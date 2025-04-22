@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface EmergencyContactsRepository extends JpaRepository<EmergencyContacts, Integer> {
     List<EmergencyContacts> findByPatientPatientId(Integer patientId);
-    Optional<EmergencyContacts> findByContactIdAndPatientPatientId(Integer contactId, Integer patientId);
 
+    Optional<EmergencyContacts> findByContactIdAndPatientPatientId(Integer contactId, Integer patientId);
 
 }
