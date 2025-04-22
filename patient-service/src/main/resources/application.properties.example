@@ -1,0 +1,8 @@
+spring.datasource.url=jdbc:postgresql://ep-holy-cloud-a8ri5qg6-pooler.eastus2.azure.neon.tech/patient_db?sslmode=require
+spring.datasource.username=************
+spring.datasource.password=************
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.jdbc.time_zone=UTC
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
