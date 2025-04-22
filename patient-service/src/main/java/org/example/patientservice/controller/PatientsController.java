@@ -26,11 +26,7 @@ public class PatientsController {
     @GetMapping("/{patientId}")
     public ResponseEntity<Patients> getPatientById(@PathVariable Integer patientId) {
         Optional<Patients> patient = patientsService.getPatientById(patientId);
-        if (patient.isPresent()) {
-            return ResponseEntity.ok(patient.get());
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        return patient.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     @PostMapping

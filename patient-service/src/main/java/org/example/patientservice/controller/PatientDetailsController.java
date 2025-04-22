@@ -21,11 +21,7 @@ public class PatientDetailsController {
     public ResponseEntity<PatientDetails> getPatientDetails(@PathVariable Integer patientId) {
         Optional<PatientDetails> patientDetails = patientDetailsService.getPatientDetails(patientId);
 
-        if (patientDetails.isPresent()) {
-            return ResponseEntity.ok(patientDetails.get());
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
+        return patientDetails.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
     @PutMapping("/{patientId}/details")

@@ -21,7 +21,6 @@ public class EmergencyContacts {
     private Integer contactId;
 
     @ManyToOne
-    @MapsId
     @JoinColumn(name = "patient_id")
     @JsonBackReference
     private Patients patient;

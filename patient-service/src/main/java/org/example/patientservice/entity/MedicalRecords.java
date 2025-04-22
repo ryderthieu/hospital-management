@@ -22,7 +22,6 @@ public class MedicalRecords {
     private Integer recordId;
 
     @ManyToOne
-    @MapsId
     @JoinColumn(name = "patient_id")
     @JsonBackReference
     private Patients patient;
