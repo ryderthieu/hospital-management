@@ -1,8 +1,8 @@
 package org.example.patientservice.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -14,16 +14,13 @@ import java.sql.Timestamp;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class EmergencyContacts {
+@Builder
+public class EmergencyContact {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "contact_id")
     private Integer contactId;
-
-    @ManyToOne
-    @JoinColumn(name = "patient_id")
-    @JsonBackReference
-    private Patients patient;
 
     @Column(name = "contact_name", length = 255)
     private String contactName;
@@ -32,14 +29,17 @@ public class EmergencyContacts {
     private String contactPhone;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "relationship")
-    private RelationshipType relationship;
+    private Relationship relationship;
 
-    @Column(name = "created_at", updatable = false, nullable = false)
+    @Column(name = "created_at")
     @CreationTimestamp
     private Timestamp createdAt;
 
-    public enum RelationshipType{
-        FAMILY, FRIEND, OTHERS;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "patient_id")
+    private Patient patient;
+
+    public enum Relationship {
+        FAMILY, FRIEND, OTHERS
     }
 }
