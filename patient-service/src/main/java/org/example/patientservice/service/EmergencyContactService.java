@@ -4,9 +4,10 @@ import org.example.patientservice.dto.EmergencyContactDto;
 import org.example.patientservice.entity.EmergencyContact;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface EmergencyContactService {
-    EmergencyContact createEmergencyContact(EmergencyContactDto emergencyContactDto);
+    EmergencyContact createEmergencyContact(Integer patientId, EmergencyContactDto emergencyContactDto);
 
     List<EmergencyContact> getAllEmergencyContacts(Integer patientId);
 
@@ -15,4 +16,6 @@ public interface EmergencyContactService {
     EmergencyContact updateEmergencyContact(Integer contactId, Integer patientId, EmergencyContactDto emergencyContactDto);
 
     void deleteEmergencyContact(Integer contactId, Integer patientId);
+
+    List<EmergencyContact> searchContactPhone(String filter);
 }

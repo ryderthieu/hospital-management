@@ -3,6 +3,7 @@ package org.example.patientservice.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.example.patientservice.entity.Patient;
 
 import java.sql.Timestamp;
@@ -10,6 +11,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 @Data
+@NoArgsConstructor
 public class PatientDto {
     private Integer patientId;
 
@@ -41,9 +43,6 @@ public class PatientDto {
     private String bloodType;
 
     private String createdAt;
-
-    public PatientDto() {
-    }
 
     public PatientDto(Patient patient) {
         this.patientId = patient.getPatientId();

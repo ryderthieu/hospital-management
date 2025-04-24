@@ -10,4 +10,6 @@ public interface EmergencyContactRepository extends JpaRepository<EmergencyConta
     List<EmergencyContact> findByPatient_PatientId(Integer patientId);
 
     Optional<EmergencyContact> findByContactIdAndPatient_PatientId(Integer contactId, Integer patientId);
+
+    List<EmergencyContact> findByContactPhone(String contactPhone);
 }

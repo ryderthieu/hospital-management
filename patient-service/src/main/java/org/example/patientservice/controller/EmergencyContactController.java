@@ -9,37 +9,43 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/patient/{patientId}/contacts")
+@RequestMapping("/api/patients")
 @RequiredArgsConstructor
 public class EmergencyContactController {
 
     private final EmergencyContactService emergencyContactService;
 
-    @PostMapping
-    public ResponseEntity<EmergencyContact> createEmergencyContact(@RequestBody @Valid EmergencyContactDto emergencyContactDto) {
-        return ResponseEntity.ok(emergencyContactService.createEmergencyContact(emergencyContactDto));
+    @PostMapping("/{patientId}/contacts")
+    public ResponseEntity<EmergencyContact> createEmergencyContact(@PathVariable Integer patientId,@RequestBody @Valid EmergencyContactDto emergencyContactDto) {
+        return ResponseEntity.ok(emergencyContactService.createEmergencyContact(patientId, emergencyContactDto));
     }
 
-    @GetMapping
+    @GetMapping("/{patientId}/contacts")
     public ResponseEntity<List<EmergencyContact>> getAllEmergencyContacts(@PathVariable Integer patientId) {
         return ResponseEntity.ok(emergencyContactService.getAllEmergencyContacts(patientId));
     }
 
-    @GetMapping("/{contactId}")
+    @GetMapping("/{patientId}/contacts/{contactId}")
     public ResponseEntity<EmergencyContact> getEmergencyContactById(@PathVariable Integer patientId, @PathVariable Integer contactId) {
         return ResponseEntity.ok(emergencyContactService.getContactByIdAndPatientId(contactId, patientId));
     }
 
-    @PutMapping("/{contactId}")
+    @PutMapping("/{patientId}/contacts/{contactId}")
     public ResponseEntity<EmergencyContact> updateEmergencyContact(@PathVariable Integer patientId, @PathVariable Integer contactId, @RequestBody @Valid EmergencyContactDto emergencyContactDto) {
         return ResponseEntity.ok(emergencyContactService.updateEmergencyContact(contactId, patientId, emergencyContactDto));
     }
 
-    @DeleteMapping("/{contactId}")
+    @DeleteMapping("/{patientId}/contacts/{contactId}")
     public ResponseEntity<String> deleteEmergencyContact(@PathVariable Integer patientId, @PathVariable Integer contactId) {
         emergencyContactService.deleteEmergencyContact(contactId, patientId);
         return ResponseEntity.ok("Contact deleted successfully");
+    }
+
+    @GetMapping("/contacts/search")
+    public ResponseEntity<List<EmergencyContact>> searchContactPhone(@RequestParam String filter) {
+        return ResponseEntity.ok(emergencyContactService.searchContactPhone(filter));
     }
 }
