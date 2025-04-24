@@ -10,11 +10,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class EmergencyContactImpl implements EmergencyContactService {
+public class EmergencyContactServiceImpl implements EmergencyContactService {
 
     private final EmergencyContactRepository emergencyContactRepository;
 

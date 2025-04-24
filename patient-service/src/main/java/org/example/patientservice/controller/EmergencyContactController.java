@@ -41,7 +41,7 @@ public class EmergencyContactController {
     @DeleteMapping("/{patientId}/contacts/{contactId}")
     public ResponseEntity<String> deleteEmergencyContact(@PathVariable Integer patientId, @PathVariable Integer contactId) {
         emergencyContactService.deleteEmergencyContact(contactId, patientId);
-        return ResponseEntity.ok("Contact deleted successfully");
+        return ResponseEntity.ok("Liên lạc được xóa thành công");
     }
 
     @GetMapping("/contacts/search")

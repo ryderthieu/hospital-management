@@ -4,7 +4,6 @@ import org.example.patientservice.dto.EmergencyContactDto;
 import org.example.patientservice.entity.EmergencyContact;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface EmergencyContactService {
     EmergencyContact createEmergencyContact(Integer patientId, EmergencyContactDto emergencyContactDto);

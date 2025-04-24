@@ -41,7 +41,7 @@ public class PatientController {
     @DeleteMapping("/{patientId}")
     public ResponseEntity<String> deletePatient(@PathVariable Integer patientId) {
         patientService.deletePatient(patientId);
-        return ResponseEntity.ok("Patient deleted successfully");
+        return ResponseEntity.ok("Bệnh nhân được xóa thành công");
     }
 
     @GetMapping("/search/identity")
