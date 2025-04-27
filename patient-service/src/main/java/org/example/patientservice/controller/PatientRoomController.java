@@ -2,14 +2,17 @@ package org.example.patientservice.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.patientservice.dto.PatientDto;
 import org.example.patientservice.dto.PatientRoomDto;
 import org.example.patientservice.entity.PatientRoom;
 import org.example.patientservice.service.PatientRoomService;
 import org.example.patientservice.service.impl.PatientRoomServiceImpl;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/patients/patient-rooms")
@@ -19,22 +22,22 @@ public class PatientRoomController {
     private final PatientRoomService patientRoomService;
 
     @GetMapping
-    public ResponseEntity<List<PatientRoom>> getAllPatientRooms() {
+    public ResponseEntity<List<PatientRoomDto>> getAllPatientRooms() {
         return ResponseEntity.ok(patientRoomService.getAllPatientRooms());
     }
 
     @GetMapping("/{roomId}")
-    public ResponseEntity<PatientRoom> getPatientRoomById(@PathVariable Integer roomId) {
+    public ResponseEntity<PatientRoomDto> getPatientRoomById(@PathVariable Integer roomId) {
         return ResponseEntity.ok(patientRoomService.getPatientRoomById(roomId));
     }
 
     @PostMapping
-    public ResponseEntity<PatientRoom> createPatientRoom(@RequestBody @Valid PatientRoomDto patientRoomDto) {
+    public ResponseEntity<PatientRoomDto> createPatientRoom(@RequestBody @Valid PatientRoomDto patientRoomDto) {
         return ResponseEntity.ok(patientRoomService.createPatientRoom(patientRoomDto));
     }
 
     @PutMapping("/{roomId}")
-    public ResponseEntity<PatientRoom> updatePatientRoom(@PathVariable Integer roomId, @RequestBody @Valid PatientRoomDto patientRoomDto) {
+    public ResponseEntity<PatientRoomDto> updatePatientRoom(@PathVariable Integer roomId, @RequestBody @Valid PatientRoomDto patientRoomDto) {
         return ResponseEntity.ok(patientRoomService.updatePatientRoom(roomId, patientRoomDto));
     }
 
@@ -44,13 +47,10 @@ public class PatientRoomController {
         return ResponseEntity.ok("Phòng được xóa thành công");
     }
 
-    @GetMapping("/search/room-name")
-    public ResponseEntity<List<PatientRoom>> searchPatientRoomsByRoomName(@RequestParam String filter){
-        return ResponseEntity.ok(patientRoomService.searchPatientRoomsByRoomName(filter));
-    }
-
-    @GetMapping("/search/max-capacity")
-    public ResponseEntity<List<PatientRoom>> searchPatientRoomsByMaxCapacity(@RequestParam Integer filter){
-        return ResponseEntity.ok(patientRoomService.searchPatientRoomsByMaxCapacity(filter));
+    @GetMapping("/search")
+    public ResponseEntity<Optional<PatientRoomDto>> filterPatientRooms(@RequestParam(required = false) String roomName,
+                                                                       @RequestParam(required = false) Integer maxCapacity){
+        Optional<PatientRoomDto> patientRoomDto = patientRoomService.filterPatientRooms(roomName, maxCapacity);
+        return patientRoomDto.isPresent() ? ResponseEntity.ok(patientRoomDto) : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 }

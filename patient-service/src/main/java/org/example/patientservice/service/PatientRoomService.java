@@ -4,19 +4,18 @@ import org.example.patientservice.dto.PatientRoomDto;
 import org.example.patientservice.entity.PatientRoom;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PatientRoomService {
-    List<PatientRoom> getAllPatientRooms();
+    List<PatientRoomDto> getAllPatientRooms();
 
-    PatientRoom getPatientRoomById(Integer roomId);
+    PatientRoomDto getPatientRoomById(Integer roomId);
 
-    PatientRoom createPatientRoom(PatientRoomDto patientRoomDto);
+    PatientRoomDto createPatientRoom(PatientRoomDto patientRoomDto);
 
-    PatientRoom updatePatientRoom(Integer roomId,PatientRoomDto patientRoomDto);
+    PatientRoomDto updatePatientRoom(Integer roomId,PatientRoomDto patientRoomDto);
 
     void deletePatientRoom(Integer roomId);
 
-    List<PatientRoom> searchPatientRoomsByRoomName(String filter);
-
-    List<PatientRoom> searchPatientRoomsByMaxCapacity(Integer filter);
+    Optional<PatientRoomDto> filterPatientRooms(String roomName, Integer maxCapacity);
 }
