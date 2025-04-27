@@ -1,5 +1,6 @@
 package org.example.doctorservice.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,6 +9,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "departments")
@@ -31,4 +34,8 @@ public class Department {
     @Column(name = "created_at")
     @CreationTimestamp
     private Timestamp createdAt;
+
+    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<ExaminationRoom> examinationRooms = new ArrayList<>();
 }
