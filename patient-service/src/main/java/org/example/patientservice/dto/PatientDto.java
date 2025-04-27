@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.patientservice.entity.Patient;
 
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -21,16 +20,13 @@ public class PatientDto {
     @NotBlank(message = "Số bảo hiểm y tế không được để trống")
     private String insuranceNumber;
 
-    @NotBlank(message = "Họ không được để trống")
-    private String firstName;
-
     @NotBlank(message = "Tên không được để trống")
-    private String lastName;
+    private String fullName;
 
     @NotNull(message = "Ngày sinh không được để trống")
     private LocalDate birthday;
 
-    private String gender;
+    private Patient.Gender gender;
 
     private String address;
 
@@ -48,10 +44,9 @@ public class PatientDto {
         this.patientId = patient.getPatientId();
         this.identityNumber = patient.getIdentityNumber();
         this.insuranceNumber = patient.getInsuranceNumber();
-        this.firstName = patient.getFirstName();
-        this.lastName = patient.getLastName();
+        this.fullName = patient.getFullName();
         this.birthday = patient.getBirthday();
-        this.gender = patient.getGender() != null ? patient.getGender().name() : null;
+        this.gender = patient.getGender();
         this.address = patient.getAddress();
         this.allergies = patient.getAllergies();
         this.height = patient.getHeight();

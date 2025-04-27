@@ -3,8 +3,8 @@ package org.example.patientservice.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.patientservice.dto.PatientDto;
-import org.example.patientservice.entity.Patient;
 import org.example.patientservice.service.PatientService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,22 +19,22 @@ public class PatientController {
     private final PatientService patientService;
 
     @PostMapping
-    public ResponseEntity<Patient> createPatient(@RequestBody @Valid PatientDto patientDto) {
+    public ResponseEntity<PatientDto> createPatient(@RequestBody @Valid PatientDto patientDto) {
         return ResponseEntity.ok(patientService.createPatient(patientDto));
     }
 
     @GetMapping
-    public ResponseEntity<List<Patient>> getAllPatients() {
+    public ResponseEntity<List<PatientDto>> getAllPatients() {
         return ResponseEntity.ok(patientService.getAllPatients());
     }
 
     @GetMapping("/{patientId}")
-    public ResponseEntity<Patient> getPatientById(@PathVariable Integer patientId) {
+    public ResponseEntity<PatientDto> getPatientById(@PathVariable Integer patientId) {
         return ResponseEntity.ok(patientService.getPatientById(patientId));
     }
 
     @PutMapping("/{patientId}")
-    public ResponseEntity<Patient> updatePatient(@PathVariable Integer patientId, @RequestBody @Valid PatientDto patientDto) {
+    public ResponseEntity<PatientDto> updatePatient(@PathVariable Integer patientId, @RequestBody @Valid PatientDto patientDto) {
         return ResponseEntity.ok(patientService.updatePatient(patientId, patientDto));
     }
 
@@ -44,13 +44,11 @@ public class PatientController {
         return ResponseEntity.ok("Bệnh nhân được xóa thành công");
     }
 
-    @GetMapping("/search/identity")
-    public ResponseEntity<Optional<Patient>> searchPatientByIdentityNumber(@RequestParam String filter) {
-        return ResponseEntity.ok(patientService.searchPatientByIdentityNumber(filter));
-    }
-
-    @GetMapping("/search/insurance")
-    public ResponseEntity<Optional<Patient>> searchPatientByInsuranceNumber(@RequestParam String filter) {
-        return ResponseEntity.ok(patientService.searchPatientByInsuranceNumber(filter));
+    @GetMapping("/search")
+    public ResponseEntity<Optional<PatientDto>> searchPatient(@RequestParam(required = false) String identityNumber,
+                                                              @RequestParam(required = false) String insuranceNumber,
+                                                              @RequestParam(required = false) String fullName) {
+        Optional<PatientDto> patientDto = patientService.searchPatient(identityNumber, insuranceNumber, fullName);
+        return patientDto.isPresent() ? ResponseEntity.ok(patientDto) : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 }
