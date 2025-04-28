@@ -4,11 +4,11 @@
     "slug": "role-patient",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/adaptive-icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,12 +17,39 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/SVN-Gilroy-Black.otf",
+            "./assets/fonts/SVN-Gilroy-Bold.otf",
+            "./assets/fonts/SVN-Gilroy-XBold.otf",
+            "./assets/fonts/SVN-Gilroy-XLight.otf",
+            "./assets/fonts/SVN-Gilroy-Light.otf",
+            "./assets/fonts/SVN-Gilroy-Medium.otf",
+            "./assets/fonts/SVN-Gilroy-Regular.otf",
+            "./assets/fonts/SVN-Gilroy-SemiBold.otf",
+            "./assets/fonts/SVN-Gilroy-Thin.otf",
+            "./assets/fonts/SVN-Gilroy-Thin-Italic.otf",
+            "./assets/fonts/SVN-Gilroy-Black-Italic.otf",
+            "./assets/fonts/SVN-Gilroy-Bold-Italic.otf",
+            "./assets/fonts/SVN-Gilroy-XBold-Italic.otf",
+            "./assets/fonts/SVN-Gilroy-XLight-Italic.otf",
+            "./assets/fonts/SVN-Gilroy-Light-Italic.otf",
+            "./assets/fonts/SVN-Gilroy-Medium-Italic.otf",
+            "./assets/fonts/SVN-Gilroy-Regular-Italic.otf",
+            "./assets/fonts/SVN-Gilroy-SemiBold-Italic.otf"
+          ]
+        }
+      ]
+    ]
   }
 }
