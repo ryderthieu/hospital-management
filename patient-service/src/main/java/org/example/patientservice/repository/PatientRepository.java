@@ -13,9 +13,9 @@ public interface PatientRepository extends JpaRepository<Patient, Integer> {
     @Query("""
         SELECT p 
         FROM Patient p 
-        WHERE p.identityNumber = :identityNumber 
-           OR p.insuranceNumber = :insuranceNumber 
-           OR p.fullName = :fullName
+        WHERE (p.identityNumber = :identityNumber OR :identityNumber IS NULL)
+           AND (p.insuranceNumber = :insuranceNumber OR :insuranceNumber IS NULL)
+           AND (p.fullName = :fullName OR :fullName IS NULL)
     """)
     Optional<Patient> searchByIdentityNumberOrInsuranceNumberOrFullName(
             String identityNumber,
