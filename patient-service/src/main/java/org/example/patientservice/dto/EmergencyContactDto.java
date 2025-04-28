@@ -20,7 +20,7 @@ public class EmergencyContactDto {
     @Pattern(regexp = "\\d{10,20}", message = "Số điện thoại phải hợp lệ")
     private String contactPhone;
 
-    private String relationship;
+    private EmergencyContact.Relationship relationship;
 
     private String createdAt;
 
@@ -30,7 +30,7 @@ public class EmergencyContactDto {
         this.contactId = emergencyContact.getContactId();
         this.contactName = emergencyContact.getContactName();
         this.contactPhone = emergencyContact.getContactPhone();
-        this.relationship = emergencyContact.getRelationship() != null ? emergencyContact.getRelationship().name() : null;
+        this.relationship = emergencyContact.getRelationship();
         this.createdAt = emergencyContact.getCreatedAt() != null ? emergencyContact.getCreatedAt().toLocalDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null;
         this.patientId = emergencyContact.getPatient() != null ? emergencyContact.getPatient().getPatientId() : null;
     }

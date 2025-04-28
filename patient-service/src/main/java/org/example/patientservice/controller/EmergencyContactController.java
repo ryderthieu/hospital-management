@@ -19,22 +19,22 @@ public class EmergencyContactController {
     private final EmergencyContactService emergencyContactService;
 
     @PostMapping("/{patientId}/contacts")
-    public ResponseEntity<EmergencyContact> createEmergencyContact(@PathVariable Integer patientId,@RequestBody @Valid EmergencyContactDto emergencyContactDto) {
+    public ResponseEntity<EmergencyContactDto> createEmergencyContact(@PathVariable Integer patientId,@RequestBody @Valid EmergencyContactDto emergencyContactDto) {
         return ResponseEntity.ok(emergencyContactService.createEmergencyContact(patientId, emergencyContactDto));
     }
 
     @GetMapping("/{patientId}/contacts")
-    public ResponseEntity<List<EmergencyContact>> getAllEmergencyContacts(@PathVariable Integer patientId) {
+    public ResponseEntity<List<EmergencyContactDto>> getAllEmergencyContacts(@PathVariable Integer patientId) {
         return ResponseEntity.ok(emergencyContactService.getAllEmergencyContacts(patientId));
     }
 
     @GetMapping("/{patientId}/contacts/{contactId}")
-    public ResponseEntity<EmergencyContact> getEmergencyContactById(@PathVariable Integer patientId, @PathVariable Integer contactId) {
+    public ResponseEntity<EmergencyContactDto> getEmergencyContactById(@PathVariable Integer patientId, @PathVariable Integer contactId) {
         return ResponseEntity.ok(emergencyContactService.getContactByIdAndPatientId(contactId, patientId));
     }
 
     @PutMapping("/{patientId}/contacts/{contactId}")
-    public ResponseEntity<EmergencyContact> updateEmergencyContact(@PathVariable Integer patientId, @PathVariable Integer contactId, @RequestBody @Valid EmergencyContactDto emergencyContactDto) {
+    public ResponseEntity<EmergencyContactDto> updateEmergencyContact(@PathVariable Integer patientId, @PathVariable Integer contactId, @RequestBody @Valid EmergencyContactDto emergencyContactDto) {
         return ResponseEntity.ok(emergencyContactService.updateEmergencyContact(contactId, patientId, emergencyContactDto));
     }
 
@@ -45,7 +45,7 @@ public class EmergencyContactController {
     }
 
     @GetMapping("/contacts/search")
-    public ResponseEntity<List<EmergencyContact>> searchContactPhone(@RequestParam String filter) {
+    public ResponseEntity<List<EmergencyContactDto>> searchContactPhone(@RequestParam String filter) {
         return ResponseEntity.ok(emergencyContactService.searchContactPhone(filter));
     }
 }
