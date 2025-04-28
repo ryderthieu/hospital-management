@@ -4,9 +4,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 
 @Entity
@@ -14,6 +17,7 @@ import java.time.LocalDate;
 @Table(name = "doctors")
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Doctor {
 
     @Id
@@ -27,11 +31,8 @@ public class Doctor {
     @Column(name = "identity_number", unique = true, length = 20)
     private String identityNumber;
 
-    @Column(name = "first_name", length = 100)
-    private String firstName;
-
-    @Column(name = "last_name", length = 100)
-    private String lastName;
+    @Column(name = "full_name")
+    private String fullName;
 
     private LocalDate birthday;
 
@@ -51,6 +52,13 @@ public class Doctor {
     @Enumerated(EnumType.STRING)
     private Type type;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private Department department;
+
+    @Column(name = "created_at")
+    @CreationTimestamp
+    private Timestamp createdAt;
 
     public enum Gender {
         MALE, FEMALE, OTHER

@@ -10,9 +10,9 @@ public interface ExaminationRoomService {
 
     List<ExaminationRoomDto> getAllExaminationRooms();
 
-    ExaminationRoom createExaminationRoom(ExaminationRoomDto examinationRoomDto);
+    ExaminationRoomDto createExaminationRoom(ExaminationRoomDto examinationRoomDto);
 
-    ExaminationRoom updateExaminationRoom(Integer roomId, ExaminationRoomDto examinationRoomDto);
+    ExaminationRoomDto updateExaminationRoom(Integer roomId, ExaminationRoomDto examinationRoomDto);
 
     void deleteExaminationRoom(Integer roomId);
 

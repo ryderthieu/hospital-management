@@ -6,13 +6,13 @@ import org.example.doctorservice.entity.Department;
 import java.util.List;
 
 public interface DepartmentService {
-    Department getDepartmentById(Integer departmentId);
+    DepartmentDto getDepartmentById(Integer departmentId);
 
-    List<Department> getAllDepartments();
+    List<DepartmentDto> getAllDepartments();
 
-    Department createDepartment(DepartmentDto departmentDto);
+    DepartmentDto createDepartment(DepartmentDto departmentDto);
 
-    Department updateDepartment(Integer departmentId, DepartmentDto departmentDto);
+    DepartmentDto updateDepartment(Integer departmentId, DepartmentDto departmentDto);
 
     void deleteDepartment(Integer departmentId);
 }

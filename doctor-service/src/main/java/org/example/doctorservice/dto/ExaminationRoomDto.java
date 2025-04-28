@@ -16,7 +16,7 @@ public class ExaminationRoomDto {
     private Integer departmentId;
 
     @NotNull(message = "Loại phòng không được để trống")
-    private String type;
+    private ExaminationRoom.Type type;
 
     @NotBlank(message = "Tòa không được để trống")
     private String building;
@@ -31,7 +31,7 @@ public class ExaminationRoomDto {
     public ExaminationRoomDto(ExaminationRoom examinationRoom) {
         this.roomId = examinationRoom.getRoomId();
         this.departmentId = examinationRoom.getDepartment() != null ? examinationRoom.getDepartment().getDepartmentId() : null;
-        this.type = examinationRoom.getType() != null ? examinationRoom.getType().name() : null;
+        this.type = examinationRoom.getType();
         this.building = examinationRoom.getBuilding();
         this.floor = examinationRoom.getFloor();
         this.note = examinationRoom.getNote();

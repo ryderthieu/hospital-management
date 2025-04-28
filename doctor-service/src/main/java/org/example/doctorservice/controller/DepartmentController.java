@@ -18,22 +18,22 @@ public class DepartmentController {
     private final DepartmentService departmentService;
 
     @GetMapping("/{departmentId}")
-    public ResponseEntity<Department> getDepartmentById(@PathVariable Integer departmentId) {
+    public ResponseEntity<DepartmentDto> getDepartmentById(@PathVariable Integer departmentId) {
         return ResponseEntity.ok(departmentService.getDepartmentById(departmentId));
     }
 
     @GetMapping
-    public ResponseEntity<List<Department>> getAllDepartments() {
+    public ResponseEntity<List<DepartmentDto>> getAllDepartments() {
         return ResponseEntity.ok(departmentService.getAllDepartments());
     }
 
     @PostMapping
-    public ResponseEntity<Department> createDepartment(@RequestBody @Valid DepartmentDto departmentDto) {
+    public ResponseEntity<DepartmentDto> createDepartment(@RequestBody @Valid DepartmentDto departmentDto) {
         return ResponseEntity.ok(departmentService.createDepartment(departmentDto));
     }
 
     @PutMapping("/{departmentId}")
-    public ResponseEntity<Department> updateDepartment(@PathVariable Integer departmentId, @RequestBody @Valid DepartmentDto departmentDto) {
+    public ResponseEntity<DepartmentDto> updateDepartment(@PathVariable Integer departmentId, @RequestBody @Valid DepartmentDto departmentDto) {
         return ResponseEntity.ok(departmentService.updateDepartment(departmentId, departmentDto));
     }
 

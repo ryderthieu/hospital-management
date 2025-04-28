@@ -2,7 +2,10 @@ package org.example.doctorservice.service.Impl;
 
 import lombok.AllArgsConstructor;
 import org.example.doctorservice.dto.ExaminationRoomDto;
+import org.example.doctorservice.entity.Department;
+import org.example.doctorservice.entity.Doctor;
 import org.example.doctorservice.entity.ExaminationRoom;
+import org.example.doctorservice.repository.DepartmentRepository;
 import org.example.doctorservice.repository.ExaminationRoomRepository;
 import org.example.doctorservice.service.ExaminationRoomService;
 import org.springframework.stereotype.Service;
@@ -13,7 +16,8 @@ import java.util.stream.Collectors;
 @Service
 @AllArgsConstructor
 public class ExaminationRoomServiceImpl implements ExaminationRoomService {
-    private ExaminationRoomRepository examinationRoomRepository;
+    private final ExaminationRoomRepository examinationRoomRepository;
+    private final DepartmentRepository departmentRepository;
 
     @Override
     public ExaminationRoomDto getExaminationRoomById(Integer roomId) {
@@ -26,34 +30,46 @@ public class ExaminationRoomServiceImpl implements ExaminationRoomService {
     @Override
     public List<ExaminationRoomDto> getAllExaminationRooms() {
         List<ExaminationRoom> rooms = examinationRoomRepository.findAll();
-        return rooms.stream()
+        return rooms
+                .stream()
                 .map(ExaminationRoomDto::new)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public ExaminationRoom createExaminationRoom(ExaminationRoomDto examinationRoomDto) {
+    public ExaminationRoomDto createExaminationRoom(ExaminationRoomDto examinationRoomDto) {
+        Department department = departmentRepository.findById(examinationRoomDto.getDepartmentId())
+                .orElseThrow(() -> new RuntimeException("Khoa không được tìm thấy"));
         ExaminationRoom examinationRoom = ExaminationRoom.builder()
-                .type(examinationRoomDto.getType() != null ? ExaminationRoom.Type.valueOf(examinationRoomDto.getType()) : null)
+                .department(department)
+                .type(examinationRoomDto.getType())
                 .building(examinationRoomDto.getBuilding())
                 .floor(examinationRoomDto.getFloor())
                 .note(examinationRoomDto.getNote())
                 .build();
 
-        return examinationRoomRepository.save(examinationRoom);
+        ExaminationRoom savedExaminationRoom = examinationRoomRepository.save(examinationRoom);
+        return new ExaminationRoomDto(savedExaminationRoom);
     }
 
     @Override
-    public ExaminationRoom updateExaminationRoom(Integer roomId, ExaminationRoomDto examinationRoomDto) {
+    public ExaminationRoomDto updateExaminationRoom(Integer roomId, ExaminationRoomDto examinationRoomDto) {
         ExaminationRoom examinationRoom = examinationRoomRepository.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phòng với ID: " + roomId));
 
-        examinationRoom.setType(examinationRoomDto.getType() != null ? ExaminationRoom.Type.valueOf(examinationRoomDto.getType()) : null);
+        if (examinationRoomDto.getDepartmentId() != null) {
+            Department department = departmentRepository.findById(examinationRoomDto.getDepartmentId())
+                    .orElseThrow(() -> new RuntimeException("Khoa không được tìm thấy"));
+            examinationRoom.setDepartment(department);
+        }
+
+        examinationRoom.setType(examinationRoomDto.getType());
         examinationRoom.setBuilding(examinationRoomDto.getBuilding());
         examinationRoom.setFloor(examinationRoomDto.getFloor());
         examinationRoom.setNote(examinationRoomDto.getNote());
 
-        return examinationRoomRepository.save(examinationRoom);
+        ExaminationRoom updatedExaminationRoom = examinationRoomRepository.save(examinationRoom);
+        return new ExaminationRoomDto(updatedExaminationRoom);
     }
 
     @Override
@@ -67,8 +83,9 @@ public class ExaminationRoomServiceImpl implements ExaminationRoomService {
     @Override
     public List<ExaminationRoomDto> filterRooms(ExaminationRoom.Type type, String building, Integer floor) {
         List<ExaminationRoom> rooms = examinationRoomRepository.findRoomsByFilters(type, building, floor);
-        return rooms.stream()
-                .map(room -> new ExaminationRoomDto(room))
+        return rooms
+                .stream()
+                .map(ExaminationRoomDto::new)
                 .collect(Collectors.toList());
     }
 }
