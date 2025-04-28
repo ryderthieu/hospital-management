@@ -1,12 +1,9 @@
-// context/AuthContext.js
 import React, { createContext, useState, useContext } from 'react';
 
-// Tạo context
 const AuthContext = createContext();
 
-// Tạo AuthProvider để cung cấp context cho các component
 export const AuthProvider = ({ children }) => {
-  const [loggedIn, setLoggedIn] = useState(false);  // Trạng thái đăng nhập
+  const [loggedIn, setLoggedIn] = useState(false);  
 
   return (
     <AuthContext.Provider value={{ loggedIn, setLoggedIn }}>
@@ -15,7 +12,6 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Tạo hook useAuth để dễ dàng truy cập vào context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
