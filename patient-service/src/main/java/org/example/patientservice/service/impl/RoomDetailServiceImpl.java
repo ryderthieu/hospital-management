@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class RoomDetailServiceImpl implements RoomDetailService {
@@ -30,18 +31,23 @@ public class RoomDetailServiceImpl implements RoomDetailService {
     }
 
     @Override
-    public List<RoomDetail> getAllRoomDetails(){
-        return roomDetailRepository.findAll();
+    public List<RoomDetailDto> getAllRoomDetails(){
+
+        return roomDetailRepository.findAll()
+                .stream()
+                .map(RoomDetailDto::new)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public RoomDetail getRoomDetailById(Integer detailId) {
-        return roomDetailRepository.findById(detailId)
+    public RoomDetailDto getRoomDetailById(Integer detailId) {
+        RoomDetail roomDetail = roomDetailRepository.findById(detailId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết phòng với ID: " + detailId));
+        return new RoomDetailDto(roomDetail);
     }
 
     @Override
-    public RoomDetail createRoomDetail(RoomDetailDto roomDetailDto) {
+    public RoomDetailDto createRoomDetail(RoomDetailDto roomDetailDto) {
         Patient patient = patientRepository.findById(roomDetailDto.getPatientId())
                 .orElseThrow(() -> new RuntimeException("Patient not found"));
         PatientRoom room = patientRoomRepository.findById(roomDetailDto.getRoomId())
@@ -52,12 +58,17 @@ public class RoomDetailServiceImpl implements RoomDetailService {
                 .room(room)
                 .build();
 
-        return roomDetailRepository.save(roomDetail);
+        RoomDetail savedRoomDetail = roomDetailRepository.save(roomDetail);
+        return new RoomDetailDto(savedRoomDetail);
     }
 
     @Override
-    public List<RoomDetail> getRoomDetailsByRoomId(Integer roomId) {
-        return roomDetailRepository.findByRoom_RoomId(roomId);
+    public List<RoomDetailDto> getRoomDetailsByRoomId(Integer roomId) {
+        return roomDetailRepository
+                .findByRoom_RoomId(roomId)
+                .stream()
+                .map(RoomDetailDto::new)
+                .collect(Collectors.toList());
     }
 
     @Override

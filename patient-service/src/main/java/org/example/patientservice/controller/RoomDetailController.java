@@ -18,22 +18,22 @@ public class RoomDetailController {
     private final RoomDetailService roomDetailService;
 
     @PostMapping
-    public ResponseEntity<RoomDetail> createRoomDetail(@RequestBody @Valid RoomDetailDto roomDetailDto) {
+    public ResponseEntity<RoomDetailDto> createRoomDetail(@RequestBody @Valid RoomDetailDto roomDetailDto) {
         return ResponseEntity.ok(roomDetailService.createRoomDetail(roomDetailDto));
     }
 
     @GetMapping
-    public ResponseEntity<List<RoomDetail>> getAllRoomDetails() {
+    public ResponseEntity<List<RoomDetailDto>> getAllRoomDetails() {
         return ResponseEntity.ok(roomDetailService.getAllRoomDetails());
     }
 
     @GetMapping("/{detailId}")
-    public ResponseEntity<RoomDetail> getRoomDetailById(@PathVariable Integer detailId) {
+    public ResponseEntity<RoomDetailDto> getRoomDetailById(@PathVariable Integer detailId) {
         return ResponseEntity.ok(roomDetailService.getRoomDetailById(detailId));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<RoomDetail>> getRoomDetailsByRoomId(@RequestParam Integer roomId) {
+    public ResponseEntity<List<RoomDetailDto>> getRoomDetailsByRoomId(@RequestParam Integer roomId) {
         return ResponseEntity.ok(roomDetailService.getRoomDetailsByRoomId(roomId));
     }
 

@@ -7,13 +7,13 @@ import java.util.List;
 
 public interface RoomDetailService {
 
-    List<RoomDetail> getAllRoomDetails();
+    List<RoomDetailDto> getAllRoomDetails();
 
-    RoomDetail getRoomDetailById(Integer detailId);
+    RoomDetailDto getRoomDetailById(Integer detailId);
 
-    RoomDetail createRoomDetail(RoomDetailDto roomDetailDto);
+    RoomDetailDto createRoomDetail(RoomDetailDto roomDetailDto);
 
-    List<RoomDetail> getRoomDetailsByRoomId(Integer roomId);
+    List<RoomDetailDto> getRoomDetailsByRoomId(Integer roomId);
 
     void deleteRoomDetail(Integer detailId);
 }
