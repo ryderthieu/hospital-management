@@ -30,21 +30,21 @@ export default function AuthNavigator() {
       <Stack.Screen name="Onboarding5" component={Onboarding5} options={{ headerShown: false }} />
       
       {/* Login */}
-      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }}/>
 
       {/* Signup */}
-      <Stack.Screen name="Signup1" component={Signup1} />
-      <Stack.Screen name="Signup2" component={Signup2} />
-      <Stack.Screen name="Signup3" component={Signup3} />
-      <Stack.Screen name="Signup4" component={Signup4} />
+      <Stack.Screen name="Signup1" component={Signup1} options={{ headerShown: false }}/>
+      <Stack.Screen name="Signup2" component={Signup2} options={{ headerShown: false }}/>
+      <Stack.Screen name="Signup3" component={Signup3} options={{ headerShown: false }}/>
+      <Stack.Screen name="Signup4" component={Signup4} options={{ headerShown: false }}/>
 
       {/* Forgot Password */}
-      <Stack.Screen name="Forgot1" component={Forgot1} />
-      <Stack.Screen name="Forgot2" component={Forgot2} />
-      <Stack.Screen name="Forgot3" component={Forgot3} />
-      <Stack.Screen name="Forgot4" component={Forgot4} />
-      <Stack.Screen name="Forgot5" component={Forgot5} />
-      <Stack.Screen name="Forgot6" component={Forgot6} />
+      <Stack.Screen name="Forgot1" component={Forgot1} options={{ headerShown: false }}/>
+      <Stack.Screen name="Forgot2" component={Forgot2} options={{ headerShown: false }}/>
+      <Stack.Screen name="Forgot3" component={Forgot3} options={{ headerShown: false }}/>
+      <Stack.Screen name="Forgot4" component={Forgot4} options={{ headerShown: false }}/>
+      <Stack.Screen name="Forgot5" component={Forgot5} options={{ headerShown: false }}/>
+      <Stack.Screen name="Forgot6" component={Forgot6} options={{ headerShown: false }}/>
     </Stack.Navigator>
   );
 }

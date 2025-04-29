@@ -1,42 +1,42 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-export default function Onboarding5({ navigation }) {
+import React from "react";
+import { View, Text, StyleSheet, Image, SafeAreaView, StatusBar } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import Button from "../../../components/Button";
+
+export default function Onboarding({ navigation }) {
   const handleStart = () => {
-    navigation.navigate('Login');
-  };
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Login' }],
+    });
+  };  
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-        <View style={styles.gradientWrapper}>
-          <LinearGradient
-            colors={["#FFFFFF", "#AFECEF", "#7EDCE2"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.cornerGradient}
-          />
-        </View>
 
-      {/* Logo + Background */}
-      <View style={styles.logoSection}>
+      {/* Background gradient */}
+      <LinearGradient
+        colors={["#E8F9FC", "#D1F3F7", "#FFFFFF"]}
+        style={styles.backgroundGradient}
+      />
+
+      {/* Logo */}
+      <View style={styles.logoContainer}>
         <Image
-          source={require('../../../assets/images/logo/Logo.png')}
+          source={require("../../../assets/images/logo/Logo.png")}
           style={styles.logo}
           resizeMode="contain"
         />
       </View>
 
-      {/* Slogan */}
+      {/* Slogan text */}
       <View style={styles.textSection}>
         <Text style={styles.title}>Chăm sóc tận tình</Text>
         <Text style={styles.title}>Bệnh tình tan biến</Text>
       </View>
 
-      {/* Button */}
-      <TouchableOpacity style={styles.button} onPress={handleStart}>
-        <Text style={styles.buttonText}>BẮT ĐẦU NGAY</Text>
-      </TouchableOpacity>
+      <Button title="BẮT ĐẦU NGAY" onPress={handleStart} />
     </SafeAreaView>
   );
 }
@@ -44,48 +44,62 @@ export default function Onboarding5({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'space-around',
+    justifyContent: "space-between",
     paddingHorizontal: 30,
+    paddingTop: 60,
+    paddingBottom: 40,
   },
-  logoSection: {
-    marginTop: 60,
-    alignItems: 'center',
+  backgroundGradient: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: -1,
+  },
+  logoContainer: {
+    alignItems: "center",
+    marginTop: 250,
   },
   logo: {
-    width: 300,
+    width: 250,
     height: 100,
   },
   textSection: {
-    alignItems: 'center',
-    marginVertical: 40,
+    alignItems: "center",
+    marginTop: 180,
   },
   title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#2B2B2B',
-    marginBottom: 8,
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#2B2B2B",
+    lineHeight: 36,
   },
   button: {
-    width: '100%',
-    backgroundColor: '#00B5B8',
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 20,
+    width: "100%",
+    backgroundColor: "#00B5B8",
+    paddingVertical: 16,
+    borderRadius: 6,
+    alignItems: "center",
+    marginTop: 40,
   },
   buttonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    color: "#FFFFFF",
+    fontWeight: "bold",
     fontSize: 16,
   },
+  loginContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 20,
+  },
   loginText: {
-    color: '#8A8A8A',
-    fontSize: 14,
+    color: "#8A8A8A",
+    fontSize: 16,
   },
   loginLink: {
-    color: '#00B5B8',
-    fontWeight: '600',
+    color: "#00B5B8",
+    fontWeight: "600",
+    fontSize: 16,
   },
 });
