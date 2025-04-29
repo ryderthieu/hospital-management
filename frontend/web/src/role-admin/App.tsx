@@ -34,54 +34,54 @@ const AdminApp: React.FC = () => {
         <Routes>
           {/* Dashboard Layout */}
           <Route element={<AppLayout />}>
-            <Route index path="/" element={<Home />} />
+            <Route index path="/admin" element={<Home />} />
 
             {/* Patients Pages */}
-            <Route path="/patients" element={<Patient />} />
-            <Route path="/patients/:id" element={<PatientDetail />} />
+            <Route path="/admin/patients" element={<Patient />} />
+            <Route path="/admin/patients/:id" element={<PatientDetail />} />
 
             {/* Doctors Page */}
-            <Route path="/doctors" element={<Doctor />} />
+            <Route path="/admin/doctors" element={<Doctor />} />
 
             {/* Medicines Page */}
-            <Route path="/medicines" element={<Medicine />} />
+            <Route path="/admin/medicines" element={<Medicine />} />
 
             {/* Services Page */}
-            <Route path="/services" element={<Service />} />
+            <Route path="/admin/services" element={<Service />} />
 
             {/* Patients Room Page */}
-            <Route path="/patients-rooms" element={<PatientRoom />} />
+            <Route path="/admin/patients-rooms" element={<PatientRoom />} />
 
             {/* Department Page */}
-            <Route path="/departments" element={<Department />} />
+            <Route path="/admin/departments" element={<Department />} />
 
             {/* Others Page */}
-            <Route path="/profile" element={<UserProfiles />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/blank" element={<Blank />} />
+            <Route path="/admin/profile" element={<UserProfiles />} />
+            <Route path="/admin/calendar" element={<Calendar />} />
+            <Route path="/admin/blank" element={<Blank />} />
 
             {/* Forms */}
-            <Route path="/form-elements" element={<FormElements />} />
+            <Route path="/admin/form-elements" element={<FormElements />} />
 
             {/* Tables */}
-            <Route path="/basic-tables" element={<BasicTables />} />
+            <Route path="/admin/basic-tables" element={<BasicTables />} />
 
             {/* Ui Elements */}
-            <Route path="/alerts" element={<Alerts />} />
-            <Route path="/avatars" element={<Avatars />} />
-            <Route path="/badge" element={<Badges />} />
-            <Route path="/buttons" element={<Buttons />} />
-            <Route path="/images" element={<Images />} />
-            <Route path="/videos" element={<Videos />} />
+            <Route path="/admin/alerts" element={<Alerts />} />
+            <Route path="/admin/avatars" element={<Avatars />} />
+            <Route path="/admin/badge" element={<Badges />} />
+            <Route path="/admin/buttons" element={<Buttons />} />
+            <Route path="/admin/images" element={<Images />} />
+            <Route path="/admin/videos" element={<Videos />} />
 
             {/* Charts */}
-            <Route path="/line-chart" element={<LineChart />} />
-            <Route path="/bar-chart" element={<BarChart />} />
+            <Route path="/admin/line-chart" element={<LineChart />} />
+            <Route path="/admin/bar-chart" element={<BarChart />} />
           </Route>
 
           {/* Auth Layout */}
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
+          <Route path="/admin/signin" element={<SignIn />} />
+          <Route path="/admin/signup" element={<SignUp />} />
 
           {/* Fallback Route */}
           <Route path="*" element={<NotFound />} />
