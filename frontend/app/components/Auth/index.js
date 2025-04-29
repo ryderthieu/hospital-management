@@ -6,3 +6,7 @@ export { PageHeader } from "./PageHeader";
 export { AuthFooter } from "./AuthFooter";
 export { Dropdown } from "./Dropdown";
 export { DatePickerField } from "./DatePickerField";
+export { PhoneNumberDisplay } from "./PhoneNumberDisplay";
+export { ResendTimer } from "./ResendTimer";
+export { OtpInput } from "./OtpInput";
+export { VerificationOptionCard } from "./VerificationOptionCard";

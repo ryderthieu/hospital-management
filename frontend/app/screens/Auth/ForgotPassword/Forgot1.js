@@ -1,49 +1,53 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { PageHeader, VerificationOptionCard } from "../../../components/Auth";
 
 export default function Forgot1({ navigation }) {
-  const [email, setEmail] = useState('');
+  const [selectedOption, setSelectedOption] = useState(''); 
 
-  const handleNext = () => {
-    // Kiểm tra tính hợp lệ của email
-    if (email) {
-      navigation.navigate('Forgot2');
+  const handleNext = (method) => {
+    if (method) {
+      setSelectedOption(method);
+      if (method === 'email') {
+        navigation.navigate('Forgot2', { method }); // Navigate to Forgot2 for email
+      } else if (method === 'phone') {
+        navigation.navigate('Forgot3', { method }); // Navigate to Forgot3 for phone
+      }
     } else {
-      alert('Vui lòng nhập email của bạn!');
+      alert('Vui lòng chọn một phương thức xác minh!');
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Quên mật khẩu</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Nhập email của bạn"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
+    <SafeAreaView style={styles.container}>
+      <PageHeader
+        title="Quên mật khẩu"
+        subtitle="Chọn phương thức xác minh và chứng tỏ sẽ gửi mã xác minh cho bạn."
+        onBack={() => navigation.goBack()}
       />
 
-      <Button title="Tiếp tục" onPress={handleNext} />
-    </View>
+      <VerificationOptionCard
+        iconName="mail-outline"
+        title="Email"
+        value="******@gmail.com"
+        onPress={() => handleNext('email')}
+      />
+
+      <VerificationOptionCard
+        iconName="call-outline"
+        title="Số điện thoại"
+        value="******2345"
+        onPress={() => handleNext('phone')}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20,
-  },
-  title: {
-    fontSize: 28, fontWeight: 'bold', marginBottom: 30,
-  },
-  input: {
-    width: '100%',
-    height: 50,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 10,
-    marginBottom: 15,
-    paddingHorizontal: 15,
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 20,
   },
 });

@@ -16,6 +16,7 @@ import Forgot3 from '../screens/Auth/ForgotPassword/Forgot3';
 import Forgot4 from '../screens/Auth/ForgotPassword/Forgot4';
 import Forgot5 from '../screens/Auth/ForgotPassword/Forgot5';
 import Forgot6 from '../screens/Auth/ForgotPassword/Forgot6';
+import Forgot7 from '../screens/Auth/ForgotPassword/Forgot7';
 
 const Stack = createNativeStackNavigator();
 
@@ -45,6 +46,7 @@ export default function AuthNavigator() {
       <Stack.Screen name="Forgot4" component={Forgot4} options={{ headerShown: false }}/>
       <Stack.Screen name="Forgot5" component={Forgot5} options={{ headerShown: false }}/>
       <Stack.Screen name="Forgot6" component={Forgot6} options={{ headerShown: false }}/>
+      <Stack.Screen name="Forgot7" component={Forgot7} options={{ headerShown: false }}/>
     </Stack.Navigator>
   );
 }
