@@ -1,76 +1,129 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  StyleSheet,
+  SafeAreaView,
+  StatusBar,
+  ScrollView,
+  Text,
+} from "react-native";
+import Button from "../../../components/Button";
+import { 
+  FloatingLabelInput,
+  PasswordRequirements,
+  CheckboxWithLabel,
+  PageHeader,
+  AuthFooter
+} from "../../../components/Auth";
 
 export default function Signup1({ navigation }) {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState("");
+  const [phoneEmail, setPhoneEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
 
-  const handleNext = () => {
-    if (name && email) {
-      navigation.navigate('Signup2');
+  // Update password validation
+  useEffect(() => {
+    if (password.length > 0) {
+      setShowValidation(true);
     } else {
-      alert('Vui lòng nhập đầy đủ thông tin!');
+      setShowValidation(false);
     }
+  }, [password]);
+
+  const handleContinue = () => {
+    navigation.navigate("Signup2");
+  };
+
+  const handleLogin = () => {
+    navigation.navigate("Login");
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Đăng ký tài khoản</Text>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <PageHeader
+          title="Đăng ký"
+          subtitle="Tạo tài khoản và trải nghiệm dịch vụ"
+          onBack={() => navigation.goBack()}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Họ và tên"
-        value={name}
-        onChangeText={setName}
-      />
+        {/* Form fields */}
+        <View style={styles.formContainer}>
+          <FloatingLabelInput
+            value={username}
+            onChangeText={setUsername}
+            placeholder="Nhập username"
+            iconName="person-outline"
+          />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
+          <FloatingLabelInput
+            value={phoneEmail}
+            onChangeText={setPhoneEmail}
+            placeholder="Nhập số điện thoại"
+            iconName="phone-portrait-outline"
+            keyboardType="email-address"
+          />
 
-      <Button title="Tiếp tục" onPress={handleNext} />
+          <FloatingLabelInput
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Nhập mật khẩu"
+            iconName="lock-closed-outline"
+            secureTextEntry={true}
+            showPasswordToggle={true}
+          />
 
-      <View style={styles.optionContainer}>
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.optionText}>Đã có tài khoản? Đăng nhập</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+          <PasswordRequirements password={password} show={showValidation} />
+
+          <CheckboxWithLabel
+            checked={termsAccepted}
+            onToggle={() => setTermsAccepted(!termsAccepted)}
+          >
+            Tôi đồng ý với{" "}
+            <Text style={styles.linkText}>Điều khoản Dịch vụ</Text> và{" "}
+            <Text style={styles.linkText}>Chính sách Bảo mật</Text> của ứng dụng.
+          </CheckboxWithLabel>
+        </View>
+
+        {/* Continue button */}
+        <Button
+          title="TIẾP THEO"
+          onPress={handleContinue}
+          style={styles.continueButton}
+        />
+
+        <AuthFooter
+          question="Đã có tài khoản?"
+          actionText="Đăng nhập"
+          onPress={handleLogin}
+        />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#FFFFFF",
+  },
+  scrollContainer: {
+    flexGrow: 1,
     paddingHorizontal: 20,
+    paddingBottom: 20,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 30,
+  formContainer: {
+    width: "100%",
   },
-  input: {
-    width: '100%',
-    height: 50,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 10,
-    marginBottom: 15,
-    paddingHorizontal: 15,
+  linkText: {
+    color: "#00B5B8",
+    fontWeight: "500",
   },
-  optionContainer: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  optionText: {
-    marginTop: 10,
-    color: '#007BFF',
-    fontSize: 16,
+  continueButton: {
+    marginTop: 30,
+    marginBottom: 20,
   },
 });

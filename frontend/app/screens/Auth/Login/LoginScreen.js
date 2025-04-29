@@ -1,75 +1,102 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, TouchableOpacity, Text } from 'react-native';
-import { useAuth } from '../../../context/AuthContext';  // Lấy giá trị từ context
-import { useNavigation } from '@react-navigation/native';  // Để điều hướng
+import { View, StyleSheet, SafeAreaView, StatusBar, ScrollView } from 'react-native';
+import { useAuth } from '../../../context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
+import {
+  FloatingLabelInput,
+  PageHeader,
+  AuthFooter
+} from '../../../components/Auth';
+import Button from '../../../components/Button';
 
 export default function LoginScreen() {
-  const { setLoggedIn } = useAuth();  // Lấy hàm setLoggedIn từ context
-  const navigation = useNavigation();  // Để điều hướng sau khi đăng nhập thành công
+  const { setLoggedIn } = useAuth();
+  const navigation = useNavigation();
 
-  const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = () => {
-    if (email && password) {
-      setLoggedIn(true);  // Cập nhật trạng thái đăng nhập
-      // navigation.replace('Main');  // Điều hướng sang MainTabNavigator
+    if (phoneNumber && password) {
+      setLoggedIn(true);
+      // navigation.replace('Main');
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Email"
-        keyboardType="email-address"
-      />
-      <TextInput
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Password"
-        secureTextEntry
-      />
-      <Button title="Đăng nhập" onPress={handleLogin} />
-      <View style={styles.optionContainer}>
-        <TouchableOpacity onPress={() => navigation.navigate('Signup1')}>
-          <Text style={styles.optionText}>Chưa có tài khoản? Đăng ký</Text>
-        </TouchableOpacity>
+  const handleSignup = () => {
+    navigation.navigate('Signup1');
+  };
 
-        <TouchableOpacity onPress={() => navigation.navigate('Forgot1')}>
-          <Text style={styles.optionText}>Quên mật khẩu?</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+  const handleForgotPassword = () => {
+    navigation.navigate('Forgot1');
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <PageHeader
+          title="Đăng nhập"
+          subtitle="Chào mừng bạn quay lại!"
+          onBack={() => navigation.goBack()}
+        />
+
+        <View style={styles.formContainer}>
+          <FloatingLabelInput
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+            placeholder="Nhập số điện thoại"
+            iconName="phone-portrait-outline"
+            keyboardType="email-address"
+          />
+
+          <FloatingLabelInput
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Nhập mật khẩu"
+            iconName="lock-closed-outline"
+            secureTextEntry={true}
+            showPasswordToggle={true}
+          />
+
+          <Button
+            title="ĐĂNG NHẬP"
+            onPress={handleLogin}
+            style={styles.loginButton}
+          />
+
+          <AuthFooter
+            question="Chưa có tài khoản?"
+            actionText="Đăng ký"
+            onPress={handleSignup}
+          />
+
+          <AuthFooter
+            question="Quên mật khẩu?"
+            actionText="Khôi phục"
+            onPress={handleForgotPassword}
+          />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#FFFFFF",
+  },
+  scrollContainer: {
+    flexGrow: 1,
     paddingHorizontal: 20,
+    paddingBottom: 20,
   },
-  input: {
-    width: '100%',
-    height: 50,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 10,
-    marginBottom: 15,
-    paddingHorizontal: 15,
-  },
-  optionContainer: {
+  formContainer: {
     marginTop: 20,
-    alignItems: 'center',
   },
-  optionText: {
-    marginTop: 10,
-    color: '#007BFF',
-    fontSize: 16,
+  loginButton: {
+    marginTop: 30,
+    marginBottom: 20,
   },
 });
