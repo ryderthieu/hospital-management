@@ -29,7 +29,6 @@ export const FontProvider = ({ children }) => {
   });
 
   if (!loaded) {
-    // Show loading screen until fonts are loaded
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />
