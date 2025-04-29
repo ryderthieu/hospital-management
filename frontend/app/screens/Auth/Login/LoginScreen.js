@@ -31,6 +31,14 @@ export default function LoginScreen() {
     navigation.navigate('Forgot1');
   };
 
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('Onboarding5'); 
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -38,7 +46,7 @@ export default function LoginScreen() {
         <PageHeader
           title="Đăng nhập"
           subtitle="Chào mừng bạn quay lại!"
-          onBack={() => navigation.goBack()}
+          onBack={handleBack}
         />
 
         <View style={styles.formContainer}>
