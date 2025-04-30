@@ -17,9 +17,11 @@ import {
   X,
 } from "lucide-react";
 import { FormField } from "../../components/examination-doctor/FormField";
+import AddVitalSignModal from "../../components/examination-doctor/AddVitalSignModal";
 
 const PatientDetail = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const [showAddVitalSignModal, setAddVitalSignModal] = useState(false)
   const [patientData, setPatientData] = useState({
     name: "Trần Nhật Trường",
     avatar:
@@ -191,11 +193,11 @@ const PatientDetail = () => {
             <div>
               <div className="flex justify-between items-center mb-4 ">
                 <h3 className="text-base-700 font-medium">Sinh hiệu</h3>
-                <button className="text-base-600 flex items-center text-sm">
+                <button className="text-base-600 flex items-center text-sm" onClick={() => setAddVitalSignModal(true)}>
                   <Plus size={16} className="mr-1" /> Thêm sinh hiệu
                 </button>
               </div>
-
+                <AddVitalSignModal isOpen={showAddVitalSignModal} onClose={() => setAddVitalSignModal(false)} />
               <div className="grid grid-cols-2">
                 <div className="w-[200px] py-2">
                   <div className="mb-1">
