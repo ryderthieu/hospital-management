@@ -1,7 +1,8 @@
 import React from "react";
 import { View, TextInput, StyleSheet } from "react-native";
-
+import { useFont, fontFamily } from "../../context/FontContext";
 const OtpInput = ({ otp, setOtp, inputRefs }) => {
+  const { fontsLoaded } = useFont();
   const handleOtpChange = (value, index) => {
     const cleanedValue = value.replace(/[^0-9]/g, "").slice(0, 1);
     const newOtp = [...otp];
@@ -50,7 +51,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginHorizontal: 10,
     fontSize: 24,
-    fontWeight: "bold",
+    fontFamily: fontFamily.bold
   },
   otpBoxFilled: {
     backgroundColor: "#e0f7fa",

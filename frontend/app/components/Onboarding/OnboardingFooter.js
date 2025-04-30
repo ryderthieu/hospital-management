@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-
+import { useFont, fontFamily } from '../../context/FontContext';
 const OnboardingFooter = ({ 
   title, 
   subtitle, 
@@ -8,6 +8,7 @@ const OnboardingFooter = ({
   totalPages, 
   onNext 
 }) => {
+  const { fontsLoaded } = useFont();
   return (
     <View style={styles.bottomSection}>
       {/* Text */}
@@ -54,12 +55,13 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   title: {
+    fontFamily: fontFamily.bold,
     fontSize: 24,
-    fontWeight: 'bold',
     color: 'white',
     marginBottom: 10,
   },
   subtitle: {
+    fontFamily: fontFamily.regular,
     fontSize: 16,
     color: 'white',
     lineHeight: 24,

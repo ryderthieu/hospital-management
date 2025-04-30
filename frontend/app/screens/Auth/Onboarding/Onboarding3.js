@@ -1,10 +1,8 @@
 import React from "react";
 import {
   View,
-  Text,
   StyleSheet,
   Image,
-  TouchableOpacity,
   StatusBar,
   SafeAreaView,
 } from "react-native";
@@ -20,7 +18,6 @@ export default function Onboarding3({ navigation }) {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.topContainer}>
-        {/* Gradient only in top right corner */}
         <View style={styles.gradientWrapper}>
           <LinearGradient
             colors={["#FFFFFF", "#AFECEF", "#7EDCE2"]}
@@ -30,7 +27,6 @@ export default function Onboarding3({ navigation }) {
           />
         </View>
 
-        {/* Logo section */}
         <View style={styles.logoContainer}>
           <Image
             source={require("../../../assets/images/logo/Logo.png")}
@@ -39,7 +35,6 @@ export default function Onboarding3({ navigation }) {
           />
         </View>
 
-        {/* Main content */}
         <View style={styles.contentContainer}>
           <View style={styles.illustrationContainer}>
             <Image

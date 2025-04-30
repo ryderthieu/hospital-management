@@ -18,29 +18,26 @@ export default function Forgot6({ navigation }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showValidation, setShowValidation] = useState(false);
-  const [isPasswordValid, setIsPasswordValid] = useState(false); // Track if password meets requirements
-  const [passwordsMatch, setPasswordsMatch] = useState(true); // Track if passwords match
+  const [isPasswordValid, setIsPasswordValid] = useState(false); 
+  const [passwordsMatch, setPasswordsMatch] = useState(true);
 
   useEffect(() => {
-    // Show password requirements when the user starts typing
     if (password.length > 0) {
       setShowValidation(true);
     } else {
       setShowValidation(false);
     }
 
-    // Basic password validation (extend based on PasswordRequirements logic)
     const meetsLength = password.length >= 8;
     const hasUpperCase = /[A-Z]/.test(password);
     const hasSpecialChar = /[!@#$%^&*]/.test(password);
     const isValid = meetsLength && hasUpperCase && hasSpecialChar;
     setIsPasswordValid(isValid);
 
-    // Check if passwords match
     if (confirmPassword.length > 0) {
       setPasswordsMatch(password === confirmPassword);
     } else {
-      setPasswordsMatch(true); // Reset if confirm password is empty
+      setPasswordsMatch(true); 
     }
   }, [password, confirmPassword]);
 
@@ -100,7 +97,6 @@ export default function Forgot6({ navigation }) {
           <PasswordRequirements password={password} show={showValidation} />
         </View>
 
-        {/* Continue button */}
         <Button
           title="TIẾP THEO"
           onPress={handleContinue}

@@ -10,9 +10,9 @@ export default function Forgot1({ navigation }) {
     if (method) {
       setSelectedOption(method);
       if (method === 'email') {
-        navigation.navigate('Forgot2', { method }); // Navigate to Forgot2 for email
+        navigation.navigate('Forgot2', { method }); 
       } else if (method === 'phone') {
-        navigation.navigate('Forgot3', { method }); // Navigate to Forgot3 for phone
+        navigation.navigate('Forgot3', { method }); 
       }
     } else {
       alert('Vui lòng chọn một phương thức xác minh!');

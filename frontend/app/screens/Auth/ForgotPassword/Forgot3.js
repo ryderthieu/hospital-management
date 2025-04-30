@@ -5,12 +5,11 @@ import { PageHeader, FloatingLabelInput } from '../../../components/Auth';
 import Button from '../../../components/Button';
 
 export default function Forgot3({ navigation, route }) {
-  const { method } = route.params; // Get the method (should be 'phone')
-  const [phone, setPhone] = useState(''); // State for phone input
+  const { method } = route.params; 
+  const [phone, setPhone] = useState('');
 
   const handleNext = () => {
     if (phone) {
-      // Navigate to the next screen to enter the verification code
       navigation.navigate('Forgot5', { method, phone });
     } else {
       alert('Vui lòng nhập số điện thoại của bạn!');

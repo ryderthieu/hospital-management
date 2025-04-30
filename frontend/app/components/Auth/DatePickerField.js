@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Modal, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-
+import { useFont, fontFamily } from "../../context/FontContext";
 const DatePickerField = ({
-  label = "Ngày sinh", // Đặt giá trị mặc định là "Ngày sinh"
+  label = "Ngày sinh", 
   value,
   onChange,
   iconName = "calendar-outline",
@@ -14,15 +14,14 @@ const DatePickerField = ({
   const [showPicker, setShowPicker] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(value ? new Date(value) : null);
+  const { fontsLoaded } = useFont();
 
-  // Initialize with animation if value exists
   useEffect(() => {
     if (value) {
       animateLabel(1);
     }
   }, []);
 
-  // Update internal state when external value changes
   useEffect(() => {
     if (value) {
       setSelectedDate(new Date(value));
@@ -45,7 +44,6 @@ const DatePickerField = ({
 
   const handleBlur = () => {
     setIsFocused(false);
-    // Only animate label down if no value is selected
     if (!selectedDate) {
       animateLabel(0);
     }
@@ -75,7 +73,7 @@ const DatePickerField = ({
     if (date) {
       setSelectedDate(date);
       onChange(date);
-      animateLabel(1); // Ensure label stays up when date is selected
+      animateLabel(1); 
     }
   };
 
@@ -95,7 +93,6 @@ const DatePickerField = ({
     <View style={styles.inputContainer}>
       <View style={[styles.inputWrapper, isFocused && styles.inputWrapperFocused]}>
         <View style={styles.inputBox}>
-          {/* Label "Ngày sinh" luôn hiển thị */}
           <Animated.Text
             style={[
               styles.floatingLabel,
@@ -129,7 +126,6 @@ const DatePickerField = ({
         </TouchableOpacity>
       </View>
 
-      {/* Android date picker */}
       {showPicker && Platform.OS === "android" && (
         <DateTimePicker
           value={selectedDate || new Date()}
@@ -139,7 +135,6 @@ const DatePickerField = ({
         />
       )}
 
-      {/* iOS date picker in modal */}
       {Platform.OS === "ios" && (
         <Modal visible={showModal} transparent animationType="slide">
           <TouchableOpacity 
@@ -204,6 +199,7 @@ const styles = StyleSheet.create({
     left: 0,
     color: "#8A8A8A",
     zIndex: 1,
+    fontFamily: fontFamily.regular,
   },
   selectTouchable: {
     paddingVertical: 5,
@@ -212,11 +208,13 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   selectedText: {
+    fontFamily: fontFamily.medium,
     fontSize: 16,
     color: "#2B2B2B",
     paddingBottom: 2,
   },
   placeholderText: {
+    fontFamily: fontFamily.regular,
     fontSize: 16,
     color: "#C0C0C0",
   },
@@ -241,8 +239,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   modalTitle: {
+    fontFamily: fontFamily.bold,
     fontSize: 18,
-    fontWeight: "500",
   },
   datePicker: {
     marginVertical: 20,
@@ -255,9 +253,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   confirmButtonText: {
+    fontFamily: fontFamily.bold,
     color: "#FFF",
     fontSize: 16,
-    fontWeight: "500",
   },
 });
 

@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
 import Button_Other from "../../../components/Button_Other";
-
+import { useFont, fontFamily } from '../../../context/FontContext';
 export default function Signup4({ navigation }) {
+  const { fontsLoaded } = useFont();
   return (
     <View style={styles.container}>
       <View style={styles.iconContainer}>
@@ -16,8 +17,7 @@ export default function Signup4({ navigation }) {
 
       <Button_Other
         title="BẮT ĐẦU"
-        onPress={() => navigation.navigate('Login')} // Điều hướng tới trang Login
-        color="#fff" // Màu nút trắng để nổi trên nền xanh
+        onPress={() => navigation.navigate('Login')} 
       />
     </View>
   );
@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#00B5B8', // Màu nền xanh lam từ hình
+    backgroundColor: '#00B5B8', 
     paddingHorizontal: 20,
   },
   iconContainer: {
@@ -40,20 +40,21 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     backgroundColor: '#fff',
     textAlign: 'center',
-    lineHeight: 80, // Căn giữa dấu kiểm theo chiều dọc
+    lineHeight: 80, 
     fontSize: 40,
-    color: '#00B5B8', // Màu dấu kiểm trùng với màu nền
+    color: '#00B5B8',
   },
   title: {
+    fontFamily: fontFamily.bold,
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff', // Chữ trắng để nổi trên nền xanh
+    color: '#fff', 
     textAlign: 'center',
     marginBottom: 10,
   },
   subtitle: {
+    fontFamily: fontFamily.regular,
     fontSize: 16,
-    color: '#fff', // Chữ trắng để nổi trên nền xanh
+    color: '#fff',
     textAlign: 'center',
     marginBottom: 30,
   },

@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, Image, SafeAreaView, StatusBar } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Button from "../../../components/Button";
-
+import { useFont, fontFamily } from "../../../context/FontContext";
 export default function Onboarding({ navigation }) {
   const handleStart = () => {
     navigation.reset({
@@ -10,18 +10,17 @@ export default function Onboarding({ navigation }) {
       routes: [{ name: 'Login' }],
     });
   };  
+  const { fontsLoaded } = useFont();
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* Background gradient */}
       <LinearGradient
         colors={["#E8F9FC", "#D1F3F7", "#FFFFFF"]}
         style={styles.backgroundGradient}
       />
 
-      {/* Logo */}
       <View style={styles.logoContainer}>
         <Image
           source={require("../../../assets/images/logo/Logo.png")}
@@ -30,7 +29,6 @@ export default function Onboarding({ navigation }) {
         />
       </View>
 
-      {/* Slogan text */}
       <View style={styles.textSection}>
         <Text style={styles.title}>Chăm sóc tận tình</Text>
         <Text style={styles.title}>Bệnh tình tan biến</Text>
@@ -70,8 +68,8 @@ const styles = StyleSheet.create({
     marginTop: 180,
   },
   title: {
+    fontFamily: fontFamily.bold,
     fontSize: 24,
-    fontWeight: "bold",
     color: "#2B2B2B",
     lineHeight: 36,
   },
@@ -84,8 +82,8 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   buttonText: {
+    fontFamily: fontFamily.bold,
     color: "#FFFFFF",
-    fontWeight: "bold",
     fontSize: 16,
   },
   loginContainer: {
@@ -94,12 +92,13 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   loginText: {
+    fontFamily: fontFamily.regular,
     color: "#8A8A8A",
     fontSize: 16,
   },
   loginLink: {
+    fontFamily: fontFamily.bold,
     color: "#00B5B8",
-    fontWeight: "600",
     fontSize: 16,
   },
 });

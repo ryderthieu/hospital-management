@@ -23,7 +23,6 @@ export default function Signup1({ navigation }) {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
 
-  // Update password validation
   useEffect(() => {
     if (password.length > 0) {
       setShowValidation(true);
@@ -50,7 +49,6 @@ export default function Signup1({ navigation }) {
           onBack={() => navigation.goBack()}
         />
 
-        {/* Form fields */}
         <View style={styles.formContainer}>
           <FloatingLabelInput
             value={username}
@@ -88,7 +86,6 @@ export default function Signup1({ navigation }) {
           </CheckboxWithLabel>
         </View>
 
-        {/* Continue button */}
         <Button
           title="TIẾP THEO"
           onPress={handleContinue}

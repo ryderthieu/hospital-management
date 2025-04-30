@@ -1,8 +1,9 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
+import { useFont, fontFamily } from "../../context/FontContext";
 const PageHeader = ({ title, subtitle, onBack }) => {
+  const { fontsLoaded } = useFont();
   return (
     <>
       {onBack && (
@@ -33,11 +34,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontFamily: fontFamily.bold,
     color: "#2B2B2B",
     marginBottom: 8,
   },
   subtitle: {
+    fontFamily: fontFamily.regular,
     fontSize: 16,
     color: "#8A8A8A",
   },

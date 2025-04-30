@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, TextInput, Animated, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useFont, fontFamily } from "../../context/FontContext";
 
 const FloatingLabelInput = ({
   value,
@@ -12,11 +13,12 @@ const FloatingLabelInput = ({
   showPasswordToggle = false,
   autoCapitalize = "none",
 }) => {
+  const { fontsLoaded } = useFont();
+
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(!secureTextEntry);
   const [labelAnim] = useState(new Animated.Value(value ? 1 : 0));
 
-  // Handle animation for floating labels
   const animateLabel = (toValue) => {
     Animated.timing(labelAnim, {
       toValue,
@@ -34,10 +36,7 @@ const FloatingLabelInput = ({
   return (
     <View style={styles.inputContainer}>
       <View
-        style={[
-          styles.inputWrapper,
-          isFocused && styles.inputWrapperFocused,
-        ]}
+        style={[styles.inputWrapper, isFocused && styles.inputWrapperFocused]}
       >
         <Ionicons
           name={iconName}
@@ -105,45 +104,47 @@ const FloatingLabelInput = ({
 };
 
 const styles = StyleSheet.create({
-    // FloatingLabelInput styles
-    inputContainer: {
-      marginBottom: 25,
-    },
-    inputWrapper: {
-      flexDirection: "row",
-      alignItems: "center",
-      borderBottomWidth: 1,
-      borderBottomColor: "#E0E0E0",
-      paddingBottom: 8,
-      position: "relative",
-      height: 50,
-    },
-    inputWrapperFocused: {
-      borderBottomColor: "#00B5B8",
-    },
-    inputIcon: {
-      marginRight: 10,
-    },
-    inputBox: {
-      flex: 1,
-      position: "relative",
-      height: 50,
-      justifyContent: "flex-end",
-    },
-    floatingLabel: {
-      position: "absolute",
-      left: 0,
-      color: "#8A8A8A",
-    },
-    input: {
-      width: "100%",
-      fontSize: 16,
-      color: "#2B2B2B",
-      paddingVertical: 5,
-    },
-    eyeIcon: {
-      padding: 5,
-    }
+  inputContainer: {
+    marginBottom: 25,
+  },
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+    paddingBottom: 8,
+    position: "relative",
+    height: 50,
+  },
+  inputWrapperFocused: {
+    borderBottomColor: "#00B5B8",
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  inputBox: {
+    flex: 1,
+    position: "relative",
+    height: 50,
+    justifyContent: "flex-end",
+  },
+  floatingLabel: {
+    position: "absolute",
+    left: 0,
+    color: "#8A8A8A",
+    fontSize: 16,
+    fontFamily: fontFamily.regular,
+  },
+  input: {
+    fontFamily: fontFamily.medium,
+    width: "100%",
+    fontSize: 16,
+    color: "#2B2B2B",
+    paddingVertical: 5,
+  },
+  eyeIcon: {
+    padding: 5,
+  },
 });
 
 export { FloatingLabelInput };

@@ -9,7 +9,7 @@ import {
   FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
+import { useFont, fontFamily } from "../../context/FontContext";
 const Dropdown = ({
   placeholder,
   value,
@@ -18,19 +18,18 @@ const Dropdown = ({
   iconName = "chevron-down-outline",
   secureTextEntry = false,
 }) => {
+  const { fontsLoaded } = useFont();
   const [isFocused, setIsFocused] = useState(false);
   const [labelAnim] = useState(new Animated.Value(value ? 1 : 0));
   const [showModal, setShowModal] = useState(false);
   const [selectedValue, setSelectedValue] = useState(value);
 
-  // Initialize with animation if value exists
   useEffect(() => {
     if (value !== "" && value !== undefined && value !== null) {
       animateLabel(1);
     }
   }, []);
 
-  // Update internal state when external value changes
   useEffect(() => {
     setSelectedValue(value);
     if (value) {
@@ -51,7 +50,6 @@ const Dropdown = ({
     onSelect(item);
     setShowModal(false);
     setIsFocused(false);
-    // Always keep label at top position after selection
     animateLabel(1);
   };
 
@@ -62,7 +60,6 @@ const Dropdown = ({
 
   const handleBlur = () => {
     setIsFocused(false);
-    // Only animate label down if no value is selected
     if (!selectedValue) {
       animateLabel(0);
     }
@@ -186,16 +183,20 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     color: "#8A8A8A",
+    fontFamily: fontFamily.regular,
+    fontSize: 16,
   },
   selectTouchable: {
     paddingVertical: 5,
     width: "100%",
   },
   selectedText: {
+    fontFamily: fontFamily.medium,
     fontSize: 16,
     color: "#2B2B2B",
   },
   placeholderText: {
+    fontFamily: fontFamily.regular,
     fontSize: 16,
     color: "#C0C0C0",
   },
@@ -221,8 +222,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   modalTitle: {
+    fontFamily: fontFamily.bold,
     fontSize: 18,
-    fontWeight: "500",
   },
   option: {
     paddingVertical: 12,
@@ -236,13 +237,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8F8F8",
   },
   optionText: {
+    fontFamily: fontFamily.regular,
     fontSize: 16,
   },
   selectedOptionText: {
+    fontFamily: fontFamily.bold,
     color: "#00B5B8",
-    fontWeight: "500",
   },
   noOptionsText: {
+    fontFamily: fontFamily.regular,
     fontSize: 16,
     color: "#8A8A8A",
     textAlign: "center",

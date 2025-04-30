@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#00B5B8', // Màu nền xanh lam từ hình
+    backgroundColor: '#00B5B8', 
     paddingHorizontal: 20,
   },
   iconContainer: {
@@ -39,20 +39,20 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     backgroundColor: '#fff',
     textAlign: 'center',
-    lineHeight: 80, // Căn giữa dấu kiểm theo chiều dọc
+    lineHeight: 80, 
     fontSize: 40,
-    color: '#00B5B8', // Màu dấu kiểm trùng với màu nền
+    color: '#00B5B8', 
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff', // Chữ trắng để nổi trên nền xanh
+    color: '#fff', 
     textAlign: 'center',
     marginBottom: 10,
   },
   subtitle: {
     fontSize: 16,
-    color: '#fff', // Chữ trắng để nổi trên nền xanh
+    color: '#fff',
     textAlign: 'center',
     marginBottom: 30,
   },

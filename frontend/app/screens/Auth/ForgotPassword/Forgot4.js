@@ -16,7 +16,6 @@ export default function Forgot4({ navigation }) {
   const email = "ltn******@gmail.com"; 
 
   const handleResendOtp = () => {
-    // Thêm logic gửi lại OTP tại đây nếu cần (ví dụ: gọi API)
   };
 
   return (

@@ -16,7 +16,6 @@ export default function Forgot5({ navigation }) {
   const phoneNumber = "+1234567890"; 
 
   const handleResendOtp = () => {
-    // Thêm logic gửi lại OTP tại đây nếu cần (ví dụ: gọi API)
   };
 
   return (

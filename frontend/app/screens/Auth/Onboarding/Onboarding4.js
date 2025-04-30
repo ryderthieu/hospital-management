@@ -1,10 +1,8 @@
 import React from "react";
 import {
   View,
-  Text,
   StyleSheet,
   Image,
-  TouchableOpacity,
   StatusBar,
   SafeAreaView,
 } from "react-native";
@@ -29,7 +27,6 @@ export default function Onboarding4({ navigation }) {
           />
         </View>
 
-        {/* Logo section */}
         <View style={styles.logoContainer}>
           <Image
             source={require("../../../assets/images/logo/Logo.png")}
@@ -38,7 +35,6 @@ export default function Onboarding4({ navigation }) {
           />
         </View>
 
-        {/* Main content */}
         <View style={styles.contentContainer}>
           <View style={styles.illustrationContainer}>
             <Image

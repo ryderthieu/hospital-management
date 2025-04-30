@@ -2,11 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, SafeAreaView, StatusBar, ScrollView } from 'react-native';
 import { useAuth } from '../../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
-import {
-  FloatingLabelInput,
-  PageHeader,
-  AuthFooter
-} from '../../../components/Auth';
+import { FloatingLabelInput, PageHeader, AuthFooter } from '../../../components/Auth';
 import Button from '../../../components/Button';
 
 export default function LoginScreen() {
@@ -19,7 +15,6 @@ export default function LoginScreen() {
   const handleLogin = () => {
     if (phoneNumber && password) {
       setLoggedIn(true);
-      // navigation.replace('Main');
     }
   };
 

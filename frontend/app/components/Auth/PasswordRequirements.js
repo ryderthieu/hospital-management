@@ -1,8 +1,9 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
+import { useFont, fontFamily } from "../../context/FontContext";
 const PasswordRequirements = ({ password, show = false }) => {
+  const { fontsLoaded } = useFont();
   if (!show) return null;
 
   const hasEightChars = password.length >= 8;
@@ -41,6 +42,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   requirementText: {
+    fontFamily: fontFamily.regular,
     fontSize: 14,
     color: "#2B2B2B",
     marginLeft: 8,

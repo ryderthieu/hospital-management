@@ -1,8 +1,9 @@
 import React from "react";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
+import { useFont, fontFamily } from "../../context/FontContext";
 const CheckboxWithLabel = ({ checked, onToggle, children }) => {
+  const { fontsLoaded } = useFont();
   return (
     <TouchableOpacity
       style={styles.checkboxContainer}
@@ -26,7 +27,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   checkboxText: {
-    fontSize: 14,
+    fontFamily: fontFamily.regular,
+    fontSize: 15,
     color: "#2B2B2B",
     marginLeft: 8,
     flex: 1,

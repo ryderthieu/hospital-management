@@ -48,7 +48,6 @@ export default function Signup1({ navigation }) {
         />
 
         <View style={styles.formContainer}>
-          {/* <View style={styles.row}> */}
             <FloatingLabelInputNotIcon
               value={lastName}
               onChangeText={setLastName}
@@ -61,7 +60,6 @@ export default function Signup1({ navigation }) {
               placeholder="Nhập tên"
               containerStyle={styles.halfInput}
             />
-          {/* </View> */}
 
           <FloatingLabelInputNotIcon
             value={idNumber}

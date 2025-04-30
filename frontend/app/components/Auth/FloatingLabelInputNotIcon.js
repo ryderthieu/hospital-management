@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, TextInput, Animated, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
+import { useFont, fontFamily } from "../../context/FontContext";
 const FloatingLabelInputNotIcon = ({
   value,
   onChangeText,
@@ -11,11 +11,11 @@ const FloatingLabelInputNotIcon = ({
   showPasswordToggle = false,
   autoCapitalize = "none",
 }) => {
+  const { fontsLoaded } = useFont();
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(!secureTextEntry);
   const [labelAnim] = useState(new Animated.Value(value ? 1 : 0));
 
-  // Handle animation for floating labels
   const animateLabel = (toValue) => {
     Animated.timing(labelAnim, {
       toValue,
@@ -98,7 +98,6 @@ const FloatingLabelInputNotIcon = ({
 };
 
 const styles = StyleSheet.create({
-    // FloatingLabelInput styles
     inputContainer: {
       marginBottom: 25,
     },
@@ -127,8 +126,11 @@ const styles = StyleSheet.create({
       position: "absolute",
       left: 0,
       color: "#8A8A8A",
+      fontSize: 16,
+      fontFamily: fontFamily.regular,
     },
     input: {
+      fontFamily: fontFamily.medium,
       width: "100%",
       fontSize: 16,
       color: "#2B2B2B",

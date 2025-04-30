@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
-
+import { useFont, fontFamily } from "../../context/FontContext";
 const ResendTimer = ({ initialTime = 60, onResend }) => {
+  const { fontsLoaded } = useFont();
   const [timer, setTimer] = useState(initialTime);
   const [canResend, setCanResend] = useState(false);
 
@@ -41,6 +42,7 @@ const ResendTimer = ({ initialTime = 60, onResend }) => {
 
 const styles = StyleSheet.create({
   resendText: {
+    fontFamily: fontFamily.medium,
     fontSize: 14,
     textAlign: "center",
     color: "#666",
@@ -48,6 +50,7 @@ const styles = StyleSheet.create({
   },
   resendTextActive: {
     color: "#00B5B8",
+    textDecorationLine: "underline",
   },
 });
 
