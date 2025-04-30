@@ -17,11 +17,15 @@ import {
   X,
 } from "lucide-react";
 import { FormField } from "../../components/examination-doctor/FormField";
-import AddVitalSignModal from "../../components/examination-doctor/AddVitalSignModal";
+import { AddVitalSignModal } from "../../components/examination-doctor/AddVitalSignModal";
+import { PrescriptionModal } from "../../components/examination-doctor/PrescriptionModal";
+import { IndicationModal } from "../../components/examination-doctor/IndicationModal";
 
 const PatientDetail = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showAddVitalSignModal, setAddVitalSignModal] = useState(false)
+  const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
+  const [isIndicationModalOpen, setIsIndicationModalOpen] = useState(false);
   const [patientData, setPatientData] = useState({
     name: "Trần Nhật Trường",
     avatar:
@@ -197,7 +201,6 @@ const PatientDetail = () => {
                   <Plus size={16} className="mr-1" /> Thêm sinh hiệu
                 </button>
               </div>
-                <AddVitalSignModal isOpen={showAddVitalSignModal} onClose={() => setAddVitalSignModal(false)} />
               <div className="grid grid-cols-2">
                 <div className="w-[200px] py-2">
                   <div className="mb-1">
@@ -314,7 +317,7 @@ const PatientDetail = () => {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="grid grid-cols-2 gap-x-5 mb-2">
                 <FormField
                   label="Tên bệnh nhân"
                   isEditable={isEditing}
@@ -497,16 +500,18 @@ const PatientDetail = () => {
                   <CalendarClock size={18} className="mr-2" />
                   Đặt lịch tái khám
                 </button>
-                <button className="flex items-center px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700">
+                <button onClick={() => setIsIndicationModalOpen(true)} className="flex items-center px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700">
                   <Plus size={18} className="mr-2" />
                   Thêm chỉ định
                 </button>
-                <button className="flex items-center px-4 py-2 bg-base-600 text-white rounded-md">
+                <button  onClick={() => setIsPrescriptionModalOpen(true)} className="flex items-center px-4 py-2 bg-base-600 text-white rounded-md">
                   <Plus size={18} className="mr-2" />
                   Kê toa thuốc
                 </button>
+                
               </div>
             </div>
+           
 
             <div className="mt-6 flex justify-end">
               <button className="px-8 py-3 bg-base-600 text-white rounded-md">
@@ -516,6 +521,9 @@ const PatientDetail = () => {
           </div>
         </div>
       </main>
+      {showAddVitalSignModal && (<AddVitalSignModal isOpen={showAddVitalSignModal} onClose={() => setAddVitalSignModal(false)} />)}
+      {isPrescriptionModalOpen && (<PrescriptionModal isOpen={isPrescriptionModalOpen} onClose={() => setIsPrescriptionModalOpen(false)} />)}
+      {isIndicationModalOpen && (<IndicationModal isOpen={isIndicationModalOpen} onClose={() => setIsIndicationModalOpen(false)} />)}
     </div>
   );
 };

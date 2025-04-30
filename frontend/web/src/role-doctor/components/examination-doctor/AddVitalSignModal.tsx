@@ -1,13 +1,12 @@
 import { FormField } from "./FormField"
 import { X } from "lucide-react"
 
-export default function AddVitalSignModal({
-  isOpen,
-  onClose,
-}: {
+type AddVitalSignModalProps = {
   isOpen: boolean
   onClose: () => void
-}) {
+}
+
+export const AddVitalSignModal: React.FC<AddVitalSignModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null
 
   return (
@@ -56,12 +55,12 @@ export default function AddVitalSignModal({
         {/* Hành động */}
         <div className="flex justify-end mt-6 space-x-3">
           <button
-            className="border border-teal-700 text-teal-700 px-4 py-2 rounded hover:bg-teal-50"
+            className="border border-base-700 text-base-700 px-4 py-2 rounded hover:bg-base-50"
             onClick={onClose}
           >
             Hủy
           </button>
-          <button className="bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800">
+          <button className="bg-base-700 text-white px-4 py-2 rounded hover:bg-base-800">
             Lưu
           </button>
         </div>
@@ -69,3 +68,5 @@ export default function AddVitalSignModal({
     </div>
   )
 }
+
+
