@@ -1,5 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import HomeStackNavigator from './HomeStackNavigator';
 import SearchScreen from '../screens/Search/SearchScreen';
 import AppointmentScreen from '../screens/Appointment/AppointmentScreen';
@@ -9,30 +10,161 @@ import { Ionicons } from '@expo/vector-icons';
 
 const Tab = createBottomTabNavigator();
 
+function CustomTabBar({ state, descriptors, navigation }) {
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {state.routes.map((route, index) => {
+          const { options } = descriptors[route.key];
+          const label = options.title || route.name;
+          const isFocused = state.index === index;
+
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
+
+          let iconName;
+          switch (route.name) {
+            case 'HomeTab':
+              iconName = isFocused ? 'home' : 'home-outline';
+              break;
+            case 'Search':
+              iconName = isFocused ? 'search' : 'search-outline';
+              break;
+            case 'Appointment':
+              iconName = isFocused ? 'calendar' : 'calendar-outline';
+              break;
+            case 'Prescription':
+              iconName = isFocused ? 'document-text' : 'document-text-outline';
+              break;
+            case 'Profile':
+              iconName = isFocused ? 'person' : 'person-outline';
+              break;
+          }
+
+          return (
+            <TouchableOpacity
+              key={index}
+              accessibilityRole="button"
+              accessibilityState={isFocused ? { selected: true } : {}}
+              onPress={onPress}
+              style={styles.tabButton}
+            >
+              <View style={isFocused ? styles.activeIconContainer : styles.iconContainer}>
+                <Ionicons 
+                  name={iconName} 
+                  size={20} 
+                  color={isFocused ? "#FFFFFF" : "#E0F7FA"} 
+                />
+              </View>
+              <Text style={[
+                styles.tabText,
+                isFocused && styles.tabTextActive
+              ]}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    backgroundColor: '#16BDCA',
+  },
+  container: {
+    flexDirection: 'row',
+    backgroundColor: '#16BDCA',
+    height: 70,
+    paddingTop: 10,
+    paddingBottom: 10,
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 10,
+    paddingHorizontal: 10,
+  },
+  tabButton: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  iconContainer: {
+    padding: 8,
+    borderRadius: 20,
+  },
+  activeIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#00A0AD',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  tabText: {
+    fontSize: 12,
+    color: '#E0F7FA',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  tabTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '500',
+  }
+});
+
 export default function MainTabNavigator() {
   return (
     <Tab.Navigator
-      initialRouteName="HomeTab"
-      screenOptions={({ route }) => ({
+      tabBar={props => <CustomTabBar {...props} />}
+      screenOptions={{
         headerShown: false,
-        tabBarIcon: ({ color, size }) => {
-          let iconName;
-          switch (route.name) {
-            case 'HomeTab': iconName = 'home-outline'; break;
-            case 'Search': iconName = 'search-outline'; break;
-            case 'Appointment': iconName = 'calendar-outline'; break;
-            case 'Prescription': iconName = 'medkit-outline'; break;
-            case 'Profile': iconName = 'person-outline'; break;
-          }
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
-      })}
+      }}
     >
-      <Tab.Screen name="HomeTab" component={HomeStackNavigator} options={{ title: 'Trang Chủ', headerShown: false }} />
-      <Tab.Screen name="Search" component={SearchScreen} options={{ title: 'Tra Cứu', headerShown: true }} />
-      <Tab.Screen name="Appointment" component={AppointmentScreen} options={{ title: 'Lịch Khám', headerShown: true }} />
-      <Tab.Screen name="Prescription" component={PrescriptionScreen} options={{ title: 'Đơn Thuốc', headerShown: true }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Hồ Sơ', headerShown: true }} />
+      <Tab.Screen 
+        name="HomeTab" 
+        component={HomeStackNavigator} 
+        options={{ title: 'Trang chủ' }} 
+      />
+      <Tab.Screen 
+        name="Search" 
+        component={SearchScreen} 
+        options={{ title: 'Tra cứu' }} 
+      />
+      <Tab.Screen 
+        name="Appointment" 
+        component={AppointmentScreen} 
+        options={{ title: 'Lịch khám' }} 
+      />
+      <Tab.Screen 
+        name="Prescription" 
+        component={PrescriptionScreen} 
+        options={{ title: 'Đơn thuốc' }} 
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={ProfileScreen} 
+        options={{ title: 'Hồ sơ' }} 
+      />
     </Tab.Navigator>
   );
 }
