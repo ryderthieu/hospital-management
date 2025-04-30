@@ -7,10 +7,12 @@ import AppointmentScreen from '../screens/Appointment/AppointmentScreen';
 import PrescriptionScreen from '../screens/Prescription/PrescriptionScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
 import { Ionicons } from '@expo/vector-icons';
+import { useFont, fontFamily } from '../context/FontContext';
 
 const Tab = createBottomTabNavigator();
 
 function CustomTabBar({ state, descriptors, navigation }) {
+  const { fontsLoaded } = useFont();
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -54,21 +56,23 @@ function CustomTabBar({ state, descriptors, navigation }) {
             <TouchableOpacity
               key={index}
               accessibilityRole="button"
-              accessibilityState={isFocused ? { selected: true } : {}}
+              accessible={false} // Tắt accessibility để loại bỏ viền focus
               onPress={onPress}
               style={styles.tabButton}
             >
-              <View style={isFocused ? styles.activeIconContainer : styles.iconContainer}>
-                <Ionicons 
-                  name={iconName} 
-                  size={20} 
-                  color={isFocused ? "#FFFFFF" : "#E0F7FA"} 
+              <View style={styles.iconContainer}>
+                <Ionicons
+                  name={iconName}
+                  size={20}
+                  color={isFocused ? '#FFFFFF' : '#E0F7FA'}
                 />
               </View>
-              <Text style={[
-                styles.tabText,
-                isFocused && styles.tabTextActive
-              ]}>
+              <Text
+                style={[
+                  styles.tabText,
+                  isFocused && styles.tabTextActive,
+                ]}
+              >
                 {label}
               </Text>
             </TouchableOpacity>
@@ -85,7 +89,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flexDirection: 'row',
-    backgroundColor: '#16BDCA',
+    backgroundColor: '#00B5B8',
     height: 70,
     paddingTop: 10,
     paddingBottom: 10,
@@ -104,66 +108,57 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconContainer: {
-    padding: 8,
-    borderRadius: 20,
-  },
-  activeIconContainer: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: '#00A0AD',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 2,
   },
   tabText: {
-    fontSize: 12,
+    fontFamily: fontFamily.regular,
+    fontSize: 13,
     color: '#E0F7FA',
     marginTop: 4,
     textAlign: 'center',
   },
   tabTextActive: {
+    fontFamily: fontFamily.bold,
     color: '#FFFFFF',
     fontWeight: '500',
-  }
+  },
 });
 
 export default function MainTabNavigator() {
   return (
     <Tab.Navigator
-      tabBar={props => <CustomTabBar {...props} />}
+      tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
       }}
     >
-      <Tab.Screen 
-        name="HomeTab" 
-        component={HomeStackNavigator} 
-        options={{ title: 'Trang chủ' }} 
+      <Tab.Screen
+        name="HomeTab"
+        component={HomeStackNavigator}
+        options={{ title: 'Trang chủ' }}
       />
-      <Tab.Screen 
-        name="Search" 
-        component={SearchScreen} 
-        options={{ title: 'Tra cứu' }} 
+      <Tab.Screen
+        name="Search"
+        component={SearchScreen}
+        options={{ title: 'Tra cứu' }}
       />
-      <Tab.Screen 
-        name="Appointment" 
-        component={AppointmentScreen} 
-        options={{ title: 'Lịch khám' }} 
+      <Tab.Screen
+        name="Appointment"
+        component={AppointmentScreen}
+        options={{ title: 'Lịch khám' }}
       />
-      <Tab.Screen 
-        name="Prescription" 
-        component={PrescriptionScreen} 
-        options={{ title: 'Đơn thuốc' }} 
+      <Tab.Screen
+        name="Prescription"
+        component={PrescriptionScreen}
+        options={{ title: 'Đơn thuốc' }}
       />
-      <Tab.Screen 
-        name="Profile" 
-        component={ProfileScreen} 
-        options={{ title: 'Hồ sơ' }} 
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ title: 'Hồ sơ' }}
       />
     </Tab.Navigator>
   );
