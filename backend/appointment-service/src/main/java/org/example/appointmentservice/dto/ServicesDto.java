@@ -8,6 +8,8 @@ import org.example.appointmentservice.entity.Services;
 
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
@@ -25,11 +27,19 @@ public class ServicesDto {
 
     private String createdAt;
 
+    private List<ServiceOrderDto> serviceOrders;
+
     public ServicesDto(Services service) {
         this.serviceId = service.getServiceId();
         this.serviceName = service.getServiceName();
         this.serviceType = service.getServiceType();
         this.price = service.getPrice();
         this.createdAt = service.getCreatedAt() != null ? service.getCreatedAt().toLocalDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null;
+        this.serviceOrders = service.getServiceOrders() != null
+                ? service.getServiceOrders()
+                .stream()
+                .map(ServiceOrderDto::new)
+                .collect(Collectors.toList())
+                : null;
     }
 }

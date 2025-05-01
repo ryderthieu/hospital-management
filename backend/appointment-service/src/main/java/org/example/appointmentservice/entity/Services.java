@@ -9,6 +9,8 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "services")
@@ -36,6 +38,9 @@ public class Services {
     @Column(name = "created_at")
     @CreationTimestamp
     private Timestamp createdAt;
+
+    @OneToMany(mappedBy = "service", cascade = CascadeType.ALL)
+    private List<ServiceOrder> serviceOrders = new ArrayList<>();
 
     public enum ServiceType {
         TEST, IMAGING, CONSULTATION, OTHER
