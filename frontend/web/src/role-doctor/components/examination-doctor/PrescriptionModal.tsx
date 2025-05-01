@@ -125,7 +125,7 @@ export const PrescriptionModal: React.FC<ModalProps> = ({ isOpen, onClose }) => 
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
-                <tr className="bg-blue-50">
+                <tr className="bg-base-100">
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Thuốc</th>
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Liều lượng</th>
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Tần suất</th>
@@ -143,30 +143,35 @@ export const PrescriptionModal: React.FC<ModalProps> = ({ isOpen, onClose }) => 
                         type="text"
                         value={med.dosage}
                         onChange={(e) => updateMedicationField(index, "dosage", e.target.value)}
-                        className="w-12 h-8 border rounded-md text-center"
+                        className="w-12 h-8 border rounded-md text-center outline-none focus:ring-base-200 focus:border-base-500"
                       />
                     </td>
                     <td className="px-4 py-3">
                       <select
                         value={med.frequency}
                         onChange={(e) => updateMedicationField(index, "frequency", e.target.value)}
-                        className="w-full border rounded-md px-2 py-1 text-sm"
+                        className="w-full border rounded-md px-2 py-1 text-sm outline-none focus:ring-base-200 focus:border-base-500"
                       >
-                        <option value="Ngày 1 lần">Ngày 1 lần</option>
-                        <option value="Ngày 2 lần">Ngày 2 lần</option>
-                        <option value="Ngày 3 lần">Ngày 3 lần</option>
-                        <option value="Cách ngày">Cách ngày</option>
+                        <option value="Ngày 1 lần">Ngày 1 lần, buổi sáng</option>
+                        <option value="Ngày 1 lần">Ngày 1 lần, buổi trưa</option>
+                        <option value="Ngày 1 lần">Ngày 1 lần, buổi chiều</option>
+                        <option value="Ngày 1 lần">Ngày 1 lần, buổi tối</option>
+                        <option value="Ngày 2 lần">Ngày 2 lần, sáng tối</option>
+                        <option value="Ngày 3 lần">Ngày 3 lần, sáng trưa chiều</option>
                       </select>
                     </td>
                     <td className="px-4 py-3">
                       <select
                         value={med.instructions}
                         onChange={(e) => updateMedicationField(index, "instructions", e.target.value)}
-                        className="w-full border rounded-md px-2 py-1 text-sm"
+                        className="w-full border rounded-md px-2 py-1 text-sm outline-none focus:ring-base-200 focus:border-base-500"
                       >
                         <option value="Trước ăn">Trước ăn</option>
+                        <option value="Trước ăn">Trước ăn 30 phút</option>
                         <option value="Sau ăn">Sau ăn</option>
+                        <option value="Sau ăn">Sau ăn 30 phút</option>
                         <option value="Trong bữa ăn">Trong bữa ăn</option>
+                        <option value="Sau ăn">Trước khi ngủ 30 phút</option>
                         <option value="Khi cần">Khi cần</option>
                       </select>
                     </td>
@@ -175,7 +180,7 @@ export const PrescriptionModal: React.FC<ModalProps> = ({ isOpen, onClose }) => 
                         type="text"
                         value={med.quantity}
                         onChange={(e) => updateMedicationField(index, "quantity", e.target.value)}
-                        className="w-12 h-8 border rounded-md text-center"
+                        className="w-12 h-8 border rounded-md text-center outline-none focus:ring-base-200 focus:border-base-500"
                       />
                     </td>
                     <td className="px-4 py-3 text-center">

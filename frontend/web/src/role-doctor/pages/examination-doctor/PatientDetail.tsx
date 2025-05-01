@@ -18,14 +18,14 @@ import {
 } from "lucide-react";
 import { FormField } from "../../components/examination-doctor/FormField";
 import { AddVitalSignModal } from "../../components/examination-doctor/AddVitalSignModal";
-import { PrescriptionModal } from "../../components/examination-doctor/PrescriptionModal";
-import { IndicationModal } from "../../components/examination-doctor/IndicationModal";
+import { PrescriptionModal } from "../../components/examination-doctor/PrescriptionModal/index";
+import { MedicalOrderModal } from "../../components/examination-doctor/MedicalOrderModal/index";
 
 const PatientDetail = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showAddVitalSignModal, setAddVitalSignModal] = useState(false)
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
-  const [isIndicationModalOpen, setIsIndicationModalOpen] = useState(false);
+  const [isMedicalModalOpen, setIsMedicalModalOpen] = useState(false);
   const [patientData, setPatientData] = useState({
     name: "Trần Nhật Trường",
     avatar:
@@ -500,7 +500,7 @@ const PatientDetail = () => {
                   <CalendarClock size={18} className="mr-2" />
                   Đặt lịch tái khám
                 </button>
-                <button onClick={() => setIsIndicationModalOpen(true)} className="flex items-center px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700">
+                <button onClick={() => setIsMedicalModalOpen(true)} className="flex items-center px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700">
                   <Plus size={18} className="mr-2" />
                   Thêm chỉ định
                 </button>
@@ -523,7 +523,7 @@ const PatientDetail = () => {
       </main>
       {showAddVitalSignModal && (<AddVitalSignModal isOpen={showAddVitalSignModal} onClose={() => setAddVitalSignModal(false)} />)}
       {isPrescriptionModalOpen && (<PrescriptionModal isOpen={isPrescriptionModalOpen} onClose={() => setIsPrescriptionModalOpen(false)} />)}
-      {isIndicationModalOpen && (<IndicationModal isOpen={isIndicationModalOpen} onClose={() => setIsIndicationModalOpen(false)} />)}
+      {isMedicalModalOpen && (<MedicalOrderModal isOpen={isMedicalModalOpen} onClose={() => setIsMedicalModalOpen(false)} />)}
     </div>
   );
 };
