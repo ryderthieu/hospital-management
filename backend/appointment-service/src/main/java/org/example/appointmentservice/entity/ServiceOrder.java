@@ -32,7 +32,7 @@ public class ServiceOrder {
 
     @ManyToOne
     @JoinColumn(name = "service_id")
-    private Service service;
+    private Services service;
 
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
