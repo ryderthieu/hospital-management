@@ -1,10 +1,20 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { useNavigation } from '@react-navigation/native';
+import Header from "../../components/Header";
 
 const AppointmentScreen = () => {
+  const navigation = useNavigation();
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Đây là màn hình Tra cứu</Text>
+      {/* Header Component */}
+      <Header
+        title="Lịch khám"
+        showBack={false}
+        showAction={true}
+        actionType="notification"
+        onActionPress={() => navigation.navigate('Notifications')}
+      />
     </View>
   );
 };
@@ -12,13 +22,11 @@ const AppointmentScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8f8f8',
+    backgroundColor: "#f8f8f8",
   },
   text: {
     fontSize: 20,
-    color: '#333',
+    color: "#333",
   },
 });
 
