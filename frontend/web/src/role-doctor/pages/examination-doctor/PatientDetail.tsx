@@ -17,13 +17,13 @@ import {
   X,
 } from "lucide-react";
 import { FormField } from "../../components/examination-doctor/FormField";
-import { AddVitalSignModal } from "../../components/examination-doctor/AddVitalSignModal";
 import { PrescriptionModal } from "../../components/examination-doctor/PrescriptionModal/index";
 import { MedicalOrderModal } from "../../components/examination-doctor/MedicalOrderModal/index";
+import { VitalSignModal } from "../../components/examination-doctor/VitalSignModal/index";
 
 const PatientDetail = () => {
   const [isEditing, setIsEditing] = useState(false);
-  const [showAddVitalSignModal, setAddVitalSignModal] = useState(false)
+  const [isVitalSignModalOpen, setIsVitalSignModalOpen] = useState(false)
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
   const [isMedicalModalOpen, setIsMedicalModalOpen] = useState(false);
   const [patientData, setPatientData] = useState({
@@ -197,7 +197,7 @@ const PatientDetail = () => {
             <div>
               <div className="flex justify-between items-center mb-4 ">
                 <h3 className="text-base-700 font-medium">Sinh hiệu</h3>
-                <button className="text-base-600 flex items-center text-sm" onClick={() => setAddVitalSignModal(true)}>
+                <button className="text-base-600 flex items-center text-sm" onClick={() => setIsVitalSignModalOpen(true)}>
                   <Plus size={16} className="mr-1" /> Thêm sinh hiệu
                 </button>
               </div>
@@ -521,7 +521,7 @@ const PatientDetail = () => {
           </div>
         </div>
       </main>
-      {showAddVitalSignModal && (<AddVitalSignModal isOpen={showAddVitalSignModal} onClose={() => setAddVitalSignModal(false)} />)}
+      {isVitalSignModalOpen && (<VitalSignModal isOpen={isVitalSignModalOpen} onClose={() => setIsVitalSignModalOpen(false)} />)}
       {isPrescriptionModalOpen && (<PrescriptionModal isOpen={isPrescriptionModalOpen} onClose={() => setIsPrescriptionModalOpen(false)} />)}
       {isMedicalModalOpen && (<MedicalOrderModal isOpen={isMedicalModalOpen} onClose={() => setIsMedicalModalOpen(false)} />)}
     </div>
