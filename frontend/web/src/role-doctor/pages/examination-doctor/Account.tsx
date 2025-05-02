@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { Bell, Search, ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
 import { AccountInfoView } from '../../components/examination-doctor/AccountInfo/index';
 import { ChangePassword } from '../../components/examination-doctor/ChangePassword/index';
 
@@ -8,7 +7,7 @@ const Account = () => {
   const [editMode, setEditMode] = useState(false);
 
   return (
-    <div className="flex-1 min-h-screen border border-red-600 bg-gray-50">
+    <div className="flex-1 min-h-screen bg-gray-50">
         {/* Content */}
         
           <h1 className="text-2xl font-bold ml-6">Tài khoản & Bảo mật</h1>

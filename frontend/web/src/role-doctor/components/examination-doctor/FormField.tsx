@@ -1,5 +1,4 @@
 import type { ReactNode, InputHTMLAttributes, TextareaHTMLAttributes } from "react"
-import { Calendar, Clock } from "lucide-react"
 
 interface BaseFormFieldProps {
   label: string
@@ -22,7 +21,7 @@ interface TextareaFormFieldProps
 type FormFieldProps = TextFormFieldProps | TextareaFormFieldProps
 
 export const FormField = (props: FormFieldProps) => {
-  const { label, isEditable, icon, suffix, ...rest } = props
+  const { label, isEditable, icon, suffix} = props
 
   // Common classes
   const baseInputClasses = `w-full p-2 ${icon ? "pl-8" : ""} ${suffix ? "pr-12" : ""} border outline-none ${
@@ -50,9 +49,6 @@ export const FormField = (props: FormFieldProps) => {
   // Render input for all other types
   const { type = "text", ...inputProps } = props as TextFormFieldProps
 
-
-
-  const isEditing = props.isEditable
 
   return (
     <div className="mb-4">
