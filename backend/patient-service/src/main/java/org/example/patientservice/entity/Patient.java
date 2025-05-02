@@ -1,5 +1,6 @@
 package org.example.patientservice.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,11 +35,8 @@ public class Patient {
     @Column(name = "insurance_number", unique = true, length = 20)
     private String insuranceNumber;
 
-    @Column(name = "first_name", length = 100)
-    private String firstName;
-
-    @Column(name = "last_name", length = 100)
-    private String lastName;
+    @Column(name = "full_name")
+    private String fullName;
 
     private LocalDate birthday;
 
@@ -67,5 +65,6 @@ public class Patient {
     }
 
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<EmergencyContact> emergencyContacts = new ArrayList<>();
 }
