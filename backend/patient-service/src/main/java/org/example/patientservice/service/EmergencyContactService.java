@@ -17,4 +17,6 @@ public interface EmergencyContactService {
     void deleteEmergencyContact(Integer contactId, Integer patientId);
 
     List<EmergencyContactDto> searchContactPhone(String filter);
+
+    List<EmergencyContactDto> getAllContactsForAdmin();
 }

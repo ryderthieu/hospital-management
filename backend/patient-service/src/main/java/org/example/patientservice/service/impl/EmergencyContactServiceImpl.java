@@ -84,4 +84,12 @@ public class EmergencyContactServiceImpl implements EmergencyContactService {
         }
         return new ArrayList<>();
     }
+
+    @Override
+    public List<EmergencyContactDto> getAllContactsForAdmin() {
+        return emergencyContactRepository.findAll()
+                .stream()
+                .map(EmergencyContactDto::new)
+                .collect(Collectors.toList());
+    }
 }
