@@ -48,4 +48,9 @@ public class EmergencyContactController {
     public ResponseEntity<List<EmergencyContactDto>> searchContactPhone(@RequestParam String filter) {
         return ResponseEntity.ok(emergencyContactService.searchContactPhone(filter));
     }
+
+    @GetMapping("/contacts")
+    public ResponseEntity<List<EmergencyContactDto>> getAllContactsForAdmin() {
+        return ResponseEntity.ok(emergencyContactService.getAllContactsForAdmin());
+    }
 }

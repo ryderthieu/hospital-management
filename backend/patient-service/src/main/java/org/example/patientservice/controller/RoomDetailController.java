@@ -37,7 +37,7 @@ public class RoomDetailController {
         return ResponseEntity.ok(roomDetailService.getRoomDetailsByRoomId(roomId));
     }
 
-    @DeleteMapping("{detailId}")
+    @DeleteMapping("/{detailId}")
     public ResponseEntity<String> deleteRoomDetail(@PathVariable Integer detailId) {
         roomDetailService.deleteRoomDetail(detailId);
         return ResponseEntity.ok("Chi tiết phòng được xóa thành công");
