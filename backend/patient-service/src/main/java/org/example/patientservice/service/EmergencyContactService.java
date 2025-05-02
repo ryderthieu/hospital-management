@@ -6,13 +6,15 @@ import org.example.patientservice.entity.EmergencyContact;
 import java.util.List;
 
 public interface EmergencyContactService {
-    EmergencyContact createEmergencyContact(EmergencyContactDto emergencyContactDto);
+    EmergencyContactDto createEmergencyContact(Integer patientId, EmergencyContactDto emergencyContactDto);
 
-    List<EmergencyContact> getAllEmergencyContacts(Integer patientId);
+    List<EmergencyContactDto> getAllEmergencyContacts(Integer patientId);
 
-    EmergencyContact getContactByIdAndPatientId(Integer contactId, Integer patientId);
+    EmergencyContactDto getContactByIdAndPatientId(Integer contactId, Integer patientId);
 
-    EmergencyContact updateEmergencyContact(Integer contactId, Integer patientId, EmergencyContactDto emergencyContactDto);
+    EmergencyContactDto updateEmergencyContact(Integer contactId, Integer patientId, EmergencyContactDto emergencyContactDto);
 
     void deleteEmergencyContact(Integer contactId, Integer patientId);
+
+    List<EmergencyContactDto> searchContactPhone(String filter);
 }
