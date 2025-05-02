@@ -49,6 +49,10 @@ export const getWeekDays = (date: Date): Date[] => {
 }
 
 export const formatMonthYear = (date: Date, locale = "vi-VN"): string => {
+  return `Tháng ${date.getMonth() + 1} ${date.getFullYear()}`
+}
+
+export const formatDayMonthYear = (date: Date, locale = "vi-VN"): string => {
   return `${date.getDate()} Tháng ${date.getMonth() + 1} ${date.getFullYear()}`
 }
 

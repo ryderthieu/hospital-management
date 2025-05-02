@@ -5,35 +5,54 @@ export const generateMockAppointments = (): Appointment[] => {
   const today = new Date()
   const appointments: Appointment[] = []
 
-  // Generate appointments for the next 30 days
-  for (let i = 0; i < 30; i++) {
-    const date = new Date()
-    date.setDate(today.getDate() + i)
+    // Thêm một cuộc hẹn cố định cho hôm nay
+    appointments.push({
+      id: `appointment-${today.toISOString()}-fixed`,
+      title: "Tư vấn sức khỏe",
+      description: "P[05] Tư vấn dinh dưỡng",
+      startTime: "13:00",
+      endTime: "18:00",
+      date: new Date(today),
+    })
 
-    // Add morning appointment
-    if (Math.random() > 0.5) {
-      appointments.push({
-        id: `appointment-${date.toISOString()}-1`,
-        title: "Khám bệnh",
-        description: "P[08] Dị ứng - Miễn dịch lâm sàng",
-        startTime: "07:00",
-        endTime: "11:30",
-        date: new Date(date),
-      })
-    }
+    appointments.push({
+      id: `appointment-${today.toISOString()}-fixed`,
+      title: "Tư vấn sức khỏe",
+      description: "P[05] Tư vấn dinh dưỡng",
+      startTime: "07:00",
+      endTime: "11:00",
+      date: new Date(today),
+    })
 
-    // Add afternoon appointment
-    if (Math.random() > 0.5) {
-      appointments.push({
-        id: `appointment-${date.toISOString()}-2`,
-        title: "Khám bệnh",
-        description: "P[08] Dị ứng - Miễn dịch lâm sàng",
-        startTime: "13:00",
-        endTime: "16:30",
-        date: new Date(date),
-      })
-    }
-  }
+  // // Generate appointments for the next 30 days
+  // for (let i = 0; i < 30; i++) {
+  //   const date = new Date()
+  //   date.setDate(today.getDate() + i)
+
+  //   // Add morning appointment
+  //   if (Math.random() > 0.5) {
+  //     appointments.push({
+  //       id: `appointment-${date.toISOString()}-1`,
+  //       title: "Khám bệnh",
+  //       description: "P[08] Dị ứng - Miễn dịch lâm sàng",
+  //       startTime: "07:00",
+  //       endTime: "11:00",
+  //       date: new Date(date),
+  //     })
+  //   }
+
+  //   // Add afternoon appointment
+  //   if (Math.random() > 0.5) {
+  //     appointments.push({
+  //       id: `appointment-${date.toISOString()}-2`,
+  //       title: "Khám bệnh",
+  //       description: "P[08] Dị ứng - Miễn dịch lâm sàng",
+  //       startTime: "13:00",
+  //       endTime: "16:00",
+  //       date: new Date(date),
+  //     })
+  //   }
+  // }
 
   return appointments
 }
