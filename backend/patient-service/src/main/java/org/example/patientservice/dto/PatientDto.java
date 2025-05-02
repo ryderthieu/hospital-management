@@ -8,6 +8,8 @@ import org.example.patientservice.entity.Patient;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
@@ -40,6 +42,8 @@ public class PatientDto {
 
     private String createdAt;
 
+    private List<EmergencyContactDto> emergencyContactDtos;
+
     public PatientDto(Patient patient) {
         this.patientId = patient.getPatientId();
         this.identityNumber = patient.getIdentityNumber();
@@ -53,5 +57,11 @@ public class PatientDto {
         this.weight = patient.getWeight();
         this.bloodType = patient.getBloodType();
         this.createdAt = patient.getCreatedAt() != null ? patient.getCreatedAt().toLocalDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null;
+        this.emergencyContactDtos = patient.getEmergencyContacts() != null
+                ? patient.getEmergencyContacts()
+                .stream()
+                .map(EmergencyContactDto::new)
+                .collect(Collectors.toList())
+                : null;
     }
 }

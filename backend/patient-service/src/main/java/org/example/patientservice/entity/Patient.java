@@ -65,6 +65,5 @@ public class Patient {
     }
 
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
     private List<EmergencyContact> emergencyContacts = new ArrayList<>();
 }
