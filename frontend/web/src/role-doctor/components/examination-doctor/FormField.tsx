@@ -26,7 +26,7 @@ export const FormField = (props: FormFieldProps) => {
 
   // Common classes
   const baseInputClasses = `w-full p-2 ${icon ? "pl-8" : ""} ${suffix ? "pr-12" : ""} border outline-none ${
-    isEditable ? "border-gray-300 focus:border-base-500 focus:ring focus:ring-base-200 " : "border-gray-200 bg-gray-50 cursor-not-allowed"} rounded-md`
+    isEditable ? "border-gray-300 bg-white focus:border-base-500 focus:ring focus:ring-base-200 " : "border-gray-200 bg-gray-50 cursor-not-allowed"} rounded-md`
 
   // Render textarea if type is textarea
   if ("type" in props && props.type === "textarea") {
