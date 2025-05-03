@@ -91,4 +91,12 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         scheduleRepository.delete(schedule);
     }
+
+    @Override
+    public List<ScheduleDto> getAllSchedulesForAdmin() {
+        return scheduleRepository.findAll()
+                .stream()
+                .map(ScheduleDto::new)
+                .collect(Collectors.toList());
+    }
 }

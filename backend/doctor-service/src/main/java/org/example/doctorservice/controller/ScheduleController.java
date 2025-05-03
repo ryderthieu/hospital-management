@@ -44,4 +44,9 @@ public class ScheduleController {
         scheduleService.deleteSchedule(doctorId, scheduleId);
         return ResponseEntity.ok("Lịch được xóa thành công");
     }
+
+    @GetMapping("/schedules")
+    public ResponseEntity<List<ScheduleDto>> getAllSchedulesForAdmin() {
+        return ResponseEntity.ok(scheduleService.getAllSchedulesForAdmin());
+    }
 }

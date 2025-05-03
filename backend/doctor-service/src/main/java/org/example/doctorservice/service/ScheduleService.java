@@ -14,4 +14,6 @@ public interface ScheduleService {
     ScheduleDto updateSchedule(Integer doctorId, Integer scheduleId, ScheduleDto scheduleDto);
 
     void deleteSchedule(Integer doctorId, Integer scheduleId);
+
+    List<ScheduleDto> getAllSchedulesForAdmin();
 }
