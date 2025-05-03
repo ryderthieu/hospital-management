@@ -1,6 +1,7 @@
 package org.example.userservice.service;
 
 import com.ctc.wstx.util.StringUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.example.userservice.dto.UserDTOs;
 import org.example.userservice.entity.User;
 import org.example.userservice.repository.UserRepository;
@@ -13,6 +14,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.List;
 import java.util.Optional;
@@ -123,11 +126,25 @@ public class UserService {
         );
     }
     public boolean isCurrentUser(Long userId) {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof Long) {
-            return userId.equals(principal);
+        // Lấy request hiện tại
+        ServletRequestAttributes attrs =
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attrs == null) {
+            return false;
         }
-        return false;
+
+        HttpServletRequest request = attrs.getRequest();
+        String headerUserId = request.getHeader("X-User-Id");
+        if (headerUserId == null) {
+            return false;
+        }
+
+        try {
+            Long headerId = Long.valueOf(headerUserId);
+            return headerId.equals(userId);
+        } catch (NumberFormatException ex) {
+            return false;
+        }
     }
 
     @Transactional

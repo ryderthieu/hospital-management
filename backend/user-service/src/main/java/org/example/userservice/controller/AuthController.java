@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/users/auth")
 public class AuthController {
 
     private final AuthService userService;
@@ -33,6 +33,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthDTOs.LoginResponse> login(@Valid @RequestBody AuthDTOs.LoginRequest request) {
         AuthDTOs.LoginResponse response = userService.login(request);
+        System.out.println("Login");
         return ResponseEntity.ok(response);
     }
 
