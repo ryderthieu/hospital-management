@@ -42,7 +42,8 @@ public class DepartmentServiceImpl implements DepartmentService {
     }
 
     @Override
-    public DepartmentDto updateDepartment(Integer departmentId, DepartmentDto departmentDto) {
+    public DepartmentDto updateDepartment(Integer departmentId,
+                                          DepartmentDto departmentDto) {
         Department department = departmentRepository.findById(departmentId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khoa với ID: " + departmentId));
 
