@@ -17,16 +17,45 @@ import {
   X,
 } from "lucide-react";
 import { FormField } from "../../components/examination-doctor/FormField";
+import { PatientStatusSection } from "../../components/examination-doctor/PatientStatusSelection";
 import { PrescriptionModal } from "../../components/examination-doctor/PrescriptionModal/index";
 import { MedicalOrderModal } from "../../components/examination-doctor/MedicalOrderModal/index";
 import { VitalSignModal } from "../../components/examination-doctor/VitalSignModal/index";
+
+interface PatientData {
+    id: string;
+    name: string;
+    avatar: string;
+    clinic: string;
+    doctor: string;
+    doctorCode: string;
+    appointmentTime: string;
+    appointmentDate: string;
+    appointmentDateTime: string;
+    diagnosis: string;
+    doctorNotes: string;
+    followUpDate: string;
+    hasFollowUp: boolean;
+    email: string;
+    phone: string;
+    birthDate: string;
+    medicalHistory: string;
+    height: string; // hoặc number nếu bạn muốn xử lý như số
+    weight: string; // hoặc number nếu bạn muốn xử lý như số
+    roomNumber: string;
+    testingStatus: string;
+    medicationStatus: string;
+  }
+  
+
 
 const PatientDetail = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isVitalSignModalOpen, setIsVitalSignModalOpen] = useState(false)
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
   const [isMedicalModalOpen, setIsMedicalModalOpen] = useState(false);
-  const [patientData, setPatientData] = useState({
+  const [patientData, setPatientData] = useState<PatientData>({
+    id: "BN22521584",
     name: "Trần Nhật Trường",
     avatar:
       "https://scontent.fsgn22-1.fna.fbcdn.net/v/t39.30808-6/480404053_1006984517940842_142074701260698715_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=a5f93a&_nc_ohc=r8rFep9IuVYQ7kNvwFjfPpD&_nc_oc=AdkP83gkVNhfVbpKu0-ljcL3QabSF50PJuixSDMIpPOm3ESya0fA9UYxmWi_SYmCoG8iGbQARjWtLuDjIB85epDh&_nc_zt=23&_nc_ht=scontent.fsgn22-1.fna&_nc_gid=2dC9L86bhn3ZNTzRC62APA&oh=00_AfElIn5o44i9rmvFVSmKCtw9BOAVH0AMFy9txWtVa1elOg&oe=6817C0E8",
@@ -47,6 +76,9 @@ const PatientDetail = () => {
     medicalHistory: "Dị ứng",
     height: "168",
     weight: "60",
+    roomNumber: "P124",
+    testingStatus: "Đang xét nghiệm",
+    medicationStatus: "Chưa kê thuốc",
   });
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -71,6 +103,28 @@ const PatientDetail = () => {
     setIsEditing(false);
   };
 
+   // Handle testing status changes
+  const handleTestingStatusChange = (status: string): void => {
+    setPatientData({
+      ...patientData,
+      testingStatus: status
+    });
+    
+    // Here you would typically make an API call to update the backend
+    console.log(`Cập nhật trạng thái xét nghiệm: ${status}`);
+  };
+
+  // Handle medication status changes
+  const handleMedicationStatusChange = (status: string): void => {
+    setPatientData({
+      ...patientData,
+      medicationStatus: status
+    });
+    
+    // Here you would typically make an API call to update the backend
+    console.log(`Cập nhật trạng thái kê thuốc: ${status}`);
+  };
+
   return (
     <div className="flex-1 min-h-screen bg-gray-50">
       {/* Main content area */}
@@ -85,13 +139,20 @@ const PatientDetail = () => {
                   alt="Patient"
                   className="w-24 h-24 rounded-full mb-3"
                 />
-                <h2 className="text-lg font-semibold">Trần Nhật Trường</h2>
                 <p className="text-gray-600">BN22521584</p>
                 <p className="text-gray-600">Nam, 21 tuổi</p>
               </div>
 
               {/* Current status */}
-              <div className="bg-base-100 rounded-lg p-4 mb-6">
+              {/* Current status section */}
+               <PatientStatusSection 
+                    roomNumber={patientData.roomNumber}
+                    initialTestingStatus={patientData.testingStatus}
+                    initialMedicationStatus={patientData.medicationStatus}
+                    onTestingStatusChange={handleTestingStatusChange}
+                    onMedicationStatusChange={handleMedicationStatusChange}
+              />
+              {/* <div className="bg-base-100 rounded-lg p-4 mb-6">
                 <h3 className="text-black font-medium mb-2">
                   Trạng thái hiện tại
                 </h3>
@@ -122,7 +183,7 @@ const PatientDetail = () => {
                     </button>
                   </span>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Contact info */}
@@ -498,7 +559,7 @@ const PatientDetail = () => {
               <div className="flex flex-wrap justify-end gap-4">
                 <button className="flex items-center px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700">
                   <CalendarClock size={18} className="mr-2" />
-                  Đặt lịch tái khám
+                  Xem toa thuốc
                 </button>
                 <button onClick={() => setIsMedicalModalOpen(true)} className="flex items-center px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700">
                   <Plus size={18} className="mr-2" />
