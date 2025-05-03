@@ -80,8 +80,8 @@ const AdminApp: React.FC = () => {
           </Route>
 
           {/* Auth Layout */}
-          <Route path="/admin/signin" element={<SignIn />} />
-          <Route path="/admin/signup" element={<SignUp />} />
+          <Route path="/" element={<SignIn />} />
+          <Route path="/signup" element={<SignUp />} />
 
           {/* Fallback Route */}
           <Route path="*" element={<NotFound />} />

@@ -126,7 +126,7 @@ const othersItems: NavItem[] = [
     icon: <PlugInIcon />,
     name: "Authentication",
     subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
+      { name: "Sign In", path: "/", pro: false },
       { name: "Sign Up", path: "/signup", pro: false },
     ],
   },
@@ -147,7 +147,7 @@ const AppSidebar: React.FC = () => {
 
   // const isActive = (path: string) => location.pathname === path;
   const isActive = useCallback(
-    (path: string) => location.pathname === path || location.pathname.startsWith(`${path}/`),
+    (path: string) => location.pathname === path || location.pathname.startsWith(`/admin/${path}/`),
     [location.pathname]
   );
 
