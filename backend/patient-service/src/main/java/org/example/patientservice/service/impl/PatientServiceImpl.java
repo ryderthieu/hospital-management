@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -17,36 +18,42 @@ public class PatientServiceImpl implements PatientService {
     private final PatientRepository patientRepository;
 
     @Override
-    public Patient createPatient(PatientDto patientDto) {
+    public PatientDto createPatient(PatientDto patientDto) {
         Patient patient = Patient.builder()
                 .identityNumber(patientDto.getIdentityNumber())
                 .insuranceNumber(patientDto.getInsuranceNumber())
-                .firstName(patientDto.getFirstName())
-                .lastName(patientDto.getLastName())
+                .fullName(patientDto.getFullName())
                 .birthday(patientDto.getBirthday())
-                .gender(patientDto.getGender() != null ? Patient.Gender.valueOf(patientDto.getGender()) : null)
+                .gender(patientDto.getGender())
                 .address(patientDto.getAddress())
                 .allergies(patientDto.getAllergies())
                 .height(patientDto.getHeight())
                 .weight(patientDto.getWeight())
                 .bloodType(patientDto.getBloodType())
                 .build();
-        return patientRepository.save(patient);
+        Patient savedPatient = patientRepository.save(patient);
+
+        return new PatientDto(savedPatient);
     }
 
     @Override
-    public List<Patient> getAllPatients() {
-        return patientRepository.findAll();
+    public List<PatientDto> getAllPatients() {
+        return patientRepository
+                .findAll()
+                .stream()
+                .map(PatientDto::new)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Patient getPatientById(Integer patientId) {
-        return patientRepository.findById(patientId)
+    public PatientDto getPatientById(Integer patientId) {
+        Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bệnh nhân với ID: " + patientId));
+        return new PatientDto(patient);
     }
 
     @Override
-    public Patient updatePatient(Integer patientId, PatientDto patientDto) {
+    public PatientDto updatePatient(Integer patientId, PatientDto patientDto) {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bệnh nhân với ID: " + patientId));
 
@@ -58,17 +65,18 @@ public class PatientServiceImpl implements PatientService {
             patient.setInsuranceNumber(patient.getInsuranceNumber());
         }
 
-        patient.setFirstName(patientDto.getFirstName());
-        patient.setLastName(patientDto.getLastName());
+        patient.setFullName(patientDto.getFullName());
         patient.setBirthday(patientDto.getBirthday());
-        patient.setGender(patientDto.getGender() != null ? Patient.Gender.valueOf(patientDto.getGender()) : null);
+        patient.setGender(patientDto.getGender());
         patient.setAddress(patientDto.getAddress());
         patient.setAllergies(patientDto.getAllergies());
         patient.setHeight(patientDto.getHeight());
         patient.setWeight(patientDto.getWeight());
         patient.setBloodType(patientDto.getBloodType());
 
-        return patientRepository.save(patient);
+        Patient updatedPatient = patientRepository.save(patient);
+
+        return new PatientDto(updatedPatient);
     }
 
     @Override
@@ -80,18 +88,8 @@ public class PatientServiceImpl implements PatientService {
     }
 
     @Override
-    public Optional<Patient> searchPatientByIdentityNumber(String identityNumber) {
-        if (identityNumber != null && !identityNumber.isEmpty()) {
-            return patientRepository.findByIdentityNumber(identityNumber);
-        }
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<Patient> searchPatientByInsuranceNumber(String insuranceNumber) {
-        if (insuranceNumber != null && !insuranceNumber.isEmpty()) {
-            return patientRepository.findByInsuranceNumber(insuranceNumber);
-        }
-        return Optional.empty();
+    public Optional<PatientDto> searchPatient(String identityNumber, String insuranceNumber, String fullName) {
+        return patientRepository.searchByIdentityNumberOrInsuranceNumberOrFullName(identityNumber, insuranceNumber, fullName)
+                .map(PatientDto::new);
     }
 }
