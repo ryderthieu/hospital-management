@@ -22,8 +22,8 @@ public class GatewayConfig {
                 .route("pharmacy-service", r -> r.path("/api/pharmacy/**")
                         .filters(f -> f.stripPrefix(1).filter(jwtAuthFilter))
                         .uri("lb://pharmacy-service"))
-                .route("payment-service", r -> r.path("/payment/**")
-                        .filters(f -> f.filter(jwtAuthFilter))
+                .route("payment-service", r -> r.path("/api/payment/**")
+                        .filters(f -> f.stripPrefix(1).filter(jwtAuthFilter))
                         .uri("lb://payment-service"))
                 .build();
 

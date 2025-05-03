@@ -1,5 +1,6 @@
 package org.example.paymentservice.service;
 
+import org.example.paymentservice.client.PharmacyServiceClient;
 import org.example.paymentservice.dto.BillDTOs.*;
 import org.example.paymentservice.entity.Bill;
 import org.example.paymentservice.entity.BillDetail;
@@ -36,7 +37,6 @@ public class BillService {
 
         return billPage.map(this::convertToResponse); // Chuyển đổi Page<Bill> thành Page<BillResponse>
     }
-
     // Lấy hóa đơn theo ID
     public BillResponse getBillById(Long billId) {
         Bill bill = billRepository.findById(billId)
@@ -102,5 +102,4 @@ public class BillService {
                 billDetails
         );
     }
-
 }

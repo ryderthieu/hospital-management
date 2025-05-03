@@ -29,7 +29,7 @@ public class JwtAuthFilter implements GatewayFilter {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
 
-        if (routerValidator.isSecured.test(request)) {
+        if (routerValidator.isSecured(request)) {
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
                 System.out.println("No Authorization Header");
                 return onError(exchange, "Thiếu token xác thực", HttpStatus.UNAUTHORIZED);
