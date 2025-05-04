@@ -21,7 +21,7 @@ interface Patient {
     phoneNumber: string,
   };
   createAt: string;
-  gender: "Nam" | "Nữ" | "Other",
+  gender: "Nam" | "Nữ" | "Khác",
   bloodType: string;
   birthday: string;
 }
@@ -126,7 +126,7 @@ export default function PatientTable() {
 
   const handleView = (patientId: string) => {
   console.log(`Viewing patient with ID: ${patientId}`);
-  navigate(`/patients/${patientId}`);
+  navigate(`/admin/patients/${patientId}`);
   };
 
   const handleDelete = (patientId: string) => {

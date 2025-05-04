@@ -17,9 +17,9 @@ export default function AuthLayout({
             {/* <!-- ===== Common Grid Shape Start ===== --> */}
             <GridShape />
             <div className="flex flex-col items-center max-w-xs">
-            <div className="tracking-tight text-white font-black text-lg "><span className="">We</span>care</div>
-              <p className="text-center text-gray-400 dark:text-white/60">
-                Wecare 
+            <div className="tracking-tight text-white font-black text-4xl"><span className="">We</span>care</div>
+              <p className="text-center text-gray-400 mt-2 dark:text-white/60">
+                Cú cuộc đời tao với 
               </p>
             </div>
           </div>
