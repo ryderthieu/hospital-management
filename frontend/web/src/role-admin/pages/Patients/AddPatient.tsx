@@ -10,11 +10,11 @@ export default function AddPatient() {
   };
 
   return (
-    <div className="p-6 bg-white">
+    <div className="p-6 bg-white rounded-lg border border-gray-200">
       <div className="flex items-center mb-6">
-        <Link to="/admin/patients" className="text-teal-600 hover:text-teal-700 flex items-center"> 
+        <Link to="/admin/patients" className="text-base-600 hover:text-base-700 flex items-center"> 
           <ArrowLeft className="mr-2" size={20} />
-          <span className="text-xl font-medium text-teal-600">Thêm bệnh nhân</span>
+          <span className="text-xl font-medium text-base-600">Thêm bệnh nhân</span>
         </Link>
       </div>
 
@@ -23,59 +23,59 @@ export default function AddPatient() {
         <form onSubmit={(e) => handleSubmit(e, "basic")}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="block text-teal-600 font-medium">
+              <label className="block text-base-600 font-medium">
                 Họ và tên <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 placeholder="VD: Nguyễn Văn A..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <label className="block text-teal-600 font-medium">
+              <label className="block text-base-600 font-medium">
                 CCCD/CMND <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 placeholder="VD: Nguyễn Văn A..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <label className="block text-teal-600 font-medium">BHYT</label>
+              <label className="block text-base-600 font-medium">BHYT</label>
               <input
                 type="text"
                 placeholder="VD: ytaucsonns"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="block text-teal-600 font-medium">
+              <label className="block text-base-600 font-medium">
                 Số điện thoại <span className="text-red-500">*</span>
               </label>
               <input
                 type="tel"
                 placeholder="VD: 0917165628"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <label className="block text-teal-600 font-medium">
+              <label className="block text-base-600 font-medium">
                 Ngày sinh <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
                   type="text"
                   placeholder="DD/MM/YYYY"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
                   required
                 />
                 <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -83,12 +83,12 @@ export default function AddPatient() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-teal-600 font-medium">
+              <label className="block text-base-600 font-medium">
                 Giới tính <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500 appearance-none"
                   required
                 >
                   <option value="">Chọn giới tính</option>
@@ -101,12 +101,12 @@ export default function AddPatient() {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <label className="block text-teal-600 font-medium">
+              <label className="block text-base-600 font-medium">
                 Địa chỉ <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500 appearance-none"
                   required
                 >
                   <option value="">Chọn địa chỉ</option>
@@ -123,7 +123,7 @@ export default function AddPatient() {
           <div className="flex gap-4 mt-8">
             <button
               type="submit"
-              className="px-4 py-2 bg-teal-600 text-white font-medium rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+              className="px-4 py-2 bg-base-600 text-white font-medium rounded-md hover:bg-base-700 focus:outline-none focus:ring-2 focus:ring-base-500 focus:ring-offset-2"
             >
               Lưu thông tin
             </button>
@@ -144,29 +144,29 @@ export default function AddPatient() {
         <form onSubmit={(e) => handleSubmit(e, "account")}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="block text-teal-600 font-medium">Bác sĩ phụ trách</label>
+              <label className="block text-base-600 font-medium">Bác sĩ phụ trách</label>
               <input
                 type="text"
                 placeholder="VD: Nguyễn Văn A..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="block text-teal-600 font-medium">ID người tạo</label>
+              <label className="block text-base-600 font-medium">ID người tạo</label>
               <input
                 type="text"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="block text-teal-600 font-medium">Ngày tạo tài khoản</label>
+              <label className="block text-base-600 font-medium">Ngày tạo tài khoản</label>
               <div className="relative">
                 <input
                   type="text"
                   placeholder="DD/MM/YYYY"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
                 />
                 <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               </div>
@@ -176,7 +176,7 @@ export default function AddPatient() {
           <div className="flex gap-4 mt-8">
             <button
               type="submit"
-              className="px-4 py-2 bg-teal-600 text-white font-medium rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+              className="px-4 py-2 bg-base-600 text-white font-medium rounded-md hover:bg-base-700 focus:outline-none focus:ring-2 focus:ring-base-500 focus:ring-offset-2"
             >
               Lưu thông tin
             </button>
