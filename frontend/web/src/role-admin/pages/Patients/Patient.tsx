@@ -1,9 +1,11 @@
+// Patient.tsx
 import Metric from "../../components/statistics/Metric";
 import DropMetric from "../../components/statistics/DropMetric";
 import PageMeta from "../../components/common/PageMeta";
 import { BoxIcon, CalenderIcon, GroupIcon } from "../../icons";
 import PatientTable from "./PatientTable";
 import AddButton from "../../components/ui/button/AddButton";
+import { Link } from 'react-router-dom';
 
 export default function Patient() {
   return (
@@ -24,7 +26,9 @@ export default function Patient() {
         </div>
 
         <div className="fixed right-5 bottom-5">
-          <AddButton />
+          <Link to="/admin/patients/add"> 
+            <AddButton />
+          </Link>
         </div>
       </div>
     </>

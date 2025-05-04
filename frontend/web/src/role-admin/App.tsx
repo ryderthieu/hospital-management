@@ -25,6 +25,7 @@ import Medicine from "./pages/Medicines/Medicines";
 import Service from "./pages/HealthServices/Services";
 import Department from "./pages/Departments/Department";
 import PatientRoom from "./pages/PatientRooms/PatientsRoom";
+import AddPatient from "./pages/Patients/AddPatient"; // Import component AddPatient
 
 const AdminApp: React.FC = () => {
   return (
@@ -39,6 +40,7 @@ const AdminApp: React.FC = () => {
             {/* Patients Pages */}
             <Route path="/admin/patients" element={<Patient />} />
             <Route path="/admin/patients/:id" element={<PatientDetail />} />
+            <Route path="/admin/patients/add" element={<AddPatient />} /> 
 
             {/* Doctors Page */}
             <Route path="/admin/doctors" element={<Doctor />} />
@@ -91,4 +93,4 @@ const AdminApp: React.FC = () => {
   );
 }
 
-export default AdminApp
+export default AdminApp;
