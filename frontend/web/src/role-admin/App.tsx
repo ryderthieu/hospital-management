@@ -26,6 +26,7 @@ import Service from "./pages/HealthServices/Services";
 import Department from "./pages/Departments/Department";
 import PatientRoom from "./pages/PatientRooms/PatientsRoom";
 import AddPatient from "./pages/Patients/AddPatient"; // Import component AddPatient
+import Inpatient from "./pages/PatientRooms/Inpatients";
 
 const AdminApp: React.FC = () => {
   return (
@@ -53,6 +54,7 @@ const AdminApp: React.FC = () => {
 
             {/* Patients Room Page */}
             <Route path="/admin/patients-rooms" element={<PatientRoom />} />
+            <Route path="/admin/inpatients" element={<Inpatient />} />
 
             {/* Department Page */}
             <Route path="/admin/departments" element={<Department />} />

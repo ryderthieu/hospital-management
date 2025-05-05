@@ -59,6 +59,8 @@ import { ReactComponent as MedicalRecordIcon } from "./medical-record.svg?react"
 import { ReactComponent as DepartmentIcon } from "./team.svg?react";
 import { ReactComponent as BedIcon } from "./bed.svg?react";
 import { ReactComponent as MedicineIcon } from "./medicine.svg?react";
+import { ReactComponent as InpatientIcon } from "./inpatient.svg?react";
+import { ReactComponent as AdminIcon } from "./admin.svg?react";
 
 export {
   ErrorHexaIcon,
@@ -122,4 +124,6 @@ export {
   MedicalRecordIcon,
   DepartmentIcon,
   MedicineIcon,
+  InpatientIcon,
+  AdminIcon
 };

@@ -17,7 +17,9 @@ import {
   DoctorIcon,
   PatientIcon,
   MedicalRecordIcon,
-  DepartmentIcon
+  DepartmentIcon,
+  InpatientIcon,
+  AdminIcon
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
@@ -36,9 +38,12 @@ const navItems: NavItem[] = [
     path: "/admin",
   },
   {
+    name: "Khám bệnh",
     icon: <CalenderIcon />,
-    name: "Lịch khám",
-    path: "/admin/calendar",
+    subItems: [
+          { name: "Lịch khám", path: "/admin/calendar", pro: false },
+          { name: "Phòng khám", path: "/admin/inpatient", pro: false },
+        ],
   },
   {
     icon: <PatientIcon />,
@@ -46,14 +51,17 @@ const navItems: NavItem[] = [
     path: "/admin/patients",
   },
   {
+    name: "Nội trú",
+    icon: <InpatientIcon />,
+    subItems: [
+          { name: "Phòng bệnh", path: "/admin/patients-rooms", pro: false },
+          { name: "Bệnh nhân nội trú", path: "/admin/inpatients", pro: false },
+        ],
+  },
+  {
     icon: <DoctorIcon />,
     name: "Bác sĩ",
     path: "/admin/doctors"
-  },
-  {
-    name: "Phòng bệnh",
-    icon: <DepartmentIcon />,
-    path: "/admin/patients-rooms",
   },
   {
     icon: <CalenderIcon />,
@@ -72,15 +80,16 @@ const navItems: NavItem[] = [
   },
 
   {
-    icon: <UserCircleIcon />,
+    icon: <AdminIcon />,
     name: "Phân quyền",
     path: "/admin/authorization",
   },
   {
     icon: <UserCircleIcon />,
-    name: "User Profile",
+    name: "Hồ sơ",
     path: "/admin/profile",
   },
+
   // {
   //   name: "Forms",
   //   icon: <ListIcon />,

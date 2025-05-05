@@ -294,7 +294,7 @@ layer(base);
 }
 
 @utility menu-dropdown-item-active {
-  @apply bg-base-900/60 text-white dark:bg-base-500/[0.12] dark:text-base-800;
+  @apply bg-base-600/50 text-white dark:bg-base-500/[0.12] dark:text-base-800;
 }
 
 @utility menu-dropdown-item-inactive {
