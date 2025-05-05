@@ -25,6 +25,15 @@ public class GatewayConfig {
                 .route("payment-service", r -> r.path("/api/payment/**")
                         .filters(f -> f.stripPrefix(1).filter(jwtAuthFilter))
                         .uri("lb://payment-service"))
+                .route("patient-service", r -> r.path("/api/patient/**")
+                        .filters(f -> f.stripPrefix(1).filter(jwtAuthFilter))
+                        .uri("lb://patient-service"))
+                .route("doctor-service", r -> r.path("/api/doctor/**")
+                        .filters(f -> f.stripPrefix(1).filter(jwtAuthFilter))
+                        .uri("lb://doctor-service"))
+                .route("appointment-service", r -> r.path("/api/appointment/**")
+                        .filters(f -> f.stripPrefix(1).filter(jwtAuthFilter))
+                        .uri("lb://appointment-service"))
                 .build();
 
     }
