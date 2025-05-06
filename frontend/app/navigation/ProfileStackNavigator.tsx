@@ -5,8 +5,9 @@ import AccountInfoScreen from '../screens/Profile/AccountInfo/AccountInfoScreen'
 import InsuranceListScreen from '../screens/Profile/InsuranceList/InsuranceListScreen';
 import HealthProfileScreen from '../screens/Profile/HealthProfile/HealthProfileScreen';
 import SettingsScreen from '../screens/Profile/Settings/SettingsScreen';
+import { ProfileStackParamList } from './types';
 
-const Stack = createStackNavigator();
+const Stack = createStackNavigator<ProfileStackParamList>();
 
 const ProfileStackNavigator = () => {
   return (

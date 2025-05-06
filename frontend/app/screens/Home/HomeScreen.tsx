@@ -16,20 +16,12 @@ import { useFont, fontFamily } from '../../context/FontContext';
 import Header from '../../components/Header';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
+import { HomeStackParamList } from '../../navigation/types';
+import { useNavigation } from '@react-navigation/native';
 
-// Điều chỉnh theo tên stack navigator của bạn
-type RootStackParamList = {
-  Notifications: undefined;
-  'Đặt lịch khám': undefined;
-  'Tin tức': undefined;
-  'Chi tiết': { newsItem: NewsItem };
-};
 
-type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Notifications'>;
+type HomeScreenNavigationProp = StackNavigationProp<HomeStackParamList, 'Home'>;
 
-interface Props {
-  navigation: HomeScreenNavigationProp;
-}
 
 interface Doctor {
   id: number;
@@ -53,7 +45,8 @@ export interface NewsItem {
   image: ImageSourcePropType;
 }
 
-export default function HomeScreen({ navigation }: Props) {
+export default function HomeScreen() {
+  const navigation = useNavigation<HomeScreenNavigationProp>();
   const { fontsLoaded } = useFont();
 
   const recentDoctors: Doctor[] = [
@@ -166,7 +159,7 @@ export default function HomeScreen({ navigation }: Props) {
 
         <TouchableOpacity
           style={styles.quickAppointment}
-          onPress={() => navigation.navigate('Đặt lịch khám')}
+          onPress={() => navigation.navigate('BookAppointment')}
         >
           <View style={styles.quickAppointmentContent}>
             <View style={styles.doctorIconContainer}>
@@ -201,7 +194,7 @@ export default function HomeScreen({ navigation }: Props) {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Các chuyên khoa</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Đặt lịch khám')}>
+            <TouchableOpacity onPress={() => navigation.navigate('BookAppointment')}>
               <Text style={styles.seeAllText}>Tất cả</Text>
             </TouchableOpacity>
           </View>
@@ -225,7 +218,7 @@ export default function HomeScreen({ navigation }: Props) {
         <View style={[styles.section, styles.newsSection]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Tin tức</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Tin tức')}>
+            <TouchableOpacity onPress={() => navigation.navigate('News')}>
               <Text style={styles.seeAllText}>Tất cả</Text>
             </TouchableOpacity>
           </View>
@@ -233,7 +226,7 @@ export default function HomeScreen({ navigation }: Props) {
             <TouchableOpacity
               key={item.id}
               style={styles.newsItem}
-              onPress={() => navigation.navigate('Chi tiết', { newsItem: item })}
+              onPress={() => navigation.navigate('NewsDetail', { newsItem: item })}
             >
               <Image source={item.image} style={styles.newsImage} />
               <View style={styles.newsContent}>

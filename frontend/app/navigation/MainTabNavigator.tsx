@@ -9,8 +9,10 @@ import AppointmentScreen from '../screens/Appointment/AppointmentScreen';
 import PrescriptionScreen from '../screens/Prescription/PrescriptionScreen';
 import { Ionicons } from '@expo/vector-icons';
 import { useFont, fontFamily } from '../context/FontContext';
+import { MainTabParamList } from './types';
 
-const Tab = createBottomTabNavigator();
+
+const Tab = createBottomTabNavigator<MainTabParamList>();
 
 const CustomTabBar: React.FC<BottomTabBarProps> = ({
   state,

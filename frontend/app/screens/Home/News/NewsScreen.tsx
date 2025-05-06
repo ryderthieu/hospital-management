@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Ima
 import { useNavigation } from '@react-navigation/native';
 import { useFont, fontFamily } from '../../../context/FontContext';
 import Header from '../../../components/Header';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { HomeStackParamList } from '../../../navigation/types';
 
 const newsList = [
   {
@@ -42,8 +44,10 @@ const newsList = [
   },
 ];
 
+type HomeScreenNavigationProp = StackNavigationProp<HomeStackParamList, 'News'>;
+
 export default function NewsScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<HomeScreenNavigationProp>();
   const { fontsLoaded } = useFont();
 
   if (!fontsLoaded) {
@@ -67,7 +71,7 @@ export default function NewsScreen() {
             <TouchableOpacity
               key={item.id}
               style={styles.newsItem}
-              onPress={() => navigation.navigate('Chi tiết', { newsItem: item })}
+              onPress={() => navigation.navigate('NewsDetail', { newsItem: item })}
             >
               <Image source={item.image} style={styles.newsImage} />
               <View style={styles.newsContent}>
