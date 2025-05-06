@@ -1,35 +1,40 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ViewStyle,
+  TextStyle,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFont, fontFamily } from '../context/FontContext';
 
-/**
- * Reusable header component for app screens
- *
- * @param {Object} props
- * @param {string} props.title
- * @param {boolean} props.showBack
- * @param {Function} props.onBackPress
- * @param {boolean} props.showAction
- * @param {string} props.actionType
- * @param {string} props.actionText
- * @param {Function} props.onActionPress
- * @param {Object} props.style
- */
-const Header = ({
+interface HeaderProps {
+  title: string;
+  showBack?: boolean;
+  onBackPress?: () => void;
+  showAction?: boolean;
+  actionType?: 'notification' | 'more' | 'search' | 'settings' | 'plus' | 'filter' | 'edit';
+  actionText?: string;
+  onActionPress?: () => void;
+  style?: ViewStyle;
+}
+
+export const Header: React.FC<HeaderProps> = ({
   title,
   showBack = false,
   onBackPress,
   showAction = false,
-  actionType = null,
-  actionText = null,
+  actionType,
+  actionText,
   onActionPress,
   style,
 }) => {
   const { fontsLoaded } = useFont();
 
   if (!fontsLoaded) {
-    return null; // Hoặc hiển thị loading
+    return null;
   }
 
   const getActionElement = () => {
@@ -47,7 +52,7 @@ const Header = ({
       );
     }
 
-    const iconMap = {
+    const iconMap: { [key: string]: keyof typeof Ionicons.glyphMap } = {
       notification: 'notifications-outline',
       more: 'ellipsis-horizontal',
       search: 'search-outline',
@@ -57,7 +62,7 @@ const Header = ({
       edit: 'create-outline',
     };
 
-    const iconName = iconMap[actionType] || 'ellipsis-horizontal';
+    const iconName = iconMap[actionType ?? ''] || 'ellipsis-horizontal';
 
     return (
       <TouchableOpacity
@@ -130,12 +135,12 @@ const styles = StyleSheet.create({
     color: '#000000',
     flex: 1,
     textAlign: 'center',
-  },
+  } as TextStyle,
   actionText: {
     fontFamily: fontFamily.regular,
     fontSize: 14,
     color: '#00B5B8',
-  },
+  } as TextStyle,
 });
 
 export default React.memo(Header);

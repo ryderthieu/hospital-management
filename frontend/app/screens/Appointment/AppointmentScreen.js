@@ -1,8 +1,7 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { useNavigation } from '@react-navigation/native';
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
 import Header from "../../components/Header";
-
+import { useNavigation } from '@react-navigation/native';
 const AppointmentScreen = () => {
   const navigation = useNavigation();
   return (
@@ -18,15 +17,10 @@ const AppointmentScreen = () => {
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f8f8",
-  },
-  text: {
-    fontSize: 20,
-    color: "#333",
+    backgroundColor: '#f8f8f8',
   },
 });
 
