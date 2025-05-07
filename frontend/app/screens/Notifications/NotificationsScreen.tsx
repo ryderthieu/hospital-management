@@ -6,19 +6,16 @@ import {
   StatusBar 
 } from "react-native";
 import { useFont } from '../../context/FontContext';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from "@react-navigation/stack";
 import Header from "../../components/Header";
 import NotificationsList from "./NotificationsList";
+import { MainTabParamList } from "../../navigation/types";
 
-/**
- * Notifications Screen that displays all user notifications
- */
-type NotificationsScreenProps = {
-  navigation: {
-    goBack: () => void;
-  };
-};
+type HomeScreenNavigationProp = StackNavigationProp<MainTabParamList, 'Notifications'>;
 
-const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ navigation }) => {
+const NotificationsScreen: React.FC= () => {
+  const navigation = useNavigation<HomeScreenNavigationProp>();
   const { fontsLoaded } = useFont();
 
   return (

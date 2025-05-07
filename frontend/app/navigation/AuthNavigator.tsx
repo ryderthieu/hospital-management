@@ -17,8 +17,9 @@ import Forgot4 from '../screens/Auth/ForgotPassword/Forgot4';
 import Forgot5 from '../screens/Auth/ForgotPassword/Forgot5';
 import Forgot6 from '../screens/Auth/ForgotPassword/Forgot6';
 import Forgot7 from '../screens/Auth/ForgotPassword/Forgot7';
+import { AuthParamList } from './types';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<AuthParamList>();
 
 export default function AuthNavigator() {
   return (

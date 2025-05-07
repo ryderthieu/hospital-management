@@ -4,8 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import AuthNavigator from './AuthNavigator';
 import MainTabNavigator from './MainTabNavigator';
 import NotificationsScreen from '../screens/Notifications/NotificationsScreen';
+import { RootParamList } from './types';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootParamList>();
 
 export default function RootNavigator() {
   const { loggedIn } = useAuth();

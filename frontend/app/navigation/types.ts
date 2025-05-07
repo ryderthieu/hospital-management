@@ -42,6 +42,42 @@ export type HomeStackParamList = {
     'Appointment': undefined;
     'Prescription': undefined;
     'Profile': undefined;
+    'Notifications': undefined;
   };
+
+  export type RootParamList = {
+    'Main': undefined;
+    'Auth': undefined;
+    'Notifications': undefined;
+  };
+
+  export type AppParamList = {
+    'Main': undefined;
+    'Auth': undefined;
+  };
+
+  export type AuthParamList = {
+    'Onboarding1': undefined;
+    'Onboarding2': undefined;
+    'Onboarding3': undefined;
+    'Onboarding4': undefined;
+    'Onboarding5': undefined;
+
+    'Login': undefined;
+
+    'Signup1': undefined;
+    'Signup2': undefined;
+    'Signup3': undefined;
+    'Signup4': undefined;
+
+    'Forgot1': undefined;
+    'Forgot2': undefined;
+    'Forgot3': undefined;
+    'Forgot4': undefined;
+    'Forgot5': undefined;
+    'Forgot6': undefined;
+    'Forgot7': undefined;
+  };
+  
   
   

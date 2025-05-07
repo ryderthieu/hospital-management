@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Image, ScrollView, ImageSourcePropType } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { HomeStackParamList } from '../../../navigation/types';
 import { useFont, fontFamily } from '../../../context/FontContext';
 import Header from '../../../components/Header';
 
@@ -14,18 +15,9 @@ interface NewsItem {
   image: ImageSourcePropType;
 }
 
-// Define the navigation param list
-type RootStackParamList = {
-  NewsDetail: { newsItem: NewsItem };
-  NewsList: undefined;
-  // Add other screens as needed
-};
 
-// Define the navigation prop type
-type NewsDetailScreenNavigationProp = StackNavigationProp<RootStackParamList>;
-
-// Define the route prop type
-type NewsDetailScreenRouteProp = RouteProp<RootStackParamList, 'NewsDetail'>;
+type NewsDetailScreenNavigationProp = StackNavigationProp<HomeStackParamList, 'NewsDetail'>;
+type NewsDetailScreenRouteProp = RouteProp<HomeStackParamList, 'NewsDetail'>;
 
 const NewsDetailScreen: React.FC = () => {
   const navigation = useNavigation<NewsDetailScreenNavigationProp>();
