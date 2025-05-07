@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -83,12 +84,12 @@ public class PrescriptionService {
         prescription.setNote(request.getNote());
         prescription.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
 
-        Prescription savedPrescription = prescriptionRepository.save(prescription);
 
         if (request.getPrescriptionDetails() != null && !request.getPrescriptionDetails().isEmpty()) {
+            List<PrescriptionDetail> details = new ArrayList<PrescriptionDetail>();
             for (PrescriptionDTOs.PrescriptionDetailRequest detailRequest : request.getPrescriptionDetails()) {
                 PrescriptionDetail detail = new PrescriptionDetail();
-                detail.setPrescription(savedPrescription);
+                detail.setPrescription(prescription);
 
                 Medicine medicine = medicineRepository.findById(detailRequest.getMedicineId())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy thuốc với ID: " + detailRequest.getMedicineId()));
@@ -98,11 +99,11 @@ public class PrescriptionService {
                 detail.setFrequency(detailRequest.getFrequency());
                 detail.setDuration(detailRequest.getDuration());
                 detail.setPrescriptionNotes(detailRequest.getPrescriptionNotes());
-
-                prescriptionDetailRepository.save(detail);
-                savedPrescription.getPrescriptionDetails().add(detail);
+                details.add(detail);
             }
+            prescription.setPrescriptionDetails(details);
         }
+        Prescription savedPrescription = prescriptionRepository.save(prescription);
 
         return mapToPrescriptionResponse(savedPrescription);
     }

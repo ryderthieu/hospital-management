@@ -17,7 +17,7 @@ public class BillDetail {
     @Column(name = "detail_id")
     private Long detailId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bill_id", nullable = false)
     private Bill bill;
 

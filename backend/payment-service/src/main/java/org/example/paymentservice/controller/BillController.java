@@ -21,13 +21,39 @@ public class BillController {
     private final BillService billService;
 
     @GetMapping
-    ResponseEntity<Page<BillDTOs.BillResponse>> getAllBills (@PathVariable int page, @PathVariable int size) {
+    ResponseEntity<Page<BillDTOs.BillResponse>> getAllBills (@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(billService.getAllBills(page, size));
     }
 
     @PostMapping
     ResponseEntity<BillDTOs.BillResponse> createBill (@Valid @RequestBody BillDTOs.NewBillRequest request) {
         return ResponseEntity.status(201).body(billService.createBill(request));
+    }
+
+    @GetMapping("/{id}")
+    ResponseEntity<BillDTOs.BillResponse> getBillById (@PathVariable Long id) {
+        return ResponseEntity.ok(billService.getBillById(id));
+    }
+    //Chưa test
+    @PutMapping("/{id}")
+    ResponseEntity<BillDTOs.BillResponse> updateBill (@PathVariable Long id, @Valid @RequestBody BillDTOs.UpdateBillRequest request) {
+        return ResponseEntity.ok(billService.updateBill(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    ResponseEntity<String> deleteBill (@PathVariable Long id) {
+        billService.deleteBill(id);
+        return ResponseEntity.ok("Xóa hóa đơn thành công");
+    }
+
+    @PostMapping("/{id}/details")
+    ResponseEntity<List<BillDTOs.BillDetailResponse>> createBillDetails (@PathVariable Long id, @Valid @RequestBody List<BillDTOs.NewBillDetailRequest> request) {
+        return ResponseEntity.status(201).body(billService.createBillDetail(id, request));
+    }
+
+    @GetMapping("/{id}/details")
+    ResponseEntity<List<BillDTOs.BillDetailResponse>> getBillDetails (@PathVariable Long id) {
+        return ResponseEntity.ok(billService.getDetailByBill(id));
     }
 
     private final PharmacyServiceClient pharmacyServiceClient;
