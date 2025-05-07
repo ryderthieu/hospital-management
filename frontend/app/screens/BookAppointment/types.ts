@@ -8,12 +8,21 @@ export type RootStackParamList = {
     FilterOptions: undefined;
   };
   
-  export interface Specialty {
-    id: string;
-    name: string;
-    count: string;
-    icon: ImageSourcePropType;
-  }
+  export type Specialty =
+  | {
+      id: string;
+      name: string;
+      count: string;
+      iconType: 'svg';
+      icon: React.ComponentType<any>; 
+    }
+  | {
+      id: string;
+      name: string;
+      count: string;
+      iconType: 'image';
+      icon: ImageSourcePropType; 
+    };
   
   export interface Doctor {
     id: string;

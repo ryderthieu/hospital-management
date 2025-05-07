@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, ImageSourcePropType } from 'react-native';
 import { Specialty } from '../types';
 import { colors } from '../../../styles/globalStyles';
 
@@ -9,10 +9,15 @@ interface SpecialtyItemProps {
 }
 
 export const SpecialtyItem: React.FC<SpecialtyItemProps> = ({ specialty, onPress }) => {
+  const Icon = specialty.icon
   return (
     <TouchableOpacity style={styles.specialtyItem} onPress={onPress}>
       <View style={styles.specialtyIconContainer}>
-        <Image source={specialty.icon} style={styles.specialtyIcon} />
+        {specialty.iconType === 'svg' && typeof specialty.icon === 'function' ? (
+            <specialty.icon width={48} height={48} />
+          ) : (
+            <Image source={specialty.icon as ImageSourcePropType} style={styles.specialtyIcon} />
+          )}
       </View>
       <Text style={styles.specialtyName}>{specialty.name}</Text>
       <Text style={styles.doctorCount}>{specialty.count}</Text>
