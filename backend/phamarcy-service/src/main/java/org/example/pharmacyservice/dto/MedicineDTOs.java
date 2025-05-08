@@ -30,8 +30,8 @@ public class MedicineDTOs {
         @NotBlank(message = "Đơn vị không được để trống")
         private String unit;
 
-        @NotNull(message = "Bảo hiểm có tri trả không không được để trống")
-        private boolean insuranceCovered;
+        @NotNull(message = "Phần trăm bảo hiểm giảm giá không được để trống")
+        private BigDecimal insuranceDiscountPercent;
 
         private String sideEffects;
 
@@ -59,7 +59,7 @@ public class MedicineDTOs {
 
         private String unit;
 
-        private Boolean insuranceCovered;
+        private BigDecimal insuranceDiscountPercent;
 
         private String sideEffects;
 
@@ -81,7 +81,8 @@ public class MedicineDTOs {
         private String description;
         private String usage;
         private String unit;
-        private boolean insuranceCovered;
+        private BigDecimal insuranceDiscountPercent;
+        private BigDecimal insuranceDiscount;
         private String sideEffects;
         private BigDecimal price;
         private Long quantity;

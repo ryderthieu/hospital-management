@@ -37,20 +37,15 @@ public class BillDTOs {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class NewBillDetailRequest {
-        @NotNull(message = "Mã hóa đơn không được để trống")
-        private Long billId;
+        @NotNull(message = "Mã thuốc hoặc dịch vụ không được để trống")
+        private Long itemId;
 
-        @NotBlank(message = "Loại hóa đơn không được để trống")
+        @NotNull(message = "Loại hóa đơn không được để trống")
         private BillDetail.ItemType itemType;
 
         @NotNull(message = "Số lượng không được để trống")
         private Long quantity;
 
-        @NotNull(message = "Đơn giá không được để trống")
-        private BigDecimal unitPrice;
-
-        @NotNull(message = "Giảm giá bảo hiểm không được để trống")
-        private BigDecimal insuranceDiscount;
     }
 
     @Data
@@ -92,6 +87,8 @@ public class BillDTOs {
         private Long billId;
 
         private BillDetail.ItemType itemType;
+
+        private Long itemId;
 
         private Long quantity;
 

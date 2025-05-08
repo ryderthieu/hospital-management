@@ -39,8 +39,11 @@ public class Medicine {
     @Column(name = "unit", nullable = false)
     private String unit;
 
-    @Column(name = "is_insurance_covered", nullable = false)
-    private boolean insuranceCovered;
+    @Column(name = "insurance_discount_percent", nullable = false)
+    private BigDecimal insuranceDiscountPercent;
+
+    @Column(name = "insuracne_discount")
+    private BigDecimal insuranceDiscount;
 
     @Column(name = "side_effects")
     private String sideEffects;

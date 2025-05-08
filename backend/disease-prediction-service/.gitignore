@@ -1,0 +1,4 @@
+training/models
+training/notebooks/disease_list.txt
+training/notebooks/symptom_list.txt
+training/dataset/

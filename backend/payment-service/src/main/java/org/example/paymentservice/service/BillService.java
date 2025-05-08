@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.example.paymentservice.client.PharmacyServiceClient;
 import org.example.paymentservice.dto.BillDTOs.*;
+import org.example.paymentservice.dto.MedicineDTO;
 import org.example.paymentservice.entity.Bill;
 import org.example.paymentservice.entity.BillDetail;
 import org.example.paymentservice.repository.BillDetailRepository;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +37,9 @@ public class BillService {
 
     @Autowired
     private BillDetailRepository billDetailRepository;
+
+    @Autowired
+    private PharmacyServiceClient pharmacyServiceClient;
 
     public Page<BillResponse> getAllBills(int page, int size) {
         if (page <= 0) {
@@ -67,29 +72,33 @@ public class BillService {
             List<BillDetail> billDetails = new ArrayList<BillDetail>();
             for (BillDetail detailRequest : request.getBillDetails()) {
                 BillDetail detail = new BillDetail();
+
                 detail.setItemType(detailRequest.getItemType());
+
                 detail.setQuantity(detailRequest.getQuantity());
-                detail.setUnitPrice(detailRequest.getUnitPrice());
-                detail.setInsuranceDiscount(detailRequest.getInsuranceDiscount());
+
+                if (detail.getItemType() == BillDetail.ItemType.MEDICINE) {
+                    MedicineDTO medicine = pharmacyServiceClient.getMedicineById(detailRequest.getItemId());
+                    detail.setItemId(medicine.getMedicineId());
+                    detail.setUnitPrice(medicine.getPrice());
+                    detail.setInsuranceDiscount(medicine.getInsuranceDiscount().multiply(BigDecimal.valueOf(detail.getQuantity())));
+                }
+
                 detail.setBill(bill);
 
                 detail.setTotalPrice(detail.getUnitPrice().multiply(BigDecimal.valueOf(detail.getQuantity())));
 
                 billDetails.add(detail);
-                System.out.println("Detail insurance: " + detail.getInsuranceDiscount());
-                System.out.println("Detail total price: " + detail.getTotalPrice());
             }
             bill.setBillDetails(billDetails);
         }
+
         BigDecimal totalPrice = bill.getBillDetails().stream().map(BillDetail::getTotalPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal insuranceDiscount = bill.getBillDetails().stream().map(BillDetail::getInsuranceDiscount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal amount = totalPrice.subtract(insuranceDiscount);
         bill.setTotalCost(totalPrice);
         bill.setInsuranceDiscount(insuranceDiscount);
         bill.setAmount(amount);
-        System.out.println("Bill ID: " + bill.getTotalCost());
-        System.out.println("Bill ID: " + bill.getInsuranceDiscount());
-        System.out.println("Bill ID: " + bill.getAmount());
         Bill savedBill = billRepository.save(bill);
         return convertToResponse(savedBill);
     }
@@ -117,6 +126,7 @@ public class BillService {
 
     @Transactional
     public List<BillDetailResponse> createBillDetail(Long id, List<NewBillDetailRequest> request) {
+        System.out.println("ID: " + id);
         Bill bill = billRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
 
@@ -124,18 +134,29 @@ public class BillService {
         for (NewBillDetailRequest detailRequest : request) {
             BillDetail billDetail = new BillDetail();
             billDetail.setBill(bill);
-
             billDetail.setItemType(detailRequest.getItemType());
-            billDetail.setQuantity(detailRequest.getQuantity());
-            billDetail.setUnitPrice(detailRequest.getUnitPrice());
-            billDetail.setInsuranceDiscount(detailRequest.getInsuranceDiscount());
 
-            billDetail.setTotalPrice(detailRequest.getUnitPrice().multiply(BigDecimal.valueOf(detailRequest.getQuantity())));
+            if (billDetail.getItemType() == BillDetail.ItemType.MEDICINE) {
+                MedicineDTO medicine = pharmacyServiceClient.getMedicineById(detailRequest.getItemId());
+                billDetail.setItemId(medicine.getMedicineId());
+                billDetail.setUnitPrice(medicine.getPrice());
+                billDetail.setInsuranceDiscount(medicine.getInsuranceDiscount().multiply(BigDecimal.valueOf(detailRequest.getQuantity())));
+            }
+
+            billDetail.setQuantity(detailRequest.getQuantity());
+
+            billDetail.setTotalPrice(billDetail.getUnitPrice().multiply(BigDecimal.valueOf(billDetail.getQuantity())).setScale(2, RoundingMode.HALF_UP));
+
+            bill.setTotalCost(bill.getTotalCost().add(billDetail.getTotalPrice()));
+            bill.setInsuranceDiscount(bill.getInsuranceDiscount().add(billDetail.getInsuranceDiscount()));
 
             BillDetail savedDetail = billDetailRepository.save(billDetail);
+
+
             detailResponses.add(convertToResponse(savedDetail));
         }
-
+        bill.setAmount(bill.getTotalCost().subtract(bill.getInsuranceDiscount()));
+        billRepository.save(bill);
         return detailResponses;
     }
 
@@ -172,6 +193,7 @@ public class BillService {
                 detail.getDetailId(),
                 detail.getBill().getBillId(),
                 detail.getItemType(),
+                detail.getItemId(),
                 detail.getQuantity(),
                 detail.getUnitPrice(),
                 detail.getTotalPrice(),

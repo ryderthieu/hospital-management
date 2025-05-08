@@ -34,7 +34,6 @@ public class BillController {
     ResponseEntity<BillDTOs.BillResponse> getBillById (@PathVariable Long id) {
         return ResponseEntity.ok(billService.getBillById(id));
     }
-    //Chưa test
     @PutMapping("/{id}")
     ResponseEntity<BillDTOs.BillResponse> updateBill (@PathVariable Long id, @Valid @RequestBody BillDTOs.UpdateBillRequest request) {
         return ResponseEntity.ok(billService.updateBill(id, request));
@@ -48,6 +47,7 @@ public class BillController {
 
     @PostMapping("/{id}/details")
     ResponseEntity<List<BillDTOs.BillDetailResponse>> createBillDetails (@PathVariable Long id, @Valid @RequestBody List<BillDTOs.NewBillDetailRequest> request) {
+        System.out.println("ID: " + id);
         return ResponseEntity.status(201).body(billService.createBillDetail(id, request));
     }
 

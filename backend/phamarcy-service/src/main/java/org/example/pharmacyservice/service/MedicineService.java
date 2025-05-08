@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,7 +36,8 @@ public class MedicineService {
                 medicine.getDescription(),
                 medicine.getUsage(),
                 medicine.getUnit(),
-                medicine.isInsuranceCovered(),
+                medicine.getInsuranceDiscountPercent(),
+                medicine.getInsuranceDiscount(),
                 medicine.getSideEffects(),
                 medicine.getPrice(),
                 medicine.getQuantity()
@@ -53,7 +55,12 @@ public class MedicineService {
         medicine.setUnit(request.getUnit());
         medicine.setQuantity(request.getQuantity());
         medicine.setUsage(request.getUsage());
-        medicine.setInsuranceCovered(request.isInsuranceCovered());
+        BigDecimal discountPercent = request.getInsuranceDiscountPercent();
+        if (discountPercent.compareTo(BigDecimal.ZERO) < 0 || discountPercent.compareTo(BigDecimal.ONE) > 0) {
+            throw new RuntimeException("Phần trăm giảm giá phải từ 0 đến 1");
+        }
+        medicine.setInsuranceDiscountPercent(request.getInsuranceDiscountPercent());
+        medicine.setInsuranceDiscount(request.getInsuranceDiscountPercent().multiply(request.getPrice()));
         medicine.setSideEffects(request.getSideEffects());
         medicineRepository.save(medicine);
         return mapToMedicineResponse(medicine);
@@ -89,7 +96,7 @@ public class MedicineService {
         ExampleMatcher matcher = ExampleMatcher.matching()
                 .withIgnoreNullValues()
                 .withIgnorePaths("medicineId", "manufactor", "description", "usage", "unit",
-                        "sideEffects", "price", "quantity", "insuranceCovered", "createdAt")
+                        "sideEffects", "price", "quantity", "insuranceDiscount", "insuranceDiscountPercent", "createdAt")
                 .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING)
                 .withIgnoreCase();
 
@@ -135,8 +142,9 @@ public class MedicineService {
             medicine.setUsage(request.getUsage());
         }
 
-        if (request.getInsuranceCovered() != null && !request.getInsuranceCovered().equals(medicine.isInsuranceCovered())) {
-            medicine.setInsuranceCovered(request.getInsuranceCovered());
+        if (request.getInsuranceDiscountPercent() != null && !request.getInsuranceDiscountPercent().equals(medicine.getInsuranceDiscountPercent())) {
+            medicine.setInsuranceDiscountPercent(request.getInsuranceDiscountPercent());
+            medicine.setInsuranceDiscount(request.getInsuranceDiscountPercent().multiply(medicine.getPrice()));
         }
 
 

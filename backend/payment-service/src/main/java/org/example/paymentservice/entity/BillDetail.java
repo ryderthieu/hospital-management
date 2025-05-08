@@ -25,6 +25,9 @@ public class BillDetail {
     @Column(name = "item_type", nullable = false)
     private ItemType itemType;
 
+    @Column(name = "item_id", nullable = false)
+    private Long itemId;
+
     @Column(name = "quantity", nullable = false)
     private Long quantity;
 
