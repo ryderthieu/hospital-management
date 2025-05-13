@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/appointments/services")
+@RequestMapping("/appointments/services")
 @RequiredArgsConstructor
 public class ServiceOrderController {
 

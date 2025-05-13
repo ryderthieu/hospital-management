@@ -3,53 +3,67 @@ package org.example.patientservice.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.patientservice.dto.EmergencyContactDto;
-import org.example.patientservice.entity.EmergencyContact;
 import org.example.patientservice.service.EmergencyContactService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/patients")
+@Validated
+@RequestMapping("/patients/contacts")
 @RequiredArgsConstructor
 public class EmergencyContactController {
 
     private final EmergencyContactService emergencyContactService;
 
-    @PostMapping("/{patientId}/contacts")
-    public ResponseEntity<EmergencyContactDto> createEmergencyContact(@PathVariable Integer patientId,@RequestBody @Valid EmergencyContactDto emergencyContactDto) {
-        return ResponseEntity.ok(emergencyContactService.createEmergencyContact(patientId, emergencyContactDto));
+    private Integer getCurrentPatientId() {
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return Integer.valueOf(userId);
     }
 
-    @GetMapping("/{patientId}/contacts")
-    public ResponseEntity<List<EmergencyContactDto>> getAllEmergencyContacts(@PathVariable Integer patientId) {
-        return ResponseEntity.ok(emergencyContactService.getAllEmergencyContacts(patientId));
+    @PreAuthorize("hasAnyRole('PATIENT')")
+    @PostMapping
+    public ResponseEntity<EmergencyContactDto> createEmergencyContact(@RequestBody @Valid EmergencyContactDto emergencyContactDto) {
+        return ResponseEntity.ok(emergencyContactService.createEmergencyContact(getCurrentPatientId(), emergencyContactDto));
     }
 
-    @GetMapping("/{patientId}/contacts/{contactId}")
-    public ResponseEntity<EmergencyContactDto> getEmergencyContactById(@PathVariable Integer patientId, @PathVariable Integer contactId) {
-        return ResponseEntity.ok(emergencyContactService.getContactByIdAndPatientId(contactId, patientId));
+    @PreAuthorize("hasAnyRole('PATIENT')")
+    @GetMapping
+    public ResponseEntity<List<EmergencyContactDto>> getAllEmergencyContacts() {
+        return ResponseEntity.ok(emergencyContactService.getAllEmergencyContacts(getCurrentPatientId()));
     }
 
-    @PutMapping("/{patientId}/contacts/{contactId}")
-    public ResponseEntity<EmergencyContactDto> updateEmergencyContact(@PathVariable Integer patientId, @PathVariable Integer contactId, @RequestBody @Valid EmergencyContactDto emergencyContactDto) {
-        return ResponseEntity.ok(emergencyContactService.updateEmergencyContact(contactId, patientId, emergencyContactDto));
+    @PreAuthorize("hasAnyRole('PATIENT')")
+    @GetMapping("/{contactId}")
+    public ResponseEntity<EmergencyContactDto> getEmergencyContactById(@PathVariable Integer contactId) {
+        return ResponseEntity.ok(emergencyContactService.getContactByIdAndPatientId(contactId, getCurrentPatientId()));
     }
 
-    @DeleteMapping("/{patientId}/contacts/{contactId}")
-    public ResponseEntity<String> deleteEmergencyContact(@PathVariable Integer patientId, @PathVariable Integer contactId) {
-        emergencyContactService.deleteEmergencyContact(contactId, patientId);
+    @PreAuthorize("hasAnyRole('PATIENT')")
+    @PutMapping("/{contactId}")
+    public ResponseEntity<EmergencyContactDto> updateEmergencyContact(@PathVariable Integer contactId,
+                                                                      @RequestBody @Valid EmergencyContactDto emergencyContactDto) {
+        return ResponseEntity.ok(emergencyContactService.updateEmergencyContact(contactId, getCurrentPatientId(), emergencyContactDto));
+    }
+
+    @PreAuthorize("hasAnyRole('PATIENT')")
+    @DeleteMapping("/{contactId}")
+    public ResponseEntity<String> deleteEmergencyContact(@PathVariable Integer contactId) {
+        emergencyContactService.deleteEmergencyContact(contactId, getCurrentPatientId());
         return ResponseEntity.ok("Liên lạc được xóa thành công");
     }
 
-    @GetMapping("/contacts/search")
+    @GetMapping("/search")
     public ResponseEntity<List<EmergencyContactDto>> searchContactPhone(@RequestParam String filter) {
         return ResponseEntity.ok(emergencyContactService.searchContactPhone(filter));
     }
 
-    @GetMapping("/contacts")
+    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
+    @GetMapping("/contacts/admin")
     public ResponseEntity<List<EmergencyContactDto>> getAllContactsForAdmin() {
         return ResponseEntity.ok(emergencyContactService.getAllContactsForAdmin());
     }
