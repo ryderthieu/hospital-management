@@ -8,76 +8,84 @@ interface NewsItem {
   image: ImageSourcePropType;
 }
 
-// Định nghĩa RootStackParamList cho HomeStack
+// Định nghĩa SearchStackParamList cho SearchStack
+export type SearchStackParamList = {
+  SearchHome: undefined;
+  MedicineSearch: undefined;
+  DiseaseSearch: undefined;
+  MedicineList: { category: string };
+  MedicineDetail: { medicine: Medicine };
+  DiseaseList: { category: string };
+  DiseaseDetail: { disease: Disease };
+};
+
+// Định nghĩa HomeStackParamList cho HomeStack
 export type HomeStackParamList = {
-    'Home': undefined;
-    'BookAppointment': undefined;
-    'Notifications': undefined;
-    'News': undefined;
-    'NewsDetail': { newsItem: NewsItem };
-  };
-  
-  // Định nghĩa RootStackParamList cho ProfileStack
+  Home: undefined;
+  BookAppointment: undefined;
+  Notifications: undefined;
+  News: undefined;
+  NewsDetail: { newsItem: NewsItem };
+};
 
+// Định nghĩa BookAppointmentStackParamList
+export type BookAppointmentStackParamList = {
+  Search: undefined;
+  DoctorList: undefined;
+  Filter: undefined;
+  BookAppointment: { doctorId: string };
+};
 
-  export type BookAppointmentStackParamList = {
-    'Search': undefined;
-    'DoctorList': undefined;
-    'Filter': undefined;
-    'BookAppointment': { doctorId: string }; 
-  };
+// Định nghĩa ProfileStackParamList
+export type ProfileStackParamList = {
+  ProfileMain: undefined;
+  AccountInfo: undefined;
+  InsuranceList: undefined;
+  HealthProfile: undefined;
+  Settings: undefined;
+  Notifications: undefined;
+};
 
- export type ProfileStackParamList = {
-    'ProfileMain': undefined;
-    'AccountInfo': undefined;
-    'InsuranceList': undefined;
-    'HealthProfile': undefined;
-    'Settings': undefined;
-    'Notifications': undefined;
-  };
+// Định nghĩa MainTabParamList
+export type MainTabParamList = {
+  HomeTab: undefined;
+  Search: undefined; // Đây là SearchStackNavigator
+  Appointment: undefined;
+  Prescription: undefined;
+  Profile: undefined;
+  Notifications: undefined;
+};
 
-  export type MainTabParamList = {
-    'HomeTab': undefined;
-    'Search': undefined;
-    'Appointment': undefined;
-    'Prescription': undefined;
-    'Profile': undefined;
-    'Notifications': undefined;
-  };
+// Định nghĩa RootParamList
+export type RootParamList = {
+  Main: undefined;
+  Auth: undefined;
+  Notifications: undefined;
+};
 
-  export type RootParamList = {
-    'Main': undefined;
-    'Auth': undefined;
-    'Notifications': undefined;
-  };
+// Định nghĩa AppParamList
+export type AppParamList = {
+  Main: undefined;
+  Auth: undefined;
+};
 
-  export type AppParamList = {
-    'Main': undefined;
-    'Auth': undefined;
-  };
-
-  export type AuthParamList = {
-    'Onboarding1': undefined;
-    'Onboarding2': undefined;
-    'Onboarding3': undefined;
-    'Onboarding4': undefined;
-    'Onboarding5': undefined;
-
-    'Login': undefined;
-
-    'Signup1': undefined;
-    'Signup2': undefined;
-    'Signup3': undefined;
-    'Signup4': undefined;
-
-    'Forgot1': undefined;
-    'Forgot2': undefined;
-    'Forgot3': undefined;
-    'Forgot4': undefined;
-    'Forgot5': undefined;
-    'Forgot6': undefined;
-    'Forgot7': undefined;
-  };
-  
-  
-  
+// Định nghĩa AuthParamList
+export type AuthParamList = {
+  Onboarding1: undefined;
+  Onboarding2: undefined;
+  Onboarding3: undefined;
+  Onboarding4: undefined;
+  Onboarding5: undefined;
+  Login: undefined;
+  Signup1: undefined;
+  Signup2: undefined;
+  Signup3: undefined;
+  Signup4: undefined;
+  Forgot1: undefined;
+  Forgot2: undefined;
+  Forgot3: undefined;
+  Forgot4: undefined;
+  Forgot5: undefined;
+  Forgot6: undefined;
+  Forgot7: undefined;
+};

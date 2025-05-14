@@ -5,7 +5,7 @@ import { View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import HomeStackNavigator from './HomeStackNavigator';
 import ProfileStackNavigator from './ProfileStackNavigator';
-import SearchScreen from '../screens/Search/SearchScreen';
+import SearchNavigator from './SearchNavigator';
 import AppointmentScreen from '../screens/Appointment/AppointmentScreen';
 import PrescriptionScreen from '../screens/Prescription/PrescriptionScreen';
 import { Ionicons } from '@expo/vector-icons';
@@ -142,7 +142,7 @@ export default function MainTabNavigator() {
       />
       <Tab.Screen
         name="Search"
-        component={SearchScreen}
+        component={SearchNavigator}
         options={{ title: 'Tra cứu' }}
       />
       <Tab.Screen
