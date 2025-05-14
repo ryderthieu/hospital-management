@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { Doctor } from '../types';
 import { colors } from '../../../styles/globalStyles';
+import { useFont, fontFamily } from '../../../context/FontContext';
 
 interface DoctorCardProps {
   doctor: Doctor;
@@ -9,6 +10,7 @@ interface DoctorCardProps {
 }
 
 export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onPress }) => {
+  const { fontsLoaded } = useFont();
   return (
     <TouchableOpacity style={styles.doctorCard} onPress={onPress}>
       <Image source={doctor.image} style={styles.doctorImage} />
@@ -29,11 +31,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: colors.base900,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: colors.border
   },
   doctorImage: {
     width: 80, 
@@ -43,27 +42,31 @@ const styles = StyleSheet.create({
   },
   doctorInfo: {
     flex: 1,
+    flexDirection: 'column',
+    gap: 3,
     justifyContent: 'center',
   },
   doctorName: {
     fontSize: 18,
-    fontWeight: '600',
     color: colors.base600,
+    fontFamily: fontFamily.bold,
     marginBottom: 4,
   },
   doctorSpecialty: {
     fontSize: 14,
     color: colors.textSecondary,
+    fontFamily: fontFamily.medium,
     marginBottom: 4,
   },
   doctorRoom: {
     fontSize: 14,
     color: colors.textSecondary,
+    fontFamily: fontFamily.medium,
     marginBottom: 4,
   },
   doctorPrice: {
     fontSize: 16,
-    fontWeight: '500',
-    color: colors.base500,
+    fontFamily: fontFamily.bold,
+    color: colors.base600,
   },
 });

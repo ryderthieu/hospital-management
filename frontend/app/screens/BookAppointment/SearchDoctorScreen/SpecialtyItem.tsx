@@ -14,9 +14,9 @@ export const SpecialtyItem: React.FC<SpecialtyItemProps> = ({ specialty, onPress
     <TouchableOpacity style={styles.specialtyItem} onPress={onPress}>
       <View style={styles.specialtyIconContainer}>
         {specialty.iconType === 'svg' && typeof specialty.icon === 'function' ? (
-            <specialty.icon width={48} height={48} />
+            <specialty.icon width={38} height={38} />
           ) : (
-            <Image source={specialty.icon as ImageSourcePropType} style={styles.specialtyIcon} />
+            <Image source={specialty.icon as ImageSourcePropType}  style={styles.specialtyIcon} />
           )}
       </View>
       <Text style={styles.specialtyName}>{specialty.name}</Text>
@@ -50,8 +50,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   specialtyIcon: {
-    width: 48,
-    height: 48,
+    width: 32,
+    height: 32,
   },
   specialtyName: {
     fontSize: 16,

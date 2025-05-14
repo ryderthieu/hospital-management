@@ -2,12 +2,14 @@ import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { Doctor } from '../types';
 import { colors } from '../../../styles/globalStyles';
+import { useFont, fontFamily } from '../../../context/FontContext';
 
 interface DoctorHeaderProps {
   doctor: Doctor;
 }
 
 export const DoctorHeader: React.FC<DoctorHeaderProps> = ({ doctor }) => {
+  const { fontsLoaded } = useFont();
   return (
     <View style={styles.doctorHeaderCard}>
       <Image source={doctor.image} style={styles.bookingDoctorImage} />
@@ -24,9 +26,10 @@ export const DoctorHeader: React.FC<DoctorHeaderProps> = ({ doctor }) => {
 const styles = StyleSheet.create({
   doctorHeaderCard: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.white,
     padding: 16,
-    marginBottom: 16,
+    
   },
   bookingDoctorImage: {
     width: 60,
@@ -36,15 +39,18 @@ const styles = StyleSheet.create({
   },
   bookingDoctorInfo: {
     flex: 1,
+    flexDirection: 'column',
+    gap: 3
   },
   bookingDoctorName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.bold,
     color: colors.primary,
     marginBottom: 2,
   },
   bookingDoctorSpecialty: {
     fontSize: 14,
+    fontFamily: fontFamily.medium,
     color: colors.textSecondary,
     marginBottom: 2,
   },
@@ -55,7 +61,7 @@ const styles = StyleSheet.create({
   },
   bookingDoctorPrice: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.bold,
     color: colors.primary,
   }
 });

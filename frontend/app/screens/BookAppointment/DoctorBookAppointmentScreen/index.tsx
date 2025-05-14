@@ -17,9 +17,11 @@ import { Header } from '../../../components/Header';
 import { DateCard } from './/DateCard';
 import { TimeSlot } from './/TimeSlot';
 import { SimilarDoctorCard } from './/SimilarDoctorCard';
+import { DoctorHeader } from './DoctorHeader';
 import { similarDoctorsData } from './SDData';
 import { sampleDoctor } from './doctorData';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useFont, fontFamily } from '../../../context/FontContext';
 import Sun from '../../../assets/images/ThoiGian/sun.svg'
 import Moon from '../../../assets/images/ThoiGian/moon.svg'
 
@@ -28,7 +30,8 @@ type BookAppointmentScreenProps = {
 };
 
 export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({navigation}) => {
-  const doctor= sampleDoctor
+  const { fontsLoaded } = useFont();
+  const doctor= sampleDoctor;
   const [selectedDate, setSelectedDate] = useState('16');
   const [selectedTime, setSelectedTime] = useState('1:00 PM');
   const [hasInsurance, setHasInsurance] = useState(true);
@@ -55,18 +58,13 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({nav
 
   return (
     <SafeAreaView style={globalStyles.container}>
-    <ScrollView style={globalStyles.container} contentContainerStyle={styles.bookingContainer}>
-      {/* Reusable Header Component */}
-                  <Header 
+      <Header 
                     title="Chọn thời giam khám"
                     showBack={true}
                     onBackPress={() => navigation.goBack()}
-                    onActionPress={() => {
-                      // Reference to the markAllAsRead function in the NotificationsList component
-                      // This would need to be handled via a ref or state management
-                    }}
                   />
-
+    <ScrollView style={globalStyles.container} contentContainerStyle={styles.bookingContainer}>
+      <DoctorHeader doctor={doctor} />
       <View style={styles.dateSelectionContainer}>
         <Text style={styles.selectionTitle}>CHỌN THỜI GIAN</Text>
         <FlatList
@@ -81,7 +79,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({nav
         <View style={styles.dayPartSelection}>
           <TouchableOpacity style={[styles.dayPartButton, styles.selectedDayPartButton]}>
             <Sun  />
-            <Text style={styles.dayPartText}>Sáng</Text>
+            <Text style={[styles.dayPartText, styles.selectedDayPartText ]}>Sáng</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.dayPartButton}>
             <Moon  />
@@ -148,7 +146,7 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   dateSelectionContainer: {
-    backgroundColor: colors.base50,
+    backgroundColor: colors.grayBackground,
     padding: 16,
     marginBottom: 16,
   },
@@ -163,16 +161,18 @@ const styles = StyleSheet.create({
   },
   dayPartSelection: {
     flexDirection: 'row',
+    gap: 15,
     marginVertical: 16,
   },
   dayPartButton: {
     flexDirection: 'row',
+    gap: 20,
+    flex: 1,
     alignItems: 'center',
     backgroundColor: colors.white,
-    borderRadius: 24,
-    paddingVertical: 10,
+    borderRadius: 15,
+    paddingVertical: 15,
     paddingHorizontal: 20,
-    marginRight: 12,
     shadowColor: colors.base900,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -183,8 +183,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.base500,
   },
   dayPartText: {
-    fontSize: 16,
+    fontSize: 18,
+    fontFamily: fontFamily.bold,
     color: colors.text,
+  },
+  selectedDayPartText: {
+    color: 'white'
   },
   timeSlotGrid: {
     flexDirection: 'row',

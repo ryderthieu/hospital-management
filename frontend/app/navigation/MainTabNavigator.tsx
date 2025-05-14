@@ -1,7 +1,8 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import HomeStackNavigator from './HomeStackNavigator';
 import ProfileStackNavigator from './ProfileStackNavigator';
 import SearchScreen from '../screens/Search/SearchScreen';
@@ -21,7 +22,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
 }) => {
   const { fontsLoaded } = useFont();
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['bottom']} style={{ backgroundColor: '#00B5B8' }} >
       <View style={styles.container}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
@@ -91,9 +92,6 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    backgroundColor: '#16BDCA',
-  },
   container: {
     flexDirection: 'row',
     backgroundColor: '#00B5B8',
@@ -102,14 +100,10 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 10,
     paddingHorizontal: 10,
   },
   tabButton: {
+    flexDirection: 'column',
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -124,7 +118,6 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.regular,
     fontSize: 13,
     color: '#E0F7FA',
-    marginTop: 4,
     textAlign: 'center',
   },
   tabTextActive: {

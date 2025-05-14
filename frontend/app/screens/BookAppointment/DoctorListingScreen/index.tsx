@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { globalStyles, colors } from '../../../styles/globalStyles';
+import { useFont, fontFamily } from '../../../context/FontContext';
 import { DoctorCard } from './DoctorCard';
 import { doctorsData } from './data';
 import Header from "../../../components/Header";
@@ -22,7 +23,8 @@ type DoctorListScreenProps = {
 };
 
 export const DoctorListScreen: React.FC<DoctorListScreenProps> = ({ navigation }) => {
-  const [specialty, setSpecialty] = useState('Tim mạch'); // Gán specialty mặc định
+  const { fontsLoaded } = useFont();
+  const [specialty, setSpecialty] = useState('Tim mạch'); 
   const [searchQuery, setSearchQuery] = useState('');
 
   // Lọc bác sĩ theo chuyên khoa và chuỗi tìm kiếm
@@ -40,7 +42,11 @@ export const DoctorListScreen: React.FC<DoctorListScreenProps> = ({ navigation }
 
   return (
     <SafeAreaView style={globalStyles.container}>
-      <Header title="Danh sách bác sĩ" />
+      <Header 
+        title="Danh sách bác sĩ"
+        showBack={true}
+        onBackPress={() => navigation.goBack()} 
+      />
 
       <View style={globalStyles.searchContainer}>
         <View style={globalStyles.searchInputContainer}>

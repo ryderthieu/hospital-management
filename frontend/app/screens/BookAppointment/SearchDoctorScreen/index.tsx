@@ -5,10 +5,10 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
-  SafeAreaView,
   StyleSheet,
   StatusBar
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList, Specialty } from '../types';

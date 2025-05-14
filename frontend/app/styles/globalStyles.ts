@@ -1,4 +1,6 @@
 import { StyleSheet } from 'react-native';
+import { useFont, fontFamily } from '../context/FontContext';
+
 
 export const colors = {
   // Base color palette (teal/turquoise)
@@ -14,15 +16,16 @@ export const colors = {
   base900: '#014451',
   
   // Semantic colors (mapped to base palette)
-  primary: '#0694A2', // base500
+  primary: '#047481', // base500
   primaryLight: '#D5F5F6', // base100
-  text: '#014451', // base900
+  text: 'black', // base900
   textSecondary: '#05505C', // base800
   background: '#EDFAFA', // base50
   backgroundSecondary: '#AFECEF', // base200
   white: '#fff',
-  border: '#7EDCE2', // base300
-  disabled: 'rgba(175, 236, 239, 0.6)', // base200 with opacity
+  border: 'lightgray', // base300
+  grayBackground: '#F5F8FA',
+  disabled: '#DDE5ED', 
 };
 
 export const globalStyles = StyleSheet.create({
@@ -48,6 +51,8 @@ export const globalStyles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
     fontSize: 16,
+    fontFamily: fontFamily.regular,
+    textAlignVertical: 'center',
     color: colors.text,
   },
   sectionTitle: {

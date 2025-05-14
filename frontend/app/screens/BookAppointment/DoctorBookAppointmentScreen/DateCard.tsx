@@ -22,7 +22,11 @@ export const DateCard: React.FC<DateCardProps> = ({ date, isSelected, onPress })
     >
       <Text style={[styles.dateDay, isSelected && styles.selectedDateText]}>{date.day}</Text>
       <Text style={[styles.dateNumber, isSelected && styles.selectedDateText]}>{date.date}</Text>
-      {date.disabled && <View style={styles.disabledDateOverlay} />}
+      {date.disabled && 
+      <View style={styles.disabledDateOverlay}>
+        <View style={styles.diagonalLine} />
+      </View>
+      }
     </TouchableOpacity>
   );
 };
@@ -30,7 +34,7 @@ export const DateCard: React.FC<DateCardProps> = ({ date, isSelected, onPress })
 const styles = StyleSheet.create({
   dateCard: {
     width: 80,
-    height: 80,
+    height: 100,
     backgroundColor: colors.white,
     borderRadius: 12,
     justifyContent: 'center',
@@ -53,18 +57,30 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     backgroundColor: colors.disabled,
+    opacity: 0.7,
     borderRadius: 12,
     zIndex: 1,
+    overflow: 'hidden',
   },
+  diagonalLine: {
+    position: 'absolute',
+    width: 2,
+    height: '140%',
+    backgroundColor: '#7A9EBE', 
+    transform: [{ rotate: '36deg' }],
+    top: '-20%',
+    left: '50%',
+  },
+  
   dateDay: {
     fontSize: 16,
     color: colors.textSecondary,
     marginBottom: 4,
   },
   dateNumber: {
-    fontSize: 20,
+    fontSize: 32,
     fontWeight: '600',
-    color: colors.text,
+    color: 'black'
   },
   selectedDateText: {
     color: colors.white,
