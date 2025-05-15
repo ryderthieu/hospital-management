@@ -44,17 +44,17 @@ const MedicalRecord: React.FC<MedicalRecordProps> = ({
   
   return (
     <div className="space-y-4">
-      <div className="flex gap-20 p-4 bg-gray-50/50 rounded-lg border-gray-200 border-1">
+      <div className="flex flex-col md:flex-row gap-4 p-4 justify-between bg-gray-50/50 rounded-lg border-gray-200 border-1">
         {/* Thông tin bệnh án */}
-        <div>
-          <h3 className="text-gray-600 font-semibold">
+        <div className="">
+          <h3 className=" text-gray-600 font-semibold">
             Bệnh án #{recordNumber}
           </h3>
           <span className="text-gray-400 text-sm font-semibold">{date}</span>
         </div>
 
         {/* Chi tiết bệnh án */}
-        <div className="w-[55%]">
+        <div className="md:w-[55%]">
           <p className="text-gray-600 truncate">
             <span className="font-medium text-gray-800">Lý do khám: </span>
             {reason}
@@ -78,7 +78,7 @@ const MedicalRecord: React.FC<MedicalRecordProps> = ({
         </div>
 
         {/* Các nút hành động */}
-        <div className="grid grid-cols-2 justify-items-center gap-2">
+        <div className="flex  gap-2">
           <button
             className="flex size-12 justify-center items-center gap-1 px-3 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
             onClick={openModal}
@@ -112,7 +112,10 @@ const MedicalRecord: React.FC<MedicalRecordProps> = ({
             </svg>
           </button>
         </div>
+        
       </div>
+
+      {/* Modal khi nhan vao button xem */}
       <Modal
         isOpen={isOpen}
         onClose={closeModal}

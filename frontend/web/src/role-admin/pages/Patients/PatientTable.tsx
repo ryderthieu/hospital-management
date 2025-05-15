@@ -10,7 +10,7 @@ import Badge from "../../components/ui/badge/Badge";
 import { useEffect, useRef, useState } from "react";
 import { DeleteConfirmationModal } from "../../components/ui/modal/DeleteConfirmationModal";
 import { useNavigate } from "react-router";
-import DatePicker from "../../components/form/date-picker";
+import DatePicker from "../../components/appointments/DatePicker";
 import SearchInput from "../../components/common/SearchInput";
 
 interface Patient {

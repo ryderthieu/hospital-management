@@ -294,7 +294,7 @@ layer(base);
 }
 
 @utility menu-dropdown-item-active {
-  @apply bg-base-600/50 text-white dark:bg-base-500/[0.12] dark:text-base-800;
+  @apply bg-base-200/50 text-base-600 dark:bg-base-500/[0.12] dark:text-base-800;
 }
 
 @utility menu-dropdown-item-inactive {
@@ -594,6 +594,36 @@ span.flatpickr-weekday,
   fill: none !important;
 }
 
+.flatpickr-time {
+  @apply flex justify-center items-center gap-3 px-4 py-3 bg-white dark:bg-gray-dark rounded-xl border border-gray-200 dark:border-white/10;
+}
+
+.flatpickr-hour,
+.flatpickr-minute {
+  @apply w-12 h-10 text-center text-base font-semibold rounded-md border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-white 
+         bg-transparent placeholder:text-gray-400 cursor-pointer transition 
+         focus:outline-none focus:ring-0 focus:border-base-500 dark:focus:border-base-500;
+}
+
+.flatpickr-hour:hover,
+.flatpickr-minute:hover {
+  @apply bg-gray-50 dark:bg-white/10;
+}
+
+.numInputWrapper .arrowUp,
+.numInputWrapper .arrowDown {
+  @apply hidden;
+}
+
+.flatpickr-time-separator {
+  @apply text-xl font-bold text-gray-500 dark:text-gray-400;
+}
+
+.flatpickr-hour::selection,
+.flatpickr-minute::selection {
+  background: transparent;
+}
+
 .flatpickr-calendar.static {
   @apply right-0;
 }
@@ -707,11 +737,11 @@ span.flatpickr-weekday,
 .event-fc-color.fc-bg-danger {
   @apply border-error-50 bg-error-50;
 }
-.event-fc-color.fc-bg-primary {
-  @apply border-base-50 bg-base-50;
+.event-fc-color.fc-bg-waiting {
+  @apply border-yellow-50 bg-yellow-50;
 }
-.event-fc-color.fc-bg-warning {
-  @apply border-orange-50 bg-orange-50;
+.event-fc-color.fc-bg-cancel {
+  @apply border-gray-50 bg-gray-50;
 }
 .event-fc-color.fc-bg-success .fc-daygrid-event-dot {
   @apply bg-success-500;
@@ -719,11 +749,11 @@ span.flatpickr-weekday,
 .event-fc-color.fc-bg-danger .fc-daygrid-event-dot {
   @apply bg-error-500;
 }
-.event-fc-color.fc-bg-primary .fc-daygrid-event-dot {
-  @apply bg-base-500;
+.event-fc-color.fc-bg-waiting .fc-daygrid-event-dot {
+  @apply bg-yellow-500;
 }
-.event-fc-color.fc-bg-warning .fc-daygrid-event-dot {
-  @apply bg-orange-500;
+.event-fc-color.fc-bg-cancel .fc-daygrid-event-dot {
+  @apply bg-gray-500;
 }
 .fc-direction-ltr .fc-timegrid-slot-label-frame {
   @apply px-3 py-1.5 text-left text-sm font-medium text-gray-500 dark:text-gray-400;

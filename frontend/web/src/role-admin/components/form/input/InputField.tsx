@@ -34,7 +34,7 @@ const Input: FC<InputProps> = ({
   error = false,
   hint,
 }) => {
-  let inputClasses = ` h-12 w-full rounded-lg border appearance-none px-4 py-2.5 text-md placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${className}`;
+  let inputClasses = ` h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-md placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${className}`;
 
   if (disabled) {
     inputClasses += `  font-outfit text-gray-900 border-gray-300 opacity-70  cursor-not-allowed dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 opacity-70`;
@@ -43,7 +43,7 @@ const Input: FC<InputProps> = ({
   } else if (success) {
     inputClasses += `  font-outfit  border-success-500 focus:border-success-300 focus:ring-success-500/20 dark:text-success-400 dark:border-success-500 dark:focus:border-success-800`;
   } else {
-    inputClasses += `  font-outfit bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:text-white/90  dark:focus:border-brand-800`;
+    inputClasses += `  font-outfit bg-transparent text-gray-800 border-gray-300 focus:border-base-300 focus:ring-base-500/20 dark:border-gray-700 dark:text-white/90  dark:focus:border-base-800`;
   }
 
   return (
