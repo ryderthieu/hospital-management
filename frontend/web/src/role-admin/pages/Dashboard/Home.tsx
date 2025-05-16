@@ -11,8 +11,8 @@ export default function Home() {
   return (
     <>
       <PageMeta
-        title="Home | Admin Dashboard"
-        description="This is Home Dashboard"
+        title="Trang chủ | Bệnh viện Đa khoa Wecare"
+        description="Trang chủ website admin bệnh viện"
       />
       <div className="">
         <div className="col-span-12 xl:col-span-7 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-5 mb-4">

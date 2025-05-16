@@ -11,7 +11,6 @@ import Avatars from "./pages/UiElements/Avatars";
 import Buttons from "./pages/UiElements/Buttons";
 import LineChart from "./pages/Charts/LineChart";
 import BarChart from "./pages/Charts/BarChart";
-import Calendar from "./pages/MedicalExamination/Calendar";
 import BasicTables from "./pages/Tables/BasicTables";
 import FormElements from "./pages/Forms/FormElements";
 import Blank from "./pages/Blank";
@@ -24,9 +23,12 @@ import Doctor from "./pages/Doctors/Doctor";
 import Medicine from "./pages/Medicines/Medicines";
 import Service from "./pages/HealthServices/Services";
 import Department from "./pages/Departments/Department";
-import PatientRoom from "./pages/PatientRooms/PatientsRoom";
-import AddPatient from "./pages/Patients/AddPatient"; // Import component AddPatient
+import PatientAddForm from "./pages/Patients/PatientAddForm"; 
 import Inpatient from "./pages/PatientRooms/Inpatients";
+import Clinics from "./pages/MedicalExamination/OutpatientClinics";
+import MedicalCalendar from "./pages/MedicalExamination/MedicalCalendar";
+import ClinicDetail from "./pages/MedicalExamination/ClinicDetail";
+import InpatientRoom from "./pages/PatientRooms/InPatientsRoom";
 
 const AdminApp: React.FC = () => {
   return (
@@ -38,10 +40,15 @@ const AdminApp: React.FC = () => {
           <Route element={<AppLayout />}>
             <Route index path="/admin" element={<Home />} />
 
+            {/* Medical Examinations Pages */}
+            <Route path="/admin/calendar" element={<MedicalCalendar />} />
+            <Route path="/admin/outpatient-clinics" element={<Clinics />} />
+            <Route path="/admin/outpatient-clinics/:id" element={<ClinicDetail />} />
+
             {/* Patients Pages */}
             <Route path="/admin/patients" element={<Patient />} />
             <Route path="/admin/patients/:id" element={<PatientDetail />} />
-            <Route path="/admin/patients/add" element={<AddPatient />} /> 
+            <Route path="/admin/patients/new" element={<PatientAddForm />} /> 
 
             {/* Doctors Page */}
             <Route path="/admin/doctors" element={<Doctor />} />
@@ -50,10 +57,10 @@ const AdminApp: React.FC = () => {
             <Route path="/admin/medicines" element={<Medicine />} />
 
             {/* Services Page */}
-            <Route path="/admin/services" element={<Service />} />
+            <Route path="/admin/health-services" element={<Service />} />
 
             {/* Patients Room Page */}
-            <Route path="/admin/patients-rooms" element={<PatientRoom />} />
+            <Route path="/admin/inpatients-rooms" element={<InpatientRoom />} />
             <Route path="/admin/inpatients" element={<Inpatient />} />
 
             {/* Department Page */}
@@ -61,7 +68,6 @@ const AdminApp: React.FC = () => {
 
             {/* Others Page */}
             <Route path="/admin/profile" element={<UserProfiles />} />
-            <Route path="/admin/calendar" element={<Calendar />} />
             <Route path="/admin/blank" element={<Blank />} />
 
             {/* Forms */}

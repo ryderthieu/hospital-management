@@ -47,9 +47,7 @@ layer(base);
   font-weight: 900;
 }
 
-
-
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --font-*: initial;
@@ -252,19 +250,19 @@ layer(base);
 }
 
 @utility menu-item-active {
-  @apply bg-base-600 text-white dark:bg-base-500/[0.12] dark:text-cyan-100;
+  @apply bg-base-600 text-white;
 }
 
 @utility menu-item-inactive {
-  @apply text-gray-700 hover:bg-gray-100 group-hover:text-gray-700 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-300;
+  @apply text-gray-700 hover:bg-gray-100 group-hover:text-gray-700;
 }
 
 @utility menu-item-icon {
-  @apply text-gray-500 group-hover:text-gray-700 dark:text-gray-400;
+  @apply text-gray-500 group-hover:text-gray-700;
 }
 
 @utility menu-item-icon-active {
-  @apply text-white dark:text-base-400;
+  @apply text-white;
 }
 
 @utility menu-item-icon-size {
@@ -274,7 +272,7 @@ layer(base);
 }
 
 @utility menu-item-icon-inactive {
-  @apply text-gray-500 group-hover:text-gray-700 dark:text-white dark:group-hover:text-gray-300;
+  @apply text-gray-500 group-hover:text-gray-700;
 }
 
 @utility menu-item-arrow {
@@ -282,11 +280,11 @@ layer(base);
 }
 
 @utility menu-item-arrow-active {
-  @apply rotate-180 text-base-500 dark:text-base-400;
+  @apply rotate-180 text-base-500;
 }
 
 @utility menu-item-arrow-inactive {
-  @apply text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300;
+  @apply text-gray-500 group-hover:text-gray-700;
 }
 
 @utility menu-dropdown-item {
@@ -294,11 +292,11 @@ layer(base);
 }
 
 @utility menu-dropdown-item-active {
-  @apply bg-base-200/50 text-base-600 dark:bg-base-500/[0.12] dark:text-base-800;
+  @apply bg-base-50 text-base-600 dark:bg-base-500/[0.12];
 }
 
 @utility menu-dropdown-item-inactive {
-  @apply text-gray-700 hover:bg-gray-200/50 dark:text-gray-700 dark:hover:bg-white/5;
+  @apply text-gray-700 hover:bg-gray-200/50;
 }
 
 @utility menu-dropdown-badge {
@@ -306,11 +304,11 @@ layer(base);
 }
 
 @utility menu-dropdown-badge-active {
-  @apply bg-base-600 dark:bg-base-500/20;
+  @apply bg-base-600;
 }
 
 @utility menu-dropdown-badge-inactive {
-  @apply bg-base-50 group-hover:bg-base-100 dark:bg-base-500/15 dark:group-hover:bg-base-500/20;
+  @apply bg-base-50 group-hover:bg-base-100;
 }
 @utility no-scrollbar {
   /* Chrome, Safari and Opera */

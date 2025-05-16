@@ -18,7 +18,7 @@ interface DoctorCardProps {
 }
 
 const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onViewSchedule, onViewDetail }) => (
-  <div className="flex flex-col md:flex-row items-center justify-between p-4 border border-gray-200 rounded-lg bg-white">
+  <div className="flex flex-col md:flex-row items-center justify-between p-4 border border-gray-200 rounded-lg bg-white hover:shadow-sm">
     {/* Avatar và thông tin bác sĩ */}
     <div className="flex items-center justify-center gap-4 w-full md:w-auto">
         <div className="">

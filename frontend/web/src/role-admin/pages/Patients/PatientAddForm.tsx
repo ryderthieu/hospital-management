@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { Calendar, ChevronDown, ArrowLeft } from "lucide-react";
 import { Link } from 'react-router-dom';
 
-export default function AddPatient() {
+export default function PatientAddForm() {
   const handleSubmit = (e: FormEvent, section: string) => {
     e.preventDefault();
     console.log(`Form submitted for section: ${section}`);

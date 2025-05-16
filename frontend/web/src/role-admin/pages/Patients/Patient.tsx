@@ -1,6 +1,5 @@
 // Patient.tsx
-import Metric from "../../components/statistics/Metric";
-import DropMetric from "../../components/statistics/DropMetric";
+import Metric from "../../components/statistics/PatientMetric";
 import PageMeta from "../../components/common/PageMeta";
 import { BoxIcon, CalenderIcon, GroupIcon } from "../../icons";
 import PatientTable from "./PatientTable";
@@ -11,7 +10,7 @@ export default function Patient() {
   return (
     <>
       <PageMeta
-        title="Patient | Admin Dashboard"
+        title="Bệnh nhân | Bệnh viện Đa khoa Wecare"
         description="This is Patient Dashboard"
       />
       <div className="">

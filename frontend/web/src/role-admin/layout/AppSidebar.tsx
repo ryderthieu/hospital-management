@@ -8,21 +8,16 @@ import {
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
-  ListIcon,
-  PageIcon,
   PieChartIcon,
   PlugInIcon,
-  TableIcon,
   UserCircleIcon,
   DoctorIcon,
   PatientIcon,
-  MedicalRecordIcon,
   DepartmentIcon,
   InpatientIcon,
   AdminIcon
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
-import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
   name: string;
@@ -42,7 +37,7 @@ const navItems: NavItem[] = [
     icon: <CalenderIcon />,
     subItems: [
           { name: "Lịch khám", path: "/admin/calendar", pro: false },
-          { name: "Phòng khám", path: "/admin/inpatient", pro: false },
+          { name: "Phòng khám", path: "/admin/outpatient-clinics", pro: false },
         ],
   },
   {
@@ -54,7 +49,7 @@ const navItems: NavItem[] = [
     name: "Nội trú",
     icon: <InpatientIcon />,
     subItems: [
-          { name: "Phòng bệnh", path: "/admin/patients-rooms", pro: false },
+          { name: "Phòng bệnh", path: "/admin/inpatients-rooms", pro: false },
           { name: "Bệnh nhân nội trú", path: "/admin/inpatients", pro: false },
         ],
   },
@@ -71,7 +66,7 @@ const navItems: NavItem[] = [
   {
     icon: <BoxCubeIcon />,
     name: "Dịch vụ",
-    path: "/admin/services",
+    path: "/admin/health-services",
   },
   {
     name: "Phòng ban",

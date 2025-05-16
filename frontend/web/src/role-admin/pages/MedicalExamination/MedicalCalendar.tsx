@@ -5,15 +5,15 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { DateSelectArg, EventClickArg } from "@fullcalendar/core";
-import { Modal } from "../../components/ui/modal";
-import { useModal } from "../../hooks/useModal";
-import PageMeta from "../../components/common/PageMeta";
+import { Modal } from "../../components/ui/modal/index.tsx";
+import { useModal } from "../../hooks/useModal.ts";
+import PageMeta from "../../components/common/PageMeta.tsx";
 import DatePicker from "../../components/appointments/DatePicker.tsx";
 import TimePicker from "../../components/appointments/TimePicker.tsx";
 import { CalendarEvent, EVENT_STATUS_MAP } from "../../types/appointment.ts";
 import { Department, Doctor, mockDataService } from "../../services/mockDataService.ts";
 
-const Calendar: React.FC = () => {
+const MedicalCalendar: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -400,7 +400,7 @@ const Calendar: React.FC = () => {
         <Modal
           isOpen={isOpen}
           onClose={handleCloseModal}
-          className="max-w-[700px] p-6 lg:p-10 mt-[20vh]"
+          className="max-w-[700px] lg:p-10 lg:pb-8 mt-[30vh] mb-8"
         >
           <div className="flex flex-col px-2 overflow-y-auto custom-scrollbar">
             <div>
@@ -697,4 +697,4 @@ const renderEventContent = (eventInfo: {
   );
 };
 
-export default Calendar;
+export default MedicalCalendar;

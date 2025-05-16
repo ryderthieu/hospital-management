@@ -61,6 +61,10 @@ import { ReactComponent as BedIcon } from "./bed.svg?react";
 import { ReactComponent as MedicineIcon } from "./medicine.svg?react";
 import { ReactComponent as InpatientIcon } from "./inpatient.svg?react";
 import { ReactComponent as AdminIcon } from "./admin.svg?react";
+import { ReactComponent as ClinicIcon } from "./clinics.svg?react";
+import { ReactComponent as ActiveIcon } from "./active.svg?react";
+import { ReactComponent as WarningIcon } from "./warning.svg?react";
+import { ReactComponent as FullIcon } from "./full.svg?react";
 
 export {
   ErrorHexaIcon,
@@ -125,5 +129,9 @@ export {
   DepartmentIcon,
   MedicineIcon,
   InpatientIcon,
-  AdminIcon
+  AdminIcon,
+  ClinicIcon,
+  ActiveIcon,
+  WarningIcon,
+  FullIcon,
 };

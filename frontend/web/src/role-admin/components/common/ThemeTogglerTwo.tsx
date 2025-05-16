@@ -1,10 +1,10 @@
-import { useTheme } from "../../context/ThemeContext";
+
 
 export default function ThemeTogglerTwo() {
-  const { toggleTheme } = useTheme();
+
   return (
     <button
-      onClick={toggleTheme}
+
       className="inline-flex items-center justify-center text-white transition-colors rounded-full size-14 bg-base-500 hover:bg-base-600"
     >
       <svg
