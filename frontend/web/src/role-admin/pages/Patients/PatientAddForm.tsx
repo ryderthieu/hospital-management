@@ -1,4 +1,3 @@
-// AddPatient.tsx
 import type { FormEvent } from "react";
 import { Calendar, ChevronDown, ArrowLeft } from "lucide-react";
 import { Link } from 'react-router-dom';

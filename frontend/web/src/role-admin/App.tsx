@@ -23,6 +23,10 @@ import Doctor from "./pages/Doctors/Doctor";
 import Medicine from "./pages/Medicines/Medicines";
 import Service from "./pages/HealthServices/Services";
 import Department from "./pages/Departments/Department";
+import PatientRoom from "./pages/PatientRooms/PatientsRoom";
+import AddPatient from "./pages/Patients/AddPatient"; 
+import Inpatient from "./pages/PatientRooms/Inpatients";
+import RoomDetail from "./pages/PatientRooms/RoomDetails";
 import PatientAddForm from "./pages/Patients/PatientAddForm"; 
 import Inpatient from "./pages/PatientRooms/Inpatients";
 import Clinics from "./pages/MedicalExamination/OutpatientClinics";
@@ -62,6 +66,7 @@ const AdminApp: React.FC = () => {
             {/* Patients Room Page */}
             <Route path="/admin/inpatients-rooms" element={<InpatientRoom />} />
             <Route path="/admin/inpatients" element={<Inpatient />} />
+            <Route path="/admin/roomdetails" element={<RoomDetail />} />
 
             {/* Department Page */}
             <Route path="/admin/departments" element={<Department />} />
