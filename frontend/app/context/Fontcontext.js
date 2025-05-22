@@ -3,6 +3,7 @@ import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 
 export const fontFamily = {
+  italic: 'SVN-Gilroy-Italic',
   medium: 'SVN-Gilroy-Medium',
   mediumItalic: 'SVN-Gilroy-Medium-Italic',
   bold: 'SVN-Gilroy-Bold',

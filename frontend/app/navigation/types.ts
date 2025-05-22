@@ -28,6 +28,13 @@ export type HomeStackParamList = {
   NewsDetail: { newsItem: NewsItem };
 };
 
+// Định nghĩa AppointmentStackParamList
+export type AppointmentStackParamList = {
+  Appointments: undefined;
+  AppointmentDetail: { appointmentId: string };
+  CompletedAppointmentDetail: { appointmentId: string };
+};
+
 // Định nghĩa BookAppointmentStackParamList
 export type BookAppointmentStackParamList = {
   Search: undefined;

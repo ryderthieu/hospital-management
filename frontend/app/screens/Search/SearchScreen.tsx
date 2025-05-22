@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  StyleSheet,
-  StatusBar,
-  Image,
-} from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, StatusBar, Image} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -32,7 +24,7 @@ export const SearchHomeScreen: React.FC<SearchHomeScreenProps> = ({ navigation }
         showBack={false}
         showAction={true}
         actionType="notification"
-        onActionPress={() => navigation.navigate('Notifications')} // Lưu ý: Cần kiểm tra
+        onActionPress={() => navigation.navigate('Notifications')}
       />
       
       <View style={globalStyles.searchContainer}>
@@ -66,7 +58,7 @@ export const SearchHomeScreen: React.FC<SearchHomeScreenProps> = ({ navigation }
           
           <View style={styles.imageContainer}>
             <Image 
-              source={require('../../assets/images/Search/Medicine.svg')} 
+              source={require('../../assets/images/Search/Medicine.png')} 
               style={styles.optionImage}
               resizeMode="contain"
             />
@@ -92,7 +84,7 @@ export const SearchHomeScreen: React.FC<SearchHomeScreenProps> = ({ navigation }
           
           <View style={styles.imageContainer}>
             <Image 
-              source={require('../../assets/images/Search/condition.svg')} 
+              source={require('../../assets/images/Search/condition.png')} 
               style={styles.optionImage}
               resizeMode="contain"
             />
@@ -104,10 +96,6 @@ export const SearchHomeScreen: React.FC<SearchHomeScreenProps> = ({ navigation }
 };
 
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
   headerTitle: {
     fontSize: 22,
     fontFamily: fontFamily.bold,

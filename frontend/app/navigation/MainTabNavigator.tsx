@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import HomeStackNavigator from './HomeStackNavigator';
 import ProfileStackNavigator from './ProfileStackNavigator';
 import SearchNavigator from './SearchNavigator';
-import AppointmentScreen from '../screens/Appointment/AppointmentScreen';
+import AppointmentNavigator from './AppointmentNavigator';
 import PrescriptionScreen from '../screens/Prescription/PrescriptionScreen';
 import { Ionicons } from '@expo/vector-icons';
 import { useFont, fontFamily } from '../context/FontContext';
@@ -147,7 +147,7 @@ export default function MainTabNavigator() {
       />
       <Tab.Screen
         name="Appointment"
-        component={AppointmentScreen}
+        component={AppointmentNavigator}
         options={{ title: 'Lịch khám' }}
       />
       <Tab.Screen
