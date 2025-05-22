@@ -166,8 +166,8 @@ export default function HomeScreen() {
               <Ionicons name="person" size={30} color="#00B5B8" />
             </View>
             <View>
-              <Text style={styles.quickAppointmentTitle}>Bác sĩ</Text>
-              <Text style={styles.quickAppointmentSubtitle}>Đặt lịch khám</Text>
+              <Text style={styles.quickAppointmentTitle}>Đặt lịch khám</Text>
+              <Text style={styles.quickAppointmentSubtitle}>Bác sĩ</Text>
             </View>
           </View>
         </TouchableOpacity>

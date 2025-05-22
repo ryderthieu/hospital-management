@@ -1,5 +1,6 @@
 import { ImageSourcePropType } from 'react-native';
-
+import type { RouteProp } from "@react-navigation/native"
+import type { StackNavigationProp } from "@react-navigation/stack"
 interface NewsItem {
   id: string | number;
   title: string;
@@ -43,15 +44,33 @@ export type BookAppointmentStackParamList = {
   BookAppointment: { doctorId: string };
 };
 
-// Định nghĩa ProfileStackParamList
+// Profile stack param list
 export type ProfileStackParamList = {
-  ProfileMain: undefined;
-  AccountInfo: undefined;
-  InsuranceList: undefined;
-  HealthProfile: undefined;
-  Settings: undefined;
-  Notifications: undefined;
-};
+  ProfileMain: undefined
+  AccountInfo: undefined
+  EditAccountInfo: undefined
+  InsuranceList: undefined
+  InsuranceDetail: { insurance: Insurance }
+  EditInsurance: { insurance: Insurance }
+  AddInsurance: undefined
+  HealthProfile: undefined
+  Settings: undefined
+  Notifications: undefined
+}
+
+// Navigation prop types
+export type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList, "ProfileMain">
+export type AccountInfoScreenNavigationProp = StackNavigationProp<ProfileStackParamList, "AccountInfo">
+export type EditAccountInfoScreenNavigationProp = StackNavigationProp<ProfileStackParamList, "EditAccountInfo">
+export type InsuranceListScreenNavigationProp = StackNavigationProp<ProfileStackParamList, "InsuranceList">
+export type InsuranceDetailScreenNavigationProp = StackNavigationProp<ProfileStackParamList, "InsuranceDetail">
+export type EditInsuranceScreenNavigationProp = StackNavigationProp<ProfileStackParamList, "EditInsurance">
+export type SettingsScreenNavigationProp = StackNavigationProp<ProfileStackParamList, "Settings">
+// Route prop types
+export type AccountInfoScreenRouteProp = RouteProp<ProfileStackParamList, "AccountInfo">
+export type EditAccountInfoScreenRouteProp = RouteProp<ProfileStackParamList, "EditAccountInfo">
+export type InsuranceDetailScreenRouteProp = RouteProp<ProfileStackParamList, "InsuranceDetail">
+export type EditInsuranceScreenRouteProp = RouteProp<ProfileStackParamList, "EditInsurance">
 
 // Định nghĩa MainTabParamList
 export type MainTabParamList = {

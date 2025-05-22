@@ -120,6 +120,7 @@ const AppointmentsScreen = () => {
 
         <SearchBar
           placeholder="Tìm bác sĩ tim mạch"
+          value={searchQuery}
           onSearch={handleSearch}
           onFilter={handleFilter}
         />
