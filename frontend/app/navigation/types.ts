@@ -44,6 +44,13 @@ export type BookAppointmentStackParamList = {
   BookAppointment: { doctorId: string };
 };
 
+// Định nghĩa MedicationScheduleStackParamList
+export type MedicationScheduleStackParamList = {
+  MedicationSchedule: undefined;
+  PrescriptionManagement: { prescriptionId: string };
+  PrescriptionDetail: { prescriptionId: string };
+};
+
 // Profile stack param list
 export type ProfileStackParamList = {
   ProfileMain: undefined
@@ -77,7 +84,7 @@ export type MainTabParamList = {
   HomeTab: undefined;
   Search: undefined; // Đây là SearchStackNavigator
   Appointment: undefined;
-  Prescription: undefined;
+  MedicationSchedule: undefined;
   Profile: undefined;
   Notifications: undefined;
 };

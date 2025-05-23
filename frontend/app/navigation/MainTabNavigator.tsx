@@ -7,7 +7,7 @@ import HomeStackNavigator from './HomeStackNavigator';
 import ProfileStackNavigator from './ProfileStackNavigator';
 import SearchNavigator from './SearchNavigator';
 import AppointmentNavigator from './AppointmentNavigator';
-import PrescriptionScreen from '../screens/Prescription/PrescriptionScreen';
+import MedicationScheduleStackNavigator from './MedicationScheduleStackNavigator';
 import { Ionicons } from '@expo/vector-icons';
 import { useFont, fontFamily } from '../context/FontContext';
 import { MainTabParamList } from './types';
@@ -151,8 +151,8 @@ export default function MainTabNavigator() {
         options={{ title: 'Lịch khám' }}
       />
       <Tab.Screen
-        name="Prescription"
-        component={PrescriptionScreen}
+        name="MedicationSchedule"
+        component={MedicationScheduleStackNavigator}
         options={{ title: 'Đơn thuốc' }}
       />
       <Tab.Screen
