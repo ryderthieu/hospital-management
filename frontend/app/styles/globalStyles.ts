@@ -16,7 +16,7 @@ export const colors = {
   base900: '#014451',
   
   // Semantic colors (mapped to base palette)
-  primary: '#047481', // base500
+  primary: '#00B5B8', // base500
   primaryLight: '#D5F5F6', // base100
   text: 'black', // base900
   textSecondary: '#05505C', // base800

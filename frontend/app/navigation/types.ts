@@ -42,6 +42,34 @@ export type BookAppointmentStackParamList = {
   DoctorList: undefined;
   Filter: undefined;
   BookAppointment: { doctorId: string };
+  SymptomSelection: {
+    doctorId: string;
+    selectedDate: string;
+    selectedTime: string;
+    hasInsurance: boolean;
+  };
+  BookingConfirmation: {
+    doctorId: string;
+    selectedDate: string;
+    selectedTime: string;
+    hasInsurance: boolean;
+    selectedSymptoms: string[];
+  };
+  Payment: {
+    doctorId: string;
+    selectedDate: string;
+    selectedTime: string;
+    hasInsurance: boolean;
+    selectedSymptoms: string[];
+  };
+  PaymentSuccess: {
+    doctorId: string;
+    selectedDate: string;
+    selectedTime: string;
+    transactionId: string;
+    appointmentId?: string;
+    selectedSymptoms: string[];
+  };
 };
 
 // Định nghĩa MedicationScheduleStackParamList
