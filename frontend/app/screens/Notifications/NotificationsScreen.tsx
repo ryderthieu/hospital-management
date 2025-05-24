@@ -30,8 +30,6 @@ const NotificationsScreen: React.FC= () => {
         showAction={true}
         actionText="Đọc tất cả"
         onActionPress={() => {
-          // Reference to the markAllAsRead function in the NotificationsList component
-          // This would need to be handled via a ref or state management
         }}
       />
 

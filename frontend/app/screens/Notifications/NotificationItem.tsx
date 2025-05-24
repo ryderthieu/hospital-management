@@ -84,11 +84,13 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onPre
       <View style={styles.notificationContent}>
         <View style={styles.notificationHeader}>
           <Text style={styles.notificationTitle}>{notification.title}</Text>
-          <Text style={styles.notificationTime}>{notification.time}</Text>
+          <View style={styles.timeContainer}>
+            <Text style={styles.notificationTime}>{notification.time}</Text>
+            {!notification.isRead && <View style={styles.unreadIndicator} />}
+          </View>
         </View>
         <Text style={styles.notificationMessage}>{notification.message}</Text>
       </View>
-      {!notification.isRead && <View style={styles.unreadIndicator} />}
     </TouchableOpacity>
   );
 };
@@ -126,11 +128,18 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.bold,
     fontSize: 16,
     color: "#000000",
+    flex: 1,
+    marginRight: 10,
+  },
+  timeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   notificationTime: {
     fontFamily: fontFamily.regular,
     fontSize: 12,
     color: "#8E8E93",
+    marginRight: 8,
   },
   notificationMessage: {
     fontFamily: fontFamily.regular,
@@ -139,13 +148,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   unreadIndicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: "#00B5B8",
-    position: "absolute",
-    right: 20,
-    top: 20,
   }
 });
 

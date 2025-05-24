@@ -103,7 +103,7 @@ export default function HomeScreen() {
       id: 2,
       title: "Superfoods you must incorporate in your family's daily diet",
       date: '11 Jun 2025',
-      content: 'Superfoods like berries, nuts, and leafy greens can boost your family’s health...',
+      content: 'Superfoods like berries, nuts, and leafy greens can boost your family health...',
       image: require('../../assets/images/news/news2.webp'),
     },
     {
@@ -117,7 +117,7 @@ export default function HomeScreen() {
       id: 4,
       title: "Superfoods you must incorporate in your family's daily diet",
       date: '11 Jun 2025',
-      content: 'Superfoods like berries, nuts, and leafy greens can boost your family’s health...',
+      content: 'Superfoods like berries, nuts, and leafy greens can boost your family health...',
       image: require('../../assets/images/news/news4.webp'),
     },
   ];
@@ -193,7 +193,7 @@ export default function HomeScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Các chuyên khoa</Text>
+            <Text style={styles.sectionTitleInHeader}>Các chuyên khoa</Text>
             <TouchableOpacity onPress={() => navigation.navigate('BookAppointment')}>
               <Text style={styles.seeAllText}>Tất cả</Text>
             </TouchableOpacity>
@@ -217,7 +217,7 @@ export default function HomeScreen() {
 
         <View style={[styles.section, styles.newsSection]}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Tin tức</Text>
+            <Text style={styles.sectionTitleInHeader}>Tin tức</Text>
             <TouchableOpacity onPress={() => navigation.navigate('News')}>
               <Text style={styles.seeAllText}>Tất cả</Text>
             </TouchableOpacity>
@@ -327,6 +327,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     paddingHorizontal: 20,
     marginBottom: 15,
+  },
+  sectionTitleInHeader: {
+    fontFamily: fontFamily.bold,
+    fontSize: 18,
   },
   seeAllText: {
     fontFamily: fontFamily.regular,

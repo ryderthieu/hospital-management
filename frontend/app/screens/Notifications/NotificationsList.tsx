@@ -17,7 +17,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFont, fontFamily } from "../../context/FontContext";
 import NotificationItem from "./NotificationItem";
 
-// Định nghĩa kiểu dữ liệu cho một thông báo
 type NotificationType = {
   id: number;
   title: string;
@@ -27,7 +26,6 @@ type NotificationType = {
   type: string;
 };
 
-// Định nghĩa kiểu của ref được forward ra ngoài
 export type NotificationsListRef = {
   markAllAsRead: () => void;
   getUnreadCount: () => number;
