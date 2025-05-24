@@ -33,55 +33,47 @@ export interface Prescription {
   examinationDate: string
   doctor: string
 }
-
 export interface MedicationDetail {
   id: string
   name: string
-  route: string // Đường dùng
-  timesPerDay: number // Lần/ngày
-  quantityPerDay: number // Số lượng/ngày
-  timeOfUse: string // Buổi dùng
+  route: string 
+  timesPerDay: number 
+  quantityPerDay: number 
+  timeOfUse: string 
   isScheduled: boolean
-  hasReminder: boolean // Track whether a reminder has been set
+  hasReminder: boolean 
 }
-
 export interface PrescriptionDetail {
   id: string
   specialty: string
   code: string
   medications: MedicationDetail[]
 }
-
 export interface MedicationReminder {
   id: string
   time: string
   dosage: string
   isActive: boolean
 }
-
 export interface MedicationReminderSettings {
   medicationId: string
   medicationName: string
   remainingQuantity: number
   unit: string
-  startDate: string // Ngày bắt đầu - thêm mới
-  repeatFrequency: string // Thời gian lặp (VD: "MỖI NGÀY", "MỖI TUẦN", etc.) - thêm mới
+  startDate: string 
+  repeatFrequency: string 
   reminders: MedicationReminder[]
   notificationsEnabled: boolean
 }
-
-// Thêm interface mới cho các tùy chọn lặp lại
 export interface RepeatOption {
   id: string
   label: string
   value: string
 }
-
-// Thêm interface cho cài đặt tùy chỉnh
 export interface CustomReminderSettings {
   repeatType: "daily" | "weekly" | "monthly" | "custom"
-  repeatInterval: number // Số ngày/tuần/tháng
-  selectedDays?: number[] // Cho lặp hàng tuần (0-6, 0 = Chủ nhật)
-  endDate?: string // Ngày kết thúc (tùy chọn)
-  totalDoses?: number // Tổng số liều cần uống
+  repeatInterval: number 
+  selectedDays?: number[]
+  endDate?: string 
+  totalDoses?: number 
 }

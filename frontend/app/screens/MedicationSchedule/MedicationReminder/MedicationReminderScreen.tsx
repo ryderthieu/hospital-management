@@ -8,7 +8,6 @@ import { fontFamily } from "../../../context/FontContext"
 import Header from "../../../components/Header"
 import DailyReminderScreen from "./DailyReminderScreen"
 import CustomReminderScreen from "./CustomReminderScreen"
-import { colors } from "../../../styles/globalStyles"
 
 const MedicationReminderScreen: React.FC = () => {
   const navigation = useNavigation()
@@ -20,7 +19,6 @@ const MedicationReminderScreen: React.FC = () => {
       <Header title="Lịch nhắc thuốc" showBack={true} onBackPress={() => navigation.goBack()} />
       
       <View style={styles.content}>
-        {/* Tab Navigation */}
         <View style={styles.tabContainer}>
           <TouchableOpacity
             style={[styles.tab, activeTab === "daily" && styles.activeTab]}
@@ -53,7 +51,6 @@ const MedicationReminderScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Tab Content */}
         {activeTab === "daily" ? <DailyReminderScreen /> : <CustomReminderScreen />}
       </View>
     </SafeAreaView>

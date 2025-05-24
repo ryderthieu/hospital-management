@@ -84,92 +84,58 @@ const CompletedAppointmentDetailScreen = () => {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>PHIẾU KẾT QUẢ</Text>
 
+          {/* Compact Code Section */}
           <View style={styles.codeSection}>
             <Text style={styles.codeText}>
               Mã phiếu: {appointment.codes?.appointmentCode || "312893713"}
             </Text>
             <Text style={styles.codeText}>
-              Mã bệnh nhân: {appointment.codes?.patientCode || "47298347293847"}
+              Mã BN: {appointment.codes?.patientCode || "47298347293847"}
             </Text>
             <Text style={styles.codeText}>
-              Thời gian khám: {appointment.examTime || "14:00 - 15:30"} (
-              {appointment.date.split(", ")[1] || "23/04/2024"})
+              Khám: {appointment.examTime || "14:00 - 15:30"} ({appointment.date.split(", ")[1] || "23/04/2024"})
             </Text>
           </View>
 
+          {/* Compact Doctor & Patient Info */}
+          <View style={styles.compactInfoSection}>
+            <View style={styles.infoGroup}>
+              <Text style={styles.groupTitle}>Bác sĩ</Text>
+              <Text style={styles.doctorName}>{appointment.doctorName}</Text>
+              <Text style={styles.specialty}>{appointment.specialty}</Text>
+            </View>
+            
+            <View style={styles.infoGroup}>
+              <Text style={styles.groupTitle}>Bệnh nhân</Text>
+              <Text style={styles.patientName}>{appointment.patientName}</Text>
+              <Text style={styles.followUpInfo}>Tái khám: {appointment.followUpDate}</Text>
+            </View>
+          </View>
+
+          {/* Diagnosis */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Thông tin bác sĩ</Text>
-            <Text style={styles.doctorName}>
-              {appointment.doctorName || "BSCKII. TRẦN ĐỖ PHƯƠNG NHI"}
-            </Text>
-            <View style={styles.specialtyRow}>
-              <Text style={styles.specialtyLabel}>Chuyên khoa:</Text>
-              <Text style={styles.specialtyValue}>
-                {appointment.specialty || "Tim mạch"}
+            <Text style={styles.sectionTitle}>Chẩn đoán</Text>
+            {appointment.diagnosis.map((item, index) => (
+              <Text key={index} style={styles.diagnosisText}>
+                {index + 1}. {item}
               </Text>
-            </View>
+            ))}
           </View>
 
+          {/* Doctor Notes */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Thông tin bệnh nhân</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Họ tên:</Text>
-              <Text style={styles.infoValue}>
-                {appointment.patientName || "LÊ THIỆN NHI"}
-              </Text>
-            </View>
+            <Text style={styles.sectionTitle}>Ghi chú bác sĩ</Text>
+            {appointment.doctorNotes.map((note, index) => (
+              <View key={index} style={styles.noteItem}>
+                <Ionicons name="checkmark-circle" size={18} color="#4CAF50" />
+                <Text style={styles.noteText}>{note}</Text>
+              </View>
+            ))}
           </View>
 
-          <View style={styles.section}>
-            <View style={styles.infoRow}>
-              <Text style={[styles.sectionTitle, styles.followUpTitle]}>
-                Ngày tái khám:
-              </Text>
-              <Text style={styles.followUpDate}>
-                {appointment.followUpDate || "30/04/2024"}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Chẩn đoán bệnh</Text>
-            <View style={styles.diagnosisList}>
-              {(
-                appointment.diagnosis || [
-                  "Hở van tim.",
-                  "Có dấu hiệu mỡ trong máu",
-                ]
-              ).map((item, index) => (
-                <View key={index} style={styles.diagnosisItem}>
-                  <Text style={styles.diagnosisNumber}>{index + 1}.</Text>
-                  <Text style={styles.diagnosisText}>{item}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Ghi chú của bác sĩ</Text>
-            <View style={styles.notesList}>
-              {(
-                appointment.doctorNotes || [
-                  "Nên uống nhiều nước hơn",
-                  "Không hút thuốc",
-                  "Không suy nghĩ nhiều, giữ đầu óc thư giãn",
-                ]
-              ).map((note, index) => (
-                <View key={index} style={styles.noteItem}>
-                  <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
-                  <Text style={styles.noteText}>{note}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              Kết quả xét nghiệm & Toa thuốc
-            </Text>
+          {/* Files */}
+          <View style={styles.lastSection}>
+            <Text style={styles.sectionTitle}>Kết quả & Toa thuốc</Text>
             <View style={styles.filesList}>
               <TouchableOpacity style={styles.fileItem}>
                 <Image
@@ -178,7 +144,6 @@ const CompletedAppointmentDetailScreen = () => {
                 />
                 <Text style={styles.fileName}>File 1</Text>
               </TouchableOpacity>
-
               <TouchableOpacity style={styles.fileItem}>
                 <Image
                   source={require("../../assets/images/logo/Logo.png")}
@@ -188,18 +153,6 @@ const CompletedAppointmentDetailScreen = () => {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
-
-        <View style={styles.actionButtonsContainer}>
-          <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="calendar-outline" size={20} color="#FFFFFF" />
-            <Text style={styles.actionButtonText}>Đặt lịch tái khám</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.actionButton, styles.shareButton]}>
-            <Ionicons name="share-outline" size={20} color="#FFFFFF" />
-            <Text style={styles.actionButtonText}>Chia sẻ kết quả</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -235,7 +188,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
-    padding: 20,
+    padding: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -244,151 +197,111 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontFamily: fontFamily.bold,
-    fontSize: 24,
+    fontSize: 22,
     color: "#0BC5C5",
     textAlign: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   codeSection: {
-    marginBottom: 24,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
   },
   codeText: {
-    fontFamily: fontFamily.light,
-    fontSize: 14,
+    fontFamily: fontFamily.regular,
+    fontSize: 13,
     color: "#6B7280",
     textAlign: "center",
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  section: {
-    marginBottom: 20,
+  compactInfoSection: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+    paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#E5E7EB",
-    paddingBottom: 16,
   },
-  sectionTitle: {
+  infoGroup: {
+    flex: 1,
+  },
+  groupTitle: {
     fontFamily: fontFamily.bold,
-    fontSize: 18,
+    fontSize: 14,
     color: "#0BC5C5",
-    marginBottom: 12,
+    marginBottom: 6,
   },
   doctorName: {
     fontFamily: fontFamily.bold,
-    fontSize: 20,
-    marginBottom: 8,
-  },
-  specialtyRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  specialtyLabel: {
-    fontFamily: fontFamily.regular,
     fontSize: 16,
-    color: "#4B5563",
-    marginRight: 4,
+    marginBottom: 4,
   },
-  specialtyValue: {
+  specialty: {
+    fontFamily: fontFamily.regular,
+    fontSize: 14,
+    color: "#6B7280",
+  },
+  patientName: {
     fontFamily: fontFamily.bold,
     fontSize: 16,
-    color: "#111827",
+    marginBottom: 4,
   },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  infoLabel: {
+  followUpInfo: {
     fontFamily: fontFamily.regular,
-    fontSize: 16,
-    color: "#4B5563",
-    marginRight: 4,
+    fontSize: 14,
+    color: "#6B7280",
   },
-  infoValue: {
-    fontFamily: fontFamily.bold,
-    fontSize: 16,
-    color: "#111827",
+  section: {
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
   },
-  followUpTitle: {
+  lastSection: {
     marginBottom: 0,
   },
-  followUpDate: {
-    fontFamily: fontFamily.bold,
-    fontSize: 18,
-    color: "#000",
-    marginLeft: 8,
-  },
-  diagnosisList: {
-    marginTop: 4,
-  },
-  diagnosisItem: {
-    flexDirection: "row",
-    marginBottom: 8,
-  },
-  diagnosisNumber: {
+  sectionTitle: {
     fontFamily: fontFamily.bold,
     fontSize: 16,
-    marginRight: 8,
-    width: 20,
+    color: "#0BC5C5",
+    marginBottom: 8,
   },
   diagnosisText: {
     fontFamily: fontFamily.regular,
-    fontSize: 16,
-    flex: 1,
-  },
-  notesList: {
-    marginTop: 4,
+    fontSize: 15,
+    marginBottom: 4,
+    lineHeight: 20,
   },
   noteItem: {
     flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
+    alignItems: "flex-start",
+    marginBottom: 8,
   },
   noteText: {
     fontFamily: fontFamily.regular,
-    fontSize: 16,
-    marginLeft: 12,
+    fontSize: 14,
+    marginLeft: 8,
     flex: 1,
+    lineHeight: 18,
   },
   filesList: {
     flexDirection: "row",
-    marginTop: 8,
+    marginTop: 4,
   },
   fileItem: {
     alignItems: "center",
-    marginRight: 24,
+    marginRight: 20,
   },
   fileIcon: {
-    width: 60,
-    height: 60,
-    marginBottom: 8,
+    width: 50,
+    height: 50,
+    marginBottom: 6,
   },
   fileName: {
     fontFamily: fontFamily.regular,
-    fontSize: 14,
+    fontSize: 13,
     color: "#4B5563",
-  },
-  actionButtonsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  actionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#0BC5C5",
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    width: "48%",
-  },
-  shareButton: {
-    backgroundColor: "#4B5563",
-  },
-  actionButtonText: {
-    fontFamily: fontFamily.bold,
-    fontSize: 14,
-    color: "#FFFFFF",
-    marginLeft: 8,
   },
 });
 

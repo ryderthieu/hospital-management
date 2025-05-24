@@ -15,16 +15,15 @@ import WeekdaySelectionModal from "../../../components/MedicationSchedule/Medica
 import { colors } from "../../../styles/globalStyles"
 import type { MedicationReminderSettings, MedicationReminder } from "../type"
 
-// Sample data for custom tab
 const sampleCustomReminderSettings: MedicationReminderSettings = {
   medicationId: "1",
   medicationName: "Ambroxol HCl (Medovent 30mg)",
   remainingQuantity: 84,
   unit: "Viên",
   startDate: "27/04/2024",
-  repeatFrequency: "NGÀY CỤ THỂ", // Đặt mặc định là NGÀY CỤ THỂ để hiển thị tùy chọn "Ngày nào?"
+  repeatFrequency: "NGÀY CỤ THỂ",
   repeatInterval: { value: 1, unit: "NGÀY" },
-  selectedWeekdays: ["T2", "T3", "T4", "T5", "T6", "T7", "CN"], // Thêm selectedWeekdays
+  selectedWeekdays: ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
   reminders: [
     {
       id: "1",

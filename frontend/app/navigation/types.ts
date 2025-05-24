@@ -46,7 +46,7 @@ export type BookAppointmentStackParamList = {
 
 // Định nghĩa MedicationScheduleStackParamList
 export type MedicationScheduleStackParamList = {
-  MedicationSchedule: undefined;
+  MedicationScheduleHome: undefined;
   PrescriptionManagement: { prescriptionId: string };
   PrescriptionDetail: { prescriptionId: string };
 };

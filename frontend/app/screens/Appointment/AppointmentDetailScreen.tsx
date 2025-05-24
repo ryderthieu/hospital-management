@@ -108,18 +108,6 @@ const AppointmentDetailScreen = () => {
             <Text style={styles.disclaimerText}>Lưu ý: Số thứ tự này chỉ có giá trị sử dụng trong ngày.</Text>
           </View>
         </View>
-
-        <View style={styles.actionButtonsContainer}>
-          <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="calendar-outline" size={20} color="#FFFFFF" />
-            <Text style={styles.actionButtonText}>Đổi lịch hẹn</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.actionButton, styles.cancelButton]}>
-            <Ionicons name="close-circle-outline" size={20} color="#FFFFFF" />
-            <Text style={styles.actionButtonText}>Hủy lịch hẹn</Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
     </SafeAreaView>
   )

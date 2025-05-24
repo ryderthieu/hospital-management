@@ -52,7 +52,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
             case 'Appointment':
               iconName = isFocused ? 'calendar' : 'calendar-outline';
               break;
-            case 'Prescription':
+            case 'MedicationSchedule':
               iconName = isFocused ? 'document-text' : 'document-text-outline';
               break;
             case 'Profile':

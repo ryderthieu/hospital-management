@@ -8,9 +8,8 @@ import { fontFamily } from "../../../context/FontContext"
 import EditReminderModal from "../../../components/MedicationSchedule/MedicationReminder/EditReminderModal"
 import DeleteReminderModal from "../../../components/MedicationSchedule/MedicationReminder/DeleteReminderModal"
 import { colors } from "../../../styles/globalStyles"
-import type { MedicationReminderSettings, MedicationReminder } from "./type"
+import type { MedicationReminderSettings, MedicationReminder } from "../type"
 
-// Sample data for daily tab
 const sampleDailyReminderSettings: MedicationReminderSettings = {
   medicationId: "1",
   medicationName: "Ambroxol HCl (Medovent 30mg)",

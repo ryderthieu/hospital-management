@@ -11,13 +11,13 @@ const Stack = createStackNavigator<MedicationScheduleStackParamList>();
 const MedicationScheduleStackNavigator: React.FC = () => {
   return (
     <Stack.Navigator
-      initialRouteName="MedicationSchedule"
+      initialRouteName="MedicationScheduleHome"
       screenOptions={{
         headerShown: false,
       }}
     >
       <Stack.Screen
-        name="MedicationSchedule"
+        name="MedicationScheduleHome"
         component={MedicationScheduleScreen}
       />
       <Stack.Screen

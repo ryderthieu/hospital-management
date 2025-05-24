@@ -7,16 +7,17 @@ import { useNavigation, useRoute } from "@react-navigation/native"
 import { fontFamily } from "../../../context/FontContext"
 import Header from "../../../components/Header"
 import { colors } from "../../../styles/globalStyles"
-import type { PrescriptionDetail, MedicationDetail } from "./types"
+import type { PrescriptionDetail, MedicationDetail } from "../type"
 
-// Sample data - in a real app, this would come from the route params or API
-const samplePrescriptionDetail: PrescriptionDetail = {
+// Sample data - single prescription object with more medications
+const samplePrescriptionDetail = {
   id: "1",
-  specialty: "Tim mạch",
-  code: "53287529472",
+  specialty: "Tim mạch - Đa khoa",
+  code: "TM240001",
   medications: [
+    // Thuốc đã đặt lịch
     {
-      id: "1",
+      id: "med_001",
       name: "Ambroxol HCl (Medovent 30mg)",
       route: "Uống",
       timesPerDay: 3,
@@ -26,24 +27,115 @@ const samplePrescriptionDetail: PrescriptionDetail = {
       hasReminder: true,
     },
     {
-      id: "2",
-      name: "Ambroxol HCl (Medovent 30mg)",
+      id: "med_002",
+      name: "Vitamin C 500mg",
       route: "Uống",
-      timesPerDay: 3,
-      quantityPerDay: 1,
-      timeOfUse: "Sáng, trưa, chiều",
+      timesPerDay: 2,
+      quantityPerDay: 2,
+      timeOfUse: "Sau ăn sáng và tối",
       isScheduled: true,
       hasReminder: true,
     },
     {
-      id: "3",
-      name: "Ambroxol HCl (Medovent 30mg)",
+      id: "med_003",
+      name: "Amlodipine 5mg",
+      route: "Uống",
+      timesPerDay: 1,
+      quantityPerDay: 1,
+      timeOfUse: "Buổi sáng, lúc đói",
+      isScheduled: true,
+      hasReminder: true,
+    },
+    {
+      id: "med_004",
+      name: "Losartan 50mg",
+      route: "Uống",
+      timesPerDay: 1,
+      quantityPerDay: 1,
+      timeOfUse: "Buổi tối, lúc đói",
+      isScheduled: true,
+      hasReminder: true,
+    },
+    {
+      id: "med_005",
+      name: "Omeprazole 20mg",
+      route: "Uống",
+      timesPerDay: 1,
+      quantityPerDay: 1,
+      timeOfUse: "Trước ăn sáng 30 phút",
+      isScheduled: true,
+      hasReminder: true,
+    },
+    // Thuốc chưa đặt lịch
+    {
+      id: "med_006",
+      name: "Paracetamol 500mg",
+      route: "Uống",
+      timesPerDay: 3,
+      quantityPerDay: 3,
+      timeOfUse: "Sau ăn 30 phút",
+      isScheduled: false,
+      hasReminder: false,
+    },
+    {
+      id: "med_007",
+      name: "Cephalexin 250mg",
+      route: "Uống",
+      timesPerDay: 4,
+      quantityPerDay: 4,
+      timeOfUse: "Cách nhau 6 tiếng",
+      isScheduled: false,
+      hasReminder: false,
+    },
+    {
+      id: "med_008",
+      name: "Aspirin 100mg",
+      route: "Uống",
+      timesPerDay: 1,
+      quantityPerDay: 1,
+      timeOfUse: "Sau ăn tối",
+      isScheduled: false,
+      hasReminder: false,
+    },
+    {
+      id: "med_009",
+      name: "Metformin 500mg",
+      route: "Uống",
+      timesPerDay: 2,
+      quantityPerDay: 2,
+      timeOfUse: "Sau ăn sáng và tối",
+      isScheduled: false,
+      hasReminder: false,
+    },
+    {
+      id: "med_010",
+      name: "Simvastatin 20mg",
+      route: "Uống",
+      timesPerDay: 1,
+      quantityPerDay: 1,
+      timeOfUse: "Trước khi đi ngủ",
+      isScheduled: false,
+      hasReminder: false,
+    },
+    {
+      id: "med_011",
+      name: "Dextromethorphan 15mg",
       route: "Uống",
       timesPerDay: 3,
       quantityPerDay: 1,
-      timeOfUse: "Sáng, trưa, chiều",
-      isScheduled: true,
-      hasReminder: true,
+      timeOfUse: "Khi ho, cách nhau ít nhất 4 tiếng",
+      isScheduled: false,
+      hasReminder: false,
+    },
+    {
+      id: "med_012",
+      name: "Loratadine 10mg",
+      route: "Uống",
+      timesPerDay: 1,
+      quantityPerDay: 1,
+      timeOfUse: "Buổi tối trước khi ngủ",
+      isScheduled: false,
+      hasReminder: false,
     },
   ],
 }
@@ -52,10 +144,11 @@ const PrescriptionDetailsScreen: React.FC = () => {
   const navigation = useNavigation()
   const route = useRoute()
 
-  // In a real app, you would get this from route.params
-  const [prescriptionDetail] = useState<PrescriptionDetail>(samplePrescriptionDetail)
-  const [activeTab, setActiveTab] = useState<"unscheduled" | "scheduled">("scheduled") // Set initial tab to "scheduled"
-
+  // Fixed: Using a single prescription object instead of array
+  const [prescriptionDetail] = useState(samplePrescriptionDetail)
+  const [activeTab, setActiveTab] = useState<"unscheduled" | "scheduled">("scheduled")
+  
+  // These will now work correctly since prescriptionDetail.medications exists
   const unscheduledMedications = prescriptionDetail.medications.filter((med) => !med.isScheduled)
   const scheduledMedications = prescriptionDetail.medications.filter((med) => med.isScheduled)
 
@@ -121,9 +214,14 @@ const PrescriptionDetailsScreen: React.FC = () => {
       </TouchableOpacity>
 
       {/* Only add divider if it's not the last item */}
-      {medication.id !== scheduledMedications[scheduledMedications.length - 1].id && (
-        <View style={styles.dottedDivider} />
-      )}
+      {activeTab === "scheduled" && scheduledMedications.length > 0 &&
+        medication.id !== scheduledMedications[scheduledMedications.length - 1].id && (
+          <View style={styles.dottedDivider} />
+        )}
+      {activeTab === "unscheduled" && unscheduledMedications.length > 0 &&
+        medication.id !== unscheduledMedications[unscheduledMedications.length - 1].id && (
+          <View style={styles.dottedDivider} />
+        )}
     </View>
   )
 
@@ -288,12 +386,55 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
+  medicationIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#E3F2FD",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  pillIcon: {
+    flexDirection: "row",
+    width: 20,
+    height: 12,
+  },
+  pillLeft: {
+    width: 10,
+    height: 12,
+    backgroundColor: colors.base500,
+    borderTopLeftRadius: 6,
+    borderBottomLeftRadius: 6,
+  },
+  pillRight: {
+    width: 10,
+    height: 12,
+    backgroundColor: "#81C784",
+    borderTopRightRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+  medicationName: {
+    fontSize: 16,
+    color: "#333",
+    flex: 1,
+  },
   medicationDetails: {
     marginBottom: 12,
   },
   detailRow: {
     flexDirection: "row",
     marginBottom: 6,
+  },
+  detailLabel: {
+    fontSize: 14,
+    color: "#666",
+    width: 120,
+  },
+  detailValue: {
+    fontSize: 14,
+    color: "#333",
+    flex: 1,
   },
   reminderButton: {
     flexDirection: "row",
@@ -349,8 +490,8 @@ const styles = StyleSheet.create({
   },
   bellSlash: {
     position: "absolute",
-    top: 2,
-    left: 0,
+    top: 6,
+    left: -2,
     width: 20,
     height: 2,
     backgroundColor: "#FF5252",
