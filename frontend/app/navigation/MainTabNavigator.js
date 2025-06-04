@@ -2,10 +2,10 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import HomeStackNavigator from './HomeStackNavigator';
+import ProfileStackNavigator from './ProfileStackNavigator';
 import SearchScreen from '../screens/Search/SearchScreen';
 import AppointmentScreen from '../screens/Appointment/AppointmentScreen';
 import PrescriptionScreen from '../screens/Prescription/PrescriptionScreen';
-import ProfileScreen from '../screens/Profile/ProfileScreen';
 import { Ionicons } from '@expo/vector-icons';
 import { useFont, fontFamily } from '../context/FontContext';
 
@@ -56,7 +56,7 @@ function CustomTabBar({ state, descriptors, navigation }) {
             <TouchableOpacity
               key={index}
               accessibilityRole="button"
-              accessible={false} // Tắt accessibility để loại bỏ viền focus
+              accessible={false} 
               onPress={onPress}
               style={styles.tabButton}
             >
@@ -157,7 +157,7 @@ export default function MainTabNavigator() {
       />
       <Tab.Screen
         name="Profile"
-        component={ProfileScreen}
+        component={ProfileStackNavigator}
         options={{ title: 'Hồ sơ' }}
       />
     </Tab.Navigator>
