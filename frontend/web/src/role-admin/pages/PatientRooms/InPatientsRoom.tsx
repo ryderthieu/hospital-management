@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import PageMeta from "../../components/common/PageMeta";
 import SearchInput from "../../components/common/SearchInput";
-import InpatientRoomCard, {
-  InpatientRoomCardProps,
-} from "../../components/inpatients/InpatientRoomCard";
+import InpatientRoomCard, { InpatientRoomCardProps} from "../../components/inpatients/InpatientRoomCard";
 import { Link } from "react-router-dom";
 import Metric from "../../components/statistics/ClinicMetric";
 import { ActiveIcon, ClinicIcon, FullIcon, WarningIcon } from "../../icons";
