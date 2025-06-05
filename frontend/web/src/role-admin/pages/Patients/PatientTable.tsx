@@ -10,7 +10,7 @@ import Badge from "../../components/ui/badge/Badge";
 import { useEffect, useRef, useState } from "react";
 import { DeleteConfirmationModal } from "../../components/ui/modal/DeleteConfirmationModal";
 import { useNavigate } from "react-router";
-import DatePicker from "../../components/form/date-picker";
+import DatePicker from "../../components/appointments/DatePicker";
 import SearchInput from "../../components/common/SearchInput";
 
 interface Patient {
@@ -21,7 +21,7 @@ interface Patient {
     phoneNumber: string,
   };
   createAt: string;
-  gender: "Nam" | "Nữ" | "Other",
+  gender: "Nam" | "Nữ" | "Khác",
   bloodType: string;
   birthday: string;
 }
@@ -126,7 +126,7 @@ export default function PatientTable() {
 
   const handleView = (patientId: string) => {
   console.log(`Viewing patient with ID: ${patientId}`);
-  navigate(`/patients/${patientId}`);
+  navigate(`/admin/patients/${patientId}`);
   };
 
   const handleDelete = (patientId: string) => {

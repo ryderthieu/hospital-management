@@ -11,7 +11,6 @@ import Avatars from "./pages/UiElements/Avatars";
 import Buttons from "./pages/UiElements/Buttons";
 import LineChart from "./pages/Charts/LineChart";
 import BarChart from "./pages/Charts/BarChart";
-import Calendar from "./pages/Calendar";
 import BasicTables from "./pages/Tables/BasicTables";
 import FormElements from "./pages/Forms/FormElements";
 import Blank from "./pages/Blank";
@@ -21,10 +20,18 @@ import Home from "./pages/Dashboard/Home";
 import Patient from "./pages/Patients/Patient";
 import PatientDetail from "./pages/Patients/PatientDetail";
 import Doctor from "./pages/Doctors/Doctor";
+import DoctorDetail from "./pages/Doctors/DoctorDetail";
+import DoctorSchedule from "./pages/Doctors/DoctorSchedule";
 import Medicine from "./pages/Medicines/Medicines";
 import Service from "./pages/HealthServices/Services";
 import Department from "./pages/Departments/Department";
-import PatientRoom from "./pages/PatientRooms/PatientsRoom";
+import RoomDetail from "./pages/PatientRooms/RoomDetails";
+import PatientAddForm from "./pages/Patients/PatientAddForm"; 
+import Inpatient from "./pages/PatientRooms/Inpatients";
+import Clinics from "./pages/MedicalExamination/OutpatientClinics";
+import MedicalCalendar from "./pages/MedicalExamination/MedicalCalendar";
+import ClinicDetail from "./pages/MedicalExamination/ClinicDetail";
+import InpatientRoom from "./pages/PatientRooms/InPatientsRoom";
 
 const AdminApp: React.FC = () => {
   return (
@@ -36,28 +43,37 @@ const AdminApp: React.FC = () => {
           <Route element={<AppLayout />}>
             <Route index path="/admin" element={<Home />} />
 
+            {/* Medical Examinations Pages */}
+            <Route path="/admin/calendar" element={<MedicalCalendar />} />
+            <Route path="/admin/outpatient-clinics" element={<Clinics />} />
+            <Route path="/admin/outpatient-clinics/:id" element={<ClinicDetail />} />
+
             {/* Patients Pages */}
             <Route path="/admin/patients" element={<Patient />} />
             <Route path="/admin/patients/:id" element={<PatientDetail />} />
+            <Route path="/admin/patients/new" element={<PatientAddForm />} /> 
 
             {/* Doctors Page */}
             <Route path="/admin/doctors" element={<Doctor />} />
+            <Route path="/admin/doctors/detail" element={<DoctorDetail />} />
+            <Route path="/admin/doctors/schedule" element={<DoctorSchedule />} />
 
             {/* Medicines Page */}
             <Route path="/admin/medicines" element={<Medicine />} />
 
             {/* Services Page */}
-            <Route path="/admin/services" element={<Service />} />
+            <Route path="/admin/health-services" element={<Service />} />
 
             {/* Patients Room Page */}
-            <Route path="/admin/patients-rooms" element={<PatientRoom />} />
+            <Route path="/admin/inpatients-rooms" element={<InpatientRoom />} />
+            <Route path="/admin/inpatients" element={<Inpatient />} />
+            <Route path="/admin/inpatients-rooms/roomdetails" element={<RoomDetail />} />
 
             {/* Department Page */}
             <Route path="/admin/departments" element={<Department />} />
 
             {/* Others Page */}
             <Route path="/admin/profile" element={<UserProfiles />} />
-            <Route path="/admin/calendar" element={<Calendar />} />
             <Route path="/admin/blank" element={<Blank />} />
 
             {/* Forms */}
@@ -80,8 +96,8 @@ const AdminApp: React.FC = () => {
           </Route>
 
           {/* Auth Layout */}
-          <Route path="/admin/signin" element={<SignIn />} />
-          <Route path="/admin/signup" element={<SignUp />} />
+          <Route path="/" element={<SignIn />} />
+          <Route path="/signup" element={<SignUp />} />
 
           {/* Fallback Route */}
           <Route path="*" element={<NotFound />} />
@@ -91,4 +107,4 @@ const AdminApp: React.FC = () => {
   );
 }
 
-export default AdminApp
+export default AdminApp;

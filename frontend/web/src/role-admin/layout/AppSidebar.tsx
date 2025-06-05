@@ -8,19 +8,16 @@ import {
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
-  ListIcon,
-  PageIcon,
   PieChartIcon,
   PlugInIcon,
-  TableIcon,
   UserCircleIcon,
   DoctorIcon,
   PatientIcon,
-  MedicalRecordIcon,
-  DepartmentIcon
+  DepartmentIcon,
+  InpatientIcon,
+  AdminIcon
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
-import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
   name: string;
@@ -33,72 +30,79 @@ const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Tổng quan",
-    path: "/",
+    path: "/admin",
   },
   {
+    name: "Khám bệnh",
     icon: <CalenderIcon />,
-    name: "Lịch khám",
-    path: "/calendar",
+    subItems: [
+          { name: "Lịch khám", path: "/admin/calendar", pro: false },
+          { name: "Phòng khám", path: "/admin/outpatient-clinics", pro: false },
+        ],
   },
   {
     icon: <PatientIcon />,
     name: "Bệnh nhân",
-    path: "/patients",
+    path: "/admin/patients",
+  },
+  {
+    name: "Nội trú",
+    icon: <InpatientIcon />,
+    subItems: [
+          { name: "Phòng bệnh", path: "/admin/inpatients-rooms", pro: false },
+          { name: "Bệnh nhân nội trú", path: "/admin/inpatients", pro: false },
+        ],
   },
   {
     icon: <DoctorIcon />,
     name: "Bác sĩ",
-    path: "/doctors"
-  },
-  {
-    name: "Phòng bệnh",
-    icon: <DepartmentIcon />,
-    path: "/patients-rooms",
+    path: "/admin/doctors"
   },
   {
     icon: <CalenderIcon />,
     name: "Kho thuốc",
-    path: "/medicines",
+    path: "/admin/medicines",
   },
   {
     icon: <BoxCubeIcon />,
     name: "Dịch vụ",
-    path: "/services",
+    path: "/admin/health-services",
   },
   {
     name: "Phòng ban",
     icon: <DepartmentIcon />,
-    path: "/departments"
+    path: "/admin/departments"
   },
 
   {
-    icon: <UserCircleIcon />,
+    icon: <AdminIcon />,
     name: "Phân quyền",
-    path: "/authorization",
+    path: "/admin/authorization",
   },
   {
     icon: <UserCircleIcon />,
-    name: "User Profile",
-    path: "/profile",
+    name: "Hồ sơ",
+    path: "/admin/profile",
   },
-  {
-    name: "Forms",
-    icon: <ListIcon />,
-    subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  },
-  {
-    name: "Tables",
-    icon: <TableIcon />,
-    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  },
-  {
-    name: "Pages",
-    icon: <PageIcon />,
-    subItems: [
-      { name: "Blank Page", path: "/blank", pro: false },
-      { name: "404 Error", path: "/error-404", pro: false },
-    ],
-  },
+
+  // {
+  //   name: "Forms",
+  //   icon: <ListIcon />,
+  //   subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
+  // },
+  // {
+  //   name: "Tables",
+  //   icon: <TableIcon />,
+  //   subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
+  // },
+  // {
+  //   name: "Pages",
+  //   icon: <PageIcon />,
+  //   subItems: [
+  //     { name: "Blank Page", path: "/blank", pro: false },
+  //     { name: "404 Error", path: "/error-404", pro: false },
+  //   ],
+  // },
 ];
 
 const othersItems: NavItem[] = [
@@ -126,7 +130,7 @@ const othersItems: NavItem[] = [
     icon: <PlugInIcon />,
     name: "Authentication",
     subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
+      { name: "Sign In", path: "/", pro: false },
       { name: "Sign Up", path: "/signup", pro: false },
     ],
   },
@@ -147,7 +151,7 @@ const AppSidebar: React.FC = () => {
 
   // const isActive = (path: string) => location.pathname === path;
   const isActive = useCallback(
-    (path: string) => location.pathname === path || location.pathname.startsWith(`${path}/`),
+    (path: string) => location.pathname === path || location.pathname.startsWith(`/admin/${path}/`),
     [location.pathname]
   );
 
@@ -372,7 +376,7 @@ const AppSidebar: React.FC = () => {
               </h2>
               {renderMenuItems(navItems, "main")}
             </div>
-            <div className="">
+            {/* <div className="">
               <h2
                 className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
                   !isExpanded && !isHovered
@@ -387,7 +391,7 @@ const AppSidebar: React.FC = () => {
                 )}
               </h2>
               {renderMenuItems(othersItems, "others")}
-            </div>
+            </div> */}
           </div>
         </nav>
         {/* {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null} */}
