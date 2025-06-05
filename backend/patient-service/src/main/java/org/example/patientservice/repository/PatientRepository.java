@@ -2,11 +2,24 @@ package org.example.patientservice.repository;
 
 import org.example.patientservice.entity.Patient;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+@Repository
 public interface PatientRepository extends JpaRepository<Patient, Integer> {
-    Optional<Patient> findByIdentityNumber(String identityNumber);
 
-    Optional<Patient> findByInsuranceNumber(String insuranceNumber);
+    @Query("""
+        SELECT p 
+        FROM Patient p 
+        WHERE (p.identityNumber = :identityNumber OR :identityNumber IS NULL)
+           AND (p.insuranceNumber = :insuranceNumber OR :insuranceNumber IS NULL)
+           AND (p.fullName = :fullName OR :fullName IS NULL)
+    """)
+    Optional<Patient> searchByIdentityNumberOrInsuranceNumberOrFullName(
+            String identityNumber,
+            String insuranceNumber,
+            String fullName
+    );
 }

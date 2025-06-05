@@ -20,6 +20,8 @@ import Home from "./pages/Dashboard/Home";
 import Patient from "./pages/Patients/Patient";
 import PatientDetail from "./pages/Patients/PatientDetail";
 import Doctor from "./pages/Doctors/Doctor";
+import DoctorDetail from "./pages/Doctors/DoctorDetail";
+import DoctorSchedule from "./pages/Doctors/DoctorSchedule";
 import Medicine from "./pages/Medicines/Medicines";
 import Service from "./pages/HealthServices/Services";
 import Department from "./pages/Departments/Department";
@@ -53,6 +55,8 @@ const AdminApp: React.FC = () => {
 
             {/* Doctors Page */}
             <Route path="/admin/doctors" element={<Doctor />} />
+            <Route path="/admin/doctors/detail" element={<DoctorDetail />} />
+            <Route path="/admin/doctors/schedule" element={<DoctorSchedule />} />
 
             {/* Medicines Page */}
             <Route path="/admin/medicines" element={<Medicine />} />
@@ -63,7 +67,7 @@ const AdminApp: React.FC = () => {
             {/* Patients Room Page */}
             <Route path="/admin/inpatients-rooms" element={<InpatientRoom />} />
             <Route path="/admin/inpatients" element={<Inpatient />} />
-            <Route path="/admin/room-details" element={<RoomDetail />} />
+            <Route path="/admin/inpatients-rooms/room-details" element={<RoomDetail />} />
 
             {/* Department Page */}
             <Route path="/admin/departments" element={<Department />} />

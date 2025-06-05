@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { AuthProvider } from './context/AuthContext';
 import RootNavigator from './navigation/RootNavigator';
-import { FontProvider, useFont } from './context/FontContext';
+import { FontProvider, useFont } from './context/FontContext.js';
 import { View, Text } from 'react-native';
 
 function AppContent() {

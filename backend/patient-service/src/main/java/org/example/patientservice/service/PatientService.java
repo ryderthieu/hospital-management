@@ -7,17 +7,15 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PatientService {
-    Patient createPatient(PatientDto patientDto);
+    PatientDto createPatient(PatientDto patientDto);
 
-    List<Patient> getAllPatients();
+    List<PatientDto> getAllPatients();
 
-    Patient getPatientById(Integer patientId);
+    PatientDto getPatientById(Integer patientId);
 
-    Patient updatePatient(Integer patientId, PatientDto patientDto);
+    PatientDto updatePatient(Integer patientId, PatientDto patientDto);
 
     void deletePatient(Integer patientId);
 
-    Optional<Patient> searchPatientByIdentityNumber(String identityNumber);
-
-    Optional<Patient> searchPatientByInsuranceNumber(String insuranceNumber);
+    Optional<PatientDto> searchPatient(String identityNumber, String insuranceNumber, String fullName);
 }
