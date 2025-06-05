@@ -63,7 +63,7 @@ const AdminApp: React.FC = () => {
             {/* Patients Room Page */}
             <Route path="/admin/inpatients-rooms" element={<InpatientRoom />} />
             <Route path="/admin/inpatients" element={<Inpatient />} />
-            <Route path="/admin/roomdetails" element={<RoomDetail />} />
+            <Route path="/admin/room-details" element={<RoomDetail />} />
 
             {/* Department Page */}
             <Route path="/admin/departments" element={<Department />} />
