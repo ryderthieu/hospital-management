@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import PageMeta from "../../components/common/PageMeta";
-import { ClinicCardProps } from "../../components/clinics/ClinicCard";
+import { ClinicCardProps } from "../../components/sections/clinics/ClinicCard";
 
 interface Doctor {
   id: string;
@@ -34,8 +34,6 @@ const ClinicDetail: React.FC = () => {
   const cancelledAppointments = 2;
   
   useEffect(() => {
-    // Trong thực tế, bạn sẽ gọi API để lấy thông tin chi tiết phòng khám
-    // Ở đây, chúng ta sẽ giả lập dữ liệu
     const fetchClinicData = async () => {
       try {
         setLoading(true);
