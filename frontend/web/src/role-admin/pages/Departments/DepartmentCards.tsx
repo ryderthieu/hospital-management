@@ -1,5 +1,5 @@
 import { useState } from "react";
-import PageMeta from "../../components/common/PageMeta";
+import { useNavigate } from "react-router-dom";
 import Pagination from "../../components/common/Pagination";
 
 interface Department {
@@ -166,8 +166,14 @@ const departmentData: Department[] = [
 const PAGE_SIZE = 6; // Hiển thị 6 card mỗi trang
 
 export default function DepartmentCards() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  
+  // Function to handle navigation to department detail page
+  const handleViewDetail = (department: Department) => {
+    navigate(`/admin/departments/${department.id}`);
+  };
 
   // Lọc danh sách khoa theo từ khóa tìm kiếm
   const filteredDepartments = departmentData.filter(department => 

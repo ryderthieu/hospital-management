@@ -9,8 +9,8 @@ export default function PatientDetail() {
     return (
         <>
         <PageMeta
-            title="Patient Detail| Admin Dashboard"
-            description="This is Patient Detail Dashboard"
+            title="Chi tiết bệnh nhân| Bệnh viện đa khoa Wecare"
+            description="Chi tiết bệnh nhân"
         />
         
         <div className="flex justify-start items-center mb-6">

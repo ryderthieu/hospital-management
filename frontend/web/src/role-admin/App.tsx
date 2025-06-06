@@ -9,7 +9,7 @@ import { Patient, PatientDetail, PatientAddForm } from "./pages/Patients";
 import { Doctor, DoctorDetail, DoctorSchedule } from "./pages/Doctors";
 import { Medicines } from "./pages/Medicines";
 import { Services } from "./pages/HealthServices";
-import { Department } from "./pages/Departments";
+import { Department, DepartmentDetail } from "./pages/Departments";
 import { RoomDetail, Inpatients, InpatientRoom } from "./pages/Inpatient";
 import { OutpatientClinics, MedicalCalendar, ClinicDetail } from "./pages/MedicalExamination";
 import Authorization from "./pages/Authorization/Authorization";
@@ -36,8 +36,8 @@ const AdminApp: React.FC = () => {
 
             {/* Doctors Page */}
             <Route path="/admin/doctors" element={<Doctor />} />
-            <Route path="/admin/doctors/detail" element={<DoctorDetail />} />
-            <Route path="/admin/doctors/schedule" element={<DoctorSchedule />} />
+            <Route path="/admin/doctors/detail/:id" element={<DoctorDetail />} />
+            <Route path="/admin/doctors/schedule/:id" element={<DoctorSchedule />} />
 
             {/* Medicines Page */}
             <Route path="/admin/medicines" element={<Medicines />} />
@@ -45,13 +45,14 @@ const AdminApp: React.FC = () => {
             {/* Services Page */}
             <Route path="/admin/health-services" element={<Services />} />
 
-            {/* Patients Room Page */}
+            {/* Inpatients Page */}
             <Route path="/admin/inpatients-rooms" element={<InpatientRoom />} />
             <Route path="/admin/inpatients" element={<Inpatients />} />
             <Route path="/admin/inpatients-rooms/room-details" element={<RoomDetail />} />
 
             {/* Department Page */}
             <Route path="/admin/departments" element={<Department />} />
+            <Route path="/admin/departments/:id" element={<DepartmentDetail />} />
 
             {/* Authorization Page */}
             <Route path="/admin/authorization" element={<Authorization />} />

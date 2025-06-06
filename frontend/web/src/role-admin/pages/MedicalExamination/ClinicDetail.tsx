@@ -234,15 +234,6 @@ const ClinicDetail: React.FC = () => {
         description={`Thông tin chi tiết về ${clinic.name}`}
       />
 
-      {/* Breadcrumb */}
-      <div className="mb-6 flex items-center gap-2 text-sm">
-        <Link to="/admin/examination" className="text-gray-500 hover:text-gray-700">Trang chủ</Link>
-        <span className="text-gray-500">/</span>
-        <Link to="/admin/examination/clinics" className="text-gray-500 hover:text-gray-700">Phòng khám</Link>
-        <span className="text-gray-500">/</span>
-        <span className="text-gray-900 font-medium">{clinic.name}</span>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Info */}
         <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl overflow-hidden">
