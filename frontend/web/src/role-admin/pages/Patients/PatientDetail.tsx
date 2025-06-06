@@ -1,6 +1,6 @@
 import { useParams } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
-import PatientDetailLayout from "./PatientDetailLayout";
+import { PatientDetailLayout } from "../../components/sections/patient";
 import ReturnButton from "../../components/ui/button/ReturnButton";
 
 export default function PatientDetail() {

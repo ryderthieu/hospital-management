@@ -1,20 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router";
-import SignIn from "./pages/AuthPages/SignIn";
-import SignUp from "./pages/AuthPages/SignUp";
+import SignIn from "./pages/Auth/SignIn";
 import NotFound from "./pages/OtherPage/NotFound";
-import UserProfiles from "./pages/UserProfiles";
-import Videos from "./pages/UiElements/Videos";
-import Images from "./pages/UiElements/Images";
-import Alerts from "./pages/UiElements/Alerts";
-import Badges from "./pages/UiElements/Badges";
-import Avatars from "./pages/UiElements/Avatars";
-import Buttons from "./pages/UiElements/Buttons";
-import LineChart from "./pages/Charts/LineChart";
-import BarChart from "./pages/Charts/BarChart";
-import BasicTables from "./pages/Tables/BasicTables";
-import FormElements from "./pages/Forms/FormElements";
-import Blank from "./pages/Blank";
-import AppLayout from "./layout/AppLayout";
+import Profile from "./pages/Profile/index";
+import AppLayout from "./layouts/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import Patient from "./pages/Patients/Patient";
@@ -25,13 +13,14 @@ import DoctorSchedule from "./pages/Doctors/DoctorSchedule";
 import Medicine from "./pages/Medicines/Medicines";
 import Service from "./pages/HealthServices/Services";
 import Department from "./pages/Departments/Department";
-import RoomDetail from "./pages/PatientRooms/RoomDetails";
+import RoomDetail from "./pages/Inpatient/RoomDetail";
 import PatientAddForm from "./pages/Patients/PatientAddForm"; 
-import Inpatient from "./pages/PatientRooms/Inpatients";
+import Inpatient from "./pages/Inpatient/Inpatients";
 import Clinics from "./pages/MedicalExamination/OutpatientClinics";
 import MedicalCalendar from "./pages/MedicalExamination/MedicalCalendar";
 import ClinicDetail from "./pages/MedicalExamination/ClinicDetail";
-import InpatientRoom from "./pages/PatientRooms/InPatientsRoom";
+import InpatientRoom from "./pages/Inpatient/InpatientRoom";
+import Authorization from "./pages/Authorization/index";
 
 const AdminApp: React.FC = () => {
   return (
@@ -72,32 +61,16 @@ const AdminApp: React.FC = () => {
             {/* Department Page */}
             <Route path="/admin/departments" element={<Department />} />
 
+            {/* Authorization Page */}
+            <Route path="/admin/authorization" element={<Authorization />} />
+
             {/* Others Page */}
-            <Route path="/admin/profile" element={<UserProfiles />} />
-            <Route path="/admin/blank" element={<Blank />} />
-
-            {/* Forms */}
-            <Route path="/admin/form-elements" element={<FormElements />} />
-
-            {/* Tables */}
-            <Route path="/admin/basic-tables" element={<BasicTables />} />
-
-            {/* Ui Elements */}
-            <Route path="/admin/alerts" element={<Alerts />} />
-            <Route path="/admin/avatars" element={<Avatars />} />
-            <Route path="/admin/badge" element={<Badges />} />
-            <Route path="/admin/buttons" element={<Buttons />} />
-            <Route path="/admin/images" element={<Images />} />
-            <Route path="/admin/videos" element={<Videos />} />
-
-            {/* Charts */}
-            <Route path="/admin/line-chart" element={<LineChart />} />
-            <Route path="/admin/bar-chart" element={<BarChart />} />
+            <Route path="/admin/profile" element={<Profile />} />
           </Route>
 
           {/* Auth Layout */}
           <Route path="/" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
+          
 
           {/* Fallback Route */}
           <Route path="*" element={<NotFound />} />

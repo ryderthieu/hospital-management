@@ -8,8 +8,8 @@ import { DateSelectArg, EventClickArg } from "@fullcalendar/core";
 import { Modal } from "../../components/ui/modal/index.tsx";
 import { useModal } from "../../hooks/useModal.ts";
 import PageMeta from "../../components/common/PageMeta.tsx";
-import DatePicker from "../../components/appointments/DatePicker.tsx";
-import TimePicker from "../../components/appointments/TimePicker.tsx";
+import DatePicker from "../../components/sections/appointments/DatePicker.tsx";
+import TimePicker from "../../components/sections/appointments/TimePicker.tsx";
 import { CalendarEvent, EVENT_STATUS_MAP } from "../../types/appointment.ts";
 import { Department, Doctor, mockDataService } from "../../services/mockDataService.ts";
 
