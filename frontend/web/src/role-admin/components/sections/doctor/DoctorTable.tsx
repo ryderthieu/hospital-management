@@ -2,6 +2,7 @@ import DoctorCard from "./DoctorCard";
 import SearchInput from "../../common/SearchInput";
 import Pagination from "../../common/Pagination";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface Doctor {
   id: string;
@@ -54,6 +55,7 @@ const PAGE_SIZE = 10;
 
 const DoctorTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
+  const navigate = useNavigate();
 
   const totalItems = tableData.length;
   const totalPages = Math.ceil(totalItems / PAGE_SIZE);
@@ -62,6 +64,14 @@ const DoctorTable: React.FC = () => {
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
   );
+
+  const handleViewSchedule = (doctorId: string) => {
+    navigate(`/admin/doctors/schedule/${doctorId}`);
+  };
+
+  const handleViewDetail = (doctorId: string) => {
+    navigate(`/admin/doctors/detail/${doctorId}`);
+  };
 
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
@@ -120,8 +130,8 @@ const DoctorTable: React.FC = () => {
           <DoctorCard
             key={doctor.id}
             doctor={doctor}
-            onViewSchedule={() => alert(`Xem lịch làm việc của ${doctor.name}`)}
-            onViewDetail={() => alert(`Xem chi tiết ${doctor.name}`)}
+            onViewSchedule={() => handleViewSchedule(doctor.id)}
+            onViewDetail={() => handleViewDetail(doctor.id)}
           />
         ))}
       </div>
