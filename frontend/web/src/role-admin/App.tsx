@@ -1,26 +1,18 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router";
 import SignIn from "./pages/Auth/SignIn";
 import NotFound from "./pages/OtherPage/NotFound";
-import Profile from "./pages/Profile/index";
+import Profile from "./pages/Profile/Profile";
 import AppLayout from "./layouts/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
-import Home from "./pages/Dashboard/Home";
-import Patient from "./pages/Patients/Patient";
-import PatientDetail from "./pages/Patients/PatientDetail";
-import Doctor from "./pages/Doctors/Doctor";
-import DoctorDetail from "./pages/Doctors/DoctorDetail";
-import DoctorSchedule from "./pages/Doctors/DoctorSchedule";
-import Medicine from "./pages/Medicines/Medicines";
-import Service from "./pages/HealthServices/Services";
-import Department from "./pages/Departments/Department";
-import RoomDetail from "./pages/Inpatient/RoomDetail";
-import PatientAddForm from "./pages/Patients/PatientAddForm"; 
-import Inpatient from "./pages/Inpatient/Inpatients";
-import Clinics from "./pages/MedicalExamination/OutpatientClinics";
-import MedicalCalendar from "./pages/MedicalExamination/MedicalCalendar";
-import ClinicDetail from "./pages/MedicalExamination/ClinicDetail";
-import InpatientRoom from "./pages/Inpatient/InpatientRoom";
-import Authorization from "./pages/Authorization/index";
+import  Home  from "./pages/Dashboard/Home";
+import { Patient, PatientDetail, PatientAddForm } from "./pages/Patients";
+import { Doctor, DoctorDetail, DoctorSchedule } from "./pages/Doctors";
+import { Medicines } from "./pages/Medicines";
+import { Services } from "./pages/HealthServices";
+import { Department } from "./pages/Departments";
+import { RoomDetail, Inpatients, InpatientRoom } from "./pages/Inpatient";
+import { OutpatientClinics, MedicalCalendar, ClinicDetail } from "./pages/MedicalExamination";
+import Authorization from "./pages/Authorization/Authorization";
 
 const AdminApp: React.FC = () => {
   return (
@@ -34,7 +26,7 @@ const AdminApp: React.FC = () => {
 
             {/* Medical Examinations Pages */}
             <Route path="/admin/calendar" element={<MedicalCalendar />} />
-            <Route path="/admin/outpatient-clinics" element={<Clinics />} />
+            <Route path="/admin/outpatient-clinics" element={<OutpatientClinics />} />
             <Route path="/admin/outpatient-clinics/:id" element={<ClinicDetail />} />
 
             {/* Patients Pages */}
@@ -48,14 +40,14 @@ const AdminApp: React.FC = () => {
             <Route path="/admin/doctors/schedule" element={<DoctorSchedule />} />
 
             {/* Medicines Page */}
-            <Route path="/admin/medicines" element={<Medicine />} />
+            <Route path="/admin/medicines" element={<Medicines />} />
 
             {/* Services Page */}
-            <Route path="/admin/health-services" element={<Service />} />
+            <Route path="/admin/health-services" element={<Services />} />
 
             {/* Patients Room Page */}
             <Route path="/admin/inpatients-rooms" element={<InpatientRoom />} />
-            <Route path="/admin/inpatients" element={<Inpatient />} />
+            <Route path="/admin/inpatients" element={<Inpatients />} />
             <Route path="/admin/inpatients-rooms/room-details" element={<RoomDetail />} />
 
             {/* Department Page */}

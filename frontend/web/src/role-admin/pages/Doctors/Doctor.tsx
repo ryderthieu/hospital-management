@@ -1,4 +1,3 @@
-import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import AddButton from "../../components/ui/button/AddButton";
 import { DoctorTable } from "../../components/sections/doctor";

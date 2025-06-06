@@ -34,8 +34,6 @@ const ClinicDetail: React.FC = () => {
   const cancelledAppointments = 2;
   
   useEffect(() => {
-    // Trong thực tế, bạn sẽ gọi API để lấy thông tin chi tiết phòng khám
-    // Ở đây, chúng ta sẽ giả lập dữ liệu
     const fetchClinicData = async () => {
       try {
         setLoading(true);

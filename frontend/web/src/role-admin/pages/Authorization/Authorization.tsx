@@ -1,5 +1,5 @@
-import PageMeta from "../../components/common/PageMeta";
-import AddButton from "../../components/ui/button/AddButton";
+import PageMeta from "../../components/common/PageMeta.tsx";
+import AddButton from "../../components/ui/button/AddButton.tsx";
 import UserRoleTable from "./UserRoleTable.tsx";
 import RolePermissionTable from "./RolePermissionTable.tsx";
 import { useState } from "react";
