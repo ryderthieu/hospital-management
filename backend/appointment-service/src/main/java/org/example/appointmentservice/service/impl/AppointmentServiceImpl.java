@@ -69,4 +69,16 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         appointmentRepository.delete(appointment);
     }
+
+    @Override
+    public List<AppointmentDto> getAppointmentsByDoctorId(Integer doctorId) {
+        List<Appointment> appointments = appointmentRepository.findByDoctorId(doctorId);
+        if (appointments.isEmpty()) {
+            throw new RuntimeException("Không tìm thấy cuộc hẹn nào với bác sĩ có ID: " + doctorId);
+        }
+        return appointments.stream()
+                .map(AppointmentDto::new)
+                .collect(Collectors.toList());
+    }
+
 }

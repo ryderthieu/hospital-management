@@ -1,10 +1,11 @@
 "use client"
 
-import type React from "react"
-import { createContext, useContext, useReducer, useEffect, useCallback } from "react"
+import { createContext, useContext, useReducer, useEffect, useCallback, type ReactNode } from "react"
 import { message } from "antd"
-import { authService } from "@/services/authService"
-import type { AuthState, AuthUser, DoctorInfo, LoginCredentials } from "@/types/auth"
+import { authService } from "../services/authService"
+import { userService } from "../services/userService"
+import { doctorService } from "../services/doctorService"
+import type { AuthState, AuthUser, DoctorInfo, LoginCredentials } from "../types/auths"
 
 // Action types
 type AuthAction =
@@ -105,13 +106,15 @@ interface AuthContextType extends AuthState {
   isDoctor: () => boolean
   isReceptionist: () => boolean
   hasRole: (role: string) => boolean
+  getCurrentUserId: () => number | null
+  getCurrentDoctorId: () => number | null
 }
 
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // Provider component
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(authReducer, initialState)
 
   // Load auth data from localStorage on mount
@@ -119,25 +122,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const loadAuthData = async () => {
       try {
         const token = localStorage.getItem("authToken")
-        const userStr = localStorage.getItem("authUser")
-        const doctorInfoStr = localStorage.getItem("doctorInfo")
 
-        if (token && userStr) {
-          const user: AuthUser = JSON.parse(userStr)
-          const doctorInfo: DoctorInfo | null = doctorInfoStr ? JSON.parse(doctorInfoStr) : null
+        if (token) {
+          // Use the getCurrentUser endpoint to verify and get current user
+          try {
+            const user = await userService.getCurrentUser()
 
-          // Verify token is still valid
-          const isValid = await authService.verifyToken(token)
-          if (isValid) {
+            // If user is a doctor, get doctor info
+            let doctorInfo: DoctorInfo | undefined
+            if (user.role === "DOCTOR") {
+              const doctor = await doctorService.getDoctorByUserId(user.userId)
+              if (doctor) {
+                doctorInfo = doctor
+                localStorage.setItem("doctorInfo", JSON.stringify(doctor))
+                localStorage.setItem("currentDoctorId", doctor.doctorId.toString())
+              }
+            }
+
+            // Update localStorage with fresh data
+            localStorage.setItem("authUser", JSON.stringify(user))
+            localStorage.setItem("currentUserId", user.userId.toString())
+
             dispatch({
               type: "LOGIN_SUCCESS",
-              payload: { user, doctorInfo: doctorInfo || undefined, token },
+              payload: { user, doctorInfo, token },
             })
-          } else {
-            // Token is invalid, clear storage
+          } catch (error) {
+            // Token is invalid or user doesn't exist, clear storage
             localStorage.removeItem("authToken")
             localStorage.removeItem("authUser")
             localStorage.removeItem("doctorInfo")
+            localStorage.removeItem("currentUserId")
+            localStorage.removeItem("currentDoctorId")
             dispatch({ type: "LOGOUT" })
           }
         } else {
@@ -159,13 +175,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const response = await authService.login(credentials)
       const { token, user, doctorInfo } = response
-
-      // Store in localStorage
-      localStorage.setItem("authToken", token)
-      localStorage.setItem("authUser", JSON.stringify(user))
-      if (doctorInfo) {
-        localStorage.setItem("doctorInfo", JSON.stringify(doctorInfo))
-      }
 
       dispatch({
         type: "LOGIN_SUCCESS",
@@ -195,46 +204,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [])
 
-  // Refresh auth data
+  // Refresh auth data using getCurrentUser
   const refreshAuth = useCallback(async (): Promise<void> => {
     try {
-      if (!state.user) return
-
       dispatch({ type: "SET_LOADING", payload: true })
 
-      // Refresh user data
-      const user = await authService.getCurrentUser()
+      // Use getCurrentUser endpoint to get fresh user data
+      const user = await userService.getCurrentUser()
       dispatch({ type: "UPDATE_USER", payload: user })
 
       // Refresh doctor info if user is a doctor
       if (user.role === "DOCTOR") {
-        const doctorInfo = await authService.getDoctorInfo(user.userId)
+        const doctorInfo = await doctorService.getDoctorByUserId(user.userId)
         if (doctorInfo) {
           dispatch({ type: "UPDATE_DOCTOR_INFO", payload: doctorInfo })
           localStorage.setItem("doctorInfo", JSON.stringify(doctorInfo))
+          localStorage.setItem("currentDoctorId", doctorInfo.doctorId.toString())
         }
       }
 
       localStorage.setItem("authUser", JSON.stringify(user))
+      localStorage.setItem("currentUserId", user.userId.toString())
     } catch (error) {
       console.error("Error refreshing auth data:", error)
       dispatch({ type: "SET_ERROR", payload: "Không thể làm mới thông tin đăng nhập" })
     } finally {
       dispatch({ type: "SET_LOADING", payload: false })
     }
-  }, [state.user])
+  }, [])
 
   // Update user info
   const updateUser = useCallback((user: AuthUser) => {
     dispatch({ type: "UPDATE_USER", payload: user })
     localStorage.setItem("authUser", JSON.stringify(user))
+    localStorage.setItem("currentUserId", user.userId.toString())
   }, [])
 
   // Update doctor info
   const updateDoctorInfo = useCallback((doctorInfo: DoctorInfo) => {
     dispatch({ type: "UPDATE_DOCTOR_INFO", payload: doctorInfo })
     localStorage.setItem("doctorInfo", JSON.stringify(doctorInfo))
+    if (doctorInfo.doctorId) {
+      localStorage.setItem("currentDoctorId", doctorInfo.doctorId.toString())
+    }
   }, [])
+
+  // Helper functions to get current IDs
+  const getCurrentUserId = useCallback((): number | null => {
+    return state.user?.userId || null
+  }, [state.user])
+
+  const getCurrentDoctorId = useCallback((): number | null => {
+    return state.doctorInfo?.doctorId || null
+  }, [state.doctorInfo])
 
   // Role checking functions
   const isAdmin = useCallback(() => state.user?.role === "ADMIN", [state.user])
@@ -253,6 +275,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isDoctor,
     isReceptionist,
     hasRole,
+    getCurrentUserId,
+    getCurrentDoctorId,
   }
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
@@ -265,28 +289,4 @@ export const useAuth = (): AuthContextType => {
     throw new Error("useAuth must be used within an AuthProvider")
   }
   return context
-}
-
-// HOC for protected routes
-export const withAuth = <P extends object>(WrappedComponent: React.ComponentType<P>, allowedRoles?: string[]) => {
-  const AuthenticatedComponent: React.FC<P> = (props) => {
-    const { isAuthenticated, isLoading, user } = useAuth()
-
-    if (isLoading) {
-      return <div className="flex justify-center items-center h-screen">Đang tải...</div>
-    }
-
-    if (!isAuthenticated) {
-      window.location.href = "/login"
-      return null
-    }
-
-    if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-      return <div className="flex justify-center items-center h-screen">Bạn không có quyền truy cập trang này</div>
-    }
-
-    return <WrappedComponent {...props} />
-  }
-
-  return AuthenticatedComponent
 }
