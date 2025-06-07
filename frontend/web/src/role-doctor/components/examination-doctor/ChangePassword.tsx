@@ -1,14 +1,25 @@
+"use client"
+
 import type React from "react"
+import { useEffect } from "react"
 import { Form, Input, Button } from "antd"
 import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons"
 import { usePasswordChange } from "../../hooks/usePasswordChange"
 
 const ChangePassword: React.FC = () => {
-  const { loading, error, success, handleSubmit } = usePasswordChange()
+  const { loading, error, success, handleSubmit, resetState } = usePasswordChange()
   const [form] = Form.useForm()
 
+  useEffect(() => {
+    resetState()
+  }, [resetState])
+
   const onFinish = async (values: any) => {
-    await handleSubmit(values)
+    await handleSubmit({
+      currentPassword: values.currentPassword,
+      newPassword: values.newPassword,
+    })
+
     if (!error) {
       form.resetFields()
     }
@@ -19,7 +30,7 @@ const ChangePassword: React.FC = () => {
       <h2 className="text-xl font-semibold mb-6">Đổi mật khẩu</h2>
 
       {success && (
-        <div className="mb-4 p-3 bg-green-100 text-base-700 rounded-md">Mật khẩu đã được thay đổi thành công!</div>
+        <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md">Mật khẩu đã được thay đổi thành công!</div>
       )}
 
       {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">{error}</div>}
@@ -42,6 +53,10 @@ const ChangePassword: React.FC = () => {
           rules={[
             { required: true, message: "Vui lòng nhập mật khẩu mới!" },
             { min: 8, message: "Mật khẩu phải có ít nhất 8 ký tự!" },
+            {
+              pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/,
+              message: "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số!",
+            },
           ]}
         >
           <Input.Password

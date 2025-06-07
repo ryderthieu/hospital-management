@@ -1,38 +1,128 @@
-import type { UserProfile } from "../types/user"
+import axios from "axios"
 
-export const fetchUserProfile = async (): Promise<UserProfile> => {
-  // In a real app, this would be an API call
-  return {
-    avatarUrl:
-      "https://scontent.fsgn22-1.fna.fbcdn.net/v/t39.30808-6/476834381_1003190531653574_2584131049560639925_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=kRwowaTq_nUQ7kNvwFLXVnI&_nc_oc=AdlZyaM6KYA-D1xUt09TCm2lilAx611Gwf3vDki_tTGhebmP2Zflv6kV8-EboluapVw&_nc_zt=23&_nc_ht=scontent.fsgn22-1.fna&_nc_gid=bFVLyXApF0OPekNm0jpXHQ&oh=00_AfFXHHw-lUYlByPwLQ0Om0klhFcZ7i-Hl5KaHD_yaJlKqg&oe=681AC99C",
-    lastName: "Nguyễn Thiên",
-    firstName: "Tài",
-    gender: "Nam",
-    dateOfBirth: "05/11/1995",
-    address: "Tòa S3.02, Vinhomes Grand Park, Phường Long Thạnh Mỹ, Thành phố Thủ Đức, Thành phố Hồ Chí Minh",
-    phoneNumber: "0901 565 563",
-    specialization: "Suy tim",
-    doctorId: "BS22521584",
-    accountType: "Bác sĩ",
-    title: "Thạc sĩ Bác sĩ (Ths.BS)",
-    department: "Nội tim mạch",
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+
+// Configure axios instance
+const api = axios.create({
+  baseURL: API_BASE_URL || "http://localhost:8080",
+  headers: {
+    "Content-Type": "application/json",
+  },
+})
+
+// Add request interceptor to include auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token")
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  },
+)
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Handle unauthorized access
+      localStorage.removeItem("token")
+      window.location.href = "/login"
+    }
+    return Promise.reject(error)
+  },
+)
+
+export interface UserProfile {
+  userId: number
+  email?: string
+  phone: string
+  role: "ADMIN" | "PATIENT" | "DOCTOR" | "RECEPTIONIST"
+  createdAt: string
+}
+
+export interface DoctorProfile {
+  doctorId: number
+  userId: number
+  identityNumber: string
+  fullName: string
+  birthday: string
+  gender: "MALE" | "FEMALE" | "OTHER"
+  address: string
+  academicDegree: "BS" | "BS_CKI" | "BS_CKII" | "THS_BS" | "TS_BS" | "PGS_TS_BS" | "GS_TS_BS"
+  specialization: string
+  type: "EXAMINATION" | "SERVICE"
+  department: {
+    departmentId: number
+    departmentName: string
   }
+  createdAt: string
 }
 
-export const updateUserProfile = async (profile: UserProfile): Promise<UserProfile> => {
-  // In a real app, this would be an API call
-  console.log("Updating profile:", profile)
-  return profile
+export interface UpdateUserRequest {
+  email?: string
+  phone?: string
 }
 
-export const changePassword = async (currentPassword: string, newPassword: string): Promise<boolean> => {
-  // In a real app, this would be an API call
-  console.log("Changing password:", { currentPassword, newPassword })
+export interface UpdateDoctorRequest {
+  fullName?: string
+  birthday?: string
+  gender?: "MALE" | "FEMALE" | "OTHER"
+  address?: string
+  academicDegree?: "BS" | "BS_CKI" | "BS_CKII" | "THS_BS" | "TS_BS" | "PGS_TS_BS" | "GS_TS_BS"
+  specialization?: string
+}
 
-  // Simulate API call
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(true)
-    }, 1000)
-  })
+export interface ChangePasswordRequest {
+  currentPassword: string
+  newPassword: string
+}
+
+export const userService = {
+  // Get user profile
+  async getUserProfile(userId: number): Promise<UserProfile> {
+    const response = await api.get(`/users/${userId}`)
+    return response.data
+  },
+
+  // Update user profile
+  async updateUserProfile(userId: number, data: UpdateUserRequest): Promise<UserProfile> {
+    const response = await api.put(`/users/${userId}`, data)
+    return response.data
+  },
+
+  // Change password
+  async changePassword(userId: number, data: ChangePasswordRequest): Promise<void> {
+    await api.put(`/users/change-password/${userId}`, data)
+  },
+}
+
+export const doctorService = {
+  // Get doctor profile
+  async getDoctorProfile(doctorId: number): Promise<DoctorProfile> {
+    const response = await api.get(`/doctors/${doctorId}`)
+    return response.data
+  },
+
+  // Update doctor profile
+  async updateDoctorProfile(doctorId: number, data: UpdateDoctorRequest): Promise<DoctorProfile> {
+    const response = await api.put(`/doctors/${doctorId}`, data)
+    return response.data
+  },
+
+  // Get all doctors (for admin/receptionist)
+  async getAllDoctors(): Promise<DoctorProfile[]> {
+    const response = await api.get("/doctors")
+    return response.data
+  },
+
+  // Find doctor by identity number
+  async findByIdentityNumber(identityNumber: string): Promise<DoctorProfile | null> {
+    const response = await api.get(`/doctors/search?identityNumber=${identityNumber}`)
+    return response.data
+  },
 }

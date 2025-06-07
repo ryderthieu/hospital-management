@@ -1,22 +1,19 @@
 "use client"
 
 import type React from "react"
+import { useState } from "react"
 import { Form, Input, Select, Button, Avatar, Space, Upload, message } from "antd"
-import { EditOutlined, UserOutlined } from "@ant-design/icons"
+import { EditOutlined, UserOutlined, UploadOutlined } from "@ant-design/icons"
 import { useUserProfile } from "../../hooks/useUserProfile"
 
-interface AccountInfoProps {
-  editMode: boolean
-  setEditMode: (value: boolean) => void
-}
-
-const AccountInfo: React.FC<AccountInfoProps> = ({ editMode, setEditMode }) => {
+const AccountInfo: React.FC = () => {
+  const [editMode, setEditMode] = useState(false)
   const { profile, loading, error, handleChange, handleSave, handleCancel } = useUserProfile()
   const [form] = Form.useForm()
 
-  if (loading) return <div className="flex justify-center py-8">Loading...</div>
+  if (loading) return <div className="flex justify-center py-8">Đang tải...</div>
   if (error) return <div className="text-red-500 py-8">{error}</div>
-  if (!profile) return <div className="text-red-500 py-8">No profile data available</div>
+  if (!profile) return <div className="text-red-500 py-8">Không có dữ liệu hồ sơ</div>
 
   const handleSubmit = async () => {
     try {
@@ -35,6 +32,14 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ editMode, setEditMode }) => {
     handleCancel()
     setEditMode(false)
     form.resetFields()
+  }
+
+  const handleAvatarChange = (info: any) => {
+    if (info.file.size && info.file.size > 3 * 1024 * 1024) {
+      message.error("Kích thước ảnh không được vượt quá 3MB!")
+      return
+    }
+    message.info("Tính năng upload ảnh sẽ được triển khai sau")
   }
 
   return (
@@ -73,18 +78,8 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ editMode, setEditMode }) => {
             {editMode ? (
               <Space>
                 <Button>Gỡ ảnh</Button>
-                <Upload
-                  showUploadList={false}
-                  beforeUpload={() => false}
-                  onChange={(info) => {
-                    if (info.file.size && info.file.size > 3 * 1024 * 1024) {
-                      message.error("Kích thước ảnh không được vượt quá 3MB!")
-                      return
-                    }
-                    // Handle avatar change
-                  }}
-                >
-                  <Button type="default">Thay đổi ảnh đại diện</Button>
+                <Upload showUploadList={false} beforeUpload={() => false} onChange={handleAvatarChange}>
+                  <Button icon={<UploadOutlined />}>Thay đổi ảnh đại diện</Button>
                 </Upload>
               </Space>
             ) : (
@@ -98,19 +93,42 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ editMode, setEditMode }) => {
           <Form.Item
             label="Họ và tên đệm"
             name="lastName"
-            rules={[{ required: true, message: "Vui lòng nhập họ và tên đệm!" }]}
+            rules={[
+              { required: true, message: "Vui lòng nhập họ và tên đệm!" },
+              { min: 2, message: "Họ và tên đệm phải có ít nhất 2 ký tự!" },
+              { max: 50, message: "Họ và tên đệm không được vượt quá 50 ký tự!" },
+              { pattern: /^[a-zA-ZÀ-ỹ\s]+$/, message: "Họ và tên đệm chỉ được chứa chữ cái và khoảng trắng!" },
+            ]}
           >
-            <Input disabled={!editMode} onChange={(e) => handleChange("lastName", e.target.value)} />
+            <Input
+              disabled={!editMode}
+              onChange={(e) => handleChange("lastName", e.target.value)}
+              placeholder="Nhập họ và tên đệm"
+            />
           </Form.Item>
 
-          <Form.Item label="Tên" name="firstName" rules={[{ required: true, message: "Vui lòng nhập tên!" }]}>
-            <Input disabled={!editMode} onChange={(e) => handleChange("firstName", e.target.value)} />
+          <Form.Item
+            label="Tên"
+            name="firstName"
+            rules={[
+              { required: true, message: "Vui lòng nhập tên!" },
+              { min: 1, message: "Tên phải có ít nhất 1 ký tự!" },
+              { max: 20, message: "Tên không được vượt quá 20 ký tự!" },
+              { pattern: /^[a-zA-ZÀ-ỹ\s]+$/, message: "Tên chỉ được chứa chữ cái và khoảng trắng!" },
+            ]}
+          >
+            <Input
+              disabled={!editMode}
+              onChange={(e) => handleChange("firstName", e.target.value)}
+              placeholder="Nhập tên"
+            />
           </Form.Item>
 
           <Form.Item label="Giới tính" name="gender">
             <Select
               disabled={!editMode}
               onChange={(value) => handleChange("gender", value)}
+              placeholder="Chọn giới tính"
               options={[
                 { value: "Nam", label: "Nam" },
                 { value: "Nữ", label: "Nữ" },
@@ -119,38 +137,74 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ editMode, setEditMode }) => {
             />
           </Form.Item>
 
-          <Form.Item label="Ngày sinh" name="dateOfBirth">
-            <Input disabled={!editMode} onChange={(e) => handleChange("dateOfBirth", e.target.value)} />
+          <Form.Item
+            label="Ngày sinh"
+            name="dateOfBirth"
+            rules={[{ required: true, message: "Vui lòng nhập ngày sinh!" }]}
+          >
+            <Input type="date" disabled={!editMode} onChange={(e) => handleChange("dateOfBirth", e.target.value)} />
           </Form.Item>
         </div>
 
-        <Form.Item label="Địa chỉ" name="address">
-          <Input disabled={!editMode} onChange={(e) => handleChange("address", e.target.value)} />
+        <Form.Item
+          label="Địa chỉ"
+          name="address"
+          rules={[{ max: 200, message: "Địa chỉ không được vượt quá 200 ký tự!" }]}
+        >
+          <Input.TextArea
+            disabled={!editMode}
+            onChange={(e) => handleChange("address", e.target.value)}
+            placeholder="Nhập địa chỉ"
+            rows={3}
+          />
         </Form.Item>
 
         <div className="grid grid-cols-2 gap-6">
-          <Form.Item label="Số điện thoại" name="phoneNumber">
-            <Input disabled={!editMode} onChange={(e) => handleChange("phoneNumber", e.target.value)} />
+          <Form.Item
+            label="Số điện thoại"
+            name="phoneNumber"
+            rules={[
+              { required: true, message: "Vui lòng nhập số điện thoại!" },
+              { pattern: /^(0[3|5|7|8|9])+([0-9]{8})$/, message: "Số điện thoại không hợp lệ (10-11 số)!" },
+            ]}
+          >
+            <Input
+              disabled={!editMode}
+              onChange={(e) => handleChange("phoneNumber", e.target.value)}
+              placeholder="Nhập số điện thoại"
+            />
+          </Form.Item>
+
+          <Form.Item label="Email" name="email">
+            <Input
+              type="email"
+              disabled={true} // Email thường không cho phép thay đổi
+              placeholder="Email"
+            />
           </Form.Item>
 
           <Form.Item label="Khoa trực thuộc" name="department">
-            <Input disabled={true} />
+            <Input disabled={true} placeholder="Khoa trực thuộc" />
           </Form.Item>
 
           <Form.Item label="Loại tài khoản" name="accountType">
-            <Input disabled={true} />
+            <Input disabled={true} placeholder="Loại tài khoản" />
           </Form.Item>
 
           <Form.Item label="Mã bác sĩ" name="doctorId">
-            <Input disabled={true} />
+            <Input disabled={true} placeholder="Mã bác sĩ" />
           </Form.Item>
 
           <Form.Item label="Chức danh" name="title">
-            <Input disabled={true} />
+            <Input disabled={true} placeholder="Chức danh" />
           </Form.Item>
 
           <Form.Item label="Chuyên khoa" name="specialization">
-            <Input disabled={true} />
+            <Input disabled={true} placeholder="Chuyên khoa" />
+          </Form.Item>
+
+          <Form.Item label="Số CCCD" name="identityNumber">
+            <Input disabled={true} placeholder="Số CCCD" />
           </Form.Item>
         </div>
       </Form>
