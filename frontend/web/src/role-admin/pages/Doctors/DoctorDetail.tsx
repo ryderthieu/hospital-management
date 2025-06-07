@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { doctorApi } from "../../api/doctorApi";
 import UserMetaCard from "../../components/sections/doctor/UserMetaCard";
 import UserInfoCard from "../../components/sections/doctor/UserInfoCard";
 import UserAddressCard from "../../components/sections/doctor/UserAddressCard";
@@ -9,8 +11,10 @@ import Button from "../../components/ui/button/Button";
 import Input from "../../components/form/input/InputField";
 import Label from "../../components/form/Label";
 import ReturnButton from "../../components/ui/button/ReturnButton";
+import { DoctorDto } from "../../types/DoctorDto";
 
 export default function DoctorDetail() {
+  const { doctorId } = useParams();
   const {
     isOpen: isProfileOpen,
     openModal: openProfileModal,
@@ -27,26 +31,26 @@ export default function DoctorDetail() {
     closeModal: closeAddressModal,
   } = useModal();
 
-  const [doctorData, setDoctorData] = useState({
-    firstName: "Nguyễn",
-    lastName: "Thiên Tài",
-    fullName: "BS. Nguyễn Thiên Tài",
-    email: "nguyenthientoi@hospital.com",
-    phone: "0901 565 563",
-    gender: "Nam",
-    dateOfBirth: "11/05/1995",
-    department: "Nội tim mạch",
-    doctorId: "BS22521584",
-    accountType: "Bác sĩ",
-    position: "Thạc sĩ Bác sĩ (Ths.BS)",
-    specialty: "Suy tim",
-    address:
-      "Tòa S3.02, Vinhomes Grand Park, Phường Long Thạnh Mỹ, Thành phố Thủ Đức, Thành phố Hồ Chí Minh",
-    country: "Việt Nam",
-    city: "Thành phố Hồ Chí Minh",
-    postalCode: "70000",
-    profileImage: "/images/user/doctor-avatar.jpg",
-  });
+  const [doctorData, setDoctorData] = useState<DoctorDto | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    console.log("doctorId:", doctorId);
+    if (!doctorId || isNaN(Number(doctorId))) {
+      setLoading(false);
+      setDoctorData(null);
+      return;
+    }
+    setLoading(true);
+    doctorApi
+      .getDoctorById(Number(doctorId))
+      .then((data) => setDoctorData(data))
+      .catch((err) => {
+        console.error("API error:", err);
+        setDoctorData(null);
+      })
+      .finally(() => setLoading(false));
+  }, [doctorId]);
 
   const handleSaveProfile = () => {
     console.log("Saving profile changes...");
@@ -63,25 +67,27 @@ export default function DoctorDetail() {
     closeAddressModal();
   };
 
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setDoctorData((prev) => ({
-          ...prev,
-          profileImage: e.target.result,
-        }));
+        setDoctorData((prev) =>
+          prev ? { ...prev, profileImage: e.target?.result as string } : prev
+        );
       };
       reader.readAsDataURL(file);
     }
   };
 
+  if (loading) return <div>Đang tải...</div>;
+  if (!doctorData) return <div>Không tìm thấy bác sĩ</div>;
+
   return (
     <>
       <PageMeta
         title={`${doctorData.fullName} | Hồ sơ Bác sĩ`}
-        description={`Thông tin chi tiết về ${doctorData.fullName} - ${doctorData.specialty}`}
+        description={`Thông tin chi tiết về ${doctorData.fullName} - ${doctorData.specialization}`}
       />
 
       <div className="flex justify-start items-center mb-6">
@@ -102,10 +108,10 @@ export default function DoctorDetail() {
         <div className="space-y-6">
           <UserMetaCard doctorData={doctorData} setDoctorData={setDoctorData} />
           <UserInfoCard doctorData={doctorData} setDoctorData={setDoctorData} />
-          <UserAddressCard
+          {/* <UserAddressCard
             doctorData={doctorData}
             setDoctorData={setDoctorData}
-          />
+          /> */}
         </div>
       </div>
 
@@ -128,7 +134,7 @@ export default function DoctorDetail() {
           <div className="flex flex-col items-center gap-4">
             <div className="w-32 h-32 overflow-hidden border-2 border-gray-200 rounded-full dark:border-gray-700">
               <img
-                src={doctorData.profileImage || "/placeholder.svg"}
+                src={"/placeholder.svg"}
                 alt="Preview"
                 className="w-full h-full object-cover"
               />
@@ -179,12 +185,12 @@ export default function DoctorDetail() {
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <div>
                 <Label>Họ và tên đệm</Label>
-                <Input type="text" defaultValue={doctorData.firstName} />
+                <Input type="text" value={doctorData.fullName} />
               </div>
-              <div>
+              {/* <div>
                 <Label>Tên</Label>
                 <Input type="text" defaultValue={doctorData.lastName} />
-              </div>
+              </div> */}
               <div>
                 <Label>Giới tính</Label>
                 <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800">
@@ -194,31 +200,31 @@ export default function DoctorDetail() {
               </div>
               <div>
                 <Label>Ngày sinh</Label>
-                <Input type="date" defaultValue="1995-05-11" />
+                <Input type="date" value={doctorData.birthday} />
               </div>
-              <div>
+              {/* <div>
                 <Label>Email</Label>
-                <Input type="email" defaultValue={doctorData.email} />
-              </div>
-              <div>
+                <Input type="email" value={doctorData.email} />
+              </div> */}
+              {/* <div>
                 <Label>Số điện thoại</Label>
                 <Input type="tel" defaultValue={doctorData.phone} />
-              </div>
+              </div> */}
               <div>
                 <Label>Khoa trực thuộc</Label>
-                <Input type="text" defaultValue={doctorData.department} />
+                <Input type="text" value={doctorData.departmentId} />
               </div>
               <div>
                 <Label>Mã bác sĩ</Label>
-                <Input type="text" defaultValue={doctorData.doctorId} />
+                <Input type="text" value={doctorData.doctorId} />
               </div>
               <div>
                 <Label>Chức danh</Label>
-                <Input type="text" defaultValue={doctorData.position} />
+                <Input type="text" value={doctorData.academicDegree} />
               </div>
               <div>
                 <Label>Chuyên khoa</Label>
-                <Input type="text" defaultValue={doctorData.specialty} />
+                <Input type="text" value={doctorData.specialization} />
               </div>
             </div>
 
@@ -255,12 +261,12 @@ export default function DoctorDetail() {
               <Label>Địa chỉ chi tiết</Label>
               <textarea
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800"
-                rows="3"
+                rows={3}
                 defaultValue={doctorData.address}
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {/* <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <div>
                 <Label>Quốc gia</Label>
                 <Input type="text" defaultValue={doctorData.country} />
@@ -273,7 +279,7 @@ export default function DoctorDetail() {
                 <Label>Mã bưu điện</Label>
                 <Input type="text" defaultValue={doctorData.postalCode} />
               </div>
-            </div>
+            </div> */}
 
             <div className="flex items-center gap-3 justify-end">
               <Button size="sm" variant="outline" onClick={closeAddressModal}>

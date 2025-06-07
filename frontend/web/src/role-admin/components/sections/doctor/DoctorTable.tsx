@@ -1,83 +1,55 @@
+import React, { useEffect, useState } from "react";
 import DoctorCard from "./DoctorCard";
 import SearchInput from "../../common/SearchInput";
 import Pagination from "../../common/Pagination";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-interface Doctor {
-  id: string;
-  name: string;
-  academic_degree: 'BS' | 'BSCKI' | 'BSCKII' | 'ThS BS' | 'TS BS' | 'PGS TS BS' | 'GS TS BS',
-  specialty: string;
-  avatar: string;
-  schedule: string;
-  description: string;
-  status: "Online" | "Offline" | "Bận";
-}
-
-const tableData: Doctor[] = [
-  {
-    id: "BS2252",
-    name: "Lê Thiện Nhi",
-    academic_degree: "BSCKI",
-    specialty: "Răng - Hàm - Mặt",
-    avatar: "/images/user/owner.jpg",
-    schedule: "T2 - T6 hàng tuần",
-    description:
-      "Lê Thiện Nhi với hơn 20 năm kinh nghiệm trong việc khám chữa các bệnh liên quan đến răng hàm mặt.",
-    status: "Online",
-  },
-  {
-    id: "BS2252",
-    name: "Lê Thiện Nhi",
-    specialty: "Răng - Hàm - Mặt",
-    academic_degree: "BS",
-    avatar: "/images/user/owner.jpg",
-    schedule: "T2 - T6 hàng tuần",
-    description:
-      "Lê Thiện Nhi với hơn 20 năm kinh nghiệm trong việc khám chữa các bệnh liên quan đến răng hàm mặt.",
-    status: "Bận",
-  },
-  {
-    id: "BS2252",
-    name: "Lê Thiện Nhi",
-    specialty: "Răng - Hàm - Mặt",
-    academic_degree: "PGS TS BS",
-    avatar: "/images/user/owner.jpg",
-    schedule: "T2 - T6 hàng tuần",
-    description:
-      "Lê Thiện Nhi với hơn 20 năm kinh nghiệm trong việc khám chữa các bệnh liên quan đến răng hàm mặt.",
-    status: "Offline",
-  },
-];
+import { doctorApi } from "../../../api/doctorApi";
+import { DoctorDto } from "../../../types/DoctorDto";
 
 const PAGE_SIZE = 10;
 
 const DoctorTable: React.FC = () => {
+  const [doctors, setDoctors] = useState<DoctorDto[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
 
-  const totalItems = tableData.length;
+  useEffect(() => {
+    doctorApi
+      .getAllDoctors()
+      .then((data) => setDoctors(data))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const totalItems = doctors.length;
   const totalPages = Math.ceil(totalItems / PAGE_SIZE);
 
-  const paginatedData = tableData.slice(
+  const paginatedData = doctors.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
   );
 
-  const handleViewSchedule = (doctorId: string) => {
-    navigate(`/admin/doctors/schedule/${doctorId}`);
+  const handleViewSchedule = (doctorId: number | undefined) => {
+    if (doctorId !== undefined) {
+      navigate(`/admin/doctors/schedule/${doctorId}`);
+    }
   };
 
-  const handleViewDetail = (doctorId: string) => {
-    navigate(`/admin/doctors/detail/${doctorId}`);
+  const handleViewDetail = (doctorId: number | undefined) => {
+    if (doctorId !== undefined) {
+      navigate(`/admin/doctors/detail/${doctorId}`);
+    }
   };
+
+  if (loading) return <div>Đang tải...</div>;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex justify-start items-center pt-5">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">Danh sách bác sĩ</h2>
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+            Danh sách bác sĩ
+          </h2>
           <span className="ml-5 text-sm bg-base-600/20 text-base-600 py-1 px-4 rounded-full font-bold">
             {totalItems} bác sĩ
           </span>
@@ -128,10 +100,10 @@ const DoctorTable: React.FC = () => {
       <div className="flex flex-col gap-4">
         {paginatedData.map((doctor) => (
           <DoctorCard
-            key={doctor.id}
+            key={doctor.doctorId}
             doctor={doctor}
-            onViewSchedule={() => handleViewSchedule(doctor.id)}
-            onViewDetail={() => handleViewDetail(doctor.id)}
+            onViewSchedule={() => handleViewSchedule(doctor.doctorId)}
+            onViewDetail={() => handleViewDetail(doctor.doctorId)}
           />
         ))}
       </div>

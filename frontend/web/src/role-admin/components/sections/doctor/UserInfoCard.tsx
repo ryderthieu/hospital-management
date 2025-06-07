@@ -1,43 +1,44 @@
-"use client"
+"use client";
 
-import { useModal } from "../../../hooks/useModal"
-import { Modal } from "../../ui/modal"
-import Button from "../../ui/button/Button"
-import Input from "../../form/input/InputField"
-import Label from "../../form/Label"
+import React, { useEffect, useState } from "react";
+import { doctorApi } from "../../../api/doctorApi";
+import { DoctorDto } from "../../../types/DoctorDto";
+import { useModal } from "../../../hooks/useModal";
+import { Modal } from "../../ui/modal";
+import Button from "../../ui/button/Button";
+import Input from "../../form/input/InputField";
+import Label from "../../form/Label";
 
-export default function UserInfoCard({ doctorData }) {
-  const { isOpen, openModal, closeModal } = useModal()
+interface UserInfoCardProps {
+  doctorData: DoctorDto;
+  setDoctorData: React.Dispatch<React.SetStateAction<DoctorDto | null>>;
+}
+
+export default function UserInfoCard({
+  doctorData,
+  setDoctorData,
+}: UserInfoCardProps) {
+  const { isOpen, openModal, closeModal } = useModal();
 
   const handleSave = () => {
-    console.log("Saving changes...")
-    closeModal()
-  }
+    console.log("Saving changes...");
+    closeModal();
+  };
 
-  // Fallback data nếu không có doctorData
-  const data = doctorData || {
-    firstName: "Musharof",
-    lastName: "Chowdhury",
-    email: "randomuser@pimjo.com",
-    phone: "+09 363 398 46",
-    bio: "Team Manager",
-    gender: "Nam",
-    dateOfBirth: "11/05/1995",
-    department: "Nội tim mạch",
-    doctorId: "BS22521584",
-    accountType: "Bác sĩ",
-    position: "Thạc sĩ Bác sĩ (Ths.BS)",
-    specialty: "Suy tim",
-  }
+  if (!doctorData) return <div>Không tìm thấy bác sĩ</div>;
 
   return (
     <>
-      {/* Personal Information Card */}
       <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex-1">
             <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-6 flex items-center gap-2">
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-5 h-5 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -55,50 +56,61 @@ export default function UserInfoCard({ doctorData }) {
                     <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                       {doctorData ? "Họ và tên đệm" : "First Name"}
                     </p>
-                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">{data.firstName}</p>
-                  </div>
-
-                  <div>
-                    <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                      {doctorData ? "Tên" : "Last Name"}
+                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                      {doctorData.fullName}
                     </p>
-                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">{data.lastName}</p>
                   </div>
 
                   {doctorData && (
                     <>
                       <div>
-                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">Giới tính</p>
-                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">{data.gender}</p>
+                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                          Giới tính
+                        </p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                          {doctorData.gender}
+                        </p>
                       </div>
 
                       <div>
-                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">Ngày sinh</p>
-                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">{data.dateOfBirth}</p>
+                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                          Ngày sinh
+                        </p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                          {doctorData.birthday}
+                        </p>
                       </div>
                     </>
                   )}
 
-                  <div>
+                  {/* <div>
                     <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                       {doctorData ? "Email" : "Email address"}
                     </p>
-                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">{data.email}</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                      {doctorData.email}
+                    </p>
                   </div>
 
                   <div>
                     <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                       {doctorData ? "Số điện thoại" : "Phone"}
                     </p>
-                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">{data.phone}</p>
-                  </div>
+                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                      {doctorData.phone}
+                    </p>
+                  </div> */}
 
-                  {!doctorData && (
+                  {/* {!doctorData && (
                     <div>
-                      <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">Bio</p>
-                      <p className="text-sm font-medium text-gray-800 dark:text-white/90">{data.bio}</p>
+                      <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                        Bio
+                      </p>
+                      <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                        {doctorData.bio}
+                      </p>
                     </div>
-                  )}
+                  )} */}
                 </div>
               </div>
             </div>
@@ -108,7 +120,13 @@ export default function UserInfoCard({ doctorData }) {
             onClick={openModal}
             className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 lg:inline-flex lg:w-auto transition-all duration-200"
           >
-            <svg className="fill-current" width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <svg
+              className="fill-current"
+              width="18"
+              height="18"
+              viewBox="0 0 18 18"
+              fill="none"
+            >
               <path
                 fillRule="evenodd"
                 clipRule="evenodd"
@@ -127,7 +145,12 @@ export default function UserInfoCard({ doctorData }) {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex-1">
               <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-6 flex items-center gap-2">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-5 h-5 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -142,28 +165,48 @@ export default function UserInfoCard({ doctorData }) {
                 <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-7 2xl:gap-x-32">
                     <div>
-                      <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">Khoa trực thuộc</p>
-                      <p className="text-sm font-medium text-gray-800 dark:text-white/90">{data.department}</p>
+                      <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                        Khoa trực thuộc
+                      </p>
+                      <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                        {doctorData.departmentId}
+                      </p>
                     </div>
 
                     <div>
-                      <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">Mã bác sĩ</p>
-                      <p className="text-sm font-medium text-gray-800 dark:text-white/90">{data.doctorId}</p>
+                      <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                        Mã bác sĩ
+                      </p>
+                      <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                        {doctorData.doctorId}
+                      </p>
                     </div>
 
                     <div>
-                      <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">Loại tài khoản</p>
-                      <p className="text-sm font-medium text-gray-800 dark:text-white/90">{data.accountType}</p>
+                      <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                        Loại tài khoản
+                      </p>
+                      <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                        {doctorData.type}
+                      </p>
                     </div>
 
                     <div>
-                      <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">Chức danh</p>
-                      <p className="text-sm font-medium text-gray-800 dark:text-white/90">{data.position}</p>
+                      <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                        Chức danh
+                      </p>
+                      <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                        {doctorData.academicDegree}
+                      </p>
                     </div>
 
                     <div className="lg:col-span-2">
-                      <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">Chuyên khoa</p>
-                      <p className="text-sm font-medium text-gray-800 dark:text-white/90">{data.specialty}</p>
+                      <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                        Chuyên khoa
+                      </p>
+                      <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                        {doctorData.specialization}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -174,7 +217,13 @@ export default function UserInfoCard({ doctorData }) {
               onClick={openModal}
               className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 lg:inline-flex lg:w-auto transition-all duration-200"
             >
-              <svg className="fill-current" width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <svg
+                className="fill-current"
+                width="18"
+                height="18"
+                viewBox="0 0 18 18"
+                fill="none"
+              >
                 <path
                   fillRule="evenodd"
                   clipRule="evenodd"
@@ -205,12 +254,16 @@ export default function UserInfoCard({ doctorData }) {
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <div>
                 <Label>{doctorData ? "Họ và tên đệm" : "First Name"}</Label>
-                <Input type="text" defaultValue={data.firstName} />
+                <Input
+                  type="text"
+                  value={doctorData.fullName}
+                  onChange={() => {}}
+                />
               </div>
-              <div>
+              {/* <div>
                 <Label>{doctorData ? "Tên" : "Last Name"}</Label>
-                <Input type="text" defaultValue={data.lastName} />
-              </div>
+                <Input type="text" defaultValue={doctorData.lastName} />
+              </div> */}
 
               {doctorData && (
                 <>
@@ -218,7 +271,7 @@ export default function UserInfoCard({ doctorData }) {
                     <Label>Giới tính</Label>
                     <select
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800"
-                      defaultValue={data.gender}
+                      defaultValue={doctorData.gender}
                     >
                       <option value="Nam">Nam</option>
                       <option value="Nữ">Nữ</option>
@@ -226,47 +279,47 @@ export default function UserInfoCard({ doctorData }) {
                   </div>
                   <div>
                     <Label>Ngày sinh</Label>
-                    <Input type="date" defaultValue="1995-05-11" />
+                    <Input type="date" value={doctorData.birthday} />
                   </div>
                 </>
               )}
 
               <div>
                 <Label>Email</Label>
-                <Input type="email" defaultValue={data.email} />
+                <Input type="email" value="admin@gmail.com" />
               </div>
-              <div>
+              {/* <div>
                 <Label>{doctorData ? "Số điện thoại" : "Phone"}</Label>
-                <Input type="tel" defaultValue={data.phone} />
-              </div>
+                <Input type="tel" value={doctorData.phone} />
+              </div> */}
 
               {doctorData && (
                 <>
                   <div>
                     <Label>Khoa trực thuộc</Label>
-                    <Input type="text" defaultValue={data.department} />
+                    <Input type="text" value={doctorData.departmentId} />
                   </div>
                   <div>
                     <Label>Mã bác sĩ</Label>
-                    <Input type="text" defaultValue={data.doctorId} />
+                    <Input type="text" value={doctorData.doctorId} />
                   </div>
                   <div>
                     <Label>Chức danh</Label>
-                    <Input type="text" defaultValue={data.position} />
+                    <Input type="text" value={doctorData.academicDegree} />
                   </div>
                   <div>
                     <Label>Chuyên khoa</Label>
-                    <Input type="text" defaultValue={data.specialty} />
+                    <Input type="text" value={doctorData.specialization} />
                   </div>
                 </>
               )}
 
-              {!doctorData && (
+              {/* {!doctorData && (
                 <div className="col-span-2">
                   <Label>Bio</Label>
-                  <Input type="text" defaultValue={data.bio} />
+                  <Input type="text" value={doctorData.bio} />
                 </div>
-              )}
+              )} */}
             </div>
 
             <div className="flex items-center gap-3 justify-end">
@@ -281,5 +334,5 @@ export default function UserInfoCard({ doctorData }) {
         </div>
       </Modal>
     </>
-  )
+  );
 }
