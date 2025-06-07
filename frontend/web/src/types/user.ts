@@ -1,6 +1,6 @@
 export interface User {
   userId: number
-  email?: string
+  email: string | null // Changed to match backend response (can be null)
   phone: string
   role: "ADMIN" | "PATIENT" | "DOCTOR" | "RECEPTIONIST"
   createdAt: string
@@ -33,3 +33,6 @@ export interface PagedResponse<T> {
   totalPages: number
   last: boolean
 }
+
+// Response type for getCurrentUser endpoint - same as User
+export interface UserResponse extends User {}

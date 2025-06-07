@@ -149,6 +149,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             })
           } catch (error) {
             // Token is invalid or user doesn't exist, clear storage
+            console.error("Token validation failed:", error)
             localStorage.removeItem("authToken")
             localStorage.removeItem("authUser")
             localStorage.removeItem("doctorInfo")
@@ -184,7 +185,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       message.success(`Chào mừng ${user.role === "DOCTOR" ? "Bác sĩ" : "Quản trị viên"}!`)
       return true
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || "Đăng nhập thất bại"
+      console.error("Login error:", error)
+
+      // Clear any stored token if login fails
+      localStorage.removeItem("authToken")
+      localStorage.removeItem("authUser")
+      localStorage.removeItem("doctorInfo")
+      localStorage.removeItem("currentUserId")
+      localStorage.removeItem("currentDoctorId")
+
+      let errorMessage = "Đăng nhập thất bại"
+
+      if (error.response?.status === 401) {
+        errorMessage = "Số điện thoại hoặc mật khẩu không đúng"
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+
       dispatch({ type: "LOGIN_FAILURE", payload: errorMessage })
       message.error(errorMessage)
       return false
