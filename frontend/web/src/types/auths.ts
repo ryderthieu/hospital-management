@@ -1,27 +1,12 @@
-export interface AuthUser {
-  userId: number
-  email?: string
-  phone: string
-  role: "ADMIN" | "PATIENT" | "DOCTOR" | "RECEPTIONIST"
-  createdAt: string
+import type { User } from "./user"
+import type { Doctor } from "./doctor"
+
+export interface AuthUser extends User {
+  // Extends the User type
 }
 
-export interface DoctorInfo {
-  doctorId: number
-  userId: number
-  identityNumber: string
-  fullName: string
-  birthday: string
-  gender: "MALE" | "FEMALE" | "OTHER"
-  address: string
-  academicDegree: "BS" | "BS_CKI" | "BS_CKII" | "THS_BS" | "TS_BS" | "PGS_TS_BS" | "GS_TS_BS"
-  specialization: string
-  type: "EXAMINATION" | "SERVICE"
-  department: {
-    departmentId: number
-    departmentName: string
-  }
-  createdAt: string
+export interface DoctorInfo extends Doctor {
+  // Extends the Doctor type
 }
 
 export interface AuthState {
