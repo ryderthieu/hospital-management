@@ -1,25 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, SafeAreaView, StatusBar, ScrollView, Text, Alert } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Button from '../../../components/Button';
 import { FloatingLabelInput, PasswordRequirements, CheckboxWithLabel, PageHeader, AuthFooter } from '../../../components/Auth';
-import axios from 'axios';
-import { API_URL } from '@env';
+import API from '../../../services/api'; 
 
-export default function Signup1({ navigation }) {
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [showValidation, setShowValidation] = useState(false);
+type RootStackParamList = {
+  Login: undefined;
+  Signup2: { phone: string; password: string };
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+interface Signup1Props {
+  navigation: NavigationProp;
+}
+
+export default function Signup1({ navigation }: Signup1Props) {
+  const [phone, setPhone] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
+  const [showValidation, setShowValidation] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    if (password.length > 0) {
-      setShowValidation(true);
-    } else {
-      setShowValidation(false);
-    }
+    setShowValidation(password.length > 0);
   }, [password]);
 
   const handleContinue = async () => {
+    if (isLoading) return;
+
     if (!phone || !password) {
       Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ số điện thoại và mật khẩu');
       return;
@@ -30,8 +40,7 @@ export default function Signup1({ navigation }) {
       return;
     }
 
-    // Kiểm tra định dạng số điện thoại
-    const cleanedPhone = phone.replace(/\D/g, ''); // Loại bỏ ký tự không phải số
+    const cleanedPhone = phone.replace(/\D/g, '');
     const formattedPhone = cleanedPhone.startsWith('0') ? cleanedPhone : `0${cleanedPhone}`;
     const phoneRegex = /^(\+84|0)\d{9,10}$/;
     if (!phoneRegex.test(formattedPhone)) {
@@ -39,24 +48,30 @@ export default function Signup1({ navigation }) {
       return;
     }
 
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số');
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/api/auth/register`, {
+      const response = await API.post<{ message: string }>('/users/auth/register', {
         phone: formattedPhone,
         password,
-        role: 'PATIENT', // Vai trò mặc định là PATIENT
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        role: 'PATIENT',
       });
 
-      const { message } = response.data || {};
-      Alert.alert('Thành công', message || 'Đăng ký thành công, vui lòng tiếp tục');
-      navigation.navigate('Signup2', { phone: formattedPhone, password });
-    } catch (error) {
+      const { message } = response.data;
+      Alert.alert('Thành công', message || 'Đăng ký thành công, vui lòng tiếp tục', [
+        { text: 'OK', onPress: () => navigation.navigate('Signup2', { phone: formattedPhone, password }) },
+      ]);
+    } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.';
       Alert.alert('Lỗi', errorMessage);
       console.error('Signup error:', error.message, error.response?.data);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -107,6 +122,7 @@ export default function Signup1({ navigation }) {
           title="TIẾP THEO"
           onPress={handleContinue}
           style={styles.continueButton}
+          disabled={isLoading}
         />
 
         <AuthFooter
