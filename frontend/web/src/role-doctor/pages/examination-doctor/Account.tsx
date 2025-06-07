@@ -1,13 +1,12 @@
 "use client"
 
-import type React from "react"
 import { useState } from "react"
 import { Card, Tabs } from "antd"
 import { UserOutlined, LockOutlined } from "@ant-design/icons"
 import AccountInfo from "../../components/examination-doctor/AccountInfo"
 import ChangePassword from "../../components/examination-doctor/ChangePassword"
 
-const Account: React.FC = () => {
+const Account = () => {
   const [activeTab, setActiveTab] = useState("profile")
 
   const items = [

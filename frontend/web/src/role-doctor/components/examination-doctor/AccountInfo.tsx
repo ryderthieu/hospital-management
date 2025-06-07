@@ -1,12 +1,9 @@
-"use client"
-
-import type React from "react"
 import { useState } from "react"
 import { Form, Input, Select, Button, Avatar, Space, Upload, message } from "antd"
 import { EditOutlined, UserOutlined, UploadOutlined } from "@ant-design/icons"
 import { useUserProfile } from "../../hooks/useUserProfile"
 
-const AccountInfo: React.FC = () => {
+const AccountInfo = () => {
   const [editMode, setEditMode] = useState(false)
   const { profile, loading, error, handleChange, handleSave, handleCancel } = useUserProfile()
   const [form] = Form.useForm()
@@ -165,21 +162,34 @@ const AccountInfo: React.FC = () => {
             name="phoneNumber"
             rules={[
               { required: true, message: "Vui lòng nhập số điện thoại!" },
-              { pattern: /^(0[3|5|7|8|9])+([0-9]{8})$/, message: "Số điện thoại không hợp lệ (10-11 số)!" },
+              {
+                pattern: /^(\+84|0)\d{9,10}$/,
+                message: "Số điện thoại không hợp lệ! Định dạng: 0xxxxxxxxx hoặc +84xxxxxxxxx",
+              },
             ]}
           >
             <Input
               disabled={!editMode}
               onChange={(e) => handleChange("phoneNumber", e.target.value)}
-              placeholder="Nhập số điện thoại"
+              placeholder="Nhập số điện thoại (VD: 0987654321)"
             />
           </Form.Item>
 
-          <Form.Item label="Email" name="email">
+          <Form.Item
+            label="Email"
+            name="email"
+            rules={[
+              {
+                type: "email",
+                message: "Email không đúng định dạng!",
+              },
+            ]}
+          >
             <Input
               type="email"
-              disabled={true} // Email thường không cho phép thay đổi
-              placeholder="Email"
+              disabled={!editMode}
+              onChange={(e) => handleChange("email", e.target.value)}
+              placeholder="Nhập email (không bắt buộc)"
             />
           </Form.Item>
 

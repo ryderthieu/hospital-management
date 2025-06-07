@@ -2,13 +2,18 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { message } from "antd"
-import { userService, doctorService, type UpdateUserRequest, type UpdateDoctorRequest } from "../services/userService"
+import { userService } from "../../services/userService"
+import { doctorService } from "../../services/doctorService"
+import { useAuth } from "../../context/AuthContext"
+import type { UserUpdateRequest } from "../../types/user"
+import type { DoctorDto } from "../../types/doctor"
+import { ACADEMIC_DEGREE_LABELS } from "../../types/doctor"
 
 interface CombinedProfile {
   // User fields
   userId: number
   email?: string
-  phoneNumber: string // Changed from phone to phoneNumber
+  phoneNumber: string
   role: string
 
   // Doctor fields (if user is a doctor)
@@ -17,7 +22,7 @@ interface CombinedProfile {
   fullName?: string
   firstName?: string
   lastName?: string
-  dateOfBirth?: string // Changed from birthday to dateOfBirth
+  dateOfBirth?: string
   gender?: string
   address?: string
   academicDegree?: string
@@ -32,67 +37,52 @@ interface CombinedProfile {
 }
 
 export const useUserProfile = () => {
+  const { user, doctorInfo, updateUser, updateDoctorInfo, getCurrentUserId, getCurrentDoctorId } = useAuth()
   const [profile, setProfile] = useState<CombinedProfile | null>(null)
   const [originalProfile, setOriginalProfile] = useState<CombinedProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  // Get current user ID from auth context or localStorage
-  const getCurrentUserId = (): number => {
-    return Number.parseInt(localStorage.getItem("currentUserId") || "1")
-  }
-
-  const getCurrentDoctorId = (): number | null => {
-    const doctorId = localStorage.getItem("currentDoctorId")
-    return doctorId ? Number.parseInt(doctorId) : null
-  }
 
   const fetchProfile = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
 
-      const userId = getCurrentUserId()
-      const userProfile = await userService.getUserProfile(userId)
+      // Use getCurrentUser to get fresh user data
+      const userData = await userService.getCurrentUser()
 
       let combinedProfile: CombinedProfile = {
-        userId: userProfile.userId,
-        email: userProfile.email,
-        phoneNumber: userProfile.phone, // Map phone to phoneNumber
-        role: userProfile.role,
-        accountType: getAccountTypeLabel(userProfile.role),
+        userId: userData.userId,
+        email: userData.email || "",
+        phoneNumber: userData.phone,
+        role: userData.role,
+        accountType: getAccountTypeLabel(userData.role),
       }
 
-      // If user is a doctor, fetch doctor profile
-      if (userProfile.role === "DOCTOR") {
-        const doctorId = getCurrentDoctorId()
-        if (doctorId) {
-          try {
-            const doctorProfile = await doctorService.getDoctorProfile(doctorId)
+      // If user is a doctor, get doctor data
+      if (userData.role === "DOCTOR") {
+        const doctorData = await doctorService.getDoctorByUserId(userData.userId)
+        if (doctorData) {
+          // Split fullName into firstName and lastName
+          const nameParts = doctorData.fullName.split(" ")
+          const firstName = nameParts[nameParts.length - 1]
+          const lastName = nameParts.slice(0, -1).join(" ")
 
-            // Split fullName into firstName and lastName
-            const nameParts = doctorProfile.fullName.split(" ")
-            const firstName = nameParts[nameParts.length - 1]
-            const lastName = nameParts.slice(0, -1).join(" ")
-
-            combinedProfile = {
-              ...combinedProfile,
-              doctorId: doctorProfile.doctorId,
-              identityNumber: doctorProfile.identityNumber,
-              fullName: doctorProfile.fullName,
-              firstName,
-              lastName,
-              dateOfBirth: doctorProfile.birthday, // Map birthday to dateOfBirth
-              gender: mapGenderToVietnamese(doctorProfile.gender),
-              address: doctorProfile.address,
-              academicDegree: doctorProfile.academicDegree,
-              specialization: doctorProfile.specialization,
-              type: doctorProfile.type,
-              department: doctorProfile.department?.departmentName,
-              title: getAcademicDegreeLabel(doctorProfile.academicDegree),
-            }
-          } catch (doctorError) {
-            console.error("Failed to fetch doctor profile:", doctorError)
+          combinedProfile = {
+            ...combinedProfile,
+            doctorId: doctorData.doctorId,
+            identityNumber: doctorData.identityNumber,
+            fullName: doctorData.fullName,
+            firstName,
+            lastName,
+            dateOfBirth: doctorData.birthday,
+            gender: mapGenderToVietnamese(doctorData.gender),
+            address: doctorData.address,
+            academicDegree: doctorData.academicDegree,
+            specialization: doctorData.specialization,
+            type: doctorData.type,
+            department: doctorData.department?.departmentName || "Chưa phân khoa",
+            title: ACADEMIC_DEGREE_LABELS[doctorData.academicDegree] || "Bác sĩ",
           }
         }
       }
@@ -119,26 +109,35 @@ export const useUserProfile = () => {
   const handleSave = useCallback(async (): Promise<boolean> => {
     if (!profile || !originalProfile) return false
 
+    const userId = getCurrentUserId()
+    const doctorId = getCurrentDoctorId()
+
+    if (!userId) {
+      message.error("Không tìm thấy thông tin người dùng")
+      return false
+    }
+
     try {
       setLoading(true)
 
       // Prepare user update data
-      const userUpdates: UpdateUserRequest = {}
+      const userUpdates: UserUpdateRequest = {}
       if (profile.email !== originalProfile.email) {
         userUpdates.email = profile.email
       }
       if (profile.phoneNumber !== originalProfile.phoneNumber) {
-        userUpdates.phone = profile.phoneNumber // Map phoneNumber back to phone
+        userUpdates.phone = profile.phoneNumber
       }
 
       // Update user profile if there are changes
       if (Object.keys(userUpdates).length > 0) {
-        await userService.updateUserProfile(profile.userId, userUpdates)
+        const updatedUser = await userService.updateUser(userId, userUpdates)
+        updateUser(updatedUser)
       }
 
       // If user is a doctor, update doctor profile
-      if (profile.role === "DOCTOR" && profile.doctorId) {
-        const doctorUpdates: UpdateDoctorRequest = {}
+      if (profile.role === "DOCTOR" && doctorId) {
+        const doctorUpdates: Partial<DoctorDto> = {}
 
         // Combine firstName and lastName back to fullName
         const newFullName = `${profile.lastName} ${profile.firstName}`.trim()
@@ -147,7 +146,7 @@ export const useUserProfile = () => {
         }
 
         if (profile.dateOfBirth !== originalProfile.dateOfBirth) {
-          doctorUpdates.birthday = profile.dateOfBirth // Map dateOfBirth back to birthday
+          doctorUpdates.birthday = profile.dateOfBirth
         }
 
         if (profile.gender !== originalProfile.gender) {
@@ -160,7 +159,8 @@ export const useUserProfile = () => {
 
         // Update doctor profile if there are changes
         if (Object.keys(doctorUpdates).length > 0) {
-          await doctorService.updateDoctorProfile(profile.doctorId, doctorUpdates)
+          const updatedDoctor = await doctorService.updateDoctor(doctorId, doctorUpdates)
+          updateDoctorInfo(updatedDoctor)
         }
       }
 
@@ -176,7 +176,7 @@ export const useUserProfile = () => {
     } finally {
       setLoading(false)
     }
-  }, [profile, originalProfile, fetchProfile])
+  }, [profile, originalProfile, getCurrentUserId, getCurrentDoctorId, updateUser, updateDoctorInfo, fetchProfile])
 
   const handleCancel = useCallback(() => {
     if (originalProfile) {
@@ -226,17 +226,4 @@ const getAccountTypeLabel = (role: string): string => {
     PATIENT: "Bệnh nhân",
   }
   return types[role] || role
-}
-
-const getAcademicDegreeLabel = (degree?: string): string => {
-  const titles: Record<string, string> = {
-    BS: "Bác sĩ",
-    BS_CKI: "Bác sĩ Chuyên khoa I",
-    BS_CKII: "Bác sĩ Chuyên khoa II",
-    THS_BS: "Thạc sĩ Bác sĩ",
-    TS_BS: "Tiến sĩ Bác sĩ",
-    PGS_TS_BS: "Phó Giáo sư Tiến sĩ Bác sĩ",
-    GS_TS_BS: "Giáo sư Tiến sĩ Bác sĩ",
-  }
-  return titles[degree || ""] || "Bác sĩ"
 }
