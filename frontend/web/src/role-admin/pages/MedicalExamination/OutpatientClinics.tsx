@@ -3,10 +3,10 @@ import PageMeta from "../../components/common/PageMeta";
 import SearchInput from "../../components/common/SearchInput";
 import ClinicCard, {
   ClinicCardProps,
-} from "../../components/clinics/ClinicCard";
+} from "../../components/sections/clinics/ClinicCard";
 import { Link } from "react-router-dom";
-import Metric from "../../components/statistics/ClinicMetric";
-import { ActiveIcon, ClinicIcon, FullIcon, WarningIcon } from "../../icons";
+import Metric from "../../components/sections/statistics/ClinicMetric";
+import { ActiveIcon, ClinicIcon, FullIcon, WarningIcon } from "../../components/assets/icons";
 import AddButton from "../../components/ui/button/AddButton";
 
 type Clinic = ClinicCardProps;

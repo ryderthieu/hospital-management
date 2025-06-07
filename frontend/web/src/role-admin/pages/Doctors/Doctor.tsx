@@ -1,7 +1,6 @@
-import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
+import DoctorTable from "../../components/sections/doctor/DoctorTable";
 import AddButton from "../../components/ui/button/AddButton";
-import DoctorTable from "./DoctorTable";
 import React from "react";
 
 

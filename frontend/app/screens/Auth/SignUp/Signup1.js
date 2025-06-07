@@ -1,25 +1,13 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  StyleSheet,
-  SafeAreaView,
-  StatusBar,
-  ScrollView,
-  Text,
-} from "react-native";
-import Button from "../../../components/Button";
-import { 
-  FloatingLabelInput,
-  PasswordRequirements,
-  CheckboxWithLabel,
-  PageHeader,
-  AuthFooter
-} from "../../../components/Auth";
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, SafeAreaView, StatusBar, ScrollView, Text, Alert } from 'react-native';
+import Button from '../../../components/Button';
+import { FloatingLabelInput, PasswordRequirements, CheckboxWithLabel, PageHeader, AuthFooter } from '../../../components/Auth';
+import axios from 'axios';
+import { API_URL } from '@env';
 
 export default function Signup1({ navigation }) {
-  const [username, setUsername] = useState("");
-  const [phoneEmail, setPhoneEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
 
@@ -31,12 +19,49 @@ export default function Signup1({ navigation }) {
     }
   }, [password]);
 
-  const handleContinue = () => {
-    navigation.navigate("Signup2");
+  const handleContinue = async () => {
+    if (!phone || !password) {
+      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ số điện thoại và mật khẩu');
+      return;
+    }
+
+    if (!termsAccepted) {
+      Alert.alert('Lỗi', 'Bạn phải đồng ý với Điều khoản Dịch vụ và Chính sách Bảo mật');
+      return;
+    }
+
+    // Kiểm tra định dạng số điện thoại
+    const cleanedPhone = phone.replace(/\D/g, ''); // Loại bỏ ký tự không phải số
+    const formattedPhone = cleanedPhone.startsWith('0') ? cleanedPhone : `0${cleanedPhone}`;
+    const phoneRegex = /^(\+84|0)\d{9,10}$/;
+    if (!phoneRegex.test(formattedPhone)) {
+      Alert.alert('Lỗi', 'Số điện thoại phải bắt đầu bằng +84 hoặc 0 và có 10-11 chữ số');
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/register`, {
+        phone: formattedPhone,
+        password,
+        role: 'PATIENT', // Vai trò mặc định là PATIENT
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const { message } = response.data || {};
+      Alert.alert('Thành công', message || 'Đăng ký thành công, vui lòng tiếp tục');
+      navigation.navigate('Signup2', { phone: formattedPhone, password });
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.';
+      Alert.alert('Lỗi', errorMessage);
+      console.error('Signup error:', error.message, error.response?.data);
+    }
   };
 
   const handleLogin = () => {
-    navigation.navigate("Login");
+    navigation.navigate('Login');
   };
 
   return (
@@ -51,18 +76,11 @@ export default function Signup1({ navigation }) {
 
         <View style={styles.formContainer}>
           <FloatingLabelInput
-            value={username}
-            onChangeText={setUsername}
-            placeholder="Nhập username"
-            iconName="person-outline"
-          />
-
-          <FloatingLabelInput
-            value={phoneEmail}
-            onChangeText={setPhoneEmail}
+            value={phone}
+            onChangeText={setPhone}
             placeholder="Nhập số điện thoại"
             iconName="phone-portrait-outline"
-            keyboardType="email-address"
+            keyboardType="phone-pad"
           />
 
           <FloatingLabelInput
@@ -80,8 +98,7 @@ export default function Signup1({ navigation }) {
             checked={termsAccepted}
             onToggle={() => setTermsAccepted(!termsAccepted)}
           >
-            Tôi đồng ý với{" "}
-            <Text style={styles.linkText}>Điều khoản Dịch vụ</Text> và{" "}
+            Tôi đồng ý với <Text style={styles.linkText}>Điều khoản Dịch vụ</Text> và{' '}
             <Text style={styles.linkText}>Chính sách Bảo mật</Text> của ứng dụng.
           </CheckboxWithLabel>
         </View>
@@ -105,7 +122,7 @@ export default function Signup1({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: '#FFFFFF',
   },
   scrollContainer: {
     flexGrow: 1,
@@ -113,11 +130,11 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   formContainer: {
-    width: "100%",
+    width: '100%',
   },
   linkText: {
-    color: "#00B5B8",
-    fontWeight: "500",
+    color: '#00B5B8',
+    fontWeight: '500',
   },
   continueButton: {
     marginTop: 30,

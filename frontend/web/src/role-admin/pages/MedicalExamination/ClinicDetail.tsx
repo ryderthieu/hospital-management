@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import PageMeta from "../../components/common/PageMeta";
-import { ClinicCardProps } from "../../components/clinics/ClinicCard";
+import { ClinicCardProps } from "../../components/sections/clinics/ClinicCard";
 
 interface Doctor {
   id: string;
@@ -34,8 +34,6 @@ const ClinicDetail: React.FC = () => {
   const cancelledAppointments = 2;
   
   useEffect(() => {
-    // Trong thực tế, bạn sẽ gọi API để lấy thông tin chi tiết phòng khám
-    // Ở đây, chúng ta sẽ giả lập dữ liệu
     const fetchClinicData = async () => {
       try {
         setLoading(true);
@@ -235,15 +233,6 @@ const ClinicDetail: React.FC = () => {
         title={`${clinic.name} | Bệnh viện Đa khoa Trung tâm`}
         description={`Thông tin chi tiết về ${clinic.name}`}
       />
-
-      {/* Breadcrumb */}
-      <div className="mb-6 flex items-center gap-2 text-sm">
-        <Link to="/admin/examination" className="text-gray-500 hover:text-gray-700">Trang chủ</Link>
-        <span className="text-gray-500">/</span>
-        <Link to="/admin/examination/clinics" className="text-gray-500 hover:text-gray-700">Phòng khám</Link>
-        <span className="text-gray-500">/</span>
-        <span className="text-gray-900 font-medium">{clinic.name}</span>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Info */}
