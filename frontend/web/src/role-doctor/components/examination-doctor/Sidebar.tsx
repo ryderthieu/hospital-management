@@ -26,7 +26,7 @@ export const SidebarItem = ({ icon, label, to }: SidebarItemProps) => {
           active ? "bg-[#007B8A] text-white" : "text-[#007B8A] hover:bg-gray-100"
         }`}
       >
-        <span className="mr-3 text-xl">{icon}</span>
+        <span className={`mr-3 text-xl ${active ? "text-white" : "text-base-600"}`}>{icon}</span>
         <span>{label}</span>
       </Link>
     </div>
@@ -40,12 +40,12 @@ export const Sidebar = () => {
         <h1 className="text-xl font-bold text-base-600">We<span className="text-xl font-bold text-black">Care</span></h1>
       </div>
       <nav className="mt-2 pr-5">
-        <SidebarItem icon={<BarChart3 size={20} className="text-base-600" />} label="Dashboard" to="/examination/" />
-        <SidebarItem icon={<Calendar size={20} className="text-base-600" />} label="Lịch làm việc" to="/examination/schedule" />
-        <SidebarItem icon={<Clock size={20} className="text-base-600" />} label="Lịch hẹn" to="/examination/appointment" />
+        <SidebarItem icon={<BarChart3 size={20} />} label="Dashboard" to="/examination/" />
+        <SidebarItem icon={<Calendar size={20} />} label="Lịch làm việc" to="/examination/schedule" />
+        <SidebarItem icon={<Clock size={20} />} label="Lịch hẹn" to="/examination/appointment" />
         <SidebarItem icon={<Users size={20} />} label="Bệnh nhân" to="/examination/patients" />
-        <SidebarItem icon={<User size={20} className="text-base-600" />} label="Tài khoản" to="/examination/account" />
-        <SidebarItem icon={<LogOut size={20} className="text-base-600" />} label="Đăng xuất" to="/examination/logout" />
+        <SidebarItem icon={<User size={20} />} label="Tài khoản" to="/examination/account" />
+        <SidebarItem icon={<LogOut size={20} />} label="Đăng xuất" to="/examination/logout" />
       </nav>
     </div>
   );

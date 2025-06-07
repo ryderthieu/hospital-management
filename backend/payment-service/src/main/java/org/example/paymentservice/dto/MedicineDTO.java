@@ -17,7 +17,8 @@ public class MedicineDTO {
     private String description;
     private String usage;
     private String unit;
-    private boolean insuranceCovered;
+    private BigDecimal insuranceDiscountPercent;
+    private BigDecimal insuranceDiscount;
     private String sideEffects;
     private BigDecimal price;
     private Long quantity;

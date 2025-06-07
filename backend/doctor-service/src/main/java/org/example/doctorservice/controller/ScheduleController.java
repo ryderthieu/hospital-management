@@ -6,47 +6,56 @@ import org.example.doctorservice.dto.ScheduleDto;
 import org.example.doctorservice.service.ScheduleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/doctors")
+@RequestMapping("/doctors")
 @RequiredArgsConstructor
 public class ScheduleController {
 
     private final ScheduleService scheduleService;
 
-    @GetMapping("/{doctorId}/schedules")
-    public ResponseEntity<List<ScheduleDto>> getAllSchedules(@PathVariable Integer doctorId) {
-        return ResponseEntity.ok(scheduleService.getAllSchedules(doctorId));
+    private Integer getCurrentDoctorId() {
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return Integer.valueOf(userId);
     }
 
-    @GetMapping("/{doctorId}/schedules/{scheduleId}")
-    public ResponseEntity<ScheduleDto> getScheduleById(@PathVariable Integer scheduleId, @PathVariable Integer doctorId) {
-        return ResponseEntity.ok(scheduleService.getScheduleById(scheduleId, doctorId));
+    @PreAuthorize("hasAnyRole('DOCTOR')")
+    @GetMapping("/schedules")
+    public ResponseEntity<List<ScheduleDto>> getAllSchedules() {
+        return ResponseEntity.ok(scheduleService.getAllSchedules(getCurrentDoctorId()));
     }
 
-    @PostMapping("/{doctorId}/schedules")
-    public ResponseEntity<ScheduleDto> createSchedule(@PathVariable Integer doctorId, @RequestBody @Valid ScheduleDto scheduleDto) {
-        return ResponseEntity.ok(scheduleService.createSchedule(doctorId, scheduleDto));
+    @PreAuthorize("hasAnyRole('DOCTOR')")
+    @GetMapping("/schedules/{scheduleId}")
+    public ResponseEntity<ScheduleDto> getScheduleById(@PathVariable Integer scheduleId) {
+        return ResponseEntity.ok(scheduleService.getScheduleById(scheduleId, getCurrentDoctorId()));
     }
 
-    @PutMapping("/{doctorId}/schedules/{scheduleId}")
-    public ResponseEntity<ScheduleDto> updateSchedule(@PathVariable Integer doctorId,
-                                                      @PathVariable Integer scheduleId,
+    @PreAuthorize("hasAnyRole('DOCTOR')")
+    @PostMapping("/schedules")
+    public ResponseEntity<ScheduleDto> createSchedule(@RequestBody @Valid ScheduleDto scheduleDto) {
+        return ResponseEntity.ok(scheduleService.createSchedule(getCurrentDoctorId(), scheduleDto));
+    }
+
+    @PreAuthorize("hasAnyRole('DOCTOR')")
+    @PutMapping("/schedules/{scheduleId}")
+    public ResponseEntity<ScheduleDto> updateSchedule(@PathVariable Integer scheduleId,
                                                       @RequestBody @Valid ScheduleDto scheduleDto) {
-        return ResponseEntity.ok(scheduleService.updateSchedule(doctorId, scheduleId, scheduleDto));
+        return ResponseEntity.ok(scheduleService.updateSchedule(getCurrentDoctorId(), scheduleId, scheduleDto));
     }
 
-    @DeleteMapping("/{doctorId}/schedules/{scheduleId}")
-    public ResponseEntity<String> deleteSchedule(@PathVariable Integer doctorId,
-                                                 @PathVariable Integer scheduleId) {
-        scheduleService.deleteSchedule(doctorId, scheduleId);
+    @DeleteMapping("/schedules/{scheduleId}")
+    public ResponseEntity<String> deleteSchedule(@PathVariable Integer scheduleId) {
+        scheduleService.deleteSchedule(getCurrentDoctorId(), scheduleId);
         return ResponseEntity.ok("Lịch được xóa thành công");
     }
 
-    @GetMapping("/schedules")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
+    @GetMapping("/schedules/admin")
     public ResponseEntity<List<ScheduleDto>> getAllSchedulesForAdmin() {
         return ResponseEntity.ok(scheduleService.getAllSchedulesForAdmin());
     }

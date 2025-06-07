@@ -1,6 +1,6 @@
 import { useParams } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
-import PatientDetailLayout from "./PatientDetailLayout";
+import { PatientDetailLayout } from "../../components/sections/patient";
 import ReturnButton from "../../components/ui/button/ReturnButton";
 
 export default function PatientDetail() {
@@ -9,8 +9,8 @@ export default function PatientDetail() {
     return (
         <>
         <PageMeta
-            title="Patient Detail| Admin Dashboard"
-            description="This is Patient Detail Dashboard"
+            title="Chi tiết bệnh nhân| Bệnh viện đa khoa Wecare"
+            description="Chi tiết bệnh nhân"
         />
         
         <div className="flex justify-start items-center mb-6">

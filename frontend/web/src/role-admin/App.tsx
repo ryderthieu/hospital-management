@@ -1,30 +1,18 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router";
-import SignIn from "./pages/AuthPages/SignIn";
-import SignUp from "./pages/AuthPages/SignUp";
+import SignIn from "./pages/Auth/SignIn";
 import NotFound from "./pages/OtherPage/NotFound";
-import UserProfiles from "./pages/UserProfiles";
-import Videos from "./pages/UiElements/Videos";
-import Images from "./pages/UiElements/Images";
-import Alerts from "./pages/UiElements/Alerts";
-import Badges from "./pages/UiElements/Badges";
-import Avatars from "./pages/UiElements/Avatars";
-import Buttons from "./pages/UiElements/Buttons";
-import LineChart from "./pages/Charts/LineChart";
-import BarChart from "./pages/Charts/BarChart";
-import Calendar from "./pages/Calendar";
-import BasicTables from "./pages/Tables/BasicTables";
-import FormElements from "./pages/Forms/FormElements";
-import Blank from "./pages/Blank";
-import AppLayout from "./layout/AppLayout";
+import Profile from "./pages/Profile/Profile";
+import AppLayout from "./layouts/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
-import Home from "./pages/Dashboard/Home";
-import Patient from "./pages/Patients/Patient";
-import PatientDetail from "./pages/Patients/PatientDetail";
-import Doctor from "./pages/Doctors/Doctor";
-import Medicine from "./pages/Medicines/Medicines";
-import Service from "./pages/HealthServices/Services";
-import Department from "./pages/Departments/Department";
-import PatientRoom from "./pages/PatientRooms/PatientsRoom";
+import  Home  from "./pages/Dashboard/Home";
+import { Patient, PatientDetail, PatientAddForm } from "./pages/Patients";
+import { Doctor, DoctorDetail, DoctorSchedule } from "./pages/Doctors";
+import { Medicines } from "./pages/Medicines";
+import { Services } from "./pages/HealthServices";
+import { Department, DepartmentDetail } from "./pages/Departments";
+import { RoomDetail, Inpatients, InpatientRoom } from "./pages/Inpatient";
+import { OutpatientClinics, MedicalCalendar, ClinicDetail } from "./pages/MedicalExamination";
+import Authorization from "./pages/Authorization/Authorization";
 
 const AdminApp: React.FC = () => {
   return (
@@ -36,52 +24,46 @@ const AdminApp: React.FC = () => {
           <Route element={<AppLayout />}>
             <Route index path="/admin" element={<Home />} />
 
+            {/* Medical Examinations Pages */}
+            <Route path="/admin/calendar" element={<MedicalCalendar />} />
+            <Route path="/admin/outpatient-clinics" element={<OutpatientClinics />} />
+            <Route path="/admin/outpatient-clinics/:id" element={<ClinicDetail />} />
+
             {/* Patients Pages */}
             <Route path="/admin/patients" element={<Patient />} />
             <Route path="/admin/patients/:id" element={<PatientDetail />} />
+            <Route path="/admin/patients/new" element={<PatientAddForm />} /> 
 
             {/* Doctors Page */}
             <Route path="/admin/doctors" element={<Doctor />} />
+            <Route path="/admin/doctors/detail/:id" element={<DoctorDetail />} />
+            <Route path="/admin/doctors/schedule/:id" element={<DoctorSchedule />} />
 
             {/* Medicines Page */}
-            <Route path="/admin/medicines" element={<Medicine />} />
+            <Route path="/admin/medicines" element={<Medicines />} />
 
             {/* Services Page */}
-            <Route path="/admin/services" element={<Service />} />
+            <Route path="/admin/health-services" element={<Services />} />
 
-            {/* Patients Room Page */}
-            <Route path="/admin/patients-rooms" element={<PatientRoom />} />
+            {/* Inpatients Page */}
+            <Route path="/admin/inpatients-rooms" element={<InpatientRoom />} />
+            <Route path="/admin/inpatients" element={<Inpatients />} />
+            <Route path="/admin/inpatients-rooms/room-details" element={<RoomDetail />} />
 
             {/* Department Page */}
             <Route path="/admin/departments" element={<Department />} />
+            <Route path="/admin/departments/:id" element={<DepartmentDetail />} />
+
+            {/* Authorization Page */}
+            <Route path="/admin/authorization" element={<Authorization />} />
 
             {/* Others Page */}
-            <Route path="/admin/profile" element={<UserProfiles />} />
-            <Route path="/admin/calendar" element={<Calendar />} />
-            <Route path="/admin/blank" element={<Blank />} />
-
-            {/* Forms */}
-            <Route path="/admin/form-elements" element={<FormElements />} />
-
-            {/* Tables */}
-            <Route path="/admin/basic-tables" element={<BasicTables />} />
-
-            {/* Ui Elements */}
-            <Route path="/admin/alerts" element={<Alerts />} />
-            <Route path="/admin/avatars" element={<Avatars />} />
-            <Route path="/admin/badge" element={<Badges />} />
-            <Route path="/admin/buttons" element={<Buttons />} />
-            <Route path="/admin/images" element={<Images />} />
-            <Route path="/admin/videos" element={<Videos />} />
-
-            {/* Charts */}
-            <Route path="/admin/line-chart" element={<LineChart />} />
-            <Route path="/admin/bar-chart" element={<BarChart />} />
+            <Route path="/admin/profile" element={<Profile />} />
           </Route>
 
           {/* Auth Layout */}
-          <Route path="/admin/signin" element={<SignIn />} />
-          <Route path="/admin/signup" element={<SignUp />} />
+          <Route path="/" element={<SignIn />} />
+          
 
           {/* Fallback Route */}
           <Route path="*" element={<NotFound />} />
@@ -91,4 +73,4 @@ const AdminApp: React.FC = () => {
   );
 }
 
-export default AdminApp
+export default AdminApp;

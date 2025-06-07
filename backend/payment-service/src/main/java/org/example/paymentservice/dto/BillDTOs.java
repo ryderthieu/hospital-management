@@ -2,6 +2,7 @@ package org.example.paymentservice.dto;
 
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -35,14 +36,23 @@ public class BillDTOs {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class NewBillDetailRequest {
+        @NotNull(message = "Mã thuốc hoặc dịch vụ không được để trống")
+        private Long itemId;
+
+        @NotNull(message = "Loại hóa đơn không được để trống")
+        private BillDetail.ItemType itemType;
+
+        @NotNull(message = "Số lượng không được để trống")
+        private Long quantity;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class UpdateBillRequest {
         private Long appointmentId;
-
-        private BigDecimal totalCost;
-
-        private BigDecimal insuranceDiscount;
-
-        private BigDecimal amount;
 
         private Bill.BillStatus status;
     }
@@ -65,6 +75,29 @@ public class BillDTOs {
 
         private LocalDateTime createdAt;
 
-        private List<BillDetail> billDetails;
+        private List<BillDetailResponse> billDetails;
+
+    }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BillDetailResponse {
+        private Long detailId;
+
+        private Long billId;
+
+        private BillDetail.ItemType itemType;
+
+        private Long itemId;
+
+        private Long quantity;
+
+        private BigDecimal unitPrice;
+
+        private BigDecimal totalPrice;
+
+        private BigDecimal insuranceDiscount;
+
+        private LocalDateTime createdAt;
     }
 }

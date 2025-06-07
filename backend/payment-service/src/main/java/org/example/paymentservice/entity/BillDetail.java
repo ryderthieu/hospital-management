@@ -17,13 +17,16 @@ public class BillDetail {
     @Column(name = "detail_id")
     private Long detailId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bill_id", nullable = false)
     private Bill bill;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "item_type", nullable = false)
     private ItemType itemType;
+
+    @Column(name = "item_id", nullable = false)
+    private Long itemId;
 
     @Column(name = "quantity", nullable = false)
     private Long quantity;
