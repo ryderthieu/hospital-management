@@ -13,7 +13,8 @@ public class RouterValidator {
     //Danh sách api không cần xác thực
     private static final List<String> OPEN_ENDPOINTS = List.of(
             "/payment/bills/test/{id}",
-            "/pharmacy/medicines/{id}"
+            "/pharmacy/medicines/{id}",
+            "/notifications"
     );
 
     //Có thể dưới dạng start with..
