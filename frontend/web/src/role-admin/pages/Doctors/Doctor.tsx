@@ -1,8 +1,7 @@
 import PageMeta from "../../components/common/PageMeta";
 import DoctorTable from "../../components/sections/doctor/DoctorTable";
 import AddButton from "../../components/ui/button/AddButton";
-import React from "react";
-
+import React, { useState, useEffect } from "react";
 
 export default function Doctor() {
   return (
@@ -18,7 +17,7 @@ export default function Doctor() {
       </div>
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <div className="col-span-12 xl:col-span-7">
-            <DoctorTable />
+          <DoctorTable />
         </div>
         <div className="fixed right-5 bottom-5">
           <AddButton />

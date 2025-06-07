@@ -28,6 +28,7 @@
     "@nestjs/platform-socket.io": "^11.1.0",
     "@nestjs/websockets": "^11.1.0",
     "class-validator": "^0.14.2",
+    "eureka-js-client": "^4.5.0",
     "firebase-admin": "^13.3.0",
     "mongoose": "^8.14.2",
     "reflect-metadata": "^0.2.2",

@@ -34,6 +34,9 @@ public class GatewayConfig {
                 .route("appointment-service", r -> r.path("/api/appointments/**")
                         .filters(f -> f.stripPrefix(1).filter(jwtAuthFilter))
                         .uri("lb://appointment-service"))
+                .route("notification-service", r -> r.path("/api/notifications/**")
+                        .filters(f -> f.stripPrefix(1).filter(jwtAuthFilter))
+                        .uri("lb://notification-service"))
                 .build();
 
     }
