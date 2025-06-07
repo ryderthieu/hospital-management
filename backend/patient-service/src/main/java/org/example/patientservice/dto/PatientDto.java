@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 @Data
 @NoArgsConstructor
 public class PatientDto {
+    private Long userId;
+
     private Integer patientId;
 
     @NotBlank(message = "Số CMND/CCCD không được để trống")
