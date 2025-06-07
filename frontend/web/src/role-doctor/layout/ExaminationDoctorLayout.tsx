@@ -1,20 +1,23 @@
-import React from "react";
-import { Sidebar } from "../components/examination-doctor/Sidebar";
-import { Header } from "../components/examination-doctor/Header";
-import { Outlet } from "react-router-dom";
+import type React from "react"
+import { Layout } from "antd"
+import { Outlet } from "react-router-dom"
+import Sidebar from "../components/common/Sidebar"
+import Header from "../components/common/Header"
+
+const { Content } = Layout
 
 const ExaminationDoctorLayout: React.FC = () => {
-    return (
-      <div className="flex h-screen">
-        <Sidebar />
-        <div className="flex-1 flex flex-col">
-          <Header />
-          <main className="flex-1 p-4 overflow-y-auto">
-            <Outlet />
-          </main>
-        </div>
-      </div>
-    )
-  }
+  return (
+    <Layout style={{ minHeight: "100vh" }}>
+      <Sidebar role="examination" />
+      <Layout>
+        <Header />
+        <Content className="p-4 overflow-y-auto bg-gray-50">
+          <Outlet />
+        </Content>
+      </Layout>
+    </Layout>
+  )
+}
 
-export default ExaminationDoctorLayout;
+export default ExaminationDoctorLayout

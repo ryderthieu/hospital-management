@@ -45,7 +45,7 @@ export const Sidebar = () => {
         <SidebarItem icon={<Clock size={20} />} label="Lịch hẹn" to="/examination/appointment" />
         <SidebarItem icon={<Users size={20} />} label="Bệnh nhân" to="/examination/patients" />
         <SidebarItem icon={<User size={20} />} label="Tài khoản" to="/examination/account" />
-        <SidebarItem icon={<LogOut size={20} />} label="Đăng xuất" to="/examination/logout" />
+        <SidebarItem icon={<LogOut size={20} />} label="Đăng xuất" to="/" />
       </nav>
     </div>
   );

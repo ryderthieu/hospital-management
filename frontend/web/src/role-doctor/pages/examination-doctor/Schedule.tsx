@@ -1,11 +1,12 @@
-import { ScheduleComponent } from "../../components/examination-doctor/Schedule/components/Schedule/index"
+import type React from "react";
+import { ScheduleComponent } from "../..//components/examination-doctor/Schedule/index";
 
-const Schedule = () => {
+const Schedule: React.FC = () => {
   return (
-    <div className="container mx-auto p-4">
-      <ScheduleComponent />
+    <div className="flex-1 min-h-screen bg-gray-50">
+        <ScheduleComponent />
     </div>
-  )
-}
+  );
+};
 
-export default Schedule
+export default Schedule;

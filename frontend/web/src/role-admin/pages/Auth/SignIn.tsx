@@ -6,9 +6,34 @@ import { EyeCloseIcon, EyeIcon } from "../../components/assets/icons";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
 import Button from "../../components/ui/button/Button";
+import { useLogin } from "../../hooks/useLogin";
+import { useNavigate } from "react-router";
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const { handleLogin, loading, error } = useLogin();
+  const navigate = useNavigate();
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleLogin({ phone, password });
+
+    const role = localStorage.getItem("role");
+
+    switch (role) {
+      case "ADMIN":
+        navigate("/admin");
+        break;
+      case "DOCTOR":
+        navigate("/examination");
+        break;
+      default:
+        navigate("/");
+    }
+  };
+
   return (
     <>
       <PageMeta
@@ -23,18 +48,20 @@ export default function SignIn() {
                 <h1 className="mb-2 font-semibold text-gray-800 text-title-sm sm:text-title-md">
                   Đăng nhập
                 </h1>
-                <p className="text-sm text-gray-500">
-                  Đăng nhập để truy cập
-                </p>
+                <p className="text-sm text-gray-500">Đăng nhập để truy cập</p>
               </div>
               <div>
-                <form>
+                <form onSubmit={onSubmit}>
                   <div className="space-y-6">
                     <div>
                       <Label>
-                        Tên đăng nhập <span className="text-error-500">*</span>{" "}
+                        Số điện thoại <span className="text-error-500">*</span>{" "}
                       </Label>
-                      <Input placeholder="info@gmail.com" />
+                      <Input
+                        placeholder="Nhập số điện thoại đã đăng ký"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                      />
                     </div>
                     <div>
                       <Label>
@@ -43,7 +70,9 @@ export default function SignIn() {
                       <div className="relative">
                         <Input
                           type={showPassword ? "text" : "password"}
-                          placeholder="Enter your password"
+                          placeholder="Nhập mật khẩu"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
                         />
                         <span
                           onClick={() => setShowPassword(!showPassword)}
@@ -66,8 +95,12 @@ export default function SignIn() {
                       </Link>
                     </div>
                     <div>
-                      <Button className="w-full" size="sm">
-                        Đăng nhập
+                      <Button
+                        className="w-full"
+                        disabled={loading}
+                        type="submit"
+                      >
+                        {loading ? "Đang đăng nhập..." : "Đăng nhập"}
                       </Button>
                     </div>
                   </div>
