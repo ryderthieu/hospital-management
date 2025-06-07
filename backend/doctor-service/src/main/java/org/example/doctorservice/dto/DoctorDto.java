@@ -20,7 +20,7 @@ public class DoctorDto {
     @NotBlank(message = "CCCD không được để trống")
     private String identityNumber;
 
-    @NotBlank(message = "Tên của bác sĩ không đuược để trống")
+    @NotBlank(message = "Tên của bác sĩ không được để trống")
     private String fullName;
 
     @NotNull(message = "Ngày sinh không được để trống")

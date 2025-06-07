@@ -25,7 +25,7 @@ public class PatientController {
         return ResponseEntity.ok(patientService.createPatient(patientDto));
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'DOCTOR')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'DOCTOR')")
     @GetMapping
     public ResponseEntity<List<PatientDto>> getAllPatients() {
         return ResponseEntity.ok(patientService.getAllPatients());
