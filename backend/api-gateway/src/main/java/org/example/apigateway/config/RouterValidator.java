@@ -14,7 +14,8 @@ public class RouterValidator {
     private static final List<String> OPEN_ENDPOINTS = List.of(
             "/payment/bills/test/{id}",
             "/pharmacy/medicines/{id}",
-            "/notifications"
+            "/notifications",
+            "/patients"
     );
 
     //Có thể dưới dạng start with..

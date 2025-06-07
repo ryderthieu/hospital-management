@@ -19,7 +19,7 @@ public class PatientController {
 
     private final PatientService patientService;
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
     @PostMapping
     public ResponseEntity<PatientDto> createPatient(@RequestBody @Valid PatientDto patientDto) {
         return ResponseEntity.ok(patientService.createPatient(patientDto));

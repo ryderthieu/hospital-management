@@ -14,7 +14,8 @@ import java.util.stream.Collectors;
 @Data
 @NoArgsConstructor
 public class PatientDto {
-    private Long userId;
+    @NotNull(message = "Mã mã khoản không được để trống")
+    private Integer userId;
 
     private Integer patientId;
 
@@ -47,6 +48,7 @@ public class PatientDto {
     private List<EmergencyContactDto> emergencyContactDtos;
 
     public PatientDto(Patient patient) {
+        this.userId = patient.getUserId();
         this.patientId = patient.getPatientId();
         this.identityNumber = patient.getIdentityNumber();
         this.insuranceNumber = patient.getInsuranceNumber();
