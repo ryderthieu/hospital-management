@@ -20,6 +20,7 @@ public class PatientServiceImpl implements PatientService {
     @Override
     public PatientDto createPatient(PatientDto patientDto) {
         Patient patient = Patient.builder()
+                .userId(patientDto.getUserId())
                 .identityNumber(patientDto.getIdentityNumber())
                 .insuranceNumber(patientDto.getInsuranceNumber())
                 .fullName(patientDto.getFullName())
