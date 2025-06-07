@@ -2,25 +2,26 @@ import React, { useState } from 'react';
 import { View, StyleSheet, SafeAreaView, StatusBar, ScrollView, Alert } from 'react-native';
 import { useAuth } from '../../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FloatingLabelInput, PageHeader, AuthFooter } from '../../../components/Auth';
 import Button from '../../../components/Button';
-import axios from 'axios';
-import { API_URL } from '@env';
+import API from '../../../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Conditional import for AsyncStorage
-let AsyncStorage;
-try {
-  AsyncStorage = require('@react-native-async-storage/async-storage').default;
-} catch (error) {
-  console.warn('Failed to load AsyncStorage, token will not be persisted:', error);
-}
+type RootStackParamList = {
+  Signup1: undefined;
+  Forgot1: undefined;
+  Onboarding5: undefined;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function LoginScreen() {
   const { setLoggedIn } = useAuth();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
 
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
 
   const handleLogin = async () => {
     if (!phone || !password) {
@@ -28,7 +29,6 @@ export default function LoginScreen() {
       return;
     }
 
-    // Kiểm tra định dạng số điện thoại
     const cleanedPhone = phone.replace(/\D/g, '');
     const formattedPhone = cleanedPhone.startsWith('0') ? cleanedPhone : `0${cleanedPhone}`;
     const phoneRegex = /^(\+84|0)\d{9,10}$/;
@@ -38,29 +38,21 @@ export default function LoginScreen() {
     }
 
     try {
-      const response = await axios.post(`${API_URL}/api/users/auth/login`, {
+      const response = await API.post<{ token: string }>('/users/auth/login', {
         phone: formattedPhone,
         password,
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
 
       const { token } = response.data;
 
       if (token) {
-        if (AsyncStorage) {
-          await AsyncStorage.setItem('userToken', token);
-        } else {
-          console.warn('AsyncStorage unavailable, token not saved');
-        }
+        await AsyncStorage.setItem('token', token); 
         setLoggedIn(true);
         Alert.alert('Thành công', 'Đăng nhập thành công');
       } else {
         Alert.alert('Lỗi', 'Không nhận được token từ server');
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra kết nối hoặc thử lại.';
       Alert.alert('Lỗi', errorMessage);
       console.error('Login error:', error.message, error.response?.data);
@@ -76,11 +68,7 @@ export default function LoginScreen() {
   };
 
   const handleBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.navigate('Onboarding5');
-    }
+    navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Onboarding5');
   };
 
   return (
