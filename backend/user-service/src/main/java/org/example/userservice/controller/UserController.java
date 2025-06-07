@@ -18,6 +18,12 @@ public class UserController {
 
     private final UserService userService;
 
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getCurrentUser() {
+        Long userId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString());
+        return ResponseEntity.ok(userService.getUserById(userId));
+    }
+
     @GetMapping("/{userId}")
     @PreAuthorize("hasRole('ADMIN') or @userService.isCurrentUser(#userId) or hasRole('RECEPTIONIST')")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long userId) {
