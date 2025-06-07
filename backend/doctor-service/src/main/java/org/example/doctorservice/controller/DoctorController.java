@@ -25,7 +25,7 @@ public class DoctorController {
         return ResponseEntity.ok(doctorService.getAllDoctors());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     @GetMapping("/{doctorId}")
     public ResponseEntity<DoctorDto> getDoctorById(@PathVariable Integer doctorId) {
         return ResponseEntity.ok(doctorService.getDoctorById(doctorId));
