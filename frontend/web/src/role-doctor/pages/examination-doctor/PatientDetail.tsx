@@ -1,64 +1,39 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-
+import type React from "react"
+import { useState } from "react"
+import { Row, Col, Form, Input, Button, Checkbox, Typography, Space } from "antd"
 import {
-  MapPin,
-  Plus,
-  Eye,
-  FileText,
-  CalendarClock,
-  ChevronDown,
-  Calendar,
-  SquarePen,
-  Clock,
-  Edit,
-  Save,
-  X,
-} from "lucide-react";
-import { FormField } from "../../components/examination-doctor/FormField";
-import { PatientStatusSection } from "../../components/examination-doctor/PatientStatusSelection";
-import { PrescriptionModal } from "../../components/examination-doctor/PrescriptionModal/index";
-import { MedicalOrderModal } from "../../components/examination-doctor/MedicalOrderModal/index";
-import { VitalSignModal } from "../../components/examination-doctor/VitalSignModal/index";
+  EditOutlined,
+  SaveOutlined,
+  CloseOutlined,
+  PlusOutlined,
+  EyeOutlined,
+  ClockCircleOutlined,
+  CalendarOutlined,
+  FileTextOutlined,
+  EnvironmentOutlined,
+} from "@ant-design/icons"
+import { PatientStatusSection } from "../../components/examination-doctor/PatientStatusSection"
+import { VitalSignModal } from "../../components/examination-doctor/VitalSignModal"
+import { PrescriptionModal } from "../../components/examination-doctor/PrescriptionModal"
+import { MedicalOrderModal } from "../../components/examination-doctor/MedicalOrderModal"
 
-interface PatientData {
-    id: string;
-    name: string;
-    avatar: string;
-    clinic: string;
-    doctor: string;
-    doctorCode: string;
-    appointmentTime: string;
-    appointmentDate: string;
-    appointmentDateTime: string;
-    diagnosis: string;
-    doctorNotes: string;
-    followUpDate: string;
-    hasFollowUp: boolean;
-    email: string;
-    phone: string;
-    birthDate: string;
-    medicalHistory: string;
-    height: string; // hoặc number nếu bạn muốn xử lý như số
-    weight: string; // hoặc number nếu bạn muốn xử lý như số
-    roomNumber: string;
-    testingStatus: string;
-    medicationStatus: string;
-  }
-  
+const { Title, Text } = Typography
 
-
-const PatientDetail = () => {
-  const [isEditing, setIsEditing] = useState(false);
+const PatientDetail: React.FC = () => {
+  const [isEditing, setIsEditing] = useState(false)
   const [isVitalSignModalOpen, setIsVitalSignModalOpen] = useState(false)
-  const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
-  const [isMedicalModalOpen, setIsMedicalModalOpen] = useState(false);
-  const [patientData, setPatientData] = useState<PatientData>({
+  const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false)
+  const [isMedicalModalOpen, setIsMedicalModalOpen] = useState(false)
+  const [form] = Form.useForm()
+
+  // Mock patient data
+  const patientData = {
     id: "BN22521584",
     name: "Trần Nhật Trường",
     avatar:
-      "https://scontent.fsgn22-1.fna.fbcdn.net/v/t39.30808-6/480404053_1006984517940842_142074701260698715_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=a5f93a&_nc_ohc=r8rFep9IuVYQ7kNvwFjfPpD&_nc_oc=AdkP83gkVNhfVbpKu0-ljcL3QabSF50PJuixSDMIpPOm3ESya0fA9UYxmWi_SYmCoG8iGbQARjWtLuDjIB85epDh&_nc_zt=23&_nc_ht=scontent.fsgn22-1.fna&_nc_gid=2dC9L86bhn3ZNTzRC62APA&oh=00_AfElIn5o44i9rmvFVSmKCtw9BOAVH0AMFy9txWtVa1elOg&oe=6817C0E8",
+      "https://scontent.fsgn19-1.fna.fbcdn.net/v/t39.30808-6/476834381_1003190531653574_2584131049560639925_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeGagn_fHUIov5-_0LLI0Vv3DrW-N58VWPcOtb43nxVY99Uq6WML4MsEIREYbrVtr9gHtzFDjN8rgGC3Z-hNx-3D&_nc_ohc=ZVnoEqkKLHQQ7kNvwESX1Nf&_nc_oc=AdmzadAZEmSvMkU6UEJd6p3I7q7gpbwtaNqcVWQbpkp4YOBHsZKYrykGYloWgF5_dj0&_nc_zt=23&_nc_ht=scontent.fsgn19-1.fna&_nc_gid=lPEaw2dpBBs_XLyGFeuCLw&oh=00_AfJTZlN6dDk08r7xeVhOPP3RbkNtq02aEQ376nvdo3GBvg&oe=68464B1C",
     clinic: "Dị Ứng - Miễn Dịch Lâm Sàng",
     doctor: "Ths.BS Nguyễn Thiên Tài",
     doctorCode: "BS22521424",
@@ -66,8 +41,7 @@ const PatientDetail = () => {
     appointmentDate: "2025-04-21",
     appointmentDateTime: "2025-04-21T09:20",
     diagnosis: "MẨY DAY MẨN",
-    doctorNotes:
-      "Kiêng ăn trứng, thịt gà. Nếu mẩy day xuất hiện kèm triệu chứng tức ngực, khó thở phải nhập viện gấp.",
+    doctorNotes: "Kiêng ăn trứng, thịt gà. Nếu mẩy day xuất hiện kèm triệu chứng tức ngực, khó thở phải nhập viện gấp.",
     followUpDate: "2025-05-21",
     hasFollowUp: true,
     email: "truontn@gmail.com",
@@ -79,55 +53,37 @@ const PatientDetail = () => {
     roomNumber: "P124",
     testingStatus: "Đang xét nghiệm",
     medicationStatus: "Chưa kê thuốc",
-  });
-
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setPatientData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const toggleEditMode = () => {
-    setIsEditing(!isEditing);
-  };
+  }
 
   const handleSave = () => {
-    // Here you would typically save the data to your backend
-    console.log("Saving patient data:", patientData);
-    setIsEditing(false);
-  };
+    form
+      .validateFields()
+      .then((values) => {
+        console.log("Saving patient data:", values)
+        setIsEditing(false)
+      })
+      .catch((error) => {
+        console.error("Validation failed:", error)
+      })
+  }
 
   const handleCancel = () => {
-    // Reset any changes (in a real app, you might want to reload from the server)
-    setIsEditing(false);
-  };
+    form.resetFields()
+    setIsEditing(false)
+  }
 
-   // Handle testing status changes
+  // Handle testing status changes
   const handleTestingStatusChange = (status: string): void => {
-    setPatientData({
-      ...patientData,
-      testingStatus: status
-    });
-    
-    // Here you would typically make an API call to update the backend
-    console.log(`Cập nhật trạng thái xét nghiệm: ${status}`);
-  };
+    console.log(`Cập nhật trạng thái xét nghiệm: ${status}`)
+  }
 
   // Handle medication status changes
   const handleMedicationStatusChange = (status: string): void => {
-    setPatientData({
-      ...patientData,
-      medicationStatus: status
-    });
-    
-    // Here you would typically make an API call to update the backend
-    console.log(`Cập nhật trạng thái kê thuốc: ${status}`);
-  };
+    console.log(`Cập nhật trạng thái kê thuốc: ${status}`)
+  }
 
   return (
     <div className="flex-1 min-h-screen bg-gray-50">
-      {/* Main content area */}
       <main className="p-6">
         <div className="flex flex-row">
           {/* Left column - Patient info */}
@@ -135,119 +91,74 @@ const PatientDetail = () => {
             <div className="flex flex-row justify-between items-center mb-6">
               <div className="flex flex-col items-center mb-6">
                 <img
-                  src={patientData.avatar}
+                  src={patientData.avatar || "/placeholder.svg"}
                   alt="Patient"
                   className="w-24 h-24 rounded-full mb-3"
                 />
-                <p className="text-gray-600">BN22521584</p>
+                <p className="text-gray-600">{patientData.id}</p>
                 <p className="text-gray-600">Nam, 21 tuổi</p>
               </div>
 
               {/* Current status */}
-              {/* Current status section */}
-               <PatientStatusSection 
-                    roomNumber={patientData.roomNumber}
-                    initialTestingStatus={patientData.testingStatus}
-                    initialMedicationStatus={patientData.medicationStatus}
-                    onTestingStatusChange={handleTestingStatusChange}
-                    onMedicationStatusChange={handleMedicationStatusChange}
+              <PatientStatusSection
+                roomNumber={patientData.roomNumber}
+                initialTestingStatus={patientData.testingStatus}
+                initialMedicationStatus={patientData.medicationStatus}
+                onTestingStatusChange={handleTestingStatusChange}
+                onMedicationStatusChange={handleMedicationStatusChange}
               />
-              {/* <div className="bg-base-100 rounded-lg p-4 mb-6">
-                <h3 className="text-black font-medium mb-2">
-                  Trạng thái hiện tại
-                </h3>
-
-                <div className="bg-base-300 rounded py-2 px-4 mb-2 flex items-center">
-                  <div className="w-3 h-3 bg-base-700 rounded-full mr-2"></div>
-                  <span className="text-sm font-medium text-black flex items-center">
-                    Phòng bệnh số:
-                  </span>
-                </div>
-
-                <div className="bg-base-300 rounded py-2 px-4 mb-2 flex items-center">
-                  <div className="w-3 h-3 bg-base-700 rounded-full mr-2"></div>
-                  <span className="text-sm font-medium text-black flex items-center">
-                    Đang xét nghiệm
-                    <button className="ml-auto">
-                      <ChevronDown size={18} className="text-black" />
-                    </button>
-                  </span>
-                </div>
-
-                <div className="bg-base-300 rounded py-2 px-4 flex items-center">
-                  <div className="w-3 h-3 bg-base-700 rounded-full mr-2"></div>
-                  <span className="text-sm font-medium text-black flex items-center">
-                    Chưa kê thuốc
-                    <button className="ml-auto">
-                      <ChevronDown size={18} className="text-black" />
-                    </button>
-                  </span>
-                </div>
-              </div> */}
             </div>
 
             {/* Contact info */}
             <div>
-              <div className="flex justify-between items-center mb-4 ">
+              <div className="flex justify-between items-center mb-4">
                 <h3 className="text-base-700 font-medium">Thông tin cá nhân</h3>
                 <button className="text-base-600 flex items-center text-sm">
-                  <SquarePen size={16} className="mr-1" /> Chỉnh sửa
+                  <EditOutlined style={{ marginRight: 4 }} /> Chỉnh sửa
                 </button>
               </div>
 
               <div className="grid grid-cols-2">
                 <div className="w-[200px] py-2">
                   <div className="mb-1">
-                    <span className="text-gray-500 text-sm">
-                      Địa chỉ email
-                    </span>
+                    <span className="text-gray-500 text-sm">Địa chỉ email</span>
                   </div>
-                  <p className="text-black text-sm">ntruong0961@gmail.com</p>
+                  <p className="text-black text-sm">{patientData.email}</p>
                 </div>
 
                 <div className="py-2 text-right">
                   <div className="mb-1">
-                    <span className="text-gray-500 text-sm w-full text-right">
-                      Số điện thoại
-                    </span>
+                    <span className="text-gray-500 text-sm w-full text-right">Số điện thoại</span>
                   </div>
-                  <p className="text-black text-sm">0961 565 563</p>
+                  <p className="text-black text-sm">{patientData.phone}</p>
                 </div>
 
                 <div className="py-2">
                   <div className="mb-1">
-                    <span className="text-gray-500 text-sm">
-                      Ngày sinh
-                    </span>
+                    <span className="text-gray-500 text-sm">Ngày sinh</span>
                   </div>
-                  <p className="text-black text-sm">17/10/2004</p>
+                  <p className="text-black text-sm">{patientData.birthDate}</p>
                 </div>
 
                 <div className="py-2 text-right">
                   <div className="mb-1">
-                    <span className="text-gray-500 text-sm w-full text-right">
-                      Tiền sử bệnh lý
-                    </span>
+                    <span className="text-gray-500 text-sm w-full text-right">Tiền sử bệnh lý</span>
                   </div>
-                  <p className="text-black text-sm">Dị ứng</p>
+                  <p className="text-black text-sm">{patientData.medicalHistory}</p>
                 </div>
 
                 <div className="py-2">
                   <div className="mb-1">
-                    <span className="text-gray-500 text-sm">
-                      Chiều cao (cm)
-                    </span>
+                    <span className="text-gray-500 text-sm">Chiều cao (cm)</span>
                   </div>
-                  <p className="text-black text-sm">168</p>
+                  <p className="text-black text-sm">{patientData.height}</p>
                 </div>
 
                 <div className="py-2 text-right">
                   <div className="mb-1">
-                    <span className="text-gray-500 text-sm w-full text-right">
-                      Cân nặng (kg)
-                    </span>
+                    <span className="text-gray-500 text-sm w-full text-right">Cân nặng (kg)</span>
                   </div>
-                  <p className="text-black text-sm">60</p>
+                  <p className="text-black text-sm">{patientData.weight}</p>
                 </div>
               </div>
             </div>
@@ -256,45 +167,40 @@ const PatientDetail = () => {
 
             {/* Medical indicators */}
             <div>
-              <div className="flex justify-between items-center mb-4 ">
+              <div className="flex justify-between items-center mb-4">
                 <h3 className="text-base-700 font-medium">Sinh hiệu</h3>
-                <button className="text-base-600 flex items-center text-sm" onClick={() => setIsVitalSignModalOpen(true)}>
-                  <Plus size={16} className="mr-1" /> Thêm sinh hiệu
+                <button
+                  className="text-base-600 flex items-center text-sm"
+                  onClick={() => setIsVitalSignModalOpen(true)}
+                >
+                  <PlusOutlined style={{ marginRight: 4 }} /> Thêm sinh hiệu
                 </button>
               </div>
               <div className="grid grid-cols-2">
                 <div className="w-[200px] py-2">
                   <div className="mb-1">
-                    <span className="text-gray-500 text-sm">
-                      Huyết áp tâm thu (mmHg)
-                    </span>
+                    <span className="text-gray-500 text-sm">Huyết áp tâm thu (mmHg)</span>
                   </div>
                   <p className="text-black text-sm">Chưa có dữ liệu</p>
                 </div>
 
                 <div className="py-2 text-right">
                   <div className="mb-1">
-                    <span className="text-gray-500 text-sm w-full text-right">
-                      Mạch (Nhịp/phút)
-                    </span>
+                    <span className="text-gray-500 text-sm w-full text-right">Mạch (Nhịp/phút)</span>
                   </div>
                   <p className="text-black text-sm">Chưa có dữ liệu</p>
                 </div>
 
                 <div className="mb-4 w-[210px] py-2">
                   <div className="mb-1">
-                    <span className="text-gray-500 text-sm">
-                      Huyết áp tâm trương (mmHg)
-                    </span>
+                    <span className="text-gray-500 text-sm">Huyết áp tâm trương (mmHg)</span>
                   </div>
                   <p className="text-black text-sm">Chưa có dữ liệu</p>
                 </div>
 
                 <div className="mb-4 py-2 text-right">
                   <div className="mb-1">
-                    <span className="text-gray-500 text-sm w-full text-right">
-                      Đường huyết
-                    </span>
+                    <span className="text-gray-500 text-sm w-full text-right">Đường huyết</span>
                   </div>
                   <p className="text-black text-sm">Chưa có dữ liệu</p>
                 </div>
@@ -310,18 +216,14 @@ const PatientDetail = () => {
               <div className="bg-white rounded-lg border border-gray-200 p-4 mb-3">
                 <div className="flex items-center mb-2">
                   <div className="w-8 h-8 bg-base-100 rounded-full flex items-center justify-center mr-3">
-                    <MapPin size={16} className="text-base-600" />
+                    <EnvironmentOutlined style={{ fontSize: 16 }} className="text-base-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">
-                      Dị Ứng - Miễn Dịch Lâm Sàng
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Ngày khám: 21/03/2025
-                    </p>
+                    <p className="text-sm font-medium">Dị Ứng - Miễn Dịch Lâm Sàng</p>
+                    <p className="text-xs text-gray-500">Ngày khám: 21/03/2025</p>
                   </div>
                   <button className="ml-auto text-base-600">
-                    <Eye size={16} />
+                    <EyeOutlined style={{ fontSize: 16 }} />
                   </button>
                 </div>
                 <p className="text-xs text-gray-500">Chẩn đoán: MẨY DAY MẨN</p>
@@ -330,18 +232,14 @@ const PatientDetail = () => {
               <div className="bg-white rounded-lg border border-gray-200 p-4">
                 <div className="flex items-center mb-2">
                   <div className="w-8 h-8 bg-base-100 rounded-full flex items-center justify-center mr-3">
-                    <MapPin size={16} className="text-base-600" />
+                    <EnvironmentOutlined style={{ fontSize: 16 }} className="text-base-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">
-                      Dị Ứng - Miễn Dịch Lâm Sàng
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Ngày khám: 21/02/2025
-                    </p>
+                    <p className="text-sm font-medium">Dị Ứng - Miễn Dịch Lâm Sàng</p>
+                    <p className="text-xs text-gray-500">Ngày khám: 21/02/2025</p>
                   </div>
                   <button className="ml-auto text-base-600">
-                    <Eye size={16} />
+                    <EyeOutlined style={{ fontSize: 16 }} />
                   </button>
                 </div>
                 <p className="text-xs text-gray-500">Chẩn đoán: MẨY DAY MẨN</p>
@@ -354,239 +252,142 @@ const PatientDetail = () => {
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <div className="flex justify-end mb-4">
                 {!isEditing ? (
-                  <button
-                    className="flex items-center text-base-600"
-                    onClick={toggleEditMode}
-                  >
-                    <Edit size={18} className="mr-1" /> Chỉnh sửa
-                  </button>
+                  <Button icon={<EditOutlined />} onClick={() => setIsEditing(true)}>
+                    Chỉnh sửa
+                  </Button>
                 ) : (
-                  <div className="flex gap-2">
-                    <button
-                      className="flex items-center text-red-600"
-                      onClick={handleCancel}
-                    >
-                      <X size={18} className="mr-1" /> Hủy
-                    </button>
-                    <button
-                      className="flex items-center text-base-600"
-                      onClick={handleSave}
-                    >
-                      <Save size={18} className="mr-1" /> Lưu
-                    </button>
-                  </div>
+                  <Space>
+                    <Button icon={<CloseOutlined />} onClick={handleCancel} danger>
+                      Hủy
+                    </Button>
+                    <Button type="primary" icon={<SaveOutlined />} onClick={handleSave}>
+                      Lưu
+                    </Button>
+                  </Space>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-x-5 mb-2">
-                <FormField
-                  label="Tên bệnh nhân"
-                  isEditable={isEditing}
-                  value={patientData.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                />
+              <Form form={form} layout="vertical" initialValues={patientData}>
+                <Row gutter={24}>
+                  <Col span={12}>
+                    <Form.Item
+                      label="Tên bệnh nhân"
+                      name="name"
+                      rules={[{ required: true, message: "Vui lòng nhập tên bệnh nhân!" }]}
+                    >
+                      <Input disabled={!isEditing} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item label="Phòng khám" name="clinic">
+                      <Input disabled={!isEditing} prefix={<EnvironmentOutlined />} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item label="Bác sĩ phụ trách" name="doctor">
+                      <Input disabled={!isEditing} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item label="Mã bác sĩ" name="doctorCode">
+                      <Input disabled={!isEditing} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item label="Giờ khám" name="appointmentTime">
+                      <Input disabled={!isEditing} prefix={<ClockCircleOutlined />} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item label="Ngày khám" name="appointmentDate">
+                      <Input disabled={!isEditing} prefix={<CalendarOutlined />} />
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-                <FormField
-                  label="Phòng khám"
-                  isEditable={isEditing}
-                  value={patientData.clinic}
-                  onChange={(e) => handleInputChange("clinic", e.target.value)}
-                  icon={
-                    <MapPin
-                      size={16}
-                      className="absolute left-2 top-3 text-gray-400"
-                    />
-                  }
-                />
+                <Form.Item label="Chẩn đoán" name="diagnosis">
+                  <Input.TextArea disabled={!isEditing} rows={4} />
+                </Form.Item>
 
-                <FormField
-                  label="Bác sĩ phụ trách"
-                  isEditable={isEditing}
-                  value={patientData.doctor}
-                  onChange={(e) => handleInputChange("doctor", e.target.value)}
-                />
+                <Form.Item label="Lời dặn của bác sĩ" name="doctorNotes">
+                  <Input.TextArea disabled={!isEditing} rows={4} />
+                </Form.Item>
 
-                <FormField
-                  label="Mã bác sĩ"
-                  isEditable={isEditing}
-                  value={patientData.doctorCode}
-                  onChange={(e) =>
-                    handleInputChange("doctorCode", e.target.value)
-                  }
-                />
-
-                <FormField
-                  label="Giờ khám"
-                  isEditable={isEditing}
-                  type="time"
-                  value={patientData.appointmentTime}
-                  onChange={(e) =>
-                    handleInputChange("appointmentTime", e.target.value)
-                  }
-                  icon={
-                    <Clock
-                      size={16}
-                      className="absolute left-2 top-3 text-gray-400"
-                    />
-                  }
-                />
-
-                <FormField
-                  label="Ngày khám"
-                  isEditable={isEditing}
-                  type="date"
-                  value={patientData.appointmentDate}
-                  onChange={(e) =>
-                    handleInputChange("appointmentDate", e.target.value)
-                  }
-                  icon={
-                    <Calendar
-                      size={16}
-                      className="absolute left-2 top-3 text-gray-400"
-                    />
-                  }
-                />
-              </div>
-
-              <FormField
-                label="Chẩn đoán"
-                isEditable={isEditing}
-                type="textarea"
-                rows={4}
-                value={patientData.diagnosis}
-                onChange={(e) =>
-                  handleInputChange("diagnosis", e.target.value)
-                }
-              />
-
-              <FormField
-                label="Lời dặn của bác sĩ"
-                isEditable={isEditing}
-                type="textarea"
-                rows={4}
-                value={patientData.doctorNotes}
-                onChange={(e) =>
-                  handleInputChange("doctorNotes", e.target.value)
-                }
-              />
-
-              <div className="mb-6">
-                <div className="flex items-center mb-4">
-                  <input
-                    type="checkbox"
-                    id="followup"
-                    className="mr-2"
-                    checked={patientData.hasFollowUp}
-                    onChange={(e) =>
-                      handleInputChange("hasFollowUp", e.target.checked)
-                    }
-                    disabled={!isEditing}
-                  />
-                  <label htmlFor="followup" className="text-gray-700">
+                <Form.Item>
+                  <Checkbox checked={patientData.hasFollowUp} disabled={!isEditing}>
                     Hẹn tái khám
-                  </label>
-                </div>
+                  </Checkbox>
+                </Form.Item>
 
-                <FormField
-                  label=""
-                  isEditable={isEditing}
-                  icon={
-                    <Calendar
-                      size={16}
-                      className="absolute left-2 top-3 text-gray-400"
-                    />
-                  }
-                  type="date"
-                  value={patientData.followUpDate}
-                  onChange={(e) =>
-                    handleInputChange("followUpDate", e.target.value)
-                  }
-                  disabled={!patientData.hasFollowUp}
-                />
-              </div>
+                <Form.Item label="" name="followUpDate">
+                  <Input disabled={!isEditing || !patientData.hasFollowUp} prefix={<CalendarOutlined />} />
+                </Form.Item>
+              </Form>
+
+              <div className="h-[2px] my-4 bg-gray-200"></div>
 
               <div className="mb-6">
-                <h3 className="text-gray-700 font-medium mb-4">
-                  Kết quả xét nghiệm
-                </h3>
+                <h3 className="text-gray-700 font-medium mb-4">Kết quả xét nghiệm</h3>
 
                 <div className="border border-gray-200 rounded-lg p-4 mb-4">
                   <div className="flex items-start mb-2">
-                    <FileText size={20} className="text-base-600 mr-3 mt-1" />
+                    <FileTextOutlined style={{ fontSize: 20 }} className="text-base-600 mr-3 mt-1" />
                     <div className="flex-1">
-                      <p className="font-medium">
-                        BN22521584 - Chụp CLVT sọ não không tiêm thuốc cản quang
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Thời gian trả kết quả dự kiến: 10:00 ngày 21/04/2025
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Thời gian trả kết quả thực tế: 10:20 ngày 21/04/2025
-                      </p>
+                      <p className="font-medium">BN22521584 - Chụp CLVT sọ não không tiêm thuốc cản quang</p>
+                      <p className="text-sm text-gray-500">Thời gian trả kết quả dự kiến: 10:00 ngày 21/04/2025</p>
+                      <p className="text-sm text-gray-500">Thời gian trả kết quả thực tế: 10:20 ngày 21/04/2025</p>
                       <p className="text-sm font-medium mt-1">
-                        Kết luận: Không thấy tụ máu nội sọ. Veo vách ngăn mũi
-                        sang phải.
+                        Kết luận: Không thấy tụ máu nội sọ. Veo vách ngăn mũi sang phải.
                       </p>
                     </div>
                     <button className="text-base-600">
-                      <Eye size={18} />
+                      <EyeOutlined style={{ fontSize: 18 }} />
                     </button>
                   </div>
                 </div>
 
                 <div className="border border-gray-200 rounded-lg p-4">
                   <div className="flex items-start mb-2">
-                    <FileText size={20} className="text-base-600 mr-3 mt-1" />
+                    <FileTextOutlined style={{ fontSize: 20 }} className="text-base-600 mr-3 mt-1" />
                     <div className="flex-1">
-                      <p className="font-medium">
-                        BN22521584 - Tổng phân tích tế bào máu
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Thời gian trả kết quả dự kiến: 10:30 ngày 21/04/2025
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Thời gian trả kết quả thực tế:
-                      </p>
+                      <p className="font-medium">BN22521584 - Tổng phân tích tế bào máu</p>
+                      <p className="text-sm text-gray-500">Thời gian trả kết quả dự kiến: 10:30 ngày 21/04/2025</p>
+                      <p className="text-sm text-gray-500">Thời gian trả kết quả thực tế:</p>
                       <p className="text-sm font-medium mt-1">Kết luận:</p>
                     </div>
                     <button className="text-base-600">
-                      <Eye size={18} />
+                      <EyeOutlined style={{ fontSize: 18 }} />
                     </button>
                   </div>
                 </div>
               </div>
 
               <div className="flex flex-wrap justify-end gap-4">
-                <button className="flex items-center px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700">
-                  <CalendarClock size={18} className="mr-2" />
-                  Xem toa thuốc
-                </button>
-                <button onClick={() => setIsMedicalModalOpen(true)} className="flex items-center px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700">
-                  <Plus size={18} className="mr-2" />
+                <Button icon={<ClockCircleOutlined />}>Xem toa thuốc</Button>
+                <Button icon={<PlusOutlined />} onClick={() => setIsMedicalModalOpen(true)}>
                   Thêm chỉ định
-                </button>
-                <button  onClick={() => setIsPrescriptionModalOpen(true)} className="flex items-center px-4 py-2 bg-base-600 text-white rounded-md">
-                  <Plus size={18} className="mr-2" />
+                </Button>
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsPrescriptionModalOpen(true)}>
                   Kê toa thuốc
-                </button>
-                
+                </Button>
               </div>
             </div>
-           
 
             <div className="mt-6 flex justify-end">
-              <button className="px-8 py-3 bg-base-600 text-white rounded-md">
+              <Button type="primary" size="large">
                 Lưu
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       </main>
-      {isVitalSignModalOpen && (<VitalSignModal isOpen={isVitalSignModalOpen} onClose={() => setIsVitalSignModalOpen(false)} />)}
-      {isPrescriptionModalOpen && (<PrescriptionModal isOpen={isPrescriptionModalOpen} onClose={() => setIsPrescriptionModalOpen(false)} />)}
-      {isMedicalModalOpen && (<MedicalOrderModal isOpen={isMedicalModalOpen} onClose={() => setIsMedicalModalOpen(false)} />)}
-    </div>
-  );
-};
 
-export default PatientDetail;
+      {/* Modals */}
+      <VitalSignModal isOpen={isVitalSignModalOpen} onClose={() => setIsVitalSignModalOpen(false)} />
+      <PrescriptionModal isOpen={isPrescriptionModalOpen} onClose={() => setIsPrescriptionModalOpen(false)} />
+      <MedicalOrderModal isOpen={isMedicalModalOpen} onClose={() => setIsMedicalModalOpen(false)} />
+    </div>
+  )
+}
+
+export default PatientDetail

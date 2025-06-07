@@ -5,10 +5,22 @@ import ExaminationDoctorLayout from './layout/ExaminationDoctorLayout'
 import TestDoctorLayout from './layout/TestDoctorLayout'
 import ExaminationDoctorRoutes from './routes/ExaminationDoctorRoutes'
 import TestDoctorRoutes from './routes/TestDoctorRoutes'
-import SignIn from '../role-admin/pages/Auth/SignIn'
+import SignIn from '../role-admin/pages/AuthPages/SignIn'
+import { ConfigProvider, App as AntdApp } from "antd";
+import viVN from "antd/es/locale/vi_VN";
+import dayjs from "dayjs";
+import "dayjs/locale/vi";
+import { theme } from "../theme"
+
+dayjs.locale("vi");
 
 const DoctorApp: React.FC = () => {
   return (
+    <ConfigProvider
+      theme={theme}
+      locale={viVN}
+      componentSize="large"
+    >
     <Router>
       <Routes>
         <Route path="/examination" element={<ExaminationDoctorLayout />}>
@@ -21,6 +33,7 @@ const DoctorApp: React.FC = () => {
         <Route path="*" element={<div>404 - Không tìm thấy trang</div>} />
       </Routes>
     </Router>
+    </ConfigProvider>
   )
 }
 

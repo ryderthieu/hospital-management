@@ -1,38 +1,79 @@
-import { useState } from 'react';
-import { AccountInfoView } from '../../components/examination-doctor/AccountInfo/index';
-import { ChangePassword } from '../../components/examination-doctor/ChangePassword/index';
+"use client"
 
-const Account = () => {
-  const [activeTab, setActiveTab] = useState('profile');
-  const [editMode, setEditMode] = useState(false);
+import type React from "react"
+import { useState } from "react"
+import { Card, Tabs } from "antd"
+import { UserOutlined, LockOutlined } from "@ant-design/icons"
+import AccountInfo from "../../components/examination-doctor/AccountInfo"
+import ChangePassword from "../../components/examination-doctor/ChangePassword"
+
+const Account: React.FC = () => {
+  const [activeTab, setActiveTab] = useState("profile")
+
+  const items = [
+    {
+      key: "profile",
+      label: (
+        <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <UserOutlined />
+          Cài đặt hồ sơ
+        </span>
+      ),
+      children: <AccountInfo />,
+    },
+    {
+      key: "password",
+      label: (
+        <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <LockOutlined />
+          Đổi mật khẩu
+        </span>
+      ),
+      children: <ChangePassword />,
+    },
+  ]
 
   return (
-    <div className="flex-1 min-h-screen bg-gray-50">
-        {/* Content */}
-        
-          <h1 className="text-2xl font-bold ml-6">Tài khoản & Bảo mật</h1>
-          
-          <div className="p-6 rounded-lg mb-6">
-            <div className="flex flex-row w-max gap-0 p-2 mb-6 bg-base-100 border border-base-200 rounded-xl">
-              <button
-                className={`px-4 py-2 rounded-md font-semibold ${activeTab === 'profile' ? ' bg-base-300 text-base-900' : 'bg-base-100 text-gray-700'}`}
-                onClick={() => setActiveTab('profile')}
-              >
-                Cài đặt hồ sơ
-              </button>
-              <button
-                className={`px-4 py-2 rounded-md font-semibold ${activeTab === 'password' ? ' bg-base-300 text-base-900' : 'bg-base-100 text-gray-700'}`}
-                onClick={() => setActiveTab('password')}
-              >
-                Đổi mật khẩu
-              </button>
-            </div>
-
-            {activeTab === 'profile' && <AccountInfoView editMode={editMode} setEditMode={setEditMode} />}
-            {activeTab === 'password' && <ChangePassword />}
-          </div>
+    <div style={{ background: "#f8fafc", minHeight: "100vh" }}>
+      <div style={{ padding: "24px" }}>
+        {/* Header */}
+        <div style={{ marginBottom: "32px" }}>
+          <h1
+            style={{
+              fontSize: "28px",
+              fontWeight: "bold",
+              color: "#111827",
+              margin: 0,
+              marginBottom: "8px",
+            }}
+          >
+            Tài khoản & Bảo mật
+          </h1>
+          <p style={{ color: "#6b7280", fontSize: "16px", margin: 0 }}>Quản lý thông tin cá nhân và cài đặt bảo mật</p>
         </div>
-  );
-};
 
-export default Account;
+        {/* Content */}
+        <Card
+          bordered={false}
+          style={{
+            borderRadius: "16px",
+            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          <Tabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            items={items}
+            size="large"
+            tabBarStyle={{
+              marginBottom: "32px",
+              borderBottom: "2px solid #f3f4f6",
+            }}
+          />
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+export default Account
