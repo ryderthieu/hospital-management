@@ -2,6 +2,7 @@ package org.example.doctorservice.service;
 
 
 import org.example.doctorservice.dto.DoctorDto;
+import org.example.doctorservice.dto.PatientDto;
 import org.example.doctorservice.entity.Doctor;
 
 import java.util.List;
@@ -24,4 +25,6 @@ public interface DoctorService {
                                       Doctor.AcademicDegree academicDegree,
                                       String specialization,
                                       Doctor.Type type);
+
+    List<PatientDto> getPatientsByDoctor(Integer doctorId);
 }

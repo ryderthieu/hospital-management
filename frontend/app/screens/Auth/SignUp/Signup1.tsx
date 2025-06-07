@@ -3,17 +3,23 @@ import { View, StyleSheet, SafeAreaView, StatusBar, ScrollView, Text, Alert } fr
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Button from '../../../components/Button';
 import { FloatingLabelInput, PasswordRequirements, CheckboxWithLabel, PageHeader, AuthFooter } from '../../../components/Auth';
-import API from '../../../services/api'; 
+import API from '../../../services/api';
 
 type RootStackParamList = {
   Login: undefined;
-  Signup2: { phone: string; password: string };
+  Signup2: { phone: string; password: string; userId: number }; // Thêm userId
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface Signup1Props {
   navigation: NavigationProp;
+}
+
+interface RegisterResponse {
+  message: string;
+  userId: number; // Khớp với AuthDTOs.UserResponse
+  role: string;
 }
 
 export default function Signup1({ navigation }: Signup1Props) {
@@ -56,15 +62,21 @@ export default function Signup1({ navigation }: Signup1Props) {
 
     setIsLoading(true);
     try {
-      const response = await API.post<{ message: string }>('/users/auth/register', {
+      const response = await API.post<RegisterResponse>('/users/auth/register', {
         phone: formattedPhone,
         password,
         role: 'PATIENT',
       });
 
-      const { message } = response.data;
+      const { message, userId } = response.data;
+      console.log('Debug - Register response:', { message, userId });
+
       Alert.alert('Thành công', message || 'Đăng ký thành công, vui lòng tiếp tục', [
-        { text: 'OK', onPress: () => navigation.navigate('Signup2', { phone: formattedPhone, password }) },
+        {
+          text: 'OK',
+          onPress: () =>
+            navigation.navigate('Signup2', { phone: formattedPhone, password, userId }), // Truyền userId
+        },
       ]);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.';
@@ -119,7 +131,7 @@ export default function Signup1({ navigation }: Signup1Props) {
         </View>
 
         <Button
-          title="TIẾP THEO"
+          title={isLoading ? 'ĐANG XỬ LÝ...' : 'TIẾP THEO'}
           onPress={handleContinue}
           style={styles.continueButton}
           disabled={isLoading}

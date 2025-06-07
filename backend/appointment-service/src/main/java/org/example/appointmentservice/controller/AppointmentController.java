@@ -47,4 +47,11 @@ public class AppointmentController {
         appointmentService.deleteAppointment(appointmentId);
         return ResponseEntity.ok("Cuộc hẹn đã xóa thành công");
     }
+
+    //@PreAuthorize("hasAnyRole('RECEPTIONIST', 'DOCTOR', 'ADMIN')")
+    @GetMapping("/doctor/{doctorId}")
+    public ResponseEntity<List<AppointmentDto>> getAppointmentsByDoctorId(@PathVariable Integer doctorId){
+        List<AppointmentDto> appointments = appointmentService.getAppointmentsByDoctorId(doctorId);
+        return ResponseEntity.ok(appointments);
+    }
 }
