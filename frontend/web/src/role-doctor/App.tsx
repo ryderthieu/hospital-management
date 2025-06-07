@@ -5,7 +5,7 @@ import ExaminationDoctorLayout from './layout/ExaminationDoctorLayout'
 import TestDoctorLayout from './layout/TestDoctorLayout'
 import ExaminationDoctorRoutes from './routes/ExaminationDoctorRoutes'
 import TestDoctorRoutes from './routes/TestDoctorRoutes'
-import SignIn from '../role-admin/pages/AuthPages/SignIn'
+import SignIn from '../role-admin/pages/Auth/SignIn'
 import { ConfigProvider, App as AntdApp } from "antd";
 import viVN from "antd/es/locale/vi_VN";
 import dayjs from "dayjs";

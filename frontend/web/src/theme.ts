@@ -36,8 +36,8 @@ export const theme: ThemeConfig = {
     Menu: {
       colorItemBg: "transparent",
       colorItemText: "#6b7280",
-      colorItemTextSelected: "#047481",
-      colorItemBgSelected: "#f0fdfa",
+      colorItemTextSelected: "#FFFFFF",
+      colorItemBgSelected: "#047481",
       colorItemTextHover: "#047481",
       borderRadius: 8,
       itemMarginInline: 4,
