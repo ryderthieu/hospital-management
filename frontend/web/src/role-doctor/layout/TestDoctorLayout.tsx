@@ -8,11 +8,11 @@ const { Content } = Layout
 
 const TestDoctorLayout: React.FC = () => {
   return (
-    <Layout style={{ minHeight: "100vh" }}>
+    <Layout className="h-screen">
       <Sidebar role="test" />
       <Layout>
         <Header />
-        <Content className="p-4 overflow-y-auto bg-gray-50">
+        <Content className="p-4 h-screen overflow-y-auto bg-gray-50">
           <Outlet />
         </Content>
       </Layout>

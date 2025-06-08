@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Form, Input, Select, Button, Avatar, Space, Upload, message } from "antd"
 import { EditOutlined, UserOutlined, UploadOutlined } from "@ant-design/icons"
 import { useUserProfile } from "../../hooks/useUserProfile"
@@ -9,6 +9,11 @@ const AccountInfo = () => {
   const [editMode, setEditMode] = useState(false)
   const { profile, loading, error, handleChange, handleSave, handleCancel } = useUserProfile()
   const [form] = Form.useForm()
+  useEffect(() => {
+  if (profile) {
+    form.setFieldsValue(profile)
+  }
+}, [profile, form])
 
   if (loading) return <div className="flex justify-center py-8">Đang tải...</div>
   if (error) return <div className="text-red-500 py-8">{error}</div>
@@ -90,38 +95,25 @@ const AccountInfo = () => {
         {/* Personal Information */}
         <div className="grid grid-cols-2 gap-6">
           <Form.Item
-            label="Họ và tên đệm"
-            name="lastName"
+            label="Họ và tên"
+            name="fullName"
             rules={[
               { required: true, message: "Vui lòng nhập họ và tên đệm!" },
               { min: 2, message: "Họ và tên đệm phải có ít nhất 2 ký tự!" },
               { max: 50, message: "Họ và tên đệm không được vượt quá 50 ký tự!" },
               { pattern: /^[a-zA-ZÀ-ỹ\s]+$/, message: "Họ và tên đệm chỉ được chứa chữ cái và khoảng trắng!" },
             ]}
+            className="w-full"
           >
             <Input
               disabled={!editMode}
-              onChange={(e) => handleChange("lastName", e.target.value)}
-              placeholder="Nhập họ và tên đệm"
+              onChange={(e) => handleChange("fullName", e.target.value)}
+              placeholder="Nhập họ và tên"
             />
           </Form.Item>
+          <div></div>
 
-          <Form.Item
-            label="Tên"
-            name="firstName"
-            rules={[
-              { required: true, message: "Vui lòng nhập tên!" },
-              { min: 1, message: "Tên phải có ít nhất 1 ký tự!" },
-              { max: 20, message: "Tên không được vượt quá 20 ký tự!" },
-              { pattern: /^[a-zA-ZÀ-ỹ\s]+$/, message: "Tên chỉ được chứa chữ cái và khoảng trắng!" },
-            ]}
-          >
-            <Input
-              disabled={!editMode}
-              onChange={(e) => handleChange("firstName", e.target.value)}
-              placeholder="Nhập tên"
-            />
-          </Form.Item>
+          
 
           <Form.Item label="Giới tính" name="gender">
             <Select
@@ -129,12 +121,12 @@ const AccountInfo = () => {
               onChange={(value) => handleChange("gender", value)}
               placeholder="Chọn giới tính"
               options={[
-                { value: "Nam", label: "Nam" },
-                { value: "Nữ", label: "Nữ" },
-                { value: "Khác", label: "Khác" },
+                { value: "MALE", label: "Nam" },
+                { value: "FEMALE", label: "Nữ" },
               ]}
             />
           </Form.Item>
+          
 
           <Form.Item
             label="Ngày sinh"
@@ -191,7 +183,7 @@ const AccountInfo = () => {
               type="email"
               disabled={!editMode}
               onChange={(e) => handleChange("email", e.target.value)}
-              placeholder="Nhập email (không bắt buộc)"
+              placeholder="Nhập email"
               allowClear
             />
           </Form.Item>
@@ -200,7 +192,7 @@ const AccountInfo = () => {
             <Input disabled={true} placeholder="Khoa trực thuộc" />
           </Form.Item>
 
-          <Form.Item label="Loại tài khoản" name="accountType">
+          <Form.Item label="Loại tài khoản" name="type">
             <Input disabled={true} placeholder="Loại tài khoản" />
           </Form.Item>
 
@@ -208,7 +200,7 @@ const AccountInfo = () => {
             <Input disabled={true} placeholder="Mã bác sĩ" />
           </Form.Item>
 
-          <Form.Item label="Chức danh" name="title">
+          <Form.Item label="Chức danh" name="academicDegree">
             <Input disabled={true} placeholder="Chức danh" />
           </Form.Item>
 

@@ -1,6 +1,6 @@
 export interface User {
   userId: number
-  email: string | null // Changed to match backend response (can be null)
+  email: string | null 
   phone: string
   role: "ADMIN" | "PATIENT" | "DOCTOR" | "RECEPTIONIST"
   createdAt: string
@@ -15,7 +15,7 @@ export interface UserRequest {
 
 export interface UserUpdateRequest {
   phone?: string
-  email?: string
+  email?: string | null
   password?: string
   role?: "ADMIN" | "PATIENT" | "DOCTOR" | "RECEPTIONIST"
 }
