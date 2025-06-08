@@ -1,24 +1,29 @@
 package org.example.appointmentservice.service;
 
-import org.example.appointmentservice.dto.AppointmentDto;
+import org.example.appointmentservice.dto.AppointmentDtos;
+import org.example.appointmentservice.entity.Appointment;
 
 import java.time.LocalDate;
 import java.util.List;
 
 public interface AppointmentService {
-    List<AppointmentDto> getAllAppointments();
+    List<AppointmentDtos.AppointmentResponse> getAllAppointments();
 
-    AppointmentDto getAppointmentById(Integer appointmentId);
+    AppointmentDtos.AppointmentResponse getAppointmentById(Integer appointmentId);
 
-    AppointmentDto createAppointment(AppointmentDto appointmentDto);
+    AppointmentDtos.AppointmentResponse createAppointment(AppointmentDtos.AppointmentRequest appointmentRequest);
 
-    AppointmentDto updateAppointment(Integer appointmentId, AppointmentDto appointmentDto);
+    AppointmentDtos.AppointmentResponse updateAppointment(Integer appointmentId, AppointmentDtos.AppointmentUpdateRequest appointmentRequest);
 
     void deleteAppointment(Integer appointmentId);
 
-    List<AppointmentDto> getAppointmentsByDoctorId(Integer doctorId);
+    List<AppointmentDtos.AppointmentResponse> getAppointmentsByDoctorId(Integer doctorId);
 
-    List<AppointmentDto> getAppointmentsByDoctorIdAndDate(Integer doctorId, LocalDate date);
+    List<AppointmentDtos.AppointmentResponse> getAppointmentsByDoctorIdAndDate(Integer doctorId, LocalDate date);
 
-    List<AppointmentDto> getTodayAppointmentsByDoctorId(Integer doctorId);
+    List<AppointmentDtos.AppointmentResponse> getTodayAppointmentsByDoctorId(Integer doctorId);
+
+    List<AppointmentDtos.AvailableTimeSlotResponse> getAvailableTimeSlots(Integer scheduleId);
+
+    List<AppointmentDtos.AppointmentResponse> getAppointmentsByScheduleId(Integer scheduleId);
 }

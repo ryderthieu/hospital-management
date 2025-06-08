@@ -1,13 +1,14 @@
 package org.example.doctorservice.service;
 
 import org.example.doctorservice.dto.ScheduleDto;
+import org.example.doctorservice.dto.TimeSlotDto;
 
 import java.util.List;
 
 public interface ScheduleService {
     List<ScheduleDto> getAllSchedules(Integer doctorId);
 
-    ScheduleDto getScheduleById(Integer doctorId ,Integer scheduleId);
+    ScheduleDto getScheduleById(Integer doctorId);
 
     ScheduleDto createSchedule(Integer doctorId, ScheduleDto scheduleDto);
 
@@ -16,4 +17,6 @@ public interface ScheduleService {
     void deleteSchedule(Integer doctorId, Integer scheduleId);
 
     List<ScheduleDto> getAllSchedulesForAdmin();
+
+    List<TimeSlotDto> getAllTimeSlots(Integer scheduleId);
 }

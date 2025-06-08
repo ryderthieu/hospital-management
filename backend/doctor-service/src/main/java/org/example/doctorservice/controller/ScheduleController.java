@@ -3,6 +3,7 @@ package org.example.doctorservice.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.doctorservice.dto.ScheduleDto;
+import org.example.doctorservice.dto.TimeSlotDto;
 import org.example.doctorservice.service.ScheduleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -10,7 +11,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 @RestController
 @RequestMapping("/doctors")
 @RequiredArgsConstructor
@@ -32,7 +32,7 @@ public class ScheduleController {
 //    @PreAuthorize("hasAnyRole('DOCTOR')")
     @GetMapping("/schedules/{scheduleId}")
     public ResponseEntity<ScheduleDto> getScheduleById(@PathVariable Integer scheduleId) {
-        return ResponseEntity.ok(scheduleService.getScheduleById(scheduleId, getCurrentDoctorId()));
+        return ResponseEntity.ok(scheduleService.getScheduleById(scheduleId));
     }
 
 //    @PreAuthorize("hasAnyRole('DOCTOR')")
@@ -58,5 +58,10 @@ public class ScheduleController {
     @GetMapping("/schedules/admin")
     public ResponseEntity<List<ScheduleDto>> getAllSchedulesForAdmin() {
         return ResponseEntity.ok(scheduleService.getAllSchedulesForAdmin());
+    }
+
+    @GetMapping("/schedules/{scheduleId}/time-slots")
+    public ResponseEntity<List<TimeSlotDto>> getAllTimeSlots(@PathVariable Integer scheduleId) {
+        return ResponseEntity.ok(scheduleService.getAllTimeSlots(scheduleId));
     }
 }
