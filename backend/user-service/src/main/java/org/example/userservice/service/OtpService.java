@@ -14,6 +14,7 @@ import org.example.userservice.service.JwtService;
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class OtpService {
@@ -55,32 +56,58 @@ public class OtpService {
         if (toPhoneNumber.startsWith("84")) {
             phone = "0" + toPhoneNumber.substring(2);  // Chuyển +84 thành 0
         }
-        userRepository.findByPhone(phone)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+        
         String otp = generateOtp();
-        otpStorage.put(toPhoneNumber, otp);
-        Message.creator(
-                new PhoneNumber("+"+toPhoneNumber),
-                new PhoneNumber(FROM_PHONE_NUMBER),
-                "Mã OTP của bạn là: " + otp
-        ).create();
+        System.out.println("Gửi OTP " + otp + " đến số điện thoại " + phone);
+        otpStorage.put(phone, otp);
+        
+        try {
+            Message.creator(
+                    new PhoneNumber("+"+toPhoneNumber),
+                    new PhoneNumber(FROM_PHONE_NUMBER),
+                    "Mã OTP của bạn là: " + otp
+            ).create();
+            System.out.println("Đã gửi OTP thành công");
+        } catch (Exception e) {
+            System.out.println("Lỗi khi gửi OTP: " + e.getMessage());
+            // Trong môi trường development, chỉ in OTP ra console
+            System.out.println("Development OTP: " + otp);
+        }
     }
 
     public AuthDTOs.OtpValidationResponse validateOtp(String toPhoneNumber, String userInputOtp) {
-        String correctOtp = otpStorage.get(toPhoneNumber);
+        String phone = toPhoneNumber;
         if (toPhoneNumber.startsWith("84")) {
-            toPhoneNumber = "0" + toPhoneNumber.substring(2);  // Chuyển +84 thành 0
+            phone = "0" + toPhoneNumber.substring(2);  // Chuyển +84 thành 0
         }
-        if (userInputOtp.equals(correctOtp)) {
-            User user = userRepository.findByPhone(toPhoneNumber)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
-            String resetToken = jwtService.generateResetPasswordToken(user);
+        System.out.println("Validating OTP for phone: " + phone);
+        System.out.println("User input OTP: " + userInputOtp);
+        System.out.println("Stored OTP: " + otpStorage.get(phone));
 
+        String correctOtp = otpStorage.get(phone);
+        if (correctOtp == null) {
+            return new AuthDTOs.OtpValidationResponse("INVALID_PHONE");
+        }
+        
+        if (!userInputOtp.equals(correctOtp)) {
+            return new AuthDTOs.OtpValidationResponse("INVALID_OTP");
+        }
+
+        // Xóa OTP sau khi xác thực thành công
+        System.out.println("User input OTP: " + userInputOtp);
+        otpStorage.remove(phone);
+        
+        // Kiểm tra xem user có tồn tại không
+        Optional<User> userOptional = userRepository.findByPhone(phone);
+        if (userOptional.isPresent()) {
+            // Nếu user tồn tại, tạo reset token
+            String resetToken = jwtService.generateResetPasswordToken(userOptional.get());
             return new AuthDTOs.OtpValidationResponse(resetToken);
+        } else {
+            // Nếu user không tồn tại (trường hợp đăng ký), trả về response thành công
+            return new AuthDTOs.OtpValidationResponse("SUCCESS");
         }
-
-        return new AuthDTOs.OtpValidationResponse("Mã otp không đúng");
     }
 
 

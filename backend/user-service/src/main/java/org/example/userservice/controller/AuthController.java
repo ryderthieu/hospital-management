@@ -23,10 +23,26 @@ public class AuthController {
         this.otpService = otpService;
     }
 
-
     @PostMapping("/register")
-    public ResponseEntity<AuthDTOs.UserResponse> register(@Valid @RequestBody AuthDTOs.RegisterRequest request) {
-        AuthDTOs.UserResponse response = userService.register(request);
+    public ResponseEntity<AuthDTOs.RegisterResponse> register(@Valid @RequestBody AuthDTOs.RegisterRequest request) {
+        System.out.println("Nhận request đăng ký với số điện thoại: " + request.getPhone());
+        System.out.println("Thông tin đăng ký: " + request);
+        // Lưu thông tin đăng ký tạm thời và gửi OTP
+        userService.preRegister(request);
+        String phone = request.getPhone();
+        if (phone.startsWith("0")) {
+            phone = "84" + phone.substring(1);
+        }
+        otpService.sendOtp(phone);
+        System.out.println("Đã gửi OTP và lưu thông tin đăng ký tạm thời");
+        return ResponseEntity.ok(new AuthDTOs.RegisterResponse("Mã OTP đã được gửi đến số điện thoại của bạn"));
+    }
+
+    @PostMapping("/register/verify")
+    public ResponseEntity<AuthDTOs.UserResponse> verifyRegistration(@Valid @RequestBody AuthDTOs.RegisterVerifyRequest request) {
+        System.out.println("Nhận request xác thực OTP với số điện thoại: " + request.getPhone());
+        AuthDTOs.UserResponse response = userService.completeRegistration(request);
+        System.out.println("Hoàn tất đăng ký cho user: " + response);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -44,15 +60,16 @@ public class AuthController {
     }
 
     @PostMapping("/otp/send-sms")
-    public String sendOtp(@RequestParam String phoneNumber) {
+    public ResponseEntity<String> sendOtp(@RequestParam String phoneNumber) {
         otpService.sendOtp(phoneNumber);
-        return "Đã gửi OTP tới " + phoneNumber;
+        return ResponseEntity.ok("Đã gửi OTP tới " + phoneNumber);
     }
 
     @PostMapping("/otp/validate-sms")
-    public AuthDTOs.OtpValidationResponse validateOtp(@RequestParam String phoneNumber, @RequestParam String otp) {
-        return otpService.validateOtp(phoneNumber, otp);
+    public ResponseEntity<AuthDTOs.OtpValidationResponse> validateOtp(@RequestParam String phoneNumber, @RequestParam String otp) {
+        return ResponseEntity.ok(otpService.validateOtp(phoneNumber, otp));
     }
+
     @PostMapping("/otp/send-email")
     public ResponseEntity<String> sendOtpByEmail(@RequestParam String email) {
         otpService.sendOtpToEmail(email);
