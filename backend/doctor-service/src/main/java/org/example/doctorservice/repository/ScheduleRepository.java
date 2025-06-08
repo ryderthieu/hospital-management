@@ -10,4 +10,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     List<Schedule> findByDoctor_DoctorId(Integer doctorId);
 
     Optional<Schedule> findByScheduleIdAndDoctor_DoctorId(Integer scheduleId, Integer doctorId);
+
+    Optional<Schedule> findByScheduleId(Integer scheduleId);
 }

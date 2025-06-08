@@ -58,106 +58,90 @@ interface AppointmentDto {
 
 interface DoctorDto {
   doctorId: number;
-  fullName: string | null; // Khớp với DoctorDto.java
+  fullName: string | null;
   specialization: string | null;
-  academicDegree: string | null; // Enum trong backend, trả về string
+  academicDegree: string | null;
+}
+
+interface DepartmentDto {
+  departmentId: number;
+  departmentName: string;
+  description: string | null;
+  createdAt: string | null;
+  examinationRoomDtos: any[] | null;
 }
 
 export default function HomeScreen() {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const { fontsLoaded } = useFont();
   const [recentDoctors, setRecentDoctors] = useState<Doctor[]>([]);
+  const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  const specialties: Specialty[] = [
-    {
-      id: 1,
-      name: 'Tim mạch',
-      doctorCount: 34,
-      icon: require('../../assets/images/ChuyenKhoa/TimMach.png'),
-    },
-    {
-      id: 2,
-      name: 'Sản nhi',
-      doctorCount: 45,
-      icon: require('../../assets/images/ChuyenKhoa/SanNhi.png'),
-    },
-    {
-      id: 3,
-      name: 'Đông y',
-      doctorCount: 15,
-      icon: require('../../assets/images/ChuyenKhoa/DongY.png'),
-    },
-  ];
 
   const news: NewsItem[] = [
     {
       id: 1,
-      title: 'Simple steps to maintain a healthy heart for all ages',
-      date: '12 Jun 2025',
-      content: 'Maintaining a healthy heart involves regular exercise, a balanced diet, and routine check-ups...',
-      image: require('../../assets/images/news/news1.webp'),
+      title: 'Simple steps to duy trì sức khỏe tim mạch cho mọi lứa tuổi',
+      date: '2025-06-12',
+      content: 'Duy trì sức khỏe tim mạch bao gồm tập thể dục đều đặn, chế độ ăn uống cân bằng và kiểm tra định kỳ...',
+      image: require('../../assets/images/logo/Logo.png'),
     },
     {
       id: 2,
-      title: "Superfoods you must incorporate in your family's daily diet",
-      date: '11 Jun 2025',
-      content: 'Superfoods like berries, nuts, and leafy greens can boost your family health...',
-      image: require('../../assets/images/news/news2.webp'),
+      title: 'Siêu thực phẩm cần bổ sung vào chế độ ăn hàng ngày của gia đình bạn',
+      date: '2025-06-11',
+      content: 'Các siêu thực phẩm như quả mọng, hạt và rau xanh có thể tăng cường sức khỏe gia đình bạn...',
+      image: require('../../assets/images/logo/Logo.png'),
     },
     {
       id: 3,
-      title: 'Simple steps to maintain a healthy heart for all ages',
-      date: '12 Jun 2025',
-      content: 'Maintaining a healthy heart involves regular exercise, a balanced diet, and routine check-ups...',
-      image: require('../../assets/images/news/news3.webp'),
+      title: 'Simple steps to duy trì sức khỏe tim mạch cho mọi lứa tuổi',
+      date: '2025-06-12',
+      content: 'Duy trì sức khỏe tim mạch bao gồm tập thể dục đều đặn, chế độ ăn uống cân bằng và kiểm tra định kỳ...',
+      image: require('../../assets/images/logo/Logo.png'),
     },
     {
       id: 4,
-      title: "Superfoods you must incorporate in your family's daily diet",
-      date: '11 Jun 2025',
-      content: 'Superfoods like berries, nuts, and leafy greens can boost your family health...',
-      image: require('../../assets/images/news/news4.webp'),
+      title: 'Siêu thực phẩm cần bổ sung vào chế độ ăn hàng ngày của gia đình bạn',
+      date: '2025-06-11',
+      content: 'Các siêu thực phẩm như quả mọng, hạt và rau xanh có thể tăng cường sức khỏe gia đình bạn...',
+      image: require('../../assets/images/logo/Logo.png'),
     },
   ];
 
   useEffect(() => {
-    fetchRecentDoctors();
+    // fetchRecentDoctors(); // Comment tạm vì lỗi /appointments chưa xác nhận sửa
+    fetchSpecialties();
   }, []);
 
   const fetchRecentDoctors = async () => {
     setIsLoading(true);
     try {
-      // Lấy danh sách cuộc hẹn
       const appointmentsResponse = await API.get<AppointmentDto[]>('/appointments');
       console.log('Debug - Appointments response:', appointmentsResponse.data);
 
-      // Lấy danh sách doctorId duy nhất và giới hạn 3
       const doctorIds = Array.from(
         new Set(appointmentsResponse.data.map((appt) => appt.doctorId)),
       ).slice(0, 3);
 
-      // Gọi API cho từng doctorId
       const doctorsPromises = doctorIds.map((doctorId) =>
         API.get<DoctorDto>(`/doctors/${doctorId}`),
       );
       const doctorsResponses = await Promise.all(doctorsPromises);
 
-      // Ánh xạ dữ liệu sang Doctor
       const doctors: Doctor[] = doctorsResponses.map((response) => {
         const doctor = response.data;
-        // Kết hợp academicDegree và fullName
         const academicPart = doctor.academicDegree ? `${doctor.academicDegree}.` : '';
         const namePart = doctor.fullName || '';
         const fullName = [academicPart, namePart]
-          .filter((part) => part !== '') // Loại bỏ chuỗi rỗng
+          .filter((part) => part !== '')
           .join(' ')
           .trim() || 'Bác sĩ chưa có tên';
         return {
           id: doctor.doctorId,
           name: fullName,
           specialty: doctor.specialization || 'Đa khoa',
-          avatar: 'https://via.placeholder.com/70', // Placeholder
+          avatar: 'https://via.placeholder.com/70',
         };
       });
 
@@ -166,8 +150,62 @@ export default function HomeScreen() {
       console.error('Fetch doctors error:', error.message, error.response?.data);
       Alert.alert(
         'Lỗi',
-        error.response?.data?.message || 'Không thể tải danh sách bác sĩ. Vui lòng thử lại.',
+        error.response?.data?.message || 'Không thể tải danh sách bác sĩ gần đây. Vui lòng thử lại.',
       );
+      setRecentDoctors([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchSpecialties = async () => {
+    setIsLoading(true);
+    try {
+      const departmentsResponse = await API.get<DepartmentDto[]>('/doctors/departments');
+      console.log('Debug - Departments response:', departmentsResponse.data);
+      departmentsResponse.data.forEach((dept) =>
+        console.log(`Department ID: ${dept.departmentId}, Name: ${dept.departmentName}`),
+      );
+
+      const doctorCountPromises = departmentsResponse.data
+        .slice(0, 5) // Giới hạn 5 chuyên khoa
+        .map((dept) =>
+          API.get<DoctorDto[]>(`/doctors/departments/${dept.departmentId}/doctors`)
+            .then((res) => ({ departmentId: dept.departmentId, count: res.data.length }))
+            .catch((error) => {
+              console.warn(`No doctors for department ${dept.departmentId}:`, error.message);
+              return { departmentId: dept.departmentId, count: 0 };
+            }),
+        );
+
+      const doctorCounts = await Promise.all(doctorCountPromises);
+      const doctorCountMap = new Map(doctorCounts.map((item) => [item.departmentId, item.count]));
+
+      const specialtiesData: Specialty[] = departmentsResponse.data
+        .slice(0, 5) // Giới hạn 5 chuyên khoa
+        .map((dept) => {
+          let icon: ImageSourcePropType = { uri: 'https://via.placeholder.com/50' };
+          try {
+            icon = require('../../assets/images/logo/Logo.png');
+          } catch (e) {
+            console.warn(`Default icon not found, using placeholder URI`);
+          }
+          return {
+            id: dept.departmentId,
+            name: dept.departmentName || 'Chưa có tên',
+            doctorCount: doctorCountMap.get(dept.departmentId) || 0,
+            icon,
+          };
+        });
+
+      setSpecialties(specialtiesData);
+    } catch (error: any) {
+      console.error('Fetch specialties error:', error.message, error.response?.data);
+      Alert.alert(
+        'Lỗi',
+        error.response?.data?.message || 'Không thể tải danh sách chuyên khoa. Vui lòng thử lại.',
+      );
+      setSpecialties([]);
     } finally {
       setIsLoading(false);
     }
@@ -175,8 +213,8 @@ export default function HomeScreen() {
 
   if (!fontsLoaded || isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Loading...</Text>
+      <View style={styles.loadingContainer}>
+        <Text style={styles.placeholderText}>Đang tải...</Text>
       </View>
     );
   }
@@ -244,7 +282,7 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               ))
             ) : (
-              <Text style={styles.noDoctorsText}>Chưa có bác sĩ nào gần đây</Text>
+              <Text style={styles.placeholderText}>Chưa có bác sĩ nào gần đây</Text>
             )}
           </ScrollView>
         </View>
@@ -261,15 +299,28 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.specialtiesContainer}
           >
-            {specialties.map((specialty) => (
-              <TouchableOpacity key={specialty.id} style={styles.specialtyCard}>
-                <Image source={specialty.icon} style={styles.specialtyIcon} />
-                <Text style={styles.specialtyName}>{specialty.name}</Text>
-                <Text style={styles.doctorCount}>
-                  {specialty.doctorCount} bác sĩ
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {specialties.length > 0 ? (
+              specialties.map((specialty) => (
+                <TouchableOpacity
+                  key={specialty.id}
+                  style={styles.specialtyCard}
+                  onPress={() =>
+                    navigation.navigate('BookAppointment', {
+                      screen: 'DoctorList',
+                      params: { departmentId: specialty.id, departmentName: specialty.name },
+                    })
+                  }
+                >
+                  <Image source={specialty.icon} style={styles.specialtyIcon} />
+                  <Text style={styles.specialtyName}>{specialty.name}</Text>
+                  <Text style={[styles.doctorCount, specialty.doctorCount === 0 && styles.placeholderText]}>
+                    {specialty.doctorCount > 0 ? `${specialty.doctorCount} bác sĩ` : 'Không có bác sĩ'}
+                  </Text>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <Text style={styles.placeholderText}>Chưa có chuyên khoa nào</Text>
+            )}
           </ScrollView>
         </View>
 
@@ -307,6 +358,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   welcomeContainer: {
     marginTop: 30,
@@ -426,18 +482,12 @@ const styles = StyleSheet.create({
     color: '#00B5B8',
     textAlign: 'center',
   },
-  noDoctorsText: {
-    fontFamily: fontFamily.regular,
-    fontSize: 14,
-    color: '#757575',
-    paddingHorizontal: 20,
-  },
   specialtiesContainer: {
     paddingLeft: 20,
     paddingRight: 10,
   },
   specialtyCard: {
-    width: 150,
+    width: 160,
     height: 160,
     borderWidth: 1,
     borderColor: '#E0E0E0',
@@ -455,13 +505,22 @@ const styles = StyleSheet.create({
   },
   specialtyName: {
     fontFamily: fontFamily.bold,
-    fontSize: 16,
+    fontSize: 14,
     marginBottom: 5,
+    numberOfLines: 1,
+    ellipsizeMode: 'tail',
+    textAlign: 'center',
   },
   doctorCount: {
     fontFamily: fontFamily.regular,
     fontSize: 12,
     color: '#757575',
+  },
+  placeholderText: {
+    fontFamily: fontFamily.regular,
+    fontSize: 12,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
   },
   newsSection: {
     paddingBottom: 10,

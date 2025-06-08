@@ -2,6 +2,7 @@ package org.example.doctorservice.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.example.doctorservice.dto.ScheduleDto;
+import org.example.doctorservice.dto.TimeSlotDto;
 import org.example.doctorservice.entity.Department;
 import org.example.doctorservice.entity.Doctor;
 import org.example.doctorservice.entity.ExaminationRoom;
@@ -12,6 +13,8 @@ import org.example.doctorservice.repository.ScheduleRepository;
 import org.example.doctorservice.service.ScheduleService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,8 +36,8 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    public ScheduleDto getScheduleById(Integer scheduleId, Integer doctorId) {
-        Schedule schedule = scheduleRepository.findByScheduleIdAndDoctor_DoctorId(scheduleId, doctorId)
+    public ScheduleDto getScheduleById(Integer scheduleId) {
+        Schedule schedule = scheduleRepository.findByScheduleId(scheduleId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch với ID: " + scheduleId));
         return new ScheduleDto(schedule);
     }
@@ -98,5 +101,26 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .stream()
                 .map(ScheduleDto::new)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TimeSlotDto> getAllTimeSlots(Integer scheduleId) {
+        Schedule schedule = scheduleRepository.findByScheduleId(scheduleId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch"));
+
+        LocalTime startTime = schedule.getStartTime();
+        LocalTime endTime = schedule.getEndTime();
+        int slotMinutes = 60; // mỗi khung giờ dài 30 phút
+
+        List<TimeSlotDto> timeSlots = new ArrayList<>();
+        LocalTime currentStart = startTime;
+
+        while (currentStart.plusMinutes(slotMinutes).compareTo(endTime) <= 0) {
+            LocalTime currentEnd = currentStart.plusMinutes(slotMinutes);
+            timeSlots.add(new TimeSlotDto(currentStart, currentEnd));
+            currentStart = currentEnd;
+        }
+
+        return timeSlots;
     }
 }

@@ -1,5 +1,6 @@
 package org.example.doctorservice.service.impl;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.example.doctorservice.dto.DepartmentDto;
 import org.springframework.stereotype.Service;
@@ -65,20 +66,13 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     @Override
     public List<DoctorDto> getDoctorsByDepartmentId(Integer departmentId) {
-        // Kiểm tra khoa tồn tại
         departmentRepository.findById(departmentId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khoa với ID: " + departmentId));
+             .orElseThrow(() -> new RuntimeException("Không tìm thấy khoa với ID: " + departmentId));
 
-        List<DoctorDto> doctors = doctorRepository.findByDepartment_DepartmentId(departmentId)
+        return doctorRepository.findByDepartment_DepartmentId(departmentId)
                 .stream()
                 .map(DoctorDto::new)
                 .collect(Collectors.toList());
-
-        if (doctors.isEmpty()) {
-            throw new RuntimeException("Không tìm thấy bác sĩ nào trong khoa có ID: " + departmentId);
-        }
-
-        return doctors;
     }
 
     // Helper method to format academic degrees

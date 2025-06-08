@@ -2,11 +2,10 @@ package org.example.appointmentservice.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.appointmentservice.dto.AppointmentDto;
+import org.example.appointmentservice.dto.AppointmentDtos;
 import org.example.appointmentservice.service.AppointmentService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -21,26 +20,28 @@ public class AppointmentController {
 
 //    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'PATIENT')")
     @GetMapping
-    public ResponseEntity<List<AppointmentDto>> getAllAppointments() {
+    public ResponseEntity<List<AppointmentDtos.AppointmentResponse>> getAllAppointments() {
         return ResponseEntity.ok(appointmentService.getAllAppointments());
     }
 
     @GetMapping("/{appointmentId}")
-    public ResponseEntity<AppointmentDto> getAppointmentById(@PathVariable Integer appointmentId) {
+    public ResponseEntity<AppointmentDtos.AppointmentResponse> getAppointmentById(@PathVariable Integer appointmentId) {
         return ResponseEntity.ok(appointmentService.getAppointmentById(appointmentId));
     }
 
 //    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'PATIENT')")
     @PostMapping
-    public ResponseEntity<AppointmentDto> createAppointment(@RequestBody @Valid AppointmentDto appointmentDto) {
-        return ResponseEntity.ok(appointmentService.createAppointment(appointmentDto));
+    public ResponseEntity<AppointmentDtos.AppointmentResponse> createAppointment(
+            @RequestBody @Valid AppointmentDtos.AppointmentRequest request) {
+        return ResponseEntity.ok(appointmentService.createAppointment(request));
     }
 
 //    @PreAuthorize("hasAnyRole('RECEPTIONIST')")
     @PutMapping("/{appointmentId}")
-    public ResponseEntity<AppointmentDto> updateAppointment(@PathVariable Integer appointmentId,
-                                                            @RequestBody @Valid AppointmentDto appointmentDto) {
-        return ResponseEntity.ok(appointmentService.updateAppointment(appointmentId, appointmentDto));
+    public ResponseEntity<AppointmentDtos.AppointmentResponse> updateAppointment(
+            @PathVariable Integer appointmentId,
+            @RequestBody @Valid AppointmentDtos.AppointmentUpdateRequest request) {
+        return ResponseEntity.ok(appointmentService.updateAppointment(appointmentId, request));
     }
 
 //    @PreAuthorize("hasAnyRole('RECEPTIONIST')")
@@ -52,22 +53,22 @@ public class AppointmentController {
 
     //@PreAuthorize("hasAnyRole('RECEPTIONIST', 'DOCTOR', 'ADMIN')")
     @GetMapping("/doctor/{doctorId}")
-    public ResponseEntity<List<AppointmentDto>> getAppointmentsByDoctorId(
-            @PathVariable Integer doctorId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        List<AppointmentDto> appointments;
-        if (date != null) {
-            appointments = appointmentService.getAppointmentsByDoctorIdAndDate(doctorId, date);
-        } else {
-            appointments = appointmentService.getAppointmentsByDoctorId(doctorId);
-        }
-        return ResponseEntity.ok(appointments);
+    public ResponseEntity<List<AppointmentDtos.AppointmentResponse>> getAppointmentsByDoctorId(
+            @PathVariable Integer doctorId) {
+        return ResponseEntity.ok(appointmentService.getAppointmentsByDoctorId(doctorId));
     }
 
-//    @PreAuthorize("hasRole('DOCTOR')")
-    @GetMapping("/doctor/{doctorId}/today")
-    public ResponseEntity<List<AppointmentDto>> getTodayAppointments(@PathVariable Integer doctorId) {
-        List<AppointmentDto> appointments = appointmentService.getTodayAppointmentsByDoctorId(doctorId);
-        return ResponseEntity.ok(appointments);
+    @GetMapping("/schedule/{scheduleId}/available-slots")
+    public ResponseEntity<List<AppointmentDtos.AvailableTimeSlotResponse>> getAvailableTimeSlots(
+            @PathVariable Integer scheduleId
+    ) {
+        return ResponseEntity.ok(appointmentService.getAvailableTimeSlots(scheduleId));
+    }
+
+    @GetMapping("/schedule/{scheduleId}")
+    public ResponseEntity<List<AppointmentDtos.AppointmentResponse>> getAppointmentsByScheduleId(
+            @PathVariable Integer scheduleId
+    ) {
+        return ResponseEntity.ok(appointmentService.getAppointmentsByScheduleId(scheduleId));
     }
 }

@@ -1,8 +1,7 @@
-"use client"
-
 import { useState, useEffect } from "react"
-import { Form, Input, Select, Button, Avatar, Space, Upload, message } from "antd"
+import { Form, Input, Select, Button, Avatar, Space, Upload, message, Empty } from "antd"
 import { EditOutlined, UserOutlined, UploadOutlined } from "@ant-design/icons"
+import WeCareLoading from "../common/WeCareLoading"
 import { useUserProfile } from "../../hooks/useUserProfile"
 
 const AccountInfo = () => {
@@ -15,9 +14,9 @@ const AccountInfo = () => {
   }
 }, [profile, form])
 
-  if (loading) return <div className="flex justify-center py-8">Đang tải...</div>
-  if (error) return <div className="text-red-500 py-8">{error}</div>
-  if (!profile) return <div className="text-red-500 py-8">Không có dữ liệu hồ sơ</div>
+  if (loading) return <WeCareLoading />
+  if (error) return <Empty description="Đã xảy ra lỗi trong quá trình tải dữ liệu" />
+  if (!profile) return <Empty description="Không có dữ liệu hồ sơ" />
 
   const handleSubmit = async () => {
     try {

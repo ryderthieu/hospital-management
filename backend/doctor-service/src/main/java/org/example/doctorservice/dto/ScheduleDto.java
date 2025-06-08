@@ -30,6 +30,12 @@ public class ScheduleDto {
 
     private Integer roomId;
 
+    private String roomNote;
+
+    private Integer floor;
+
+    private String building;
+
     private String createdAt;
 
     public ScheduleDto(Schedule schedule) {
@@ -40,6 +46,9 @@ public class ScheduleDto {
         this.endTime = schedule.getEndTime();
         this.shift = schedule.getShift();
         this.roomId = schedule.getExaminationRoom().getRoomId();
+        this.roomNote = schedule.getExaminationRoom().getNote();
+        this.floor = schedule.getExaminationRoom().getFloor();
+        this.building = schedule.getExaminationRoom().getBuilding();
         this.createdAt = schedule.getCreatedAt() != null ? schedule.getCreatedAt().toLocalDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null;
     }
 }

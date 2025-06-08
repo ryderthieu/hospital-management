@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.sql.Timestamp;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +36,9 @@ public class Appointment {
 
     @Column(columnDefinition = "TEXT")
     private String symptoms;
+
+    private LocalTime slotStart;
+    private LocalTime slotEnd;
 
     private Integer number;
 

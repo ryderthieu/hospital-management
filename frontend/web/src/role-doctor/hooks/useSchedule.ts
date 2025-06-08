@@ -1,6 +1,16 @@
+"use client"
+
 import { useState, useEffect, useCallback } from "react"
-import type { Schedule, CalendarDay, ViewType } from "./types"
-import { getDaysInMonth, getWeekDays, getSchedulesForDay, scheduleService } from "./services"
+import type { Schedule, CalendarDay, ViewType } from "../types/schedule"
+import {
+  getDaysInMonth,
+  getWeekDays,
+  getSchedulesForDay,
+  scheduleService,
+  calculateTimeDifference,
+  isDateInCurrentWeek,
+  isDateInCurrentMonth,
+} from "../services/scheduleServices"
 import { message } from "antd"
 
 export const useSchedule = () => {
@@ -10,8 +20,8 @@ export const useSchedule = () => {
   const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([])
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [selectedDaySchedules, setSelectedDaySchedules] = useState<Schedule[]>([])
-  const [totalWeekHours] = useState<number>(32.5)
-  const [totalMonthHours] = useState<number>(117)
+  const [totalWeekHours, setTotalWeekHours] = useState<number>(0)
+  const [totalMonthHours, setTotalMonthHours] = useState<number>(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -35,6 +45,30 @@ export const useSchedule = () => {
     fetchSchedule()
   }, [fetchSchedule])
 
+  // Calculate total working hours for week and month
+  useEffect(() => {
+    if (schedules.length === 0) return
+
+    // Calculate week hours
+    let weekHours = 0
+    let monthHours = 0
+
+    schedules.forEach((schedule) => {
+      const scheduleDate = new Date(schedule.date)
+      const hours = calculateTimeDifference(schedule.startTime, schedule.endTime)
+
+      if (isDateInCurrentWeek(scheduleDate, currentDate)) {
+        weekHours += hours
+      }
+
+      if (isDateInCurrentMonth(scheduleDate, currentDate)) {
+        monthHours += hours
+      }
+    })
+
+    setTotalWeekHours(Number.parseFloat(weekHours.toFixed(1)))
+    setTotalMonthHours(Number.parseFloat(monthHours.toFixed(1)))
+  }, [schedules, currentDate])
 
   // Update calendar days when date or view changes
   useEffect(() => {
@@ -103,6 +137,8 @@ export const useSchedule = () => {
     setCurrentDate,
     view,
     setView,
+    loading,
+    error,
     schedules,
     calendarDays,
     selectedDay,
