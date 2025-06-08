@@ -12,7 +12,7 @@ import { ACADEMIC_DEGREE_LABELS } from "../../types/doctor"
 interface CombinedProfile {
   // User fields
   userId: number
-  email?: string
+  email?: string | null
   phoneNumber: string
   role: string
 
@@ -20,15 +20,13 @@ interface CombinedProfile {
   doctorId?: number
   identityNumber?: string
   fullName?: string
-  firstName?: string
-  lastName?: string
   dateOfBirth?: string
-  gender?: string
+  gender?: "MALE" | "FEMALE" 
   address?: string
   academicDegree?: string
   specialization?: string
-  type?: string
-  department?: string
+  type?: "EXAMINATION" | "SERVICE"
+  department?: string 
 
   // UI fields
   avatarUrl?: string
@@ -54,35 +52,27 @@ export const useUserProfile = () => {
 
       let combinedProfile: CombinedProfile = {
         userId: userData.userId,
-        email: userData.email || "", // Handle null email from backend
+        email: userData.email || "", 
         phoneNumber: userData.phone,
         role: userData.role,
-        accountType: getAccountTypeLabel(userData.role),
       }
 
       // If user is a doctor, get doctor data
       if (userData.role === "DOCTOR") {
         const doctorData = await doctorService.getDoctorByUserId(userData.userId)
         if (doctorData) {
-          // Split fullName into firstName and lastName
-          const nameParts = doctorData.fullName.split(" ")
-          const firstName = nameParts[nameParts.length - 1]
-          const lastName = nameParts.slice(0, -1).join(" ")
-
           combinedProfile = {
             ...combinedProfile,
             doctorId: doctorData.doctorId,
             identityNumber: doctorData.identityNumber,
             fullName: doctorData.fullName,
-            firstName,
-            lastName,
             dateOfBirth: doctorData.birthday,
-            gender: mapGenderToVietnamese(doctorData.gender),
+            gender: doctorData.gender,
             address: doctorData.address,
             academicDegree: doctorData.academicDegree,
             specialization: doctorData.specialization,
             type: doctorData.type,
-            department: doctorData.department?.departmentName || "Chưa phân khoa",
+            department: doctorData.department?.departmentName || "Chưa gắn API",
             title: ACADEMIC_DEGREE_LABELS[doctorData.academicDegree] || "Bác sĩ",
           }
         }
@@ -142,7 +132,7 @@ export const useUserProfile = () => {
         const doctorUpdates: Partial<DoctorDto> = {}
 
         // Combine firstName and lastName back to fullName
-        const newFullName = `${profile.lastName} ${profile.firstName}`.trim()
+        const newFullName = profile.fullName
         if (newFullName !== originalProfile.fullName) {
           doctorUpdates.fullName = newFullName
         }
@@ -152,7 +142,7 @@ export const useUserProfile = () => {
         }
 
         if (profile.gender !== originalProfile.gender) {
-          doctorUpdates.gender = mapVietnameseToGender(profile.gender)
+          doctorUpdates.gender = profile.gender
         }
 
         if (profile.address !== originalProfile.address) {
@@ -197,28 +187,6 @@ export const useUserProfile = () => {
   }
 }
 
-// Helper functions
-const mapGenderToVietnamese = (gender: "MALE" | "FEMALE" | "OTHER"): string => {
-  switch (gender) {
-    case "MALE":
-      return "Nam"
-    case "FEMALE":
-      return "Nữ"
-    default:
-      return "Khác"
-  }
-}
-
-const mapVietnameseToGender = (gender?: string): "MALE" | "FEMALE" | "OTHER" => {
-  switch (gender) {
-    case "Nam":
-      return "MALE"
-    case "Nữ":
-      return "FEMALE"
-    default:
-      return "OTHER"
-  }
-}
 
 const getAccountTypeLabel = (role: string): string => {
   const types: Record<string, string> = {

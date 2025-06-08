@@ -9,7 +9,7 @@ export interface Doctor {
   identityNumber: string
   fullName: string
   birthday: string
-  gender: "MALE" | "FEMALE" | "OTHER"
+  gender: "MALE" | "FEMALE" 
   address: string
   academicDegree: "BS" | "BS_CKI" | "BS_CKII" | "THS_BS" | "TS_BS" | "PGS_TS_BS" | "GS_TS_BS"
   specialization: string
@@ -24,7 +24,7 @@ export interface DoctorDto {
   identityNumber: string
   fullName: string
   birthday: string
-  gender: "MALE" | "FEMALE" | "OTHER"
+  gender: "MALE" | "FEMALE" 
   address: string
   academicDegree: "BS" | "BS_CKI" | "BS_CKII" | "THS_BS" | "TS_BS" | "PGS_TS_BS" | "GS_TS_BS"
   specialization: string
