@@ -10,9 +10,10 @@ type VerificationOptionCardProps = {
   onPress: () => void;
 };
 
-
 const VerificationOptionCard = ({ iconName, title, value, onPress }: VerificationOptionCardProps) => {
   const { fontsLoaded } = useFont();
+  if (!fontsLoaded) return null;
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
       <Ionicons name={iconName as any} size={28} color="#00A3A1" style={styles.icon} />
@@ -29,14 +30,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#E6F7FA',
-    borderRadius: 12, 
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#D1E8EB', 
-    padding: 12, 
+    borderColor: '#D1E8EB',
+    padding: 12,
     marginBottom: 10,
   },
   icon: {
-    marginRight: 12, 
+    marginRight: 12,
   },
   cardContent: {
     flex: 1,
@@ -45,12 +46,12 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.bold,
     fontSize: 15,
     color: '#2B2B2B',
-    marginBottom: 3, 
+    marginBottom: 3,
   },
   cardValue: {
     fontFamily: fontFamily.regular,
-    fontSize: 13, 
-    color: '#6B7280', 
+    fontSize: 13,
+    color: '#6B7280',
   },
 });
 

@@ -12,15 +12,11 @@ import {
   DatePickerField,
 } from '../../../components/Auth';
 import API from '../../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '../../../context/AuthContext';
 
-// Định nghĩa kiểu cho navigation và route
 type RootStackParamList = {
   Login: undefined;
-  Signup3: undefined;
-  Signup1: undefined;
-  Signup2: { phone: string; password: string; userId: number }; // userId bắt buộc
+  Signup2: { phone: string; password: string };
+  Signup3: { phone: string };
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup2'>;
@@ -32,8 +28,7 @@ interface Signup2Props {
 }
 
 export default function Signup2({ navigation, route }: Signup2Props) {
-  const { setLoggedIn } = useAuth();
-  const { phone, userId } = route.params; // Lấy phone và userId từ Signup1
+  const { phone, password } = route.params;
 
   const [fullName, setFullName] = useState<string>('');
   const [idNumber, setIdNumber] = useState<string>('');
@@ -47,36 +42,20 @@ export default function Signup2({ navigation, route }: Signup2Props) {
   const handleContinue = async () => {
     if (isLoading) return;
 
-    // Debug: Kiểm tra giá trị
-    console.log('Debug - Input values:', {
-      fullName,
-      idNumber,
-      insuranceNumber,
-      dob: dob ? dob.toISOString() : null,
-      gender,
-      address,
-      termsAccepted,
-      userId,
-    });
-
-    // Kiểm tra các trường bắt buộc
     const errors: string[] = [];
     if (!fullName.trim()) errors.push('Tên không được để trống');
     if (!idNumber) errors.push('CCCD/CMND không được để trống');
     if (!insuranceNumber) errors.push('Số bảo hiểm y tế không được để trống');
     if (!dob) errors.push('Ngày sinh không được để trống');
+    if (!gender) errors.push('Giới tính không được chọn');
+    if (!address.trim()) errors.push('Địa chỉ không được để trống');
+    if (!termsAccepted) errors.push('Vui lòng đồng ý với Điều khoản Dịch vụ và Chính sách Bảo mật');
 
     if (errors.length > 0) {
       Alert.alert('Lỗi', errors.join('\n'));
       return;
     }
 
-    if (!termsAccepted) {
-      Alert.alert('Lỗi', 'Vui lòng đồng ý với Điều khoản Dịch vụ và Chính sách Bảo mật');
-      return;
-    }
-
-    // Kiểm tra định dạng
     const idNumberRegex = /^\d{9,12}$/;
     if (!idNumberRegex.test(idNumber)) {
       Alert.alert('Lỗi', 'Số CCCD/CMND phải có 9 hoặc 12 số');
@@ -95,68 +74,37 @@ export default function Signup2({ navigation, route }: Signup2Props) {
       return;
     }
 
-    if (!userId) {
-      Alert.alert('Lỗi', 'Không tìm thấy thông tin tài khoản. Vui lòng đăng ký lại từ đầu.');
+    if (!['MALE', 'FEMALE', 'OTHER'].includes(gender.toUpperCase())) {
+      Alert.alert('Lỗi', 'Giới tính phải là Nam (MALE), Nữ (FEMALE), hoặc Khác (OTHER)');
       return;
     }
 
     setIsLoading(true);
-    const maxRetries = 3;
-    let retries = 0;
+    try {
+      const dobString = dob.toISOString().split('T')[0];
+      const payload = {
+        phone,
+        password,
+        fullName: fullName.trim(),
+        identityNumber: idNumber,
+        insuranceNumber,
+        birthday: dobString,
+        gender: gender.toUpperCase(),
+        address: address.trim(),
+      };
+      console.log('Debug - Payload:', payload);
 
-    while (retries < maxRetries) {
-      try {
-        const dobString = dob.toISOString().split('T')[0];
+      const response = await API.post<{ message: string }>('/users/auth/register', payload);
 
-        // Debug: Kiểm tra payload
-        const payload = {
-          userId, // Thêm userId
-          identityNumber: idNumber,
-          insuranceNumber,
-          fullName: fullName.trim(),
-          birthday: dobString,
-          gender: gender || undefined,
-          address: address || undefined,
-        };
-        console.log('Debug - Payload:', payload);
-
-        // Gửi yêu cầu
-        const response = await API.post<{ message: string; token?: string }>('/patients', payload);
-
-        const { message, token } = response.data;
-
-        if (token) {
-          await AsyncStorage.setItem('token', token);
-          setLoggedIn(true);
-        }
-
-        Alert.alert('Thành công', message || 'Thông tin bệnh nhân đã được lưu', [
-          { text: 'OK', onPress: () => navigation.navigate('Signup3') },
-        ]);
-        break;
-      } catch (error: any) {
-        retries++;
-        let errorMessage = 'Lưu thông tin thất bại. Vui lòng thử lại.';
-        if (error.response?.status === 400) {
-          const errors = error.response.data.errors || [];
-          errorMessage = errors
-            .map((err: any) => err.defaultMessage || 'Dữ liệu không hợp lệ')
-            .join('\n');
-        } else if (error.response?.status === 503) {
-          errorMessage = 'Dịch vụ tạm thời không khả dụng. Vui lòng thử lại sau.';
-        } else if (error.response?.data?.message) {
-          errorMessage = error.response.data.message;
-        }
-
-        if (retries === maxRetries || error.response?.status !== 503) {
-          Alert.alert('Lỗi', errorMessage);
-          console.error('Signup2 error:', error.message, error.response?.data);
-          break;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 1000 * retries));
-      } finally {
-        if (retries === maxRetries) setIsLoading(false);
-      }
+      Alert.alert('Thành công', response.data.message || 'Vui lòng xác thực OTP', [
+        { text: 'OK', onPress: () => navigation.navigate('Signup3', { phone }) },
+      ]);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Lưu thông tin thất bại. Vui lòng thử lại.';
+      Alert.alert('Lỗi', errorMessage);
+      console.error('Signup2 error:', error.message, error.response?.data);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -177,53 +125,35 @@ export default function Signup2({ navigation, route }: Signup2Props) {
         <View style={styles.formContainer}>
           <FloatingLabelInputNotIcon
             value={fullName}
-            onChangeText={(text: string) => {
-              console.log('fullName:', text);
-              setFullName(text);
-            }}
+            onChangeText={setFullName}
             placeholder="Nhập họ và tên"
             keyboardType="default"
             autoCapitalize="words"
-            editable={true}
           />
 
           <FloatingLabelInputNotIcon
             value={idNumber}
-            onChangeText={(text: string) => {
-              console.log('idNumber:', text);
-              setIdNumber(text);
-            }}
+            onChangeText={setIdNumber}
             placeholder="Nhập CCCD/CMND"
             keyboardType="numeric"
-            editable={true}
           />
 
           <FloatingLabelInputNotIcon
             value={insuranceNumber}
-            onChangeText={(text: string) => {
-              console.log('insuranceNumber:', text);
-              setInsuranceNumber(text);
-            }}
+            onChangeText={setInsuranceNumber}
             placeholder="Nhập số bảo hiểm y tế"
             keyboardType="numeric"
-            editable={true}
           />
 
           <DatePickerField
             label="Ngày sinh"
             value={dob || new Date()}
-            onChange={(date: Date) => {
-              console.log('dob selected:', date.toISOString());
-              setDob(date);
-            }}
+            onChange={setDob}
           />
 
           <Dropdown
             value={gender}
-            onSelect={(value: string) => {
-              console.log('gender selected:', value);
-              setGender(value);
-            }}
+            onSelect={setGender}
             placeholder="Giới tính"
             options={[
               { label: 'Nam', value: 'MALE' },
@@ -234,21 +164,14 @@ export default function Signup2({ navigation, route }: Signup2Props) {
 
           <FloatingLabelInputNotIcon
             value={address}
-            onChangeText={(text: string) => {
-              console.log('address:', text);
-              setAddress(text);
-            }}
+            onChangeText={setAddress}
             placeholder="Nhập địa chỉ đầy đủ"
             keyboardType="default"
-            editable={true}
           />
 
           <CheckboxWithLabel
             checked={termsAccepted}
-            onToggle={() => {
-              console.log('termsAccepted toggled:', !termsAccepted);
-              setTermsAccepted(!termsAccepted);
-            }}
+            onToggle={() => setTermsAccepted(!termsAccepted)}
           >
             Tôi đồng ý với <Text style={styles.linkText}>Điều khoản Dịch vụ</Text> và{' '}
             <Text style={styles.linkText}>Chính sách Bảo mật</Text> của ứng dụng.

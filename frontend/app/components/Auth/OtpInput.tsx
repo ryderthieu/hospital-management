@@ -1,6 +1,6 @@
-import React, { RefObject } from "react";
-import { View, TextInput, StyleSheet, TextInputProps } from "react-native";
-import { useFont, fontFamily } from "../../context/FontContext";
+import React from 'react';
+import { View, TextInput, StyleSheet } from 'react-native';
+import { useFont, fontFamily } from '../../context/FontContext';
 
 interface OtpInputProps {
   otp: string[];
@@ -10,27 +10,28 @@ interface OtpInputProps {
 
 const OtpInput: React.FC<OtpInputProps> = ({ otp, setOtp, inputRefs }) => {
   const { fontsLoaded } = useFont();
+  if (!fontsLoaded) return null;
 
   const handleOtpChange = (value: string, index: number): void => {
-    const cleanedValue = value.replace(/[^0-9]/g, "").slice(0, 1);
+    const cleanedValue = value.replace(/[^0-9]/g, '').slice(0, 1);
     const newOtp = [...otp];
     newOtp[index] = cleanedValue;
     setOtp(newOtp);
-    
-    if (cleanedValue && index < 3) {
+
+    if (cleanedValue && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
     if (!cleanedValue && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
-  
+
   return (
     <View style={styles.otpContainer}>
       {otp.map((value, index) => (
         <TextInput
           key={index}
-          ref={(ref: TextInput | null): void => {
+          ref={(ref: TextInput | null) => {
             inputRefs.current[index] = ref;
           }}
           value={value}
@@ -48,25 +49,27 @@ const OtpInput: React.FC<OtpInputProps> = ({ otp, setOtp, inputRefs }) => {
 
 const styles = StyleSheet.create({
   otpContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 20,
+    paddingHorizontal: 10,
   },
   otpBox: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#f0f0f0",
-    justifyContent: "center",
-    alignItems: "center",
-    marginHorizontal: 10,
-    fontSize: 24,
-    fontFamily: fontFamily.bold
+    width: 45,
+    height: 45,
+    borderRadius: 10,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 5,
+    fontSize: 20,
+    fontFamily: fontFamily.bold,
+    color: '#2B2B2B',
   },
   otpBoxFilled: {
-    backgroundColor: "#e0f7fa",
-    borderWidth: 2,
-    borderColor: "#00B5B8",
+    backgroundColor: '#E6F7FA',
+    borderWidth: 1,
+    borderColor: '#00B5B8',
   },
 });
 
