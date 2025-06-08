@@ -30,6 +30,12 @@ public class Department {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "location", length = 200)
+    private String location;
+
+    @Column(name = "head", length = 100)
+    private String head;
+
     @Column(name = "created_at")
     @CreationTimestamp
     private Timestamp createdAt;

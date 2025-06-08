@@ -1,186 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "../../components/common/Pagination";
-
-interface Department {
-  id: string;
-  name: string;
-  head: string;
-  team: {
-    images: string[];
-  };
-  location: string;
-  staffCount: number;
-  description: string;
-  foundedYear: number;
-}
-
-// Sử dụng lại dữ liệu từ DepartmentTable
-const departmentData: Department[] = [
-  {
-    id: "KH2025-001",
-    name: "Khám bệnh",
-    head: "TS.BS Nguyễn Văn An",
-    team: {
-        images: [
-          "/images/user/user-22.jpg",
-          "/images/user/user-23.jpg",
-          "/images/user/user-24.jpg",
-        ],
-      },
-    location: "Tầng 1, Tòa nhà A",
-    staffCount: 25,
-    description: "Khoa khám bệnh tổng quát và phân loại bệnh nhân",
-    foundedYear: 2010,
-  },
-  {
-    id: "KH2025-002",
-    name: "Chẩn đoán hình ảnh",
-    head: "PGS.TS Trần Thị Bình",
-    team: {
-        images: [
-          "/images/user/user-22.jpg",
-          "/images/user/user-23.jpg",
-          "/images/user/user-24.jpg",
-        ],
-      },
-    location: "Tầng 2, Tòa nhà B",
-    staffCount: 18,
-    description: "Khoa thực hiện các dịch vụ chẩn đoán hình ảnh và siêu âm",
-    foundedYear: 2010,
-  },
-  {
-    id: "KH2025-003",
-    name: "Xét nghiệm",
-    head: "TS.BS Lê Minh Công",
-    team: {
-        images: [
-          "/images/user/user-22.jpg",
-          "/images/user/user-23.jpg",
-          "/images/user/user-24.jpg",
-        ],
-      },
-    location: "Tầng 3, Tòa nhà B",
-    staffCount: 22,
-    description: "Thực hiện các xét nghiệm mẫu bệnh phẩm",
-    foundedYear: 2010,
-  },
-  {
-    id: "KH2025-004",
-    name: "Răng Hàm Mặt",
-    head: "BS.CKI Phạm Quang Dương",
-    team: {
-        images: [
-          "/images/user/user-22.jpg",
-          "/images/user/user-23.jpg",
-          "/images/user/user-24.jpg",
-        ],
-      },
-    location: "Tầng 1, Tòa nhà C",
-    staffCount: 12,
-    description: "Chuyên khoa về các bệnh lý và điều trị răng hàm mặt",
-    foundedYear: 2012,
-  },
-  {
-    id: "KH2025-005",
-    name: "Dinh dưỡng",
-    head: "TS.BS Hoàng Thị Lan",
-    location: "Tầng 2, Tòa nhà A",
-     team: {
-      images: [
-        "/images/user/user-22.jpg",
-        "/images/user/user-23.jpg",
-        "/images/user/user-24.jpg",
-      ],
-    },
-    staffCount: 8,
-    description: "Tư vấn dinh dưỡng và chế độ ăn cho bệnh nhân",
-    foundedYear: 2015,
-  },
-  {
-    id: "KH2025-006",
-    name: "Phục hồi chức năng",
-    head: "PGS.TS Vũ Thanh Hà",
-    location: "Tầng 4, Tòa nhà C",
-     team: {
-      images: [
-        "/images/user/user-22.jpg",
-        "/images/user/user-23.jpg",
-        "/images/user/user-24.jpg",
-      ],
-    },
-    staffCount: 15,
-    description: "Khoa chuyên về phục hồi chức năng và vật lý trị liệu",
-    foundedYear: 2013,
-  },
-  {
-    id: "KH2025-007",
-    name: "Sản",
-    head: "TS.BS Nguyễn Thu Trang",
-    location: "Tầng 3, Tòa nhà A",
-     team: {
-      images: [
-        "/images/user/user-22.jpg",
-        "/images/user/user-23.jpg",
-        "/images/user/user-24.jpg",
-      ],
-    },
-    staffCount: 20,
-    description: "Chuyên khoa sản, chăm sóc mẹ và bé",
-    foundedYear: 2010,
-  },
-  {
-    id: "KH2025-008",
-    name: "Tim mạch",
-    head: "GS.TS Trần Văn Minh",
-     team: {
-      images: [
-        "/images/user/user-22.jpg",
-        "/images/user/user-23.jpg",
-        "/images/user/user-24.jpg",
-      ],
-    },
-    location: "Tầng 5, Tòa nhà B",
-    staffCount: 16,
-    description: "Khoa chuyên về các bệnh lý tim mạch",
-    foundedYear: 2010,
-  },
-  {
-    id: "KH2025-009",
-    name: "Tiêu hóa",
-    head: "TS.BS Lương Thị Hạnh",
-     team: {
-      images: [
-        "/images/user/user-22.jpg",
-        "/images/user/user-23.jpg",
-        "/images/user/user-24.jpg",
-      ],
-    },
-    location: "Tầng 4, Tòa nhà A",
-    staffCount: 14,
-    description: "Chuyên về các bệnh lý đường tiêu hóa",
-    foundedYear: 2011,
-  },
-];
-
-const PAGE_SIZE = 6; // Hiển thị 6 card mỗi trang
+import { departmentService } from "../../../services/departmentService";
+import { Department, transformDepartmentData } from "../../../types/department";
 
 export default function DepartmentCards() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch departments from API
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        setLoading(true);
+        const apiDepartments = await departmentService.getAllDepartments();
+        const transformedDepartments = apiDepartments.map(transformDepartmentData);
+        setDepartments(transformedDepartments);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching departments:", err);
+        setError("Không thể tải danh sách khoa. Vui lòng thử lại.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
   // Function to handle navigation to department detail page
   const handleViewDetail = (department: Department) => {
     navigate(`/admin/departments/${department.id}`);
   };
 
   // Lọc danh sách khoa theo từ khóa tìm kiếm
-  const filteredDepartments = departmentData.filter(department => 
+  const filteredDepartments = departments.filter(department => 
     department.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     department.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const PAGE_SIZE = 6; // Hiển thị 6 card mỗi trang
   const totalItems = filteredDepartments.length;
   const totalPages = Math.ceil(totalItems / PAGE_SIZE);
 
@@ -218,9 +80,45 @@ export default function DepartmentCards() {
           </div>
         </div>
 
+        {/* Loading state */}
+        {loading && (
+          <div className="text-center py-10">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-base-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Đang tải danh sách khoa...</p>
+          </div>
+        )}
+
+        {/* Error state */}
+        {error && (
+          <div className="text-center py-10">
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className="h-16 w-16 text-red-400 mx-auto mb-4" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L4.316 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <h3 className="text-lg font-medium text-red-700 dark:text-red-300 mb-2">
+              Có lỗi xảy ra
+            </h3>
+            <p className="text-red-500 dark:text-red-400 mb-4">
+              {error}
+            </p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="text-white bg-red-600 hover:bg-red-700 font-medium rounded-lg text-sm px-4 py-2"
+            >
+              Thử lại
+            </button>
+          </div>
+        )}
+
         {/* Department Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {paginatedData.map((department) => (
+        {!loading && !error && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedData.map((department) => (
             <div 
               key={department.id} 
               className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700"
@@ -298,20 +196,6 @@ export default function DepartmentCards() {
                   </span>
                 </div>
                 
-                <div className="flex items-start mb-3">
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    className="h-5 w-5 text-gray-500 dark:text-gray-400 mr-2 mt-0.5" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Thành lập năm {department.foundedYear}
-                  </span>
-                </div>
                 
                 <div className="mb-4">
                   <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
@@ -328,12 +212,12 @@ export default function DepartmentCards() {
                   </button>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            </div>            ))}
+          </div>
+        )}
         
         {/* Empty state */}
-        {filteredDepartments.length === 0 && (
+        {!loading && !error && filteredDepartments.length === 0 && (
           <div className="text-center py-10">
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
@@ -354,15 +238,17 @@ export default function DepartmentCards() {
         )}
         
         {/* Pagination */}
-        <div className="mt-6">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            pageSize={PAGE_SIZE}
-            totalItems={totalItems}
-            onPageChange={setCurrentPage}
-          />
-        </div>
+        {!loading && !error && filteredDepartments.length > 0 && (
+          <div className="mt-6">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={PAGE_SIZE}
+              totalItems={totalItems}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
       </div>
               
     </>
