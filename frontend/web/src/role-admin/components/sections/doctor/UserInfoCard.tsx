@@ -6,7 +6,7 @@ import { Modal } from "../../ui/modal";
 import Button from "../../ui/button/Button";
 import Input from "../../form/input/InputField";
 import Label from "../../form/Label";
-import { Doctor } from "../../../../types/doctor";
+import { Doctor } from "../../../types/doctor";
 interface UserInfoCardProps {
   doctorData: Doctor;
   setDoctorData: React.Dispatch<React.SetStateAction<Doctor | null>>;

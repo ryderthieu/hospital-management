@@ -1,8 +1,3 @@
-export interface Department {
-  departmentId: number;
-  departmentName: string;
-}
-
 export interface Doctor {
   doctorId: number;
   userId: number;
@@ -21,7 +16,8 @@ export interface Doctor {
     | "GS_TS_BS";
   specialization: string;
   type: "EXAMINATION" | "SERVICE";
-  department: Department;
+  departmentId: number;
+  departmentName: string;
   createdAt: string;
 }
 
@@ -56,3 +52,31 @@ export const ACADEMIC_DEGREE_LABELS: Record<string, string> = {
   PGS_TS_BS: "PGS.TS.BS",
   GS_TS_BS: "GS.TS.BS",
 };
+
+export type RoomType = "examination" | "test";
+
+export type Shift = "MORNING" | "AFTERNOON" | "EVENING" | "NIGHT";
+export interface Department {
+  departmentId: number;
+  departmentName: string;
+  description: string;
+  createdAt: string;
+}
+export interface ExaminationRoom {
+  roomId: number;
+  departmentId: number;
+  type: RoomType;
+  building: string;
+  floor: number;
+  note: string;
+}
+export interface Schedule {
+  scheduleId: number;
+  doctorId: number;
+  workDate: string;
+  startTime: string; // HH:mm:ss
+  endTime: string; // HH:mm:ss
+  shift: Shift;
+  roomId: number;
+  createdAt: string;
+}

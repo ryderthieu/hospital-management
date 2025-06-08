@@ -1,6 +1,6 @@
 import React from "react";
 import Badge from "../../ui/badge/Badge";
-import { Doctor } from "../../../../types/doctor";
+import { Doctor } from "../../../types/doctor";
 interface DoctorCardProps {
   doctor: Doctor;
   onViewSchedule?: () => void;

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { Patient } from "../../../../types/patient";
-import { patientService } from "../../../../services/patientService";
 import { useNavigate, useParams } from "react-router";
+import { patientService } from "../../../services/patientService";
+import { Patient } from "../../../types/patient";
 
 const MedicalRecordIcon = () => (
   <svg
