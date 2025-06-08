@@ -93,4 +93,11 @@ public class PatientServiceImpl implements PatientService {
         return patientRepository.searchByIdentityNumberOrInsuranceNumberOrFullName(identityNumber, insuranceNumber, fullName)
                 .map(PatientDto::new);
     }
+
+    @Override
+    public PatientDto getPatientByUserId(Integer userId) {
+        return patientRepository.findByUserId(userId)
+                .map(PatientDto::new)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bệnh nhân với ID: " + userId));
+    }
 }

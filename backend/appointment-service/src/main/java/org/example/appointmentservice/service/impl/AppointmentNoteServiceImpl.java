@@ -19,57 +19,45 @@ public class AppointmentNoteServiceImpl implements AppointmentNoteService {
     private final AppointmentRepository appointmentRepository;
 
     @Override
-    public List<AppointmentNoteDto> getAllAppointmentNotes(Integer appointmentId) {
-        return appointmentNoteRepository
-                .findByAppointment_AppointmentId(appointmentId)
-                .stream()
+    public List<AppointmentNoteDto> getNotesByAppointmentId(Integer appointmentId) {
+        List<AppointmentNote> notes = appointmentNoteRepository.findAllByAppointment_AppointmentId(appointmentId);
+        return notes.stream()
                 .map(AppointmentNoteDto::new)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public AppointmentNoteDto getAppointmentNoteById(Integer noteId, Integer appointmentId) {
-        AppointmentNote appointmentNote = appointmentNoteRepository.findByNoteIdAndAppointment_AppointmentId(noteId, appointmentId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy ghi chú cuộc hẹn với ID: " + noteId));
-        return new AppointmentNoteDto(appointmentNote);
-    }
-
-    @Override
-    public AppointmentNoteDto createAppointmentNote(Integer appointmentId, AppointmentNoteDto appointmentNoteDto) {
+    public AppointmentNoteDto createNote(Integer appointmentId, AppointmentNoteDto appointmentNoteDto) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy cuộc hẹn với ID" + appointmentId));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy cuộc hẹn với ID: " + appointmentId));
 
-        AppointmentNote appointmentNote = AppointmentNote.builder()
+        AppointmentNote note = AppointmentNote.builder()
                 .appointment(appointment)
                 .noteType(appointmentNoteDto.getNoteType())
-                .noteText(appointmentNoteDto.getNoteText())
+                .noteText(appointmentNoteDto.getContent())
                 .build();
 
-        AppointmentNote savedAppointmentNote = appointmentNoteRepository.save(appointmentNote);
-        return new AppointmentNoteDto(savedAppointmentNote);
+        AppointmentNote savedNote = appointmentNoteRepository.save(note);
+        return new AppointmentNoteDto(savedNote);
     }
 
     @Override
-    public AppointmentNoteDto updateAppointmentNote(Integer appointmentId,
-                                                    Integer noteId,
-                                                    AppointmentNoteDto appointmentNoteDto) {
-        AppointmentNote appointmentNote = appointmentNoteRepository.findByNoteIdAndAppointment_AppointmentId(noteId, appointmentId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy ghi chú cuộc hẹn"));
+    public AppointmentNoteDto updateNote(Integer noteId, AppointmentNoteDto appointmentNoteDto) {
+        AppointmentNote note = appointmentNoteRepository.findById(noteId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ghi chú với ID: " + noteId));
 
+        note.setNoteType(appointmentNoteDto.getNoteType());
+        note.setNoteText(appointmentNoteDto.getContent());
 
-        appointmentNote.setNoteType(appointmentNoteDto.getNoteType());
-        appointmentNote.setNoteText(appointmentNoteDto.getNoteText());
-
-        AppointmentNote updatedAppointmentNote = appointmentNoteRepository.save(appointmentNote);
-        return new AppointmentNoteDto(updatedAppointmentNote);
+        AppointmentNote updatedNote = appointmentNoteRepository.save(note);
+        return new AppointmentNoteDto(updatedNote);
     }
 
     @Override
-    public void deleteAppointmentNote(Integer appointmentId,
-                                      Integer noteId) {
-        AppointmentNote appointmentNote = appointmentNoteRepository.findByNoteIdAndAppointment_AppointmentId(noteId, appointmentId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy ghi chú cuộc hẹn"));
+    public void deleteNote(Integer noteId) {
+        AppointmentNote note = appointmentNoteRepository.findById(noteId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ghi chú với ID: " + noteId));
 
-        appointmentNoteRepository.delete(appointmentNote);
+        appointmentNoteRepository.delete(note);
     }
 }

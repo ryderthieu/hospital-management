@@ -16,32 +16,32 @@ import java.util.List;
 public class ServicesController {
     private final ServicesService servicesService;
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'PATIENT')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'PATIENT')")
     @GetMapping
     public ResponseEntity<List<ServicesDto>> getAllServices() {
         return ResponseEntity.ok(servicesService.getAllServices());
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'PATIENT')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'PATIENT')")
     @GetMapping("/{serviceId}")
     public ResponseEntity<ServicesDto> getServiceById(@PathVariable Integer serviceId) {
         return ResponseEntity.ok(servicesService.getServiceById(serviceId));
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'PATIENT')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'PATIENT')")
     @PostMapping
     public ResponseEntity<ServicesDto> createService(@RequestBody @Valid ServicesDto servicesDto) {
         return ResponseEntity.ok(servicesService.createService(servicesDto));
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST')")
     @PutMapping("/{serviceId}")
     public ResponseEntity<ServicesDto> updateService(@PathVariable Integer serviceId,
                                                      @RequestBody @Valid ServicesDto servicesDto) {
         return ResponseEntity.ok(servicesService.updateService(serviceId, servicesDto));
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST')")
     @DeleteMapping("/{serviceId}")
     public ResponseEntity<String> deleteService(@PathVariable Integer serviceId) {
         servicesService.deleteService(serviceId);

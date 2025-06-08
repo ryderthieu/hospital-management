@@ -4,10 +4,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.appointmentservice.dto.AppointmentDto;
 import org.example.appointmentservice.service.AppointmentService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -17,7 +19,7 @@ public class AppointmentController {
 
     private final AppointmentService appointmentService;
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'PATIENT')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'PATIENT')")
     @GetMapping
     public ResponseEntity<List<AppointmentDto>> getAllAppointments() {
         return ResponseEntity.ok(appointmentService.getAllAppointments());
@@ -28,20 +30,20 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getAppointmentById(appointmentId));
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'PATIENT')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'PATIENT')")
     @PostMapping
     public ResponseEntity<AppointmentDto> createAppointment(@RequestBody @Valid AppointmentDto appointmentDto) {
         return ResponseEntity.ok(appointmentService.createAppointment(appointmentDto));
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST')")
     @PutMapping("/{appointmentId}")
     public ResponseEntity<AppointmentDto> updateAppointment(@PathVariable Integer appointmentId,
                                                             @RequestBody @Valid AppointmentDto appointmentDto) {
         return ResponseEntity.ok(appointmentService.updateAppointment(appointmentId, appointmentDto));
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST')")
     @DeleteMapping("/{appointmentId}")
     public ResponseEntity<String> deleteAppointment(@PathVariable Integer appointmentId) {
         appointmentService.deleteAppointment(appointmentId);
@@ -50,8 +52,22 @@ public class AppointmentController {
 
     //@PreAuthorize("hasAnyRole('RECEPTIONIST', 'DOCTOR', 'ADMIN')")
     @GetMapping("/doctor/{doctorId}")
-    public ResponseEntity<List<AppointmentDto>> getAppointmentsByDoctorId(@PathVariable Integer doctorId){
-        List<AppointmentDto> appointments = appointmentService.getAppointmentsByDoctorId(doctorId);
+    public ResponseEntity<List<AppointmentDto>> getAppointmentsByDoctorId(
+            @PathVariable Integer doctorId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        List<AppointmentDto> appointments;
+        if (date != null) {
+            appointments = appointmentService.getAppointmentsByDoctorIdAndDate(doctorId, date);
+        } else {
+            appointments = appointmentService.getAppointmentsByDoctorId(doctorId);
+        }
+        return ResponseEntity.ok(appointments);
+    }
+
+//    @PreAuthorize("hasRole('DOCTOR')")
+    @GetMapping("/doctor/{doctorId}/today")
+    public ResponseEntity<List<AppointmentDto>> getTodayAppointments(@PathVariable Integer doctorId) {
+        List<AppointmentDto> appointments = appointmentService.getTodayAppointmentsByDoctorId(doctorId);
         return ResponseEntity.ok(appointments);
     }
 }
