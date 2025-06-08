@@ -13,11 +13,10 @@ import {
   FaInstagram,
 } from "react-icons/fa";
 import React from "react";
-import { DoctorDto } from "../../../types/DoctorDto";
-
+import { Doctor } from "../../../../types/doctor";
 interface UserMetaCardProps {
-  doctorData: DoctorDto;
-  setDoctorData: React.Dispatch<React.SetStateAction<DoctorDto | null>>;
+  doctorData: Doctor;
+  setDoctorData: React.Dispatch<React.SetStateAction<Doctor | null>>;
 }
 
 const UserMetaCard: React.FC<UserMetaCardProps> = ({
