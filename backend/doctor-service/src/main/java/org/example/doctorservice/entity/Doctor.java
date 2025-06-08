@@ -49,6 +49,9 @@ public class Doctor {
     @Column(length = 100)
     private String specialization;
 
+    @Column(name = "profile_image", length = 255)
+    private String profileImage;
+
     @Enumerated(EnumType.STRING)
     private Type type;
 

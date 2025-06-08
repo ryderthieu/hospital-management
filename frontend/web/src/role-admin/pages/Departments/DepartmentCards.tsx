@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Pagination from "../../components/common/Pagination";
 import { departmentService } from "../../../services/departmentService";
 import { Department, transformDepartmentData } from "../../../types/department";
+import Pagination from "../../components/common/Pagination";
 
 export default function DepartmentCards() {
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ export default function DepartmentCards() {
       try {
         setLoading(true);
         const apiDepartments = await departmentService.getAllDepartments();
-        const transformedDepartments = apiDepartments.map(transformDepartmentData);
+        const transformedDepartments = apiDepartments.map((dept, index) => transformDepartmentData(dept, index));
         setDepartments(transformedDepartments);
         setError(null);
       } catch (err) {
@@ -38,8 +38,8 @@ export default function DepartmentCards() {
 
   // Lọc danh sách khoa theo từ khóa tìm kiếm
   const filteredDepartments = departments.filter(department => 
-    department.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    department.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (department.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) || 
+    (department.description?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
   const PAGE_SIZE = 6; // Hiển thị 6 card mỗi trang
@@ -118,9 +118,9 @@ export default function DepartmentCards() {
         {/* Department Cards */}
         {!loading && !error && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {paginatedData.map((department) => (
+            {paginatedData.map((department, index) => (
             <div 
-              key={department.id} 
+              key={`${department.id}-${index}`} 
               className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700"
             >
               <div className="p-6">
@@ -135,17 +135,29 @@ export default function DepartmentCards() {
 
                 {/* Team photos */}
                 <div className="flex -space-x-2 mb-4">
-                  {department.team.images.map((image, index) => (
-                    <img
-                      key={index}
-                      className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800"
-                      src={image}
-                      alt="Team member"
-                    />
-                  ))}
-                  {department.staffCount > department.team.images.length && (
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 border-2 border-white dark:border-gray-800">
-                      <span className="text-xs font-medium">+{department.staffCount - department.team.images.length}</span>
+                  {department.team.images.length > 0 ? (
+                    department.team.images.slice(0, 4).map((image, index) => (
+                      <img
+                        key={index}
+                        className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800 object-cover"
+                        src={image}
+                        alt={`Nhân viên ${index + 1}`}
+                        onError={(e) => {
+                          e.currentTarget.src = "/images/user/default-avatar.jpg";
+                        }}
+                      />
+                    ))
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 border-2 border-white dark:border-gray-800 flex items-center justify-center">
+                      <span className="text-xs text-gray-600 dark:text-gray-400">?</span>
+                    </div>
+                  )}
+                  
+                  {department.staffCount > Math.max(department.team.images.length, 1) && (
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-400 dark:bg-gray-600 border-2 border-white dark:border-gray-800">
+                      <span className="text-xs font-medium text-white">
+                        +{department.staffCount - Math.max(department.team.images.length, 1)}
+                      </span>
                     </div>
                   )}
                 </div>

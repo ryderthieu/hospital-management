@@ -33,13 +33,23 @@ public class Department {
     @Column(name = "location", length = 200)
     private String location;
 
-    @Column(name = "head", length = 100)
-    private String head;
+    @Column(name = "head_doctor_id")
+    private Integer headDoctorId;
+
+    @Column(name = "founded_year")
+    private Integer foundedYear;
+
+    @Column(name = "phone_number", length = 20)
+    private String phoneNumber;
+
+    @Column(name = "email", length = 100)
+    private String email;
 
     @Column(name = "created_at")
     @CreationTimestamp
     private Timestamp createdAt;
 
     @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<ExaminationRoom> examinationRooms = new ArrayList<>();
 }
