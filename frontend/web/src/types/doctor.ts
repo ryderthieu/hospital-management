@@ -15,9 +15,9 @@ export interface Doctor {
   academicDegree: "BS" | "BS_CKI" | "BS_CKII" | "THS_BS" | "TS_BS" | "PGS_TS_BS" | "GS_TS_BS"
   specialization: string
   type: "EXAMINATION" | "SERVICE"
-  department: Department
-  profileImage?: string
-  createdAt: string
+  department: Department;
+  profileImage?: string;
+  createdAt: string;
 =======
   doctorId: number;
   userId: number;
