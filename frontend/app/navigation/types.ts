@@ -49,7 +49,6 @@ interface DoctorDto {
 }
 
 interface Insurance {
-  // Giả định cấu trúc, cần xác nhận từ BE hoặc FE
   insuranceId: number;
   insuranceNumber: string;
   provider: string;
@@ -58,20 +57,25 @@ interface Insurance {
 }
 
 interface Medicine {
-  // Giả định cấu trúc
   id: string;
   name: string;
   description: string;
 }
 
 interface Disease {
-  // Giả định cấu trúc
   id: string;
   name: string;
   description: string;
 }
 
-// Định nghĩa SearchStackParamList cho SearchStack
+// Thống nhất Specialty
+export interface Specialty {
+  id: number;
+  name: string;
+  doctorCount: number;
+  icon: ImageSourcePropType;
+}
+
 export type SearchStackParamList = {
   SearchHome: undefined;
   MedicineSearch: undefined;
@@ -82,50 +86,47 @@ export type SearchStackParamList = {
   DiseaseDetail: { disease: Disease };
 };
 
-// Định nghĩa HomeStackParamList cho HomeStack
 export type HomeStackParamList = {
   Home: undefined;
-  BookAppointment: undefined;
+  BookAppointment: { screen: keyof BookAppointmentStackParamList; params?: any } | undefined;
   Notifications: undefined;
   News: undefined;
   NewsDetail: { newsItem: NewsItem };
 };
 
-// Định nghĩa AppointmentStackParamList
 export type AppointmentStackParamList = {
   Appointments: undefined;
   AppointmentDetail: { appointmentId: string };
   CompletedAppointmentDetail: { appointmentId: string };
 };
 
-// Định nghĩa BookAppointmentStackParamList
 export type BookAppointmentStackParamList = {
   Search: undefined;
-  DoctorList: undefined;
+  DoctorList: { departmentId: number; departmentName?: string };
   Filter: undefined;
-  BookAppointment: { doctorId: string };
+  BookAppointment: { doctor: Doctor };
   SymptomSelection: {
-    doctorId: string;
+    doctor: Doctor;
     selectedDate: string;
     selectedTime: string;
     hasInsurance: boolean;
   };
   BookingConfirmation: {
-    doctorId: string;
+    doctor: Doctor;
     selectedDate: string;
     selectedTime: string;
     hasInsurance: boolean;
     selectedSymptoms: string[];
   };
   Payment: {
-    doctorId: string;
+    doctor: Doctor;
     selectedDate: string;
     selectedTime: string;
     hasInsurance: boolean;
     selectedSymptoms: string[];
   };
   PaymentSuccess: {
-    doctorId: string;
+    doctor: Doctor;
     selectedDate: string;
     selectedTime: string;
     transactionId: string;
@@ -134,14 +135,12 @@ export type BookAppointmentStackParamList = {
   };
 };
 
-// Định nghĩa MedicationScheduleStackParamList
 export type MedicationScheduleStackParamList = {
   MedicationScheduleHome: undefined;
   PrescriptionManagement: { prescriptionId: string };
   PrescriptionDetail: { prescriptionId: string };
 };
 
-// Profile stack param list
 export type ProfileStackParamList = {
   ProfileMain: undefined;
   AccountInfo: undefined;
@@ -155,7 +154,6 @@ export type ProfileStackParamList = {
   Notifications: undefined;
 };
 
-// Navigation prop types
 export type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'ProfileMain'>;
 export type AccountInfoScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'AccountInfo'>;
 export type EditAccountInfoScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'EditAccountInfo'>;
@@ -164,42 +162,33 @@ export type InsuranceDetailScreenNavigationProp = StackNavigationProp<ProfileSta
 export type EditInsuranceScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'EditInsurance'>;
 export type SettingsScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'Settings'>;
 
-// Route prop types
 export type AccountInfoScreenRouteProp = RouteProp<ProfileStackParamList, 'AccountInfo'>;
 export type EditAccountInfoScreenRouteProp = RouteProp<ProfileStackParamList, 'EditAccountInfo'>;
 export type InsuranceDetailScreenRouteProp = RouteProp<ProfileStackParamList, 'InsuranceDetail'>;
 export type EditInsuranceScreenRouteProp = RouteProp<ProfileStackParamList, 'EditInsurance'>;
 
-// Định nghĩa MainTabParamList
 export type MainTabParamList = {
   HomeTab: undefined;
-  Search: undefined; // Đây là SearchStackNavigator
+  Search: undefined;
   Appointment: undefined;
   MedicationSchedule: undefined;
   Profile: undefined;
   Notifications: undefined;
 };
 
-// Định nghĩa RootParamList
 export type RootParamList = {
   Main: undefined;
   Auth: undefined;
   Notifications: undefined;
 };
 
-// Định nghĩa AppParamList
 export type AppParamList = {
   Main: undefined;
   Auth: undefined;
 };
 
-// Định nghĩa AuthParamList
 export type AuthParamList = {
-  Onboarding1: undefined;
-  Onboarding2: undefined;
-  Onboarding3: undefined;
-  Onboarding4: undefined;
-  Onboarding5: undefined;
+  Onboarding: undefined;
   Login: undefined;
   Signup1: undefined;
   Signup2: undefined;
@@ -213,3 +202,16 @@ export type AuthParamList = {
   Forgot6: undefined;
   Forgot7: undefined;
 };
+
+export interface Doctor {
+  id: string;
+  name: string;
+  specialty: string;
+  image: ImageSourcePropType;
+  rating?: number;
+  price: string;
+  experience?: string;
+  isOnline?: boolean;
+  joinDate?: string;
+  room?: string;
+}

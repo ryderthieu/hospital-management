@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
+import WeCareLoading from "../../common/WeCareLoading"
 import { ChevronLeft, ChevronRight, Clock, BriefcaseMedical, Calendar } from "lucide-react"
 import { Modal, Select, Tabs, Button, Card, Progress, Badge, Tooltip, Empty, Descriptions } from "antd"
 import { useSchedule } from "../../../hooks/useSchedule"
@@ -394,6 +395,8 @@ export const ScheduleComponent: React.FC = () => {
     setCurrentDate,
     view,
     setView,
+    loading,
+    error,
     schedules,
     calendarDays,
     selectedDay,
@@ -441,6 +444,10 @@ export const ScheduleComponent: React.FC = () => {
   const handleCloseScheduleDetail = () => {
     setSelectedSchedule(null)
   }
+
+  if(loading) return <WeCareLoading />
+  
+  else
 
   return (
     <div className="w-full bg-white rounded-lg shadow-sm">

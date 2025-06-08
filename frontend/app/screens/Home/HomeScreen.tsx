@@ -81,44 +81,36 @@ export default function HomeScreen() {
   const news: NewsItem[] = [
     {
       id: 1,
-      title: 'Simple steps to maintain a healthy heart for all ages',
-      date: '12 Jun 2025',
-      content: 'Maintaining a healthy heart involves regular exercise, a balanced diet, and routine check-ups...',
-      image: require('../../assets/images/news/news1.webp'),
+      title: 'Simple steps to duy trì sức khỏe tim mạch cho mọi lứa tuổi',
+      date: '2025-06-12',
+      content: 'Duy trì sức khỏe tim mạch bao gồm tập thể dục đều đặn, chế độ ăn uống cân bằng và kiểm tra định kỳ...',
+      image: require('../../assets/images/logo/Logo.png'),
     },
     {
       id: 2,
-      title: "Superfoods you must incorporate in your family's daily diet",
-      date: '11 Jun 2025',
-      content: 'Superfoods like berries, nuts, and leafy greens can boost your family health...',
-      image: require('../../assets/images/news/news2.webp'),
+      title: 'Siêu thực phẩm cần bổ sung vào chế độ ăn hàng ngày của gia đình bạn',
+      date: '2025-06-11',
+      content: 'Các siêu thực phẩm như quả mọng, hạt và rau xanh có thể tăng cường sức khỏe gia đình bạn...',
+      image: require('../../assets/images/logo/Logo.png'),
     },
     {
       id: 3,
-      title: 'Simple steps to maintain a healthy heart for all ages',
-      date: '12 Jun 2025',
-      content: 'Maintaining a healthy heart involves regular exercise, a balanced diet, and routine check-ups...',
-      image: require('../../assets/images/news/news3.webp'),
+      title: 'Simple steps to duy trì sức khỏe tim mạch cho mọi lứa tuổi',
+      date: '2025-06-12',
+      content: 'Duy trì sức khỏe tim mạch bao gồm tập thể dục đều đặn, chế độ ăn uống cân bằng và kiểm tra định kỳ...',
+      image: require('../../assets/images/logo/Logo.png'),
     },
     {
       id: 4,
-      title: "Superfoods you must incorporate in your family's daily diet",
-      date: '11 Jun 2025',
-      content: 'Superfoods like berries, nuts, and leafy greens can boost your family health...',
-      image: require('../../assets/images/news/news4.webp'),
+      title: 'Siêu thực phẩm cần bổ sung vào chế độ ăn hàng ngày của gia đình bạn',
+      date: '2025-06-11',
+      content: 'Các siêu thực phẩm như quả mọng, hạt và rau xanh có thể tăng cường sức khỏe gia đình bạn...',
+      image: require('../../assets/images/logo/Logo.png'),
     },
   ];
 
-  // Icon mapping for departments
-  const departmentIcons: { [key: string]: ImageSourcePropType } = {
-    'Tim mạch': require('../../assets/images/ChuyenKhoa/TimMach.svg'),
-    'Sản nhi': require('../../assets/images/ChuyenKhoa/SanNhi.png'),
-    'Đông y': require('../../assets/images/ChuyenKhoa/DongY.png'),
-    // Add more mappings as needed
-  };
-
   useEffect(() => {
-    fetchRecentDoctors();
+    // fetchRecentDoctors(); // Comment tạm vì lỗi /appointments chưa xác nhận sửa
     fetchSpecialties();
   }, []);
 
@@ -158,8 +150,9 @@ export default function HomeScreen() {
       console.error('Fetch doctors error:', error.message, error.response?.data);
       Alert.alert(
         'Lỗi',
-        error.response?.data?.message || 'Không thể tải danh sách bác sĩ. Vui lòng thử lại.',
+        error.response?.data?.message || 'Không thể tải danh sách bác sĩ gần đây. Vui lòng thử lại.',
       );
+      setRecentDoctors([]);
     } finally {
       setIsLoading(false);
     }
@@ -168,30 +161,42 @@ export default function HomeScreen() {
   const fetchSpecialties = async () => {
     setIsLoading(true);
     try {
-      // Lấy danh sách khoa
       const departmentsResponse = await API.get<DepartmentDto[]>('/doctors/departments');
       console.log('Debug - Departments response:', departmentsResponse.data);
-
-      // Gọi API lấy số bác sĩ cho mỗi khoa
-      const doctorCountPromises = departmentsResponse.data.map((dept) =>
-        API.get<DoctorDto[]>(`/doctors/departments/${dept.departmentId}/doctors`)
-          .then((res) => ({ departmentId: dept.departmentId, count: res.data.length }))
-          .catch((error) => {
-            console.error(`Error fetching doctors for department ${dept.departmentId}:`, error);
-            return { departmentId: dept.departmentId, count: 0 };
-          }),
+      departmentsResponse.data.forEach((dept) =>
+        console.log(`Department ID: ${dept.departmentId}, Name: ${dept.departmentName}`),
       );
+
+      const doctorCountPromises = departmentsResponse.data
+        .slice(0, 5) // Giới hạn 5 chuyên khoa
+        .map((dept) =>
+          API.get<DoctorDto[]>(`/doctors/departments/${dept.departmentId}/doctors`)
+            .then((res) => ({ departmentId: dept.departmentId, count: res.data.length }))
+            .catch((error) => {
+              console.warn(`No doctors for department ${dept.departmentId}:`, error.message);
+              return { departmentId: dept.departmentId, count: 0 };
+            }),
+        );
 
       const doctorCounts = await Promise.all(doctorCountPromises);
       const doctorCountMap = new Map(doctorCounts.map((item) => [item.departmentId, item.count]));
 
-      // Ánh xạ dữ liệu sang Specialty
-      const specialtiesData: Specialty[] = departmentsResponse.data.map((dept) => ({
-        id: dept.departmentId,
-        name: dept.departmentName || 'Chưa có tên',
-        doctorCount: doctorCountMap.get(dept.departmentId) || 0,
-        icon: departmentIcons[dept.departmentName] || require('../../assets/images/ChuyenKhoa/Default.png'),
-      }));
+      const specialtiesData: Specialty[] = departmentsResponse.data
+        .slice(0, 5) // Giới hạn 5 chuyên khoa
+        .map((dept) => {
+          let icon: ImageSourcePropType = { uri: 'https://via.placeholder.com/50' };
+          try {
+            icon = require('../../assets/images/logo/Logo.png');
+          } catch (e) {
+            console.warn(`Default icon not found, using placeholder URI`);
+          }
+          return {
+            id: dept.departmentId,
+            name: dept.departmentName || 'Chưa có tên',
+            doctorCount: doctorCountMap.get(dept.departmentId) || 0,
+            icon,
+          };
+        });
 
       setSpecialties(specialtiesData);
     } catch (error: any) {
@@ -299,12 +304,17 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   key={specialty.id}
                   style={styles.specialtyCard}
-                  onPress={() => navigation.navigate('BookAppointment', { departmentId: specialty.id })}
+                  onPress={() =>
+                    navigation.navigate('BookAppointment', {
+                      screen: 'DoctorList',
+                      params: { departmentId: specialty.id, departmentName: specialty.name },
+                    })
+                  }
                 >
                   <Image source={specialty.icon} style={styles.specialtyIcon} />
                   <Text style={styles.specialtyName}>{specialty.name}</Text>
-                  <Text style={styles.doctorCount}>
-                    {specialty.doctorCount} bác sĩ
+                  <Text style={[styles.doctorCount, specialty.doctorCount === 0 && styles.placeholderText]}>
+                    {specialty.doctorCount > 0 ? `${specialty.doctorCount} bác sĩ` : 'Không có bác sĩ'}
                   </Text>
                 </TouchableOpacity>
               ))
@@ -477,7 +487,7 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   specialtyCard: {
-    width: 150,
+    width: 160,
     height: 160,
     borderWidth: 1,
     borderColor: '#E0E0E0',
@@ -495,8 +505,11 @@ const styles = StyleSheet.create({
   },
   specialtyName: {
     fontFamily: fontFamily.bold,
-    fontSize: 16,
+    fontSize: 14,
     marginBottom: 5,
+    numberOfLines: 1,
+    ellipsizeMode: 'tail',
+    textAlign: 'center',
   },
   doctorCount: {
     fontFamily: fontFamily.regular,
@@ -505,10 +518,9 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     fontFamily: fontFamily.regular,
-    fontSize: 16,
+    fontSize: 12,
     color: '#9CA3AF',
     fontStyle: 'italic',
-    paddingHorizontal: 20,
   },
   newsSection: {
     paddingBottom: 10,

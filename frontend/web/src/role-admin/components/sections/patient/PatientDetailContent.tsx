@@ -547,23 +547,27 @@ export function HealthInfoContent() {
 
 // ContactInfoContent
 export function ContactInfoContent() {
-  const [patient, setPatient] = useState<Patient | null>(null);
+  const [contacts, setContacts] = useState<EmergencyContact[]>([]);
   const { patientId } = useParams();
 
   useEffect(() => {
     if (!patientId) return;
-    const fetchPatient = async () => {
+    const fetchContacts = async () => {
       try {
-        const data = await patientService.getPatientById(Number(patientId));
-        setPatient({
-          ...data,
-          contacts: data.contacts || [],
-        });
+        const data = await patientService.getEmergencyContacts(
+          Number(patientId)
+        );
+        setContacts(
+          data.map((item) => ({
+            ...item,
+            contactRelationship: item.relationship,
+          }))
+        );
       } catch (error) {
-        console.error("Failed to fetch patient data:", error);
+        console.error("Failed to fetch emergency contacts:", error);
       }
     };
-    fetchPatient();
+    fetchContacts();
   }, [patientId]);
 
   return (
@@ -605,9 +609,9 @@ export function ContactInfoContent() {
             </TableHeader>
 
             {/* Table Body */}
-            {patient?.contacts && patient.contacts.length > 0 ? (
+            {contacts && contacts.length > 0 ? (
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                {patient.contacts.map((contact) => (
+                {contacts.map((contact) => (
                   <TableRow key={contact.contactId}>
                     <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
                       {contact.contactName}
@@ -616,7 +620,13 @@ export function ContactInfoContent() {
                       {contact.contactPhone}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
-                      {contact.contactRelationship}
+                      {contact.relationship === "FAMILY"
+                        ? "Gia đình"
+                        : contact.relationship === "FRIEND"
+                        ? "Bạn bè"
+                        : contact.relationship === "OTHERS"
+                        ? "Khác"
+                        : "Chưa xác định"}
                     </TableCell>
                   </TableRow>
                 ))}

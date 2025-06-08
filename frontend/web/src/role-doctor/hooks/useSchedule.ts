@@ -137,6 +137,8 @@ export const useSchedule = () => {
     setCurrentDate,
     view,
     setView,
+    loading,
+    error,
     schedules,
     calendarDays,
     selectedDay,

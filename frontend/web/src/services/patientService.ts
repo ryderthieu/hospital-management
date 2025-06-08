@@ -49,8 +49,10 @@ export const patientService = {
   },
 
   // Emergency Contacts
-  async getEmergencyContacts(): Promise<EmergencyContact[]> {
-    const response = await api.get<EmergencyContact[]>(`/patients/contacts`);
+  async getEmergencyContacts(patientId: number): Promise<EmergencyContact[]> {
+    const response = await api.get<EmergencyContact[]>(
+      `/patients/${patientId}/contacts`
+    );
     return response.data;
   },
 };
