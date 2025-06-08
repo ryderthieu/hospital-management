@@ -22,38 +22,38 @@ public class PatientRoomController {
 
     private final PatientRoomService patientRoomService;
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'DOCTOR')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'DOCTOR')")
     @GetMapping
     public ResponseEntity<List<PatientRoomDto>> getAllPatientRooms() {
         return ResponseEntity.ok(patientRoomService.getAllPatientRooms());
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'DOCTOR')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'DOCTOR')")
     @GetMapping("/{roomId}")
     public ResponseEntity<PatientRoomDto> getPatientRoomById(@PathVariable Integer roomId) {
         return ResponseEntity.ok(patientRoomService.getPatientRoomById(roomId));
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
     @PostMapping
     public ResponseEntity<PatientRoomDto> createPatientRoom(@RequestBody @Valid PatientRoomDto patientRoomDto) {
         return ResponseEntity.ok(patientRoomService.createPatientRoom(patientRoomDto));
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
     @PutMapping("/{roomId}")
     public ResponseEntity<PatientRoomDto> updatePatientRoom(@PathVariable Integer roomId, @RequestBody @Valid PatientRoomDto patientRoomDto) {
         return ResponseEntity.ok(patientRoomService.updatePatientRoom(roomId, patientRoomDto));
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
     @DeleteMapping("/{roomId}")
     public ResponseEntity<String> deletePatientRoom(@PathVariable Integer roomId){
         patientRoomService.deletePatientRoom(roomId);
         return ResponseEntity.ok("Phòng được xóa thành công");
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'DOCTOR')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'DOCTOR')")
     @GetMapping("/search")
     public ResponseEntity<Optional<PatientRoomDto>> filterPatientRooms(@RequestParam(required = false) String roomName,
                                                                        @RequestParam(required = false) Integer maxCapacity){

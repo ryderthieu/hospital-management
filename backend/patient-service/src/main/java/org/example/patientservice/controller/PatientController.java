@@ -32,25 +32,27 @@ public class PatientController {
     }
 
     @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'DOCTOR', 'PATIENT')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'DOCTOR')")
     @GetMapping("/{patientId}")
     public ResponseEntity<PatientDto> getPatientById(@PathVariable Integer patientId) {
         return ResponseEntity.ok(patientService.getPatientById(patientId));
     }
 
     @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'PATIENT')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
     @PutMapping("/{patientId}")
     public ResponseEntity<PatientDto> updatePatient(@PathVariable Integer patientId, @RequestBody @Valid PatientDto patientDto) {
         return ResponseEntity.ok(patientService.updatePatient(patientId, patientDto));
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
     @DeleteMapping("/{patientId}")
     public ResponseEntity<String> deletePatient(@PathVariable Integer patientId) {
         patientService.deletePatient(patientId);
         return ResponseEntity.ok("Bệnh nhân được xóa thành công");
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'DOCTOR')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'DOCTOR')")
     @GetMapping("/search")
     public ResponseEntity<Optional<PatientDto>> searchPatient(@RequestParam(required = false) String identityNumber,
                                                               @RequestParam(required = false) String insuranceNumber,

@@ -25,32 +25,32 @@ public class EmergencyContactController {
         return Integer.valueOf(userId);
     }
 
-    @PreAuthorize("hasAnyRole('PATIENT')")
+//    @PreAuthorize("hasAnyRole('PATIENT')")
     @PostMapping
     public ResponseEntity<EmergencyContactDto> createEmergencyContact(@RequestBody @Valid EmergencyContactDto emergencyContactDto) {
         return ResponseEntity.ok(emergencyContactService.createEmergencyContact(getCurrentPatientId(), emergencyContactDto));
     }
 
-    @PreAuthorize("hasAnyRole('PATIENT')")
+//    @PreAuthorize("hasAnyRole('PATIENT')")
     @GetMapping
     public ResponseEntity<List<EmergencyContactDto>> getAllEmergencyContacts() {
         return ResponseEntity.ok(emergencyContactService.getAllEmergencyContacts(getCurrentPatientId()));
     }
 
-    @PreAuthorize("hasAnyRole('PATIENT')")
+//    @PreAuthorize("hasAnyRole('PATIENT')")
     @GetMapping("/{contactId}")
     public ResponseEntity<EmergencyContactDto> getEmergencyContactById(@PathVariable Integer contactId) {
         return ResponseEntity.ok(emergencyContactService.getContactByIdAndPatientId(contactId, getCurrentPatientId()));
     }
 
-    @PreAuthorize("hasAnyRole('PATIENT')")
+//    @PreAuthorize("hasAnyRole('PATIENT')")
     @PutMapping("/{contactId}")
     public ResponseEntity<EmergencyContactDto> updateEmergencyContact(@PathVariable Integer contactId,
                                                                       @RequestBody @Valid EmergencyContactDto emergencyContactDto) {
         return ResponseEntity.ok(emergencyContactService.updateEmergencyContact(contactId, getCurrentPatientId(), emergencyContactDto));
     }
 
-    @PreAuthorize("hasAnyRole('PATIENT')")
+//    @PreAuthorize("hasAnyRole('PATIENT')")
     @DeleteMapping("/{contactId}")
     public ResponseEntity<String> deleteEmergencyContact(@PathVariable Integer contactId) {
         emergencyContactService.deleteEmergencyContact(contactId, getCurrentPatientId());
@@ -62,7 +62,7 @@ public class EmergencyContactController {
         return ResponseEntity.ok(emergencyContactService.searchContactPhone(filter));
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
+//    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
     @GetMapping("/contacts/admin")
     public ResponseEntity<List<EmergencyContactDto>> getAllContactsForAdmin() {
         return ResponseEntity.ok(emergencyContactService.getAllContactsForAdmin());

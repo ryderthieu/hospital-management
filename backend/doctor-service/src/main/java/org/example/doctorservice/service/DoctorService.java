@@ -26,5 +26,6 @@ public interface DoctorService {
                                       String specialization,
                                       Doctor.Type type);
 
-    List<PatientDto> getPatientsByDoctor(Integer doctorId);
+    DoctorDto getDoctorByUserId(Integer userId);
+
 }
