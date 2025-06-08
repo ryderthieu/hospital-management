@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import type { Schedule, CalendarDay, ViewType } from "./types"
+import type { Schedule, CalendarDay, ViewType } from "../types/schedule"
 import {
   getDaysInMonth,
   getWeekDays,
@@ -10,7 +10,7 @@ import {
   calculateTimeDifference,
   isDateInCurrentWeek,
   isDateInCurrentMonth,
-} from "./services"
+} from "../services/scheduleServices"
 import { message } from "antd"
 
 export const useSchedule = () => {

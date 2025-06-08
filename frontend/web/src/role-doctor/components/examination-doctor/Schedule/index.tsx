@@ -4,7 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import { ChevronLeft, ChevronRight, Clock, BriefcaseMedical, Calendar } from "lucide-react"
 import { Modal, Select, Tabs, Button, Card, Progress, Badge, Tooltip, Empty, Descriptions } from "antd"
-import { useSchedule } from "./new/hooks"
+import { useSchedule } from "../../../hooks/useSchedule"
 import {
   formatMonthYear,
   formatDateRange,
@@ -14,8 +14,8 @@ import {
   formatScheduleDate,
   formatScheduleTime,
   parseScheduleDate,
-} from "./new/services"
-import type { TimeSlot, MonthViewProps, WeekViewProps, ScheduleModalProps, Schedule } from "./new/types"
+} from "../../../services/scheduleServices"
+import type { TimeSlot, MonthViewProps, WeekViewProps, ScheduleModalProps, Schedule } from "../../../types/schedule"
 
 const { Option } = Select
 
@@ -189,7 +189,7 @@ const WeekView: React.FC<WeekViewProps & { onScheduleClick: (schedule: Schedule)
           <div
             key={index}
             className={`p-3 border-r border-b border-gray-200 text-center font-semibold ${
-              dayIsToday ? "bg-blue-600 text-white" : "bg-gray-50 text-gray-700"
+              dayIsToday ? "bg-base-600 text-white" : "bg-gray-50 text-gray-700"
             }`}
           >
             <div>{day}</div>
@@ -252,7 +252,7 @@ const WeekView: React.FC<WeekViewProps & { onScheduleClick: (schedule: Schedule)
                     <div
                       className={`absolute left-1 right-1 p-2 rounded-lg text-sm border-l-4 shadow-sm overflow-hidden cursor-pointer transition-all hover:shadow-md ${
                         inProgress
-                          ? "bg-base-50 border-l-base-500 border border-base-200 hover:bg-base-100"
+                          ? "bg-base-100 border-l-base-500 border border-base-200 hover:bg-base-100"
                           : "bg-blue-50 border-l-blue-500 border border-blue-200 hover:bg-blue-100"
                       }`}
                       style={{ ...style, zIndex: 20 }}

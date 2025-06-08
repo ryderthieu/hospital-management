@@ -1,5 +1,5 @@
-import type { Schedule } from "./types"
-import { api } from "../../../../../services/api"
+import type { Schedule } from "../types/schedule"
+import { api } from "../../services/api"
 
 const doctorId = localStorage.getItem("currentDoctorId")
 const doctorIdNumber = doctorId ? Number.parseInt(doctorId) : null
