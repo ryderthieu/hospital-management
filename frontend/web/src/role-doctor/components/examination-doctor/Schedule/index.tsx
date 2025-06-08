@@ -1,5 +1,3 @@
-"use client";
-
 import type React from "react";
 import { useState } from "react";
 import {
@@ -7,7 +5,6 @@ import {
   ChevronRight,
   Clock,
   User,
-  FileText,
   Calendar,
 } from "lucide-react";
 import {
@@ -22,27 +19,27 @@ import {
   Empty,
   Descriptions,
 } from "antd";
-import { useSchedule } from "./hooks";
+import { useSchedule } from "./new/hooks";
 import {
   formatMonthYear,
   formatDateRange,
   getWeekDays,
   formatTimeRange,
   formatDayMonthYear,
-} from "./services";
+} from "./new/services";
 import type {
   TimeSlot,
   MonthViewProps,
   WeekViewProps,
-  AppointmentModalProps,
-  Appointment,
-} from "./types";
+  ScheduleModalProps,
+  Schedule,
+} from "./new/types";
 
 const { Option } = Select;
 
 // MonthView Component
 const MonthView: React.FC<MonthViewProps> = ({ calendarDays, onDayClick }) => {
-  const weekdays = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"];
+  const weekdays = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"];
   const today = new Date();
 
   return (
@@ -80,9 +77,9 @@ const MonthView: React.FC<MonthViewProps> = ({ calendarDays, onDayClick }) => {
               <span className="flex items-center justify-center text-lg h-full">
                 {day.date.getDate()}
               </span>
-              {day.appointmentCount > 0 && (
+              {day.scheduleCount > 0 && (
                 <Badge
-                  count={day.appointmentCount}
+                  count={day.scheduleCount}
                   size="default"
                   className="absolute -top-21 -right-44"
                   style={{
@@ -105,8 +102,8 @@ const MonthView: React.FC<MonthViewProps> = ({ calendarDays, onDayClick }) => {
 
 // WeekView Component
 const WeekView: React.FC<
-  WeekViewProps & { onAppointmentClick: (appointment: Appointment) => void }
-> = ({ days, appointments, timeSlots, onAppointmentClick }) => {
+  WeekViewProps & { onScheduleClick: (schedule: Schedule) => void }
+> = ({ days, schedules, timeSlots, onScheduleClick }) => {
   const weekdays = [
     "",
     "Thứ 2",
@@ -123,7 +120,7 @@ const WeekView: React.FC<
     return hours * 60 + minutes;
   };
 
-  // Extended time range to cover appointments outside working hours
+
   const allTimeSlots = [
     { label: "6:00", start: "06:00", end: "07:00" },
     { label: "7:00", start: "07:00", end: "08:00" },
@@ -145,16 +142,16 @@ const WeekView: React.FC<
   const latestTime = timeToMinutes(allTimeSlots[allTimeSlots.length - 1].end);
   const totalMinutes = latestTime - earliestTime;
 
-  const getAppointmentsForDay = (day: Date) => {
-    return appointments.filter(
-      (app) =>
-        app.date.getDate() === day.getDate() &&
-        app.date.getMonth() === day.getMonth() &&
-        app.date.getFullYear() === day.getFullYear()
+  const getSchedulesForDay = (day: Date) => {
+    return schedules.filter(
+      (sch) =>
+        sch.date.getDate() === day.getDate() &&
+        sch.date.getMonth() === day.getMonth() &&
+        sch.date.getFullYear() === day.getFullYear()
     );
   };
 
-  const getAppointmentStyle = (startTime: string, endTime: string) => {
+  const getScheduleStyle = (startTime: string, endTime: string) => {
     const startMinutes = timeToMinutes(startTime);
     const endMinutes = timeToMinutes(endTime);
     const top = ((startMinutes - earliestTime) / totalMinutes) * 100;
@@ -171,30 +168,30 @@ const WeekView: React.FC<
     );
   };
 
-  const isAppointmentInProgress = (app: {
+  const isScheduleInProgress = (sch: {
     startTime: string;
     endTime: string;
     date: Date;
   }): boolean => {
     const now = new Date();
     if (
-      app.date.getDate() !== now.getDate() ||
-      app.date.getMonth() !== now.getMonth() ||
-      app.date.getFullYear() !== now.getFullYear()
+      sch.date.getDate() !== now.getDate() ||
+      sch.date.getMonth() !== now.getMonth() ||
+      sch.date.getFullYear() !== now.getFullYear()
     ) {
       return false;
     }
 
-    const [startHours, startMinutes] = app.startTime.split(":").map(Number);
-    const [endHours, endMinutes] = app.endTime.split(":").map(Number);
-    const appStart = new Date(
+    const [startHours, startMinutes] = sch.startTime.split(":").map(Number);
+    const [endHours, endMinutes] = sch.endTime.split(":").map(Number);
+    const schStart = new Date(
       now.getFullYear(),
       now.getMonth(),
       now.getDate(),
       startHours,
       startMinutes
     );
-    const appEnd = new Date(
+    const schEnd = new Date(
       now.getFullYear(),
       now.getMonth(),
       now.getDate(),
@@ -202,7 +199,7 @@ const WeekView: React.FC<
       endMinutes
     );
 
-    return now >= appStart && now <= appEnd;
+    return now >= schStart && now <= schEnd;
   };
 
   return (
@@ -260,7 +257,7 @@ const WeekView: React.FC<
 
         {/* Days columns */}
         {days.map((day, dayIndex) => {
-          const dayAppointments = getAppointmentsForDay(day);
+          const daySchedules = getSchedulesForDay(day);
 
           return (
             <div
@@ -290,16 +287,16 @@ const WeekView: React.FC<
                 );
               })}
 
-              {dayAppointments.map((app, appIndex) => {
-                const style = getAppointmentStyle(app.startTime, app.endTime);
-                const inProgress = isAppointmentInProgress(app);
+              {daySchedules.map((sch, schIndex) => {
+                const style = getScheduleStyle(sch.startTime, sch.endTime);
+                const inProgress = isScheduleInProgress(sch);
 
                 return (
                   <Tooltip
-                    key={appIndex}
-                    title={`${app.title} - ${formatTimeRange(
-                      app.startTime,
-                      app.endTime
+                    key={schIndex}
+                    title={`${sch.title} - ${formatTimeRange(
+                      sch.startTime,
+                      sch.endTime
                     )}`}
                   >
                     <div
@@ -309,23 +306,24 @@ const WeekView: React.FC<
                           : "bg-blue-50 border-l-blue-500 border border-blue-200 hover:bg-blue-100"
                       }`}
                       style={{ ...style, zIndex: 20 }}
-                      onClick={() => onAppointmentClick(app)}
+                      onClick={() => onScheduleClick(sch)}
                     >
                       <div
                         className={`font-semibold text-sm ${
                           inProgress ? "text-green-700" : "text-blue-700"
                         }`}
                       >
-                        {app.title}
+                        {sch.title}
                       </div>
                       <div className="text-xs text-gray-600 mt-1">
-                        {formatTimeRange(app.startTime, app.endTime)}
+                        {formatTimeRange(sch.startTime, sch.endTime)}
                       </div>
-                      {app.description && (
-                        <div className="text-xs mt-1 truncate text-gray-600">
-                          {app.description}
-                        </div>
-                      )}
+                       <div className="text-xs text-gray-600 mt-1">
+                        {sch.shift}
+                      </div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        {sch.roomId}
+                      </div>
                     </div>
                   </Tooltip>
                 );
@@ -338,10 +336,10 @@ const WeekView: React.FC<
   );
 };
 
-// AppointmentModal Component
-const AppointmentModal: React.FC<AppointmentModalProps> = ({
+
+const ScheduleModal: React.FC<ScheduleModalProps> = ({
   selectedDay,
-  appointments,
+  schedules,
   onClose,
 }) => {
   if (!selectedDay) return null;
@@ -362,9 +360,9 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
         </Button>,
       ]}
       width={700}
-      className="appointment-modal"
+      className="schedule-modal"
     >
-      {appointments.length === 0 ? (
+      {schedules.length === 0 ? (
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description="Không có lịch hẹn nào trong ngày này"
@@ -372,7 +370,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
         />
       ) : (
         <div className="space-y-4 max-h-96 overflow-y-auto">
-          {appointments.map((appointment, index) => (
+          {schedules.map((schedule, index) => (
             <Card
               key={index}
               size="small"
@@ -383,7 +381,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                   <div className="flex items-center mb-2">
                     <User size={16} className="text-blue-600 mr-2" />
                     <h3 className="font-semibold text-gray-800">
-                      {appointment.title}
+                      {schedule.title}
                     </h3>
                   </div>
 
@@ -391,21 +389,13 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     <Clock size={14} className="mr-2" />
                     <span>
                       {formatTimeRange(
-                        appointment.startTime,
-                        appointment.endTime
+                        schedule.startTime,
+                        schedule.endTime
                       )}
                     </span>
                   </div>
 
-                  {appointment.description && (
-                    <div className="flex items-start text-sm text-gray-600">
-                      <FileText
-                        size={14}
-                        className="mr-2 mt-0.5 flex-shrink-0"
-                      />
-                      <span>{appointment.description}</span>
-                    </div>
-                  )}
+                  
                 </div>
 
                 <Badge status="processing" text="Đã đặt lịch" />
@@ -418,12 +408,12 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   );
 };
 
-// Appointment Detail Modal Component
-const AppointmentDetailModal: React.FC<{
-  appointment: Appointment | null;
+
+const ScheduleDetailModal: React.FC<{
+  schedule: Schedule | null;
   onClose: () => void;
-}> = ({ appointment, onClose }) => {
-  if (!appointment) return null;
+}> = ({ schedule, onClose }) => {
+  if (!schedule) return null;
 
   return (
     <Modal
@@ -452,7 +442,7 @@ const AppointmentDetailModal: React.FC<{
         >
           <div className="flex items-center">
             <User size={16} className="mr-2 text-blue-600" />
-            {appointment.title}
+            {schedule.title}
           </div>
         </Descriptions.Item>
 
@@ -462,46 +452,32 @@ const AppointmentDetailModal: React.FC<{
         >
           <div className="flex items-center">
             <Clock size={16} className="mr-2 text-green-600" />
-            {formatTimeRange(appointment.startTime, appointment.endTime)}
+            {formatTimeRange(schedule.startTime, schedule.endTime)}
           </div>
         </Descriptions.Item>
 
         <Descriptions.Item label="Ngày hẹn" labelStyle={{ fontWeight: "bold" }}>
           <div className="flex items-center">
             <Calendar size={16} className="mr-2 text-purple-600" />
-            {formatDayMonthYear(appointment.date)}
+            {formatDayMonthYear(schedule.date)}
           </div>
         </Descriptions.Item>
 
-        {appointment.type && (
+       
           <Descriptions.Item
-            label="Loại khám"
+            label="Ca làm việc"
             labelStyle={{ fontWeight: "bold" }}
           >
-            <Badge status="processing" text={appointment.type} />
+            {schedule.shift} 
           </Descriptions.Item>
-        )}
+        
 
-        {appointment.description && (
-          <Descriptions.Item
-            label="Ghi chú"
-            labelStyle={{ fontWeight: "bold" }}
-          >
-            <div className="flex items-start">
-              <FileText
-                size={16}
-                className="mr-2 mt-0.5 text-orange-600 flex-shrink-0"
-              />
-              <span>{appointment.description}</span>
-            </div>
-          </Descriptions.Item>
-        )}
 
         <Descriptions.Item
-          label="Trạng thái"
+          label="RoomId"
           labelStyle={{ fontWeight: "bold" }}
         >
-          <Badge status="success" text="Đã xác nhận" />
+          <span>{schedule.roomId} </span>
         </Descriptions.Item>
       </Descriptions>
     </Modal>
@@ -515,20 +491,20 @@ export const ScheduleComponent: React.FC = () => {
     setCurrentDate,
     view,
     setView,
-    appointments,
+    schedules,
     calendarDays,
     selectedDay,
-    selectedDayAppointments,
+    selectedDaySchedules,
     totalWeekHours,
     totalMonthHours,
     handlePreviousPeriod,
     handleNextPeriod,
     handleDayClick,
-    handleCloseAppointmentModal,
+    handleCloseScheduleModal,
   } = useSchedule();
 
-  const [selectedAppointment, setSelectedAppointment] =
-    useState<Appointment | null>(null);
+  const [selectedSchedule, setSelectedSchedule] =
+    useState<Schedule | null>(null);
 
   const timeSlots: TimeSlot[] = [
     { label: "7:00 - 8:00", start: "07:00", end: "08:00" },
@@ -556,12 +532,12 @@ export const ScheduleComponent: React.FC = () => {
     setCurrentDate(newDate);
   };
 
-  const handleAppointmentClick = (appointment: Appointment) => {
-    setSelectedAppointment(appointment);
+  const handleScheduleClick = (schedule: Schedule) => {
+    setSelectedSchedule(schedule);
   };
 
-  const handleCloseAppointmentDetail = () => {
-    setSelectedAppointment(null);
+  const handleCloseScheduleDetail = () => {
+    setSelectedSchedule(null);
   };
 
   return (
@@ -685,27 +661,27 @@ export const ScheduleComponent: React.FC = () => {
         ) : (
           <WeekView
             days={getWeekDays(currentDate)}
-            appointments={appointments}
+            schedules={schedules}
             timeSlots={timeSlots}
-            onAppointmentClick={handleAppointmentClick}
+            onScheduleClick={handleScheduleClick}
           />
         )}
       </Card>
 
       {/* Day Appointments Modal */}
-      <AppointmentModal
+      <ScheduleModal
         selectedDay={selectedDay}
-        appointments={selectedDayAppointments}
-        onClose={handleCloseAppointmentModal}
+        schedules={selectedDaySchedules}
+        onClose={handleCloseScheduleModal}
       />
 
-      {/* Appointment Detail Modal */}
-      <AppointmentDetailModal
-        appointment={selectedAppointment}
-        onClose={handleCloseAppointmentDetail}
+      {/* Schedule Detail Modal */}
+      <ScheduleDetailModal
+        schedule={selectedSchedule}
+        onClose={handleCloseScheduleDetail}
       />
 
-      <style jsx global>{`
+      <style>{`
         .month-tabs .ant-tabs-nav {
           margin-bottom: 0;
         }
@@ -716,12 +692,12 @@ export const ScheduleComponent: React.FC = () => {
           font-size: 12px;
         }
 
-        .appointment-modal .ant-modal-header {
+        .schedule-modal .ant-modal-header {
           border-bottom: 1px solid #f0f0f0;
           padding: 16px 24px;
         }
 
-        .appointment-modal .ant-modal-body {
+        .schedule-modal .ant-modal-body {
           padding: 24px;
         }
 

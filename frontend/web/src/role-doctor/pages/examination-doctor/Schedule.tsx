@@ -1,5 +1,5 @@
 import type React from "react";
-import { ScheduleComponent } from "../..//components/examination-doctor/Schedule/index";
+import { ScheduleComponent } from "../../components/examination-doctor/Schedule/index";
 
 const Schedule: React.FC = () => {
   return (
