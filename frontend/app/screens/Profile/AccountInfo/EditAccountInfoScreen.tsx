@@ -1,7 +1,7 @@
-"use client"
+// EditAccountInfoScreen.tsx
+"use client";
 
-import type React from "react"
-import { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,14 +14,33 @@ import {
   Modal,
   FlatList,
   KeyboardAvoidingView,
-} from "react-native"
-import { useNavigation } from "@react-navigation/native"
-import { Ionicons } from "@expo/vector-icons"
-import DateTimePicker from "@react-native-community/datetimepicker"
-import { fontFamily } from "../../../context/FontContext"
-import Header from "../../../components/Header"
-import { mockUser } from "../Data"
-import type { EditAccountInfoScreenNavigationProp } from "../../../navigation/types"
+  Alert,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { fontFamily } from "../../../context/FontContext";
+import Header from "../../../components/Header";
+import API from "../../../services/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import type { EditAccountInfoScreenNavigationProp } from "../../../navigation/types";
+
+interface PatientData {
+  patientId: number;
+  userId: number;
+  identityNumber: string;
+  insuranceNumber: string;
+  fullName: string;
+  birthday: string;
+  gender: string;
+  address: string;
+  phone: string;
+  email: string;
+  province: string;
+  district: string;
+  ward: string;
+  emergencyContactDtos: { phone: string; name: string; relationship: string }[];
+}
 
 // Define relationship options
 const relationshipOptions = [
@@ -36,9 +55,9 @@ const relationshipOptions = [
   { id: "9", label: "Con", value: "Con" },
   { id: "10", label: "Bạn", value: "Bạn" },
   { id: "11", label: "Họ hàng khác", value: "Họ hàng khác" },
-]
+];
 
-// Input field component (defined outside the main component to prevent re-renders)
+// Input field component
 const InputField = ({
   label,
   value,
@@ -49,16 +68,16 @@ const InputField = ({
   isEmail = false,
   placeholder = "",
 }: {
-  label: string
-  value: string
-  onChangeText?: (text: string) => void
-  editable?: boolean
-  icon?: string
-  isPhone?: boolean
-  isEmail?: boolean
-  placeholder?: string
+  label: string;
+  value: string;
+  onChangeText?: (text: string) => void;
+  editable?: boolean;
+  icon?: string;
+  isPhone?: boolean;
+  isEmail?: boolean;
+  placeholder?: string;
 }) => {
-  const inputRef = useRef<TextInput>(null)
+  const inputRef = useRef<TextInput>(null);
 
   return (
     <View style={styles.inputContainer}>
@@ -92,104 +111,159 @@ const InputField = ({
         )}
       </View>
     </View>
-  )
-}
+  );
+};
 
-// Section component (defined outside the main component to prevent re-renders)
+// Section component
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <View style={styles.section}>
     <Text style={styles.sectionTitle}>{title}</Text>
     <View style={styles.sectionContent}>{children}</View>
   </View>
-)
+);
 
 const EditAccountInfoScreen: React.FC = () => {
-  const navigation = useNavigation<EditAccountInfoScreenNavigationProp>()
-
-  // Initialize form state from mockUser
+  const navigation = useNavigation<EditAccountInfoScreenNavigationProp>();
+  const [patientId, setPatientId] = useState<string | null>(null);
   const [formState, setFormState] = useState({
-    patientId: mockUser.patientId || "",
-    nationalId: mockUser.nationalId || "",
-    firstName: mockUser.name.split(" ").slice(1).join(" "),
-    lastName: mockUser.name.split(" ")[0],
-    dob: mockUser.dob || "",
-    gender: mockUser.gender || "",
-    phone: mockUser.phone || "",
-    email: mockUser.email || "",
-    province: mockUser.province || "",
-    district: mockUser.district || "",
-    ward: mockUser.ward || "",
-    fullAddress: mockUser.fullAddress || "",
-    emergencyContactPhone: mockUser.emergencyContact?.phone || "",
-    emergencyContactName: mockUser.emergencyContact?.name || "",
-    emergencyContactRelationship: mockUser.emergencyContact?.relationship || "",
-  })
+    patientId: "",
+    userId: "",
+    identityNumber: "",
+    insuranceNumber: "",
+    firstName: "",
+    lastName: "",
+    dob: "",
+    gender: "",
+    phone: "",
+    email: "",
+    province: "",
+    district: "",
+    ward: "",
+    fullAddress: "",
+    emergencyContactPhone: "",
+    emergencyContactName: "",
+    emergencyContactRelationship: "",
+  });
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showRelationshipModal, setShowRelationshipModal] = useState(false);
 
-  const [showDatePicker, setShowDatePicker] = useState(false)
-  const [showRelationshipModal, setShowRelationshipModal] = useState(false)
+  useEffect(() => {
+    const fetchPatientData = async () => {
+      try {
+        const id = await AsyncStorage.getItem('patientId');
+        if (!id) {
+          Alert.alert('Lỗi', 'Không tìm thấy patientId. Vui lòng đăng nhập lại.');
+          return;
+        }
+        setPatientId(id);
+
+        const response = await API.get<PatientData>(`/patients/${id}`);
+        const data = response.data;
+        const [lastName, ...firstNameParts] = data.fullName.split(" ");
+        setFormState({
+          patientId: data.patientId.toString(),
+          userId: data.userId.toString(),
+          identityNumber: data.identityNumber || "",
+          insuranceNumber: data.insuranceNumber || "",
+          firstName: firstNameParts.join(" "),
+          lastName: lastName,
+          dob: data.birthday || "",
+          gender: data.gender || "",
+          phone: data.phone || "",
+          email: data.email || "",
+          province: data.province || "",
+          district: data.district || "",
+          ward: data.ward || "",
+          fullAddress: data.address || "",
+          emergencyContactPhone: data.emergencyContactDtos?.[0]?.phone || "",
+          emergencyContactName: data.emergencyContactDtos?.[0]?.name || "",
+          emergencyContactRelationship: data.emergencyContactDtos?.[0]?.relationship || "",
+        });
+      } catch (error: any) {
+        const errorMessage = error.response?.data?.message || 'Không thể tải thông tin bệnh nhân. Vui lòng thử lại.';
+        Alert.alert('Lỗi', errorMessage);
+        console.error('Fetch patient error:', error.message, error.response?.data);
+      }
+    };
+
+    fetchPatientData();
+  }, []);
 
   // Update a single field in the form state
   const updateField = (field: string, value: string) => {
     setFormState((prev) => ({
       ...prev,
       [field]: value,
-    }))
-  }
+    }));
+  };
 
-  // Format date from DD/MM/YYYY to Date object
+  // Format date from DD/MM/YYYY to YYYY-MM-DD for API
   const formatStringToDate = (dateString: string) => {
-    if (!dateString) return new Date()
-    const [day, month, year] = dateString.split("/").map(Number)
-    return new Date(year, month - 1, day)
-  }
+    if (!dateString) return "";
+    const [day, month, year] = dateString.split("/").map(Number);
+    return `${year}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+  };
 
   // Format date from Date object to DD/MM/YYYY
   const formatDateToString = (date: Date) => {
-    const day = date.getDate().toString().padStart(2, "0")
-    const month = (date.getMonth() + 1).toString().padStart(2, "0")
-    const year = date.getFullYear()
-    return `${day}/${month}/${year}`
-  }
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === "ios")
+    setShowDatePicker(Platform.OS === "ios");
     if (selectedDate) {
-      updateField("dob", formatDateToString(selectedDate))
+      updateField("dob", formatDateToString(selectedDate));
     }
-  }
+  };
 
-  const handleSave = () => {
-    // Reconstruct the user object from form state
-    const updatedUser = {
-      ...mockUser,
-      nationalId: formState.nationalId,
-      name: `${formState.lastName} ${formState.firstName}`,
-      dob: formState.dob,
+  const handleSave = async () => {
+    if (!patientId) {
+      Alert.alert('Lỗi', 'Không tìm thấy patientId. Vui lòng đăng nhập lại.');
+      return;
+    }
+
+    // Construct the patient data for the API
+    const updatedPatient = {
+      userId: parseInt(formState.userId),
+      patientId: parseInt(formState.patientId),
+      identityNumber: formState.identityNumber,
+      insuranceNumber: formState.insuranceNumber,
+      fullName: `${formState.lastName} ${formState.firstName}`,
+      birthday: formatStringToDate(formState.dob),
       gender: formState.gender,
+      address: formState.fullAddress,
       phone: formState.phone,
       email: formState.email,
       province: formState.province,
       district: formState.district,
       ward: formState.ward,
-      fullAddress: formState.fullAddress,
-      emergencyContact: {
-        phone: formState.emergencyContactPhone,
-        name: formState.emergencyContactName,
-        relationship: formState.emergencyContactRelationship,
-      },
+      emergencyContactDtos: [
+        {
+          phone: formState.emergencyContactPhone,
+          name: formState.emergencyContactName,
+          relationship: formState.emergencyContactRelationship,
+        },
+      ],
+    };
+
+    try {
+      await API.put(`/patients/${patientId}`, updatedPatient);
+      Alert.alert('Thành công', 'Cập nhật thông tin thành công');
+      navigation.goBack();
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Cập nhật thông tin thất bại. Vui lòng thử lại.';
+      Alert.alert('Lỗi', errorMessage);
+      console.error('Update patient error:', error.message, error.response?.data);
     }
-
-    // Here you would typically save the user data to your backend
-    console.log("Saving user data:", updatedUser)
-
-    // Navigate back
-    navigation.goBack()
-  }
+  };
 
   const handleSelectRelationship = (relationship: string) => {
-    updateField("emergencyContactRelationship", relationship)
-    setShowRelationshipModal(false)
-  }
+    updateField("emergencyContactRelationship", relationship);
+    setShowRelationshipModal(false);
+  };
 
   // Relationship option item
   const RelationshipItem = ({
@@ -200,7 +274,7 @@ const EditAccountInfoScreen: React.FC = () => {
       <Text style={styles.relationshipItemText}>{item.label}</Text>
       {formState.emergencyContactRelationship === item.value && <Ionicons name="checkmark" size={20} color="#0BC5C5" />}
     </TouchableOpacity>
-  )
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -217,15 +291,19 @@ const EditAccountInfoScreen: React.FC = () => {
             <InputField label="Mã bệnh nhân" value={formState.patientId} editable={false} />
             <InputField
               label="CCCD/CMND"
-              value={formState.nationalId}
-              onChangeText={(text) => updateField("nationalId", text)}
+              value={formState.identityNumber}
+              onChangeText={(text) => updateField("identityNumber", text)}
             />
             <InputField
               label="Tên"
               value={formState.firstName}
               onChangeText={(text) => updateField("firstName", text)}
             />
-            <InputField label="Họ" value={formState.lastName} onChangeText={(text) => updateField("lastName", text)} />
+            <InputField
+              label="Họ"
+              value={formState.lastName}
+              onChangeText={(text) => updateField("lastName", text)}
+            />
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Ngày sinh</Text>
               <TouchableOpacity style={styles.datePickerButton} onPress={() => setShowDatePicker(true)}>
@@ -279,7 +357,11 @@ const EditAccountInfoScreen: React.FC = () => {
               value={formState.district}
               onChangeText={(text) => updateField("district", text)}
             />
-            <InputField label="Xã/Phường" value={formState.ward} onChangeText={(text) => updateField("ward", text)} />
+            <InputField
+              label="Xã/Phường"
+              value={formState.ward}
+              onChangeText={(text) => updateField("ward", text)}
+            />
             <InputField
               label="Địa chỉ"
               value={formState.fullAddress}
@@ -328,7 +410,7 @@ const EditAccountInfoScreen: React.FC = () => {
       {/* Date Picker */}
       {showDatePicker && (
         <DateTimePicker
-          value={formatStringToDate(formState.dob || "")}
+          value={formState.dob ? new Date(formState.dob.split("/").reverse().join("-")) : new Date()}
           mode="date"
           display="default"
           onChange={handleDateChange}
@@ -362,8 +444,8 @@ const EditAccountInfoScreen: React.FC = () => {
         </View>
       </Modal>
     </SafeAreaView>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -527,7 +609,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#FFFFFF",
   },
-  // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
@@ -570,6 +651,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#111827",
   },
-})
+});
 
-export default EditAccountInfoScreen
+export default EditAccountInfoScreen;

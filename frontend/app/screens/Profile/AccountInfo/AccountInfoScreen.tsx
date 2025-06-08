@@ -1,13 +1,52 @@
-import type React from "react"
-import { View, Text, StyleSheet, SafeAreaView, ScrollView } from "react-native"
-import { useNavigation } from "@react-navigation/native"
-import { fontFamily } from "../../../context/FontContext"
-import Header from "../../../components/Header"
-import { mockUser } from "../Data"
-import type { AccountInfoScreenNavigationProp } from "../../../navigation/types"
+// AccountInfoScreen.tsx
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { fontFamily } from "../../../context/FontContext";
+import Header from "../../../components/Header";
+import API from "../../../services/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import type { AccountInfoScreenNavigationProp } from "../../../navigation/types";
+
+interface PatientData {
+  patientId: number;
+  identityNumber: string;
+  fullName: string;
+  gender: string;
+  birthday: string;
+  phone: string;
+  email: string;
+  province: string;
+  district: string;
+  ward: string;
+  address: string;
+  emergencyContactDtos: { phone: string; name: string; relationship: string }[];
+}
 
 const AccountInfoScreen: React.FC = () => {
-  const navigation = useNavigation<AccountInfoScreenNavigationProp>()
+  const navigation = useNavigation<AccountInfoScreenNavigationProp>();
+  const [patientData, setPatientData] = useState<PatientData | null>(null);
+
+  useEffect(() => {
+    const fetchPatientData = async () => {
+      try {
+        const patientId = await AsyncStorage.getItem('patientId');
+        if (!patientId) {
+          Alert.alert('Lỗi', 'Không tìm thấy patientId. Vui lòng đăng nhập lại.');
+          return;
+        }
+
+        const response = await API.get<PatientData>(`/patients/${patientId}`);
+        setPatientData(response.data);
+      } catch (error: any) {
+        const errorMessage = error.response?.data?.message || 'Không thể tải thông tin bệnh nhân. Vui lòng thử lại.';
+        Alert.alert('Lỗi', errorMessage);
+        console.error('Fetch patient error:', error.message, error.response?.data);
+      }
+    };
+
+    fetchPatientData();
+  }, []);
 
   // Info section component
   const InfoItem = ({ label, value }: { label: string; value: string }) => (
@@ -15,7 +54,7 @@ const AccountInfoScreen: React.FC = () => {
       <Text style={styles.infoLabel}>{label}</Text>
       <Text style={styles.infoValue}>{value}</Text>
     </View>
-  )
+  );
 
   // Section component
   const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
@@ -23,10 +62,25 @@ const AccountInfoScreen: React.FC = () => {
       <Text style={styles.sectionTitle}>{title}</Text>
       <View style={styles.sectionContent}>{children}</View>
     </View>
-  )
+  );
 
   const handleEditPress = () => {
-    navigation.navigate("EditAccountInfo")
+    navigation.navigate("EditAccountInfo");
+  };
+
+  if (!patientData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Header
+          title="Thông tin tài khoản"
+          showBack={true}
+          onBackPress={() => navigation.goBack()}
+        />
+        <View style={styles.scrollView}>
+          <Text>Đang tải dữ liệu...</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -44,53 +98,57 @@ const AccountInfoScreen: React.FC = () => {
         {/* Personal Information Section */}
         <Section title="Thông tin cá nhân">
           <View style={styles.infoRow}>
-            <InfoItem label="Mã bệnh nhân" value={mockUser.patientId || ""} />
-            <InfoItem label="CCCD/CMND" value={mockUser.nationalId || ""} />
+            <InfoItem label="Mã bệnh nhân" value={patientData.patientId.toString()} />
+            <InfoItem label="CCCD/CMND" value={patientData.identityNumber || ""} />
           </View>
           <View style={styles.infoRow}>
-            <InfoItem label="Họ tên" value={mockUser.name} />
-            <InfoItem label="Giới tính" value={mockUser.gender || ""} />
+            <InfoItem label="Họ tên" value={patientData.fullName} />
+            <InfoItem label="Giới tính" value={patientData.gender || ""} />
           </View>
           <View style={styles.infoRow}>
-            <InfoItem label="Ngày sinh" value={mockUser.dob || ""} />
+            <InfoItem label="Ngày sinh" value={patientData.birthday || ""} />
           </View>
         </Section>
 
         {/* Contact Information Section */}
         <Section title="Liên hệ">
           <View style={styles.infoRow}>
-            <InfoItem label="Số điện thoại" value={mockUser.phone || ""} />
-            <InfoItem label="Email" value={mockUser.email} />
+            <InfoItem label="Số điện thoại" value={patientData.phone || ""} />
+            <InfoItem label="Email" value={patientData.email || ""} />
           </View>
           <View style={styles.infoRow}>
-            <InfoItem label="Tỉnh/Thành phố" value={mockUser.province || ""} />
-            <InfoItem label="Quận/Huyện" value={mockUser.district || ""} />
+            <InfoItem label="Tỉnh/Thành phố" value={patientData.province || ""} />
+            <InfoItem label="Quận/Huyện" value={patientData.district || ""} />
           </View>
           <View style={styles.infoRow}>
-            <InfoItem label="Xã/Phường" value={mockUser.ward || ""} />
+            <InfoItem label="Xã/Phường" value={patientData.ward || ""} />
           </View>
           <View style={styles.fullWidthItem}>
             <Text style={styles.infoLabel}>Địa chỉ</Text>
-            <Text style={styles.infoValue}>{mockUser.fullAddress || ""}</Text>
+            <Text style={styles.infoValue}>{patientData.address || ""}</Text>
           </View>
         </Section>
 
         {/* Emergency Contact Section */}
         <Section title="Liên hệ khẩn cấp">
-          <View style={styles.infoRow}>
-            <InfoItem label="Số điện thoại" value={mockUser.emergencyContact?.phone || ""} />
-          </View>
-          <View style={styles.infoRow}>
-            <InfoItem label="Họ tên" value={mockUser.emergencyContact?.name || ""} />
-          </View>
-          <View style={styles.infoRow}>
-            <InfoItem label="Mối quan hệ" value={mockUser.emergencyContact?.relationship || ""} />
-          </View>
+          {patientData.emergencyContactDtos?.length > 0 && (
+            <>
+              <View style={styles.infoRow}>
+                <InfoItem label="Số điện thoại" value={patientData.emergencyContactDtos[0].phone || ""} />
+              </View>
+              <View style={styles.infoRow}>
+                <InfoItem label="Họ tên" value={patientData.emergencyContactDtos[0].name || ""} />
+              </View>
+              <View style={styles.infoRow}>
+                <InfoItem label="Mối quan hệ" value={patientData.emergencyContactDtos[0].relationship || ""} />
+              </View>
+            </>
+          )}
         </Section>
       </ScrollView>
     </SafeAreaView>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -143,6 +201,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#111827",
   },
-})
+});
 
-export default AccountInfoScreen
+export default AccountInfoScreen;

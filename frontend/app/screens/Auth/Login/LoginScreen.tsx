@@ -1,3 +1,4 @@
+// LoginScreen.tsx
 import React, { useState } from 'react';
 import { View, StyleSheet, SafeAreaView, StatusBar, ScrollView, Alert } from 'react-native';
 import { useAuth } from '../../../context/AuthContext';
@@ -38,19 +39,20 @@ export default function LoginScreen() {
     }
 
     try {
-      const response = await API.post<{ token: string }>('/users/auth/login', {
+      const response = await API.post<{ token: string, patientId: number }>('/users/auth/login', {
         phone: formattedPhone,
         password,
       });
 
-      const { token } = response.data;
+      const { token, patientId } = response.data;
 
-      if (token) {
-        await AsyncStorage.setItem('token', token); 
+      if (token && patientId) {
+        await AsyncStorage.setItem('token', token);
+        await AsyncStorage.setItem('patientId', patientId.toString());
         setLoggedIn(true);
         Alert.alert('Thành công', 'Đăng nhập thành công');
       } else {
-        Alert.alert('Lỗi', 'Không nhận được token từ server');
+        Alert.alert('Lỗi', 'Không nhận được token hoặc patientId từ server');
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra kết nối hoặc thử lại.';
