@@ -1,8 +1,15 @@
 "use client"
 
 import type React from "react"
-import { Layout, Badge, Avatar, Dropdown, Space } from "antd"
-import { BellOutlined, UserOutlined, DownOutlined } from "@ant-design/icons"
+import { Layout, Badge, Avatar, Dropdown, Space, Button } from "antd"
+import { 
+  BellOutlined, 
+  UserOutlined, 
+  DownOutlined,
+  SettingOutlined,
+  LogoutOutlined,
+  UserAddOutlined
+} from "@ant-design/icons"
 import { useUserProfile } from "../../hooks/useUserProfile"
 
 const { Header: AntHeader } = Layout
@@ -10,54 +17,89 @@ const { Header: AntHeader } = Layout
 const Header: React.FC = () => {
   const { profile } = useUserProfile()
 
-  const items = [
+  const menuItems = [
     {
-      key: "1",
+      key: "profile",
       label: "Thông tin cá nhân",
+      icon: <UserAddOutlined className="text-blue-500" />,
     },
     {
-      key: "2",
+      key: "settings", 
       label: "Cài đặt",
+      icon: <SettingOutlined className="text-gray-500" />,
     },
     {
-      key: "3",
+      type: "divider" as const,
+    },
+    {
+      key: "logout",
       label: "Đăng xuất",
+      icon: <LogoutOutlined className="text-red-500" />,
+      danger: true,
     },
   ]
 
   return (
-    <AntHeader
-      style={{
+    <AntHeader 
+      className="shadow-sm border-0 border-b border-gray-200 px-6 lg:px-8"
+      style={{ 
         background: "#fff",
-        padding: "0 24px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "flex-end",
-        height: 77,
-        borderBottom: "1px solid #f0f0f0",
+        height: 77
       }}
     >
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <Badge count={3} size="small">
-          <div className="p-2 bg-gray-100 rounded-full cursor-pointer">
-            <BellOutlined style={{ fontSize: 20 }} />
+      <div className="h-full w-full flex items-center justify-end  mx-auto">
+        {/* Right Section */}
+        <div className="flex items-center space-x-4">
+          {/* Notifications */}
+          <div className="relative">
+            <Badge 
+              count={3} 
+              size="small"
+              className="hover:scale-105 transition-transform duration-200"
+            >
+              <Button
+                type="text"
+                shape="circle"
+                size="large"
+                icon={<BellOutlined />}
+                className="bg-gray-50 hover:bg-gray-100 border-0 shadow-sm hover:shadow-md transition-all duration-200"
+              />
+            </Badge>
           </div>
-        </Badge>
 
-        <Dropdown menu={{ items }} trigger={["click"]}>
-          <a onClick={(e) => e.preventDefault()} className="ml-6 flex items-center">
-            <Space>
-              <Avatar src={profile?.avatarUrl} icon={<UserOutlined />} size={40} />
-              <div>
-                <div className="font-medium">
-                  Dr. {profile?.firstName} {profile?.lastName}
+          {/* User Profile Dropdown */}
+          <Dropdown
+            menu={{ 
+              items: menuItems,
+              className: "min-w-48 py-2"
+            }}
+            trigger={["click"]}
+            placement="bottomCenter"
+            arrow={{ pointAtCenter: true }}
+          >
+            <div className="flex items-center py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 border border-transparent hover:border-gray-200">
+              <Avatar 
+                src={profile?.avatarUrl} 
+                icon={<UserOutlined />} 
+                size={42}
+                className="border-2 border-white"
+              />
+              
+              {/* User Info - Ẩn trên mobile nhỏ */}
+              <div className="hidden sm:block ml-3">
+                <div className="font-semibold text-gray-800 text-sm leading-tight">
+                  <span>Dr. {profile?.fullName} </span>
+                   <DownOutlined className="text-gray-400 text-xs ml-1 transition-transform duration-200" />
                 </div>
-                <div className="text-xs text-gray-500">{profile?.title}</div>
+                <div className="text-xs text-gray-500 mt-0.5">
+                  {profile?.title || "Không xác định"}
+                </div>
               </div>
-              <DownOutlined style={{ fontSize: 12 }} />
-            </Space>
-          </a>
-        </Dropdown>
+              
+             
+            </div>
+          </Dropdown>
+        </div>
       </div>
     </AntHeader>
   )
