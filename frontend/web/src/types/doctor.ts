@@ -15,6 +15,7 @@ export interface Doctor {
   specialization: string
   type: "EXAMINATION" | "SERVICE"
   department: Department
+  profileImage?: string
   createdAt: string
 }
 

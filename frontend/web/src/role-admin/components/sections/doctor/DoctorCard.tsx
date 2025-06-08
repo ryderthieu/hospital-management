@@ -1,5 +1,4 @@
 import React from "react";
-import Badge from "../../ui/badge/Badge";
 import { Doctor } from "../../../../types/doctor";
 interface DoctorCardProps {
   doctor: Doctor;
@@ -17,7 +16,7 @@ const DoctorCard: React.FC<DoctorCardProps> = ({
     <div className="flex items-center justify-center gap-4 w-full md:w-auto">
       <div className="">
         <img
-          src="https://via.placeholder.com/80"
+          src={doctor.profileImage || "https://via.placeholder.com/80"}
           alt={doctor.fullName}
           className="w-20 h-20 rounded-lg object-cover"
         />

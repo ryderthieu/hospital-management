@@ -39,6 +39,8 @@ public class DoctorDto {
     @NotBlank(message = "Chuyên môn không được để trống")
     private String specialization;
 
+    private String profileImage;
+
     @NotNull(message = "Loại bác sĩ không được để trống")
     private Doctor.Type type;
 
@@ -56,6 +58,7 @@ public class DoctorDto {
         this.address = doctor.getAddress();
         this.academicDegree = doctor.getAcademicDegree();
         this.specialization = doctor.getSpecialization();
+        this.profileImage = doctor.getProfileImage();
         this.type = doctor.getType();
         this.departmentId = doctor.getDepartment().getDepartmentId();
         this.createdAt = doctor.getCreatedAt() != null ? doctor.getCreatedAt().toLocalDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null;
