@@ -111,7 +111,7 @@ export default function HomeScreen() {
 
   // Icon mapping for departments
   const departmentIcons: { [key: string]: ImageSourcePropType } = {
-    'Tim mạch': require('../../assets/images/ChuyenKhoa/TimMach.png'),
+    'Tim mạch': require('../../assets/images/ChuyenKhoa/TimMach.svg'),
     'Sản nhi': require('../../assets/images/ChuyenKhoa/SanNhi.png'),
     'Đông y': require('../../assets/images/ChuyenKhoa/DongY.png'),
     // Add more mappings as needed
