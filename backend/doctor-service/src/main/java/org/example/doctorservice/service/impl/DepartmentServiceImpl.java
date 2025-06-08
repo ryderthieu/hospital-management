@@ -6,7 +6,8 @@ import org.springframework.stereotype.Service;
 import org.example.doctorservice.entity.Department;
 import org.example.doctorservice.repository.DepartmentRepository;
 import org.example.doctorservice.service.DepartmentService;
-
+import org.example.doctorservice.dto.DoctorDto;
+import org.example.doctorservice.repository.DoctorRepository;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,7 +15,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DepartmentServiceImpl implements DepartmentService {
     private final DepartmentRepository departmentRepository;
-
+    private final DoctorRepository doctorRepository;
     @Override
     public DepartmentDto getDepartmentById(Integer departmentId) {
         Department department = departmentRepository.findById(departmentId)
@@ -60,6 +61,24 @@ public class DepartmentServiceImpl implements DepartmentService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khoa với ID: " + departmentId));
 
         departmentRepository.delete(department);
+    }
+
+    @Override
+    public List<DoctorDto> getDoctorsByDepartmentId(Integer departmentId) {
+        // Kiểm tra khoa tồn tại
+        departmentRepository.findById(departmentId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khoa với ID: " + departmentId));
+
+        List<DoctorDto> doctors = doctorRepository.findByDepartment_DepartmentId(departmentId)
+                .stream()
+                .map(DoctorDto::new)
+                .collect(Collectors.toList());
+
+        if (doctors.isEmpty()) {
+            throw new RuntimeException("Không tìm thấy bác sĩ nào trong khoa có ID: " + departmentId);
+        }
+
+        return doctors;
     }
 }
 

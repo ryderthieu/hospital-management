@@ -23,38 +23,38 @@ public class ScheduleController {
         return Integer.valueOf(userId);
     }
 
-    @PreAuthorize("hasAnyRole('DOCTOR')")
+//    @PreAuthorize("hasAnyRole('DOCTOR')")
     @GetMapping("/schedules")
     public ResponseEntity<List<ScheduleDto>> getAllSchedules() {
         return ResponseEntity.ok(scheduleService.getAllSchedules(getCurrentDoctorId()));
     }
 
-    @PreAuthorize("hasAnyRole('DOCTOR')")
+//    @PreAuthorize("hasAnyRole('DOCTOR')")
     @GetMapping("/schedules/{scheduleId}")
     public ResponseEntity<ScheduleDto> getScheduleById(@PathVariable Integer scheduleId) {
         return ResponseEntity.ok(scheduleService.getScheduleById(scheduleId, getCurrentDoctorId()));
     }
 
-    @PreAuthorize("hasAnyRole('DOCTOR')")
+//    @PreAuthorize("hasAnyRole('DOCTOR')")
     @PostMapping("/schedules")
     public ResponseEntity<ScheduleDto> createSchedule(@RequestBody @Valid ScheduleDto scheduleDto) {
         return ResponseEntity.ok(scheduleService.createSchedule(getCurrentDoctorId(), scheduleDto));
     }
 
-    @PreAuthorize("hasAnyRole('DOCTOR')")
+//    @PreAuthorize("hasAnyRole('DOCTOR')")
     @PutMapping("/schedules/{scheduleId}")
     public ResponseEntity<ScheduleDto> updateSchedule(@PathVariable Integer scheduleId,
                                                       @RequestBody @Valid ScheduleDto scheduleDto) {
         return ResponseEntity.ok(scheduleService.updateSchedule(getCurrentDoctorId(), scheduleId, scheduleDto));
     }
 
-    @DeleteMapping("/schedules/{scheduleId}")
+//    @DeleteMapping("/schedules/{scheduleId}")
     public ResponseEntity<String> deleteSchedule(@PathVariable Integer scheduleId) {
         scheduleService.deleteSchedule(getCurrentDoctorId(), scheduleId);
         return ResponseEntity.ok("Lịch được xóa thành công");
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     @GetMapping("/schedules/admin")
     public ResponseEntity<List<ScheduleDto>> getAllSchedulesForAdmin() {
         return ResponseEntity.ok(scheduleService.getAllSchedulesForAdmin());

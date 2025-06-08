@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from "react";
-import { TouchableOpacity, Text, StyleSheet } from "react-native";
-import { useFont, fontFamily } from "../../context/FontContext";
+import React, { useState, useEffect } from 'react';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { useFont, fontFamily } from '../../context/FontContext';
 
 type ResendTimerProps = {
   initialTime?: number;
   onResend: () => void;
 };
 
-
 const ResendTimer = ({ initialTime = 60, onResend }: ResendTimerProps) => {
   const { fontsLoaded } = useFont();
-  const [timer, setTimer] = useState(initialTime);
-  const [canResend, setCanResend] = useState(false);
+  if (!fontsLoaded) return null;
+
+  const [timer, setTimer] = useState<number>(initialTime);
+  const [canResend, setCanResend] = useState<boolean>(false);
 
   useEffect(() => {
     if (timer > 0) {
@@ -35,13 +36,13 @@ const ResendTimer = ({ initialTime = 60, onResend }: ResendTimerProps) => {
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   return (
     <TouchableOpacity onPress={handleResend} disabled={!canResend}>
       <Text style={[styles.resendText, canResend && styles.resendTextActive]}>
-        {canResend ? "Gửi lại OTP" : `Gửi lại OTP trong ${formatTime(timer)}`}
+        {canResend ? 'Gửi lại OTP' : `Gửi lại OTP trong ${formatTime(timer)}`}
       </Text>
     </TouchableOpacity>
   );
@@ -51,13 +52,13 @@ const styles = StyleSheet.create({
   resendText: {
     fontFamily: fontFamily.medium,
     fontSize: 14,
-    textAlign: "center",
-    color: "#666",
+    textAlign: 'center',
+    color: '#666',
     marginBottom: 20,
   },
   resendTextActive: {
-    color: "#00B5B8",
-    textDecorationLine: "underline",
+    color: '#00B5B8',
+    textDecorationLine: 'underline',
   },
 });
 

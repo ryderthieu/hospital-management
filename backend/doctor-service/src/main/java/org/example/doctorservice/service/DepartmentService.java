@@ -2,7 +2,7 @@ package org.example.doctorservice.service;
 
 import org.example.doctorservice.dto.DepartmentDto;
 import org.example.doctorservice.entity.Department;
-
+import org.example.doctorservice.dto.DoctorDto;
 import java.util.List;
 
 public interface DepartmentService {
@@ -15,4 +15,7 @@ public interface DepartmentService {
     DepartmentDto updateDepartment(Integer departmentId, DepartmentDto departmentDto);
 
     void deleteDepartment(Integer departmentId);
+
+    List<DoctorDto> getDoctorsByDepartmentId(Integer departmentId);
+
 }

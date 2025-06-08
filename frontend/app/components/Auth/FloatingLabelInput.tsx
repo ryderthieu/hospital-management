@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { View, TextInput, Animated, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useFont, fontFamily } from "../../context/FontContext";
-
+import React, { useState, useEffect } from 'react';
+import { View, TextInput, Animated, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useFont, fontFamily } from '../../context/FontContext';
 
 type FloatingLabelInputProps = {
   value: string;
@@ -15,21 +14,21 @@ type FloatingLabelInputProps = {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
 };
 
-
 const FloatingLabelInput = ({
   value,
   onChangeText,
   placeholder,
   iconName,
   secureTextEntry = false,
-  keyboardType = "default",
+  keyboardType = 'default',
   showPasswordToggle = false,
-  autoCapitalize = "none",
+  autoCapitalize = 'none',
 }: FloatingLabelInputProps) => {
   const { fontsLoaded } = useFont();
+  if (!fontsLoaded) return null;
 
-  const [isFocused, setIsFocused] = useState(false);
-  const [showPassword, setShowPassword] = useState(!secureTextEntry);
+  const [isFocused, setIsFocused] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(!secureTextEntry);
   const [labelAnim] = useState(new Animated.Value(value ? 1 : 0));
 
   const animateLabel = (toValue: number) => {
@@ -41,20 +40,18 @@ const FloatingLabelInput = ({
   };
 
   useEffect(() => {
-    if (value !== "") {
+    if (value) {
       animateLabel(1);
     }
   }, []);
 
   return (
     <View style={styles.inputContainer}>
-      <View
-        style={[styles.inputWrapper, isFocused && styles.inputWrapperFocused]}
-      >
+      <View style={[styles.inputWrapper, isFocused && styles.inputWrapperFocused]}>
         <Ionicons
           name={iconName as any}
           size={20}
-          color={isFocused ? "#00B5B8" : "#8A8A8A"}
+          color={isFocused ? '#00B5B8' : '#8A8A8A'}
           style={styles.inputIcon}
         />
         <View style={styles.inputBox}>
@@ -70,7 +67,7 @@ const FloatingLabelInput = ({
                   inputRange: [0, 1],
                   outputRange: [16, 12],
                 }),
-                color: isFocused ? "#00B5B8" : "#8A8A8A",
+                color: isFocused ? '#00B5B8' : '#8A8A8A',
               },
             ]}
           >
@@ -81,7 +78,7 @@ const FloatingLabelInput = ({
             value={value}
             onChangeText={(text) => {
               onChangeText(text);
-              if (text !== "") {
+              if (text) {
                 animateLabel(1);
               } else if (!isFocused) {
                 animateLabel(0);
@@ -93,7 +90,7 @@ const FloatingLabelInput = ({
             }}
             onBlur={() => {
               setIsFocused(false);
-              if (value === "") {
+              if (!value) {
                 animateLabel(0);
               }
             }}
@@ -104,9 +101,9 @@ const FloatingLabelInput = ({
         </View>
         {showPasswordToggle && (
           <Ionicons
-            name={showPassword ? "eye-outline" : "eye-off-outline"}
+            name={showPassword ? 'eye-outline' : 'eye-off-outline'}
             size={22}
-            color="#8A8A8A"
+            color='#8A8A8A'
             style={styles.eyeIcon}
             onPress={() => setShowPassword(!showPassword)}
           />
@@ -121,38 +118,38 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
+    borderBottomColor: '#E0E0E0',
     paddingBottom: 8,
-    position: "relative",
+    position: 'relative',
     height: 50,
   },
   inputWrapperFocused: {
-    borderBottomColor: "#00B5B8",
+    borderBottomColor: '#00B5B8',
   },
   inputIcon: {
     marginRight: 10,
   },
   inputBox: {
     flex: 1,
-    position: "relative",
+    position: 'relative',
     height: 50,
-    justifyContent: "flex-end",
+    justifyContent: 'flex-end',
   },
   floatingLabel: {
-    position: "absolute",
+    position: 'absolute',
     left: 0,
-    color: "#8A8A8A",
+    color: '#8A8A8A',
     fontSize: 16,
     fontFamily: fontFamily.regular,
   },
   input: {
     fontFamily: fontFamily.medium,
-    width: "100%",
+    width: '100%',
     fontSize: 16,
-    color: "#2B2B2B",
+    color: '#2B2B2B',
     paddingVertical: 5,
   },
   eyeIcon: {

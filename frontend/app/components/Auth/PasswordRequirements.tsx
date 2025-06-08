@@ -1,26 +1,25 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useFont, fontFamily } from "../../context/FontContext";
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useFont, fontFamily } from '../../context/FontContext';
 
 type PasswordRequirementsProps = {
   password: string;
   show?: boolean;
 };
 
-
 const PasswordRequirements = ({ password, show = false }: PasswordRequirementsProps) => {
   const { fontsLoaded } = useFont();
-  if (!show) return null;
+  if (!show || !fontsLoaded) return null;
 
   const hasEightChars = password.length >= 8;
-  const hasNumber = /[0-9]/.test(password);
-  const hasLetter = /[a-zA-Z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasUpperCase = /[A-Z]/.test(password);
 
   const requirements = [
-    { met: hasEightChars, text: "Tối thiểu 8 ký tự" },
-    { met: hasNumber, text: "Ít nhất 1 chữ số (từ 0 đến 9)" },
-    { met: hasLetter, text: "Ít nhất 1 chữ cái viết thường hoặc viết hoa." },
+    { met: hasEightChars, text: 'Tối thiểu 8 ký tự' },
+    { met: hasNumber, text: 'Ít nhất 1 chữ số (0-9)' },
+    { met: hasUpperCase, text: 'Ít nhất 1 chữ cái in hoa' },
   ];
 
   return (
@@ -28,9 +27,9 @@ const PasswordRequirements = ({ password, show = false }: PasswordRequirementsPr
       {requirements.map((req, index) => (
         <View key={index} style={styles.requirementRow}>
           <Ionicons
-            name={req.met ? "checkmark-circle" : "close-circle"}
+            name={req.met ? 'checkmark-circle' : 'close-circle'}
             size={18}
-            color={req.met ? "#34C759" : "#FF3B30"}
+            color={req.met ? '#34C759' : '#FF3B30'}
           />
           <Text style={styles.requirementText}>{req.text}</Text>
         </View>
@@ -44,14 +43,14 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   requirementRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 10,
   },
   requirementText: {
     fontFamily: fontFamily.regular,
     fontSize: 14,
-    color: "#2B2B2B",
+    color: '#2B2B2B',
     marginLeft: 8,
     flex: 1,
   },

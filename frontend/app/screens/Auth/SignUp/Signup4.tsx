@@ -1,9 +1,27 @@
 import React from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
-import Button_Other from "../../../components/Button_Other";
+import { View, Text, StyleSheet } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Button_Other from '../../../components/Button_Other';
 import { useFont, fontFamily } from '../../../context/FontContext';
-export default function Signup4({ navigation }) {
+
+type RootStackParamList = {
+  Signup4: undefined;
+  Login: undefined;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup4'>;
+
+interface Signup4Props {
+  navigation: NavigationProp;
+}
+
+export default function Signup4({ navigation }: Signup4Props) {
   const { fontsLoaded } = useFont();
+
+  if (!fontsLoaded) {
+    return null; // Hoặc hiển thị loading indicator
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.iconContainer}>
@@ -12,12 +30,12 @@ export default function Signup4({ navigation }) {
 
       <Text style={styles.title}>Tài khoản đã được xác minh</Text>
       <Text style={styles.subtitle}>
-        Tài khoản của bạn đã được xác minh thành công, Hãy cùng khám phá các tính năng của eCare nhé!
+        Tài khoản của bạn đã được xác minh thành công. Hãy cùng khám phá các tính năng của eCare nhé!
       </Text>
 
       <Button_Other
         title="BẮT ĐẦU"
-        onPress={() => navigation.navigate('Login')} 
+        onPress={() => navigation.navigate('Login')}
       />
     </View>
   );
@@ -28,7 +46,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#00B5B8', 
+    backgroundColor: '#00B5B8',
     paddingHorizontal: 20,
   },
   iconContainer: {
@@ -40,14 +58,14 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     backgroundColor: '#fff',
     textAlign: 'center',
-    lineHeight: 80, 
+    lineHeight: 80,
     fontSize: 40,
     color: '#00B5B8',
   },
   title: {
     fontFamily: fontFamily.bold,
     fontSize: 24,
-    color: '#fff', 
+    color: '#fff',
     textAlign: 'center',
     marginBottom: 10,
   },
