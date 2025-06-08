@@ -1,9 +1,59 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import type { Service, ServiceOrder, CreateServiceOrderRequest, TestResult } from "../types/service"
-import { serviceService, serviceOrderService } from "../services/serviceOrderServices"
+import type { Service, ServiceOrder, TestResult } from "../types/service"
 import { message } from "antd"
+
+// Mock data
+const mockServices: Service[] = [
+  {
+    serviceId: 1,
+    serviceName: "Xét nghiệm máu tổng quát",
+    serviceType: "TEST",
+    price: 150000,
+    createdAt: "2025-01-01T00:00:00",
+  },
+  {
+    serviceId: 2,
+    serviceName: "Chụp X-quang phổi",
+    serviceType: "IMAGING",
+    price: 200000,
+    createdAt: "2025-01-01T00:00:00",
+  },
+  {
+    serviceId: 3,
+    serviceName: "Siêu âm bụng",
+    serviceType: "IMAGING",
+    price: 300000,
+    createdAt: "2025-01-01T00:00:00",
+  },
+  {
+    serviceId: 4,
+    serviceName: "Điện tim",
+    serviceType: "TEST",
+    price: 100000,
+    createdAt: "2025-01-01T00:00:00",
+  },
+]
+
+const mockTestResults: TestResult[] = [
+  {
+    orderId: 1,
+    serviceName: "Xét nghiệm máu tổng quát",
+    expectedTime: "2 giờ",
+    actualTime: "1.5 giờ",
+    result: "Bình thường",
+    status: "COMPLETED",
+    roomId: 101,
+  },
+  {
+    orderId: 2,
+    serviceName: "Chụp X-quang phổi",
+    expectedTime: "30 phút",
+    status: "ORDERED",
+    roomId: 102,
+  },
+]
 
 export const useServiceOrder = (appointmentId?: number) => {
   const [services, setServices] = useState<Service[]>([])
@@ -16,8 +66,16 @@ export const useServiceOrder = (appointmentId?: number) => {
   const fetchServices = useCallback(async () => {
     try {
       setLoading(true)
-      const data = await serviceService.getAllServices()
-      setServices(data)
+
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 500))
+
+      // Use mock data
+      setServices(mockServices)
+
+      // Original API call - commented out
+      // const data = await serviceService.getAllServices()
+      // setServices(data)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Không thể tải danh sách dịch vụ"
       setError(errorMessage)
@@ -33,8 +91,16 @@ export const useServiceOrder = (appointmentId?: number) => {
 
     try {
       setLoading(true)
-      const data = await serviceOrderService.getTestResults(appointmentId)
-      setTestResults(data)
+
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 500))
+
+      // Use mock data
+      setTestResults(mockTestResults)
+
+      // Original API call - commented out
+      // const data = await serviceOrderService.getTestResults(appointmentId)
+      // setTestResults(data)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Không thể tải kết quả xét nghiệm"
       setError(errorMessage)
@@ -57,21 +123,51 @@ export const useServiceOrder = (appointmentId?: number) => {
 
       try {
         setLoading(true)
-        const orderRequest: CreateServiceOrderRequest = {
-          appointmentId,
-          roomId,
-          serviceId,
-          orderTime: new Date().toISOString(),
+
+        // Simulate API delay
+        await new Promise((resolve) => setTimeout(resolve, 500))
+
+        // Create mock service order
+        const service = mockServices.find((s) => s.serviceId === serviceId)
+        if (service) {
+          const newOrder: ServiceOrder = {
+            orderId: Date.now(),
+            appointmentId,
+            roomId,
+            service,
+            orderStatus: "ORDERED",
+            number: 1,
+            orderTime: new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+          }
+
+          setServiceOrders((prev) => [...prev, newOrder])
+          message.success("Tạo chỉ định thành công")
+
+          // Add to test results
+          const newTestResult: TestResult = {
+            orderId: newOrder.orderId,
+            serviceName: service.serviceName,
+            expectedTime: "30 phút",
+            status: "ORDERED",
+            roomId,
+          }
+          setTestResults((prev) => [...prev, newTestResult])
+
+          return newOrder
         }
 
-        const newOrder = await serviceOrderService.createOrder(serviceId, orderRequest)
-        setServiceOrders((prev) => [...prev, newOrder])
-        message.success("Tạo chỉ định thành công")
-
-        // Refresh test results
-        fetchTestResults()
-
-        return newOrder
+        // Original API call - commented out
+        // const orderRequest: CreateServiceOrderRequest = {
+        //   appointmentId,
+        //   roomId,
+        //   serviceId,
+        //   orderTime: new Date().toISOString(),
+        // }
+        // const newOrder = await serviceOrderService.createOrder(serviceId, orderRequest)
+        // setServiceOrders((prev) => [...prev, newOrder])
+        // fetchTestResults()
+        // return newOrder
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Không thể tạo chỉ định"
         message.error(errorMessage)
@@ -80,23 +176,40 @@ export const useServiceOrder = (appointmentId?: number) => {
         setLoading(false)
       }
     },
-    [appointmentId, fetchTestResults],
+    [appointmentId],
   )
 
   const updateServiceOrderStatus = useCallback(
     async (serviceId: number, orderId: number, status: string, result?: string) => {
       try {
         setLoading(true)
-        await serviceOrderService.updateOrder(serviceId, orderId, {
-          orderStatus: status as any,
-          result,
-          resultTime: status === "COMPLETED" ? new Date().toISOString() : undefined,
-        })
+
+        // Simulate API delay
+        await new Promise((resolve) => setTimeout(resolve, 500))
+
+        // Update mock data
+        setTestResults((prev) =>
+          prev.map((test) =>
+            test.orderId === orderId
+              ? {
+                  ...test,
+                  status: status as any,
+                  result,
+                  actualTime: status === "COMPLETED" ? new Date().toLocaleTimeString() : undefined,
+                }
+              : test,
+          ),
+        )
 
         message.success("Cập nhật trạng thái thành công")
 
-        // Refresh test results
-        fetchTestResults()
+        // Original API call - commented out
+        // await serviceOrderService.updateOrder(serviceId, orderId, {
+        //   orderStatus: status as any,
+        //   result,
+        //   resultTime: status === "COMPLETED" ? new Date().toISOString() : undefined,
+        // })
+        // fetchTestResults()
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Không thể cập nhật trạng thái"
         message.error(errorMessage)
@@ -104,7 +217,7 @@ export const useServiceOrder = (appointmentId?: number) => {
         setLoading(false)
       }
     },
-    [fetchTestResults],
+    [],
   )
 
   return {

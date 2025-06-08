@@ -2,8 +2,57 @@
 
 import { useState, useEffect, useCallback } from "react"
 import type { Medicine, CreatePrescriptionRequest, PrescriptionDetail, Prescription } from "../types/prescription"
-import { medicineService, prescriptionService } from "../services/prescriptionServices"
+// import { medicineService, prescriptionService } from "../services/prescriptionServices"
 import { message } from "antd"
+
+// Mock data
+const mockMedicines: Medicine[] = [
+  {
+    medicineId: 1,
+    medicineName: "Paracetamol 500mg",
+    category: "Giảm đau",
+    usage: "Uống",
+    unit: "Viên",
+    price: 2000,
+    insuranceDiscountPercent: 80,
+    quantity: 100,
+  },
+  {
+    medicineId: 2,
+    medicineName: "Amoxicillin 250mg",
+    category: "Kháng sinh",
+    usage: "Uống",
+    unit: "Viên",
+    price: 5000,
+    insuranceDiscountPercent: 70,
+    quantity: 50,
+  },
+  {
+    medicineId: 3,
+    medicineName: "Vitamin C 1000mg",
+    category: "Vitamin",
+    usage: "Uống",
+    unit: "Viên",
+    price: 3000,
+    insuranceDiscountPercent: 50,
+    quantity: 200,
+  },
+]
+
+const mockPrescription: Prescription = {
+  prescriptionId: 1,
+  appointmentId: 1,
+  followUpDate: "2025-04-28",
+  isFollowUp: true,
+  diagnosis: "Viêm họng cấp",
+  systolicBloodPressure: 120,
+  diastolicBloodPressure: 80,
+  heartRate: 75,
+  bloodSugar: 95,
+  note: "Nghỉ ngơi và uống nhiều nước",
+  createdAt: "2025-04-21T09:20:00",
+  prescriptionDetails: [],
+}
 
 export const usePrescription = (appointmentId?: number) => {
   const [medicines, setMedicines] = useState<Medicine[]>([])
@@ -18,13 +67,19 @@ export const usePrescription = (appointmentId?: number) => {
       const fetchPrescription = async () => {
         try {
           setLoading(true)
-          const data = await prescriptionService.getPrescriptionByAppointment(appointmentId)
-          setPrescription(data)
 
-          // If prescription exists, load its details
-          if (data && data.prescriptionDetails) {
-            setSelectedMedicines(data.prescriptionDetails)
-          }
+          // Simulate API delay
+          await new Promise((resolve) => setTimeout(resolve, 500))
+
+          // Use mock data
+          setPrescription(mockPrescription)
+
+          // // Original API call - commented out
+          // const data = await prescriptionService.getPrescriptionByAppointment(appointmentId)
+          // setPrescription(data)
+          // if (data && data.prescriptionDetails) {
+          //   setSelectedMedicines(data.prescriptionDetails)
+          // }
         } catch (err) {
           // Prescription might not exist yet, which is fine
           console.log("No existing prescription found")
@@ -40,8 +95,21 @@ export const usePrescription = (appointmentId?: number) => {
   const searchMedicines = useCallback(async (searchTerm: string) => {
     try {
       setLoading(true)
-      const results = await medicineService.searchMedicines(searchTerm)
-      setMedicines(results)
+
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 300))
+
+      // Filter mock medicines
+      const filtered = mockMedicines.filter(
+        (med) =>
+          med.medicineName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          med.category.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+      setMedicines(filtered)
+
+      // // Original API call - commented out
+      // const results = await medicineService.searchMedicines(searchTerm)
+      // setMedicines(results)
     } catch (err) {
       message.error("Không thể tìm kiếm thuốc")
     } finally {
@@ -75,56 +143,70 @@ export const usePrescription = (appointmentId?: number) => {
       try {
         setLoading(true)
 
-        let result: Prescription
+        // Simulate API delay
+        await new Promise((resolve) => setTimeout(resolve, 1000))
 
-        if (prescription?.prescriptionId) {
-          // Update existing prescription
-          result = await prescriptionService.updatePrescription(prescription.prescriptionId, prescriptionData as any)
-
-          // Update prescription details
-          for (const detail of selectedMedicines) {
-            if (detail.detailId) {
-              // Update existing detail
-              await prescriptionService.updatePrescriptionDetail(detail.detailId, detail)
-            } else {
-              // Add new detail
-              await prescriptionService.addMedicineToPrescription({
-                prescriptionId: prescription.prescriptionId,
-                medicineId: detail.medicine.medicineId,
-                dosage: detail.dosage,
-                frequency: detail.frequency,
-                duration: detail.duration,
-                prescriptionNotes: detail.prescriptionNotes,
-              })
-            }
-          }
-        } else {
-          // Create new prescription
-          const newPrescription: CreatePrescriptionRequest = {
-            appointmentId,
-            isFollowUp: prescriptionData.isFollowUp || false,
-            diagnosis: prescriptionData.diagnosis || "",
-            systolicBloodPressure: prescriptionData.systolicBloodPressure || 0,
-            diastolicBloodPressure: prescriptionData.diastolicBloodPressure || 0,
-            heartRate: prescriptionData.heartRate || 0,
-            bloodSugar: prescriptionData.bloodSugar || 0,
-            followUpDate: prescriptionData.followUpDate,
-            note: prescriptionData.note,
-            prescriptionDetails: selectedMedicines.map((detail) => ({
-              medicineId: detail.medicine.medicineId,
-              dosage: detail.dosage,
-              frequency: detail.frequency,
-              duration: detail.duration,
-              prescriptionNotes: detail.prescriptionNotes,
-            })),
-          }
-
-          result = await prescriptionService.createPrescription(newPrescription)
+        // Create mock prescription
+        const newPrescription: Prescription = {
+          prescriptionId: prescription?.prescriptionId || Date.now(),
+          appointmentId,
+          isFollowUp: prescriptionData.isFollowUp || false,
+          diagnosis: prescriptionData.diagnosis || "",
+          systolicBloodPressure: prescriptionData.systolicBloodPressure || 0,
+          diastolicBloodPressure: prescriptionData.diastolicBloodPressure || 0,
+          heartRate: prescriptionData.heartRate || 0,
+          bloodSugar: prescriptionData.bloodSugar || 0,
+          followUpDate: prescriptionData.followUpDate,
+          note: prescriptionData.note,
+          createdAt: new Date().toISOString(),
+          prescriptionDetails: selectedMedicines,
         }
 
-        setPrescription(result)
+        setPrescription(newPrescription)
         message.success("Lưu đơn thuốc thành công")
-        return result
+        return newPrescription
+
+        // // Original API calls - commented out
+        // let result: Prescription
+        // if (prescription?.prescriptionId) {
+        //   result = await prescriptionService.updatePrescription(prescription.prescriptionId, prescriptionData as any)
+        //   for (const detail of selectedMedicines) {
+        //     if (detail.detailId) {
+        //       await prescriptionService.updatePrescriptionDetail(detail.detailId, detail)
+        //     } else {
+        //       await prescriptionService.addMedicineToPrescription({
+        //         prescriptionId: prescription.prescriptionId,
+        //         medicineId: detail.medicine.medicineId,
+        //         dosage: detail.dosage,
+        //         frequency: detail.frequency,
+        //         duration: detail.duration,
+        //         prescriptionNotes: detail.prescriptionNotes,
+        //       })
+        //     }
+        //   }
+        // } else {
+        //   const newPrescription: CreatePrescriptionRequest = {
+        //     appointmentId,
+        //     isFollowUp: prescriptionData.isFollowUp || false,
+        //     diagnosis: prescriptionData.diagnosis || "",
+        //     systolicBloodPressure: prescriptionData.systolicBloodPressure || 0,
+        //     diastolicBloodPressure: prescriptionData.diastolicBloodPressure || 0,
+        //     heartRate: prescriptionData.heartRate || 0,
+        //     bloodSugar: prescriptionData.bloodSugar || 0,
+        //     followUpDate: prescriptionData.followUpDate,
+        //     note: prescriptionData.note,
+        //     prescriptionDetails: selectedMedicines.map((detail) => ({
+        //       medicineId: detail.medicine.medicineId,
+        //       dosage: detail.dosage,
+        //       frequency: detail.frequency,
+        //       duration: detail.duration,
+        //       prescriptionNotes: detail.prescriptionNotes,
+        //     })),
+        //   }
+        //   result = await prescriptionService.createPrescription(newPrescription)
+        // }
+        // setPrescription(result)
+        // return result
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Không thể lưu đơn thuốc"
         message.error(errorMessage)
