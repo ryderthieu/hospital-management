@@ -1,11 +1,10 @@
 package org.example.apigateway.config;
 
+import java.util.List;
+
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
-
-import java.util.List;
-import java.util.function.Predicate;
 
 @Component
 public class RouterValidator {
@@ -15,7 +14,8 @@ public class RouterValidator {
             "/payment/bills/test/{id}",
             "/pharmacy/medicines/{id}",
             "/notifications",
-            "/patients"
+            "/patients",
+            "/doctors/departments"
     );
 
     //Có thể dưới dạng start with..

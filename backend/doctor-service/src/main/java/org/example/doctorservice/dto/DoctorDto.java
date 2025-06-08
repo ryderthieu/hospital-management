@@ -17,6 +17,8 @@ public class DoctorDto {
     @NotNull(message = "Id của người dùng không được để trống")
     private Integer userId;
 
+    private String doctorCode;
+
     @NotBlank(message = "CCCD không được để trống")
     private String identityNumber;
 
