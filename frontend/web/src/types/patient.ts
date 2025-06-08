@@ -11,6 +11,7 @@ export interface Patient {
   weight: number; // đơn vị: kg
   bloodType: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
   createdAt: string;
+  contacts?: EmergencyContact[];
 }
 
 export interface PatientDto {

@@ -6,11 +6,11 @@ import {
   TableHeader,
   TableRow,
 } from "../../ui/table";
-
+import { format } from "date-fns";
 import Badge from "../../ui/badge/Badge";
 import AppointmentCard from "./AppointmentCard";
 import { useState, useEffect } from "react";
-import { Patient } from "../../../../types/patient";
+import { Patient, EmergencyContact } from "../../../../types/patient";
 import { patientService } from "../../../../services/patientService";
 import { useParams } from "react-router-dom";
 
@@ -454,6 +454,14 @@ export function PatientInfoContent() {
             <p className="text-gray-500 text-sm">Căn cước công dân</p>
             <p className="font-medium">{patient?.identityNumber}</p>
           </div>
+          <div>
+            <p className="text-gray-500 text-sm">Ngày tạo tài khoản</p>
+            <p className="font-medium">
+              {patient?.createdAt
+                ? format(new Date(patient?.createdAt), "dd-MM-yyyy")
+                : ""}
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -539,24 +547,90 @@ export function HealthInfoContent() {
 
 // ContactInfoContent
 export function ContactInfoContent() {
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const { patientId } = useParams();
+
+  useEffect(() => {
+    if (!patientId) return;
+    const fetchPatient = async () => {
+      try {
+        const data = await patientService.getPatientById(Number(patientId));
+        setPatient({
+          ...data,
+          contacts: data.contacts || [],
+        });
+      } catch (error) {
+        console.error("Failed to fetch patient data:", error);
+      }
+    };
+    fetchPatient();
+  }, [patientId]);
+
   return (
-    <div className="bg-white py-6 px-5 rounded-lg border border-gray-200">
-      <div className="flex justify-between mb-4">
-        <h2 className="text-xl font-semibold">Thông tin liên lạc khẩn cấp</h2>
-        <button className="flex items-center justify-center bg-base-700 py-2.5 px-5 rounded-lg text-white text-sm hover:bg-base-700/70">
-          Sửa
-        </button>
-      </div>
-      <div className="space-y-4 ml-1">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-gray-500 text-sm">Họ và tên</p>
-            <p className="font-medium">Pnhi</p>
-          </div>
-          <div>
-            <p className="text-gray-500 text-sm">Số điện thoại</p>
-            <p className="font-medium">0123456</p>
-          </div>
+    <div className="bg-white py-6 px-4 rounded-lg border border-gray-200">
+      <h2 className="text-xl font-semibold mb-4 ml-1">
+        Thông tin liên lạc khẩn cấp
+      </h2>
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+        <div className="max-w-full overflow-x-auto">
+          <Table>
+            {/* Table Header */}
+            <TableHeader className="border-b border-gray-100 bg-slate-600/10 dark:border-white/[0.05]">
+              <TableRow>
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 font-medium text-gray-800 text-start text-theme-sm dark:text-gray-400"
+                >
+                  Tên người liên lạc
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 font-medium text-gray-800 text-start text-theme-sm dark:text-gray-400"
+                >
+                  Số điện thoại
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-4 py-3 font-medium text-gray-800 text-start text-theme-sm dark:text-gray-400"
+                >
+                  Mối quan hệ
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-3 py-3 font-medium text-gray-800 text-start text-theme-sm dark:text-gray-400"
+                >
+                  Hành động
+                </TableCell>
+              </TableRow>
+            </TableHeader>
+
+            {/* Table Body */}
+            {patient?.contacts && patient.contacts.length > 0 ? (
+              <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+                {patient.contacts.map((contact) => (
+                  <TableRow key={contact.contactId}>
+                    <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
+                      {contact.contactName}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
+                      {contact.contactPhone}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
+                      {contact.contactRelationship}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            ) : (
+              <TableBody>
+                <TableRow>
+                  <TableCell className="text-center">
+                    Không có liên hệ khẩn cấp
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            )}
+          </Table>
         </div>
       </div>
     </div>
