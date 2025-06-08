@@ -1,5 +1,7 @@
 import React from "react";
 import { Doctor } from "../../../../types/doctor";
+import Badge from "../../ui/badge/Badge";
+
 interface DoctorCardProps {
   doctor: Doctor;
   onViewSchedule?: () => void;

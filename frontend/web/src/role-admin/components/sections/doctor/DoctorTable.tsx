@@ -3,8 +3,8 @@ import DoctorCard from "./DoctorCard";
 import SearchInput from "../../common/SearchInput";
 import Pagination from "../../common/Pagination";
 import { useNavigate } from "react-router-dom";
-import { doctorService } from "../../../../services/doctorService";
-import { Doctor } from "../../../../types/doctor";
+import { doctorService } from "../../../services/doctorService";
+import { Doctor } from "../../../types/doctor";
 const PAGE_SIZE = 10;
 
 const DoctorTable: React.FC = () => {

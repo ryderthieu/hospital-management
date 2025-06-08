@@ -1,24 +1,4 @@
-export interface Department {
-  departmentId: number;
-  departmentName: string;
-}
-
 export interface Doctor {
-<<<<<<< HEAD
-  doctorId: number
-  userId: number
-  identityNumber: string
-  fullName: string
-  birthday: string
-  gender: "MALE" | "FEMALE" 
-  address: string
-  academicDegree: "BS" | "BS_CKI" | "BS_CKII" | "THS_BS" | "TS_BS" | "PGS_TS_BS" | "GS_TS_BS"
-  specialization: string
-  type: "EXAMINATION" | "SERVICE"
-  department: Department
-  profileImage?: string
-  createdAt: string
-=======
   doctorId: number;
   userId: number;
   identityNumber: string;
@@ -36,9 +16,9 @@ export interface Doctor {
     | "GS_TS_BS";
   specialization: string;
   type: "EXAMINATION" | "SERVICE";
-  department: Department;
+  departmentId: number;
+  departmentName: string;
   createdAt: string;
->>>>>>> cc1c0d83dc8fb10d3d60a80e4047ffa2462300ad
 }
 
 export interface DoctorDto {
@@ -72,3 +52,31 @@ export const ACADEMIC_DEGREE_LABELS: Record<string, string> = {
   PGS_TS_BS: "PGS.TS.BS",
   GS_TS_BS: "GS.TS.BS",
 };
+
+export type RoomType = "examination" | "test";
+
+export type Shift = "MORNING" | "AFTERNOON" | "EVENING" | "NIGHT";
+export interface Department {
+  departmentId: number;
+  departmentName: string;
+  description: string;
+  createdAt: string;
+}
+export interface ExaminationRoom {
+  roomId: number;
+  departmentId: number;
+  type: RoomType;
+  building: string;
+  floor: number;
+  note: string;
+}
+export interface Schedule {
+  scheduleId: number;
+  doctorId: number;
+  workDate: string;
+  startTime: string; // HH:mm:ss
+  endTime: string; // HH:mm:ss
+  shift: Shift;
+  roomId: number;
+  createdAt: string;
+}
