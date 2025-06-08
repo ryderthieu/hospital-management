@@ -14,50 +14,51 @@ import java.util.List;
 
 @RestController
 @Validated
-@RequestMapping("/patients/contacts")
+@RequestMapping("/patients")
 @RequiredArgsConstructor
 public class EmergencyContactController {
 
     private final EmergencyContactService emergencyContactService;
 
-    private Integer getCurrentPatientId() {
-        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return Integer.valueOf(userId);
+//    private Integer getCurrentPatientId() {
+//        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+//        return Integer.valueOf(userId);
+//    }
+
+//    @PreAuthorize("hasAnyRole('PATIENT')")
+    @PostMapping("/{patientId}/contacts")
+    public ResponseEntity<EmergencyContactDto> createEmergencyContact(@PathVariable Integer patientId, @RequestBody @Valid EmergencyContactDto emergencyContactDto) {
+        return ResponseEntity.ok(emergencyContactService.createEmergencyContact(patientId, emergencyContactDto));
     }
 
 //    @PreAuthorize("hasAnyRole('PATIENT')")
-    @PostMapping
-    public ResponseEntity<EmergencyContactDto> createEmergencyContact(@RequestBody @Valid EmergencyContactDto emergencyContactDto) {
-        return ResponseEntity.ok(emergencyContactService.createEmergencyContact(getCurrentPatientId(), emergencyContactDto));
+    @GetMapping("/{patientId}/contacts")
+    public ResponseEntity<List<EmergencyContactDto>> getAllEmergencyContacts(@PathVariable Integer patientId) {
+        return ResponseEntity.ok(emergencyContactService.getAllEmergencyContacts(patientId));
     }
 
 //    @PreAuthorize("hasAnyRole('PATIENT')")
-    @GetMapping
-    public ResponseEntity<List<EmergencyContactDto>> getAllEmergencyContacts() {
-        return ResponseEntity.ok(emergencyContactService.getAllEmergencyContacts(getCurrentPatientId()));
+    @GetMapping("/{patientId}/contacts/{contactId}")
+    public ResponseEntity<EmergencyContactDto> getEmergencyContactById(@PathVariable Integer patientId, @PathVariable Integer contactId) {
+        return ResponseEntity.ok(emergencyContactService.getContactByIdAndPatientId(contactId, patientId));
     }
 
 //    @PreAuthorize("hasAnyRole('PATIENT')")
-    @GetMapping("/{contactId}")
-    public ResponseEntity<EmergencyContactDto> getEmergencyContactById(@PathVariable Integer contactId) {
-        return ResponseEntity.ok(emergencyContactService.getContactByIdAndPatientId(contactId, getCurrentPatientId()));
-    }
-
-//    @PreAuthorize("hasAnyRole('PATIENT')")
-    @PutMapping("/{contactId}")
+    @PutMapping("/{patientId}/contacts/{contactId}")
     public ResponseEntity<EmergencyContactDto> updateEmergencyContact(@PathVariable Integer contactId,
+                                                                      @PathVariable Integer patientId,
                                                                       @RequestBody @Valid EmergencyContactDto emergencyContactDto) {
-        return ResponseEntity.ok(emergencyContactService.updateEmergencyContact(contactId, getCurrentPatientId(), emergencyContactDto));
+        return ResponseEntity.ok(emergencyContactService.updateEmergencyContact(contactId, patientId, emergencyContactDto));
     }
 
 //    @PreAuthorize("hasAnyRole('PATIENT')")
-    @DeleteMapping("/{contactId}")
-    public ResponseEntity<String> deleteEmergencyContact(@PathVariable Integer contactId) {
-        emergencyContactService.deleteEmergencyContact(contactId, getCurrentPatientId());
+    @DeleteMapping("/{patientId}/contacts/{contactId}")
+    public ResponseEntity<String> deleteEmergencyContact(@PathVariable Integer contactId, @PathVariable Integer patientId) {
+        emergencyContactService.deleteEmergencyContact(contactId, patientId);
         return ResponseEntity.ok("Liên lạc được xóa thành công");
     }
 
-    @GetMapping("/search")
+    @GetMapping("/contacts/search")
     public ResponseEntity<List<EmergencyContactDto>> searchContactPhone(@RequestParam String filter) {
         return ResponseEntity.ok(emergencyContactService.searchContactPhone(filter));
     }
