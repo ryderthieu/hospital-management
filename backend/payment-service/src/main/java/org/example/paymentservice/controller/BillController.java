@@ -1,11 +1,8 @@
 package org.example.paymentservice.controller;
 
 import jakarta.validation.Valid;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import org.example.paymentservice.client.PharmacyServiceClient;
 import org.example.paymentservice.dto.BillDTOs;
-import org.example.paymentservice.dto.MedicineDTO;
 import org.example.paymentservice.service.BillService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +31,7 @@ public class BillController {
     ResponseEntity<BillDTOs.BillResponse> getBillById (@PathVariable Long id) {
         return ResponseEntity.ok(billService.getBillById(id));
     }
+
     @PutMapping("/{id}")
     ResponseEntity<BillDTOs.BillResponse> updateBill (@PathVariable Long id, @Valid @RequestBody BillDTOs.UpdateBillRequest request) {
         return ResponseEntity.ok(billService.updateBill(id, request));
@@ -47,7 +45,6 @@ public class BillController {
 
     @PostMapping("/{id}/details")
     ResponseEntity<List<BillDTOs.BillDetailResponse>> createBillDetails (@PathVariable Long id, @Valid @RequestBody List<BillDTOs.NewBillDetailRequest> request) {
-        System.out.println("ID: " + id);
         return ResponseEntity.status(201).body(billService.createBillDetail(id, request));
     }
 
@@ -56,11 +53,8 @@ public class BillController {
         return ResponseEntity.ok(billService.getDetailByBill(id));
     }
 
-    private final PharmacyServiceClient pharmacyServiceClient;
-
-    @GetMapping("/test/{id}")
-    public ResponseEntity<MedicineDTO> testPharmacyCall(@PathVariable Long id) {
-        MedicineDTO medicine = pharmacyServiceClient.getMedicineById(id);
-        return ResponseEntity.ok(medicine);
+    @GetMapping("/patient/{patientId}")
+    ResponseEntity<List<BillDTOs.BillResponse>> getBillsByPatientId(@PathVariable Integer patientId) {
+        return ResponseEntity.ok(billService.getBillsByPatientId(patientId));
     }
 }

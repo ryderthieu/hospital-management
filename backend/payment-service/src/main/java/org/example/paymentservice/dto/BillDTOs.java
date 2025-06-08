@@ -22,6 +22,9 @@ public class BillDTOs {
         @NotNull(message = "Mã khám bệnh không được để trống")
         private Long appointmentId;
 
+        @NotNull(message = "Mã bệnh nhân không được để trống")
+        private Integer patientId;
+
         private BigDecimal totalCost;
 
         private BigDecimal insuranceDiscount;
@@ -40,12 +43,20 @@ public class BillDTOs {
         @NotNull(message = "Mã thuốc hoặc dịch vụ không được để trống")
         private Long itemId;
 
+        @NotBlank(message = "Tên thuốc hoặc dịch vụ không được để trống")
+        private String itemName;
+
         @NotNull(message = "Loại hóa đơn không được để trống")
         private BillDetail.ItemType itemType;
 
         @NotNull(message = "Số lượng không được để trống")
         private Long quantity;
 
+        @NotNull(message = "Đơn giá không được để trống")
+        private BigDecimal unitPrice;
+
+        @NotNull(message = "Giảm giá bảo hiểm không được để trống")
+        private BigDecimal insuranceDiscount;
     }
 
     @Data
@@ -64,6 +75,8 @@ public class BillDTOs {
         private Long billId;
 
         private Long appointmentId;
+
+        private Integer patientId;
 
         private BigDecimal totalCost;
 
@@ -89,6 +102,8 @@ public class BillDTOs {
         private BillDetail.ItemType itemType;
 
         private Long itemId;
+
+        private String itemName;
 
         private Long quantity;
 

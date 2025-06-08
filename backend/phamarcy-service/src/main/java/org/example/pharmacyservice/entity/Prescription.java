@@ -19,6 +19,9 @@ public class Prescription {
     @Column(name = "prescription_id")
     Long prescriptionId;
 
+    @Column(name = "patient_id", nullable = false)
+    Integer patientId;
+
     @Column(name = "appointment_id", nullable = false)
     Long appointmentId;
 

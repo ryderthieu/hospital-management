@@ -18,6 +18,9 @@ public class PrescriptionDTOs {
         @NotNull(message = "ID cuộc hẹn không được để trống")
         private Long appointmentId;
 
+        @NotNull(message = "ID bệnh nhân không được để trống")
+        private Integer patientId;
+
         private LocalDate followUpDate;
 
         private boolean isFollowUp;
@@ -133,6 +136,7 @@ public class PrescriptionDTOs {
     public static class PrescriptionResponse {
         private Long prescriptionId;
         private Long appointmentId;
+        private Integer patientId;
         private LocalDate followUpDate;
         private boolean isFollowUp;
         private String diagnosis;

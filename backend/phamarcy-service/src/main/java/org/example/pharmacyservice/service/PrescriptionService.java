@@ -44,6 +44,7 @@ public class PrescriptionService {
         return new PrescriptionDTOs.PrescriptionResponse(
                 prescription.getPrescriptionId(),
                 prescription.getAppointmentId(),
+                prescription.getPatientId(),
                 prescription.getFollowUpDate(),
                 prescription.isFollowUp(),
                 prescription.getDiagnosis(),
@@ -74,6 +75,7 @@ public class PrescriptionService {
     public PrescriptionDTOs.PrescriptionResponse createPrescription(PrescriptionDTOs.CreatePrescriptionRequest request) {
         Prescription prescription = new Prescription();
         prescription.setAppointmentId(request.getAppointmentId());
+        prescription.setPatientId(request.getPatientId());
         prescription.setFollowUpDate(request.getFollowUpDate());
         prescription.setFollowUp(request.isFollowUp());
         prescription.setDiagnosis(request.getDiagnosis());
@@ -236,5 +238,13 @@ public class PrescriptionService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết đơn thuốc với ID: " + detailId));
 
         prescriptionDetailRepository.delete(detail);
+    }
+
+    @Transactional
+    public List<PrescriptionDTOs.PrescriptionResponse> getPrescriptionsByPatientId(Integer patientId) {
+        List<Prescription> prescriptions = prescriptionRepository.findByPatientId(patientId);
+        return prescriptions.stream()
+                .map(this::mapToPrescriptionResponse)
+                .collect(Collectors.toList());
     }
 }
