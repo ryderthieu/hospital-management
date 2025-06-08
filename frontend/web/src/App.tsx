@@ -8,7 +8,7 @@ export default function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/" element={<SignIn />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<SignIn />} />
         <Route path="/admin/*" element={<AdminApp />} />
         <Route path="/doctor/*" element={<DoctorApp />} />
