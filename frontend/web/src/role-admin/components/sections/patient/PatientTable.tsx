@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { patientService } from "../../../../services/patientService";
@@ -20,7 +19,7 @@ export default function PatientTable() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setModalOpen] = useState(false);
-  const [patientToDelete, setPatientToDelete] = useState<string | null>(null);
+  const [patientToDelete, setPatientToDelete] = useState<number | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -34,23 +33,22 @@ export default function PatientTable() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleView = (patientId: Number) => {
+  const handleView = (patientId: number) => {
     navigate(`/admin/patients/${patientId}`);
   };
 
-  const handleDelete = (patientId: Number) => {
-    setPatientToDelete(patientId.toString());
+  const handleDelete = (patientId: number) => {
+    setPatientToDelete(patientId);
     setModalOpen(true);
   };
 
   const handleConfirmDelete = () => {
+    if (patientToDelete === null) return;
     patientService
-      .deletePatient(patientToDelete!)
+      .deletePatient(patientToDelete)
       .then(() => {
         setPatients((prev) =>
-          prev.filter(
-            (patient) => patient.patientId.toString() !== patientToDelete
-          )
+          prev.filter((patient) => patient.patientId !== patientToDelete)
         );
       })
       .catch((err) => {
@@ -146,13 +144,13 @@ export default function PatientTable() {
                 isHeader
                 className="px-4 py-3 font-medium text-slate-500 text-start text-theme-sm dark:text-slate-400"
               >
-                Mã bệnh nhân
+                Căn cước công dân
               </TableCell>
               <TableCell
                 isHeader
                 className="px-4 py-3 font-medium text-slate-500 text-start text-theme-sm dark:text-slate-400"
               >
-                Ngày tạo
+                Bảo hiểm y tế
               </TableCell>
               <TableCell
                 isHeader
@@ -184,19 +182,17 @@ export default function PatientTable() {
           {/* Table Body */}
           <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
             {patients.map((patient) => (
-              <TableRow key={patient.identityNumber}>
+              <TableRow key={patient.patientId}>
                 <TableCell className="px-5 py-4 sm:px-6 text-start">
                   <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
                     {patient.fullName}
                   </span>
                 </TableCell>
                 <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                  {patient.patientId.toString()}
+                  {patient.identityNumber}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                  {patient.createdAt
-                    ? format(new Date(patient.createdAt), "dd/MM/yyyy")
-                    : ""}
+                  {patient.insuranceNumber}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                   <Badge

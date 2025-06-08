@@ -1,5 +1,5 @@
 export interface Patient {
-  patientId: Number;
+  patientId: number;
   identityNumber: string;
   insuranceNumber: string;
   fullName: string;
@@ -11,6 +11,7 @@ export interface Patient {
   weight: number; // đơn vị: kg
   bloodType: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
   createdAt: string;
+  contacts?: EmergencyContact[];
 }
 
 export interface PatientDto {
@@ -24,4 +25,19 @@ export interface PatientDto {
   height: number;
   weight: number;
   bloodType: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
+}
+
+export interface EmergencyContact {
+  contactId: number;
+  contactName: string;
+  contactPhone: string;
+  contactRelationship: "FAMILY" | "FRIEND" | "OTHER";
+  createdAt: string;
+  patientId: number;
+}
+
+export interface EmergencyContactDto {
+  contactName: string;
+  contactPhone: string;
+  contactRelationship: "FAMILY" | "FRIEND" | "OTHER";
 }

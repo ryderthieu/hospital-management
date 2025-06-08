@@ -9,8 +9,14 @@ export const doctorService = {
   },
 
   // Get doctor by ID
-  async getDoctorById(doctorId: number): Promise<Doctor> {
-    const response = await api.get<Doctor>(`/doctors/${doctorId}`)
+  async getDoctorById(userId: number): Promise<Doctor> {
+    const response = await api.get<Doctor>(`/doctors/${userId}`)
+    return response.data
+  },
+
+   // Get doctor by userId
+  async getDoctorByUserId(doctorId: number): Promise<Doctor> {
+    const response = await api.get<Doctor>(`/doctors/users/${doctorId}`)
     return response.data
   },
 
@@ -56,14 +62,4 @@ export const doctorService = {
     return response.data
   },
 
-  // Get doctor by user ID (helper method)
-  async getDoctorByUserId(userId: number): Promise<Doctor | null> {
-    try {
-      const doctors = await this.getAllDoctors()
-      return doctors.find((doctor) => doctor.userId === userId) || null
-    } catch (error) {
-      console.error("Error fetching doctor by user ID:", error)
-      return null
-    }
-  },
 }
