@@ -20,7 +20,7 @@ public class DoctorController {
 
     private final DoctorService doctorService;
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     @GetMapping
     public ResponseEntity<List<DoctorDto>> getAllDoctors() {
         return ResponseEntity.ok(doctorService.getAllDoctors());
