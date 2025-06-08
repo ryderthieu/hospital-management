@@ -31,13 +31,13 @@ public class PatientController {
         return ResponseEntity.ok(patientService.getAllPatients());
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'DOCTOR', 'PATIENT')")
     @GetMapping("/{patientId}")
     public ResponseEntity<PatientDto> getPatientById(@PathVariable Integer patientId) {
         return ResponseEntity.ok(patientService.getPatientById(patientId));
     }
 
-    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'PATIENT')")
     @PutMapping("/{patientId}")
     public ResponseEntity<PatientDto> updatePatient(@PathVariable Integer patientId, @RequestBody @Valid PatientDto patientDto) {
         return ResponseEntity.ok(patientService.updatePatient(patientId, patientDto));
