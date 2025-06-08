@@ -18,38 +18,38 @@ public class ExaminationRoomController {
 
     private final ExaminationRoomService examinationRoomService;
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR')")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR')")
     @GetMapping
     public ResponseEntity<List<ExaminationRoomDto>> getAllExaminationRooms() {
         return ResponseEntity.ok(examinationRoomService.getAllExaminationRooms());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR')")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR')")
     @GetMapping("/{roomId}")
     public ResponseEntity<ExaminationRoomDto> getExaminationRoomById(@PathVariable Integer roomId) {
         return ResponseEntity.ok(examinationRoomService.getExaminationRoomById(roomId));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     @PostMapping
     public ResponseEntity<ExaminationRoomDto> createExaminationRoom(@RequestBody @Valid ExaminationRoomDto examinationRoomDto) {
         return ResponseEntity.ok(examinationRoomService.createExaminationRoom(examinationRoomDto));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     @PutMapping("/{roomId}")
     public ResponseEntity<ExaminationRoomDto> updateExaminationRoom(@PathVariable Integer roomId, @RequestBody @Valid ExaminationRoomDto examinationRoomDto) {
         return ResponseEntity.ok(examinationRoomService.updateExaminationRoom(roomId, examinationRoomDto));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     @DeleteMapping("/{roomId}")
     public ResponseEntity<String> deleteExaminationRoom(@PathVariable Integer roomId) {
         examinationRoomService.deleteExaminationRoom(roomId);
         return ResponseEntity.ok("Phòng được xóa thành công");
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR')")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR')")
     @GetMapping("/search")
     public ResponseEntity<List<ExaminationRoomDto>> filterRooms(@RequestParam(required = false) ExaminationRoom.Type type,
                                                                 @RequestParam(required = false) String building,
