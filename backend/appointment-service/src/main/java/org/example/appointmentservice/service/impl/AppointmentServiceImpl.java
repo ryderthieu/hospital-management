@@ -21,6 +21,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import jakarta.annotation.PreDestroy;
 
 @Service
 @RequiredArgsConstructor
@@ -29,13 +35,12 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final PatientServiceClient patientServiceClient;
     private final DoctorServiceClient doctorServiceClient;
+    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     @Override
     public List<AppointmentDtos.AppointmentResponse> getAllAppointments() {
-        return appointmentRepository.findAll()
-                .stream()
-                .map(this::mapToAppointmentResponse)
-                .collect(Collectors.toList());
+        List<Appointment> appointments = appointmentRepository.findAll();
+        return batchMapToAppointmentResponses(appointments);
     }
 
     @Override
@@ -179,10 +184,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         if (appointments.isEmpty()) {
             return Collections.emptyList();
         }
-        return appointments.stream()
-                .map(this::mapToAppointmentResponse)
-                .sorted(Comparator.comparing(AppointmentDtos.AppointmentResponse::getNumber))
-                .collect(Collectors.toList());
+        return batchMapToAppointmentResponses(appointments);
     }
 
     @Override
@@ -266,17 +268,123 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw new RuntimeException("Không tìm thấy thông tin lịch khám với ID: " + scheduleId);
         }
 
-        // Lấy danh sách cuộc hẹn, sắp xếp theo thời gian bắt đầu
         List<Appointment> appointments = appointmentRepository.findByScheduleIdOrderBySlotStartAsc(scheduleId);
-        
         if (appointments.isEmpty()) {
             log.info("Không có cuộc hẹn nào cho lịch khám ID: {}", scheduleId);
             return Collections.emptyList();
         }
 
-        // Map sang DTO và trả về
+        return batchMapToAppointmentResponses(appointments);
+    }
+
+    private List<AppointmentDtos.AppointmentResponse> batchMapToAppointmentResponses(List<Appointment> appointments) {
+        if (appointments.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Thu thập unique IDs
+        List<Integer> patientIds = appointments.stream()
+                .map(Appointment::getPatientId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<Integer> scheduleIds = appointments.stream()
+                .map(Appointment::getScheduleId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // Tạo cache cho patient và schedule info
+        Map<Integer, PatientDto> patientCache = new HashMap<>();
+        Map<Integer, ScheduleDto> scheduleCache = new HashMap<>();
+
+        try {
+            // Tạo danh sách CompletableFuture cho các API call
+            List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+            // Batch lấy thông tin bệnh nhân song song
+            for (Integer patientId : patientIds) {
+                CompletableFuture<Void> future = CompletableFuture
+                    .supplyAsync(() -> {
+                        try {
+                            return patientServiceClient.getPatientById(patientId);
+                        } catch (Exception e) {
+                            log.error("Lỗi khi lấy thông tin bệnh nhân ID {}: {}", patientId, e.getMessage());
+                            return null;
+                        }
+                    }, executorService)
+                    .thenAccept(patientInfo -> {
+                        if (patientInfo != null) {
+                            synchronized (patientCache) {
+                                patientCache.put(patientId, patientInfo);
+                            }
+                        }
+                    });
+                futures.add(future);
+            }
+
+            // Batch lấy thông tin lịch khám song song
+            for (Integer scheduleId : scheduleIds) {
+                CompletableFuture<Void> future = CompletableFuture
+                    .supplyAsync(() -> {
+                        try {
+                            return doctorServiceClient.getScheduleById(scheduleId);
+                        } catch (Exception e) {
+                            log.error("Lỗi khi lấy thông tin lịch khám ID {}: {}", scheduleId, e.getMessage());
+                            return null;
+                        }
+                    }, executorService)
+                    .thenAccept(scheduleInfo -> {
+                        if (scheduleInfo != null) {
+                            synchronized (scheduleCache) {
+                                scheduleCache.put(scheduleId, scheduleInfo);
+                            }
+                        }
+                    });
+                futures.add(future);
+            }
+
+            // Chờ tất cả các API call hoàn thành
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        } catch (Exception e) {
+            log.error("Lỗi khi lấy thông tin: {}", e.getMessage());
+        }
+
+        // Map appointments với thông tin đã cache
         return appointments.stream()
-                .map(this::mapToAppointmentResponse)
+                .map(appointment -> {
+                    AppointmentDtos.AppointmentResponse response = new AppointmentDtos.AppointmentResponse();
+                    response.setAppointmentId(appointment.getAppointmentId());
+                    response.setDoctorId(appointment.getDoctorId());
+                    response.setSymptoms(appointment.getSymptoms());
+                    response.setNumber(appointment.getNumber());
+                    response.setSlotStart(appointment.getSlotStart());
+                    response.setSlotEnd(appointment.getSlotEnd());
+                    response.setAppointmentStatus(appointment.getAppointmentStatus());
+                    response.setCreatedAt(appointment.getCreatedAt());
+
+                    // Set patient info từ cache
+                    PatientDto patientInfo = patientCache.get(appointment.getPatientId());
+                    if (patientInfo != null) {
+                        response.setPatientInfo(patientInfo);
+                    }
+
+                    // Set schedule info từ cache
+                    ScheduleDto scheduleInfo = scheduleCache.get(appointment.getScheduleId());
+                    if (scheduleInfo != null) {
+                        response.setSchedule(scheduleInfo);
+                    }
+
+                    // Map appointment notes nếu có
+                    if (appointment.getAppointmentNotes() != null && !appointment.getAppointmentNotes().isEmpty()) {
+                        List<AppointmentNoteDto> notes = appointment.getAppointmentNotes().stream()
+                                .map(AppointmentNoteDto::new)
+                                .collect(Collectors.toList());
+                        response.setAppointmentNotes(notes);
+                    }
+
+                    return response;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -324,5 +432,11 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         return response;
+    }
+
+    // Thêm phương thức để đóng ExecutorService khi service bị destroy
+    @PreDestroy
+    public void destroy() {
+        executorService.shutdown();
     }
 }
