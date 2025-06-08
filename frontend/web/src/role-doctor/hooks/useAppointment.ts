@@ -1,0 +1,146 @@
+import { useState, useEffect, useCallback } from "react"
+import type { Appointment, AppointmentFilters, AppointmentStats, Patient } from "../types/appointment"
+import { appointmentService, formatAppointmentDate, getAppointmentStatusText } from "../services/appointmentServices"
+import { message } from "antd"
+import dayjs from "dayjs"
+
+export const useAppointments = (initialFilters?: AppointmentFilters) => {
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Set default date to today
+  const [filters, setFilters] = useState<AppointmentFilters>({
+    date: dayjs().format("YYYY-MM-DD"), // Default to today
+    ...initialFilters,
+  })
+
+  const [stats, setStats] = useState<AppointmentStats>({
+    total: 0,
+    pending: 0,
+    confirmed: 0,
+    completed: 0,
+    cancelled: 0,
+  })
+
+  const fetchAppointments = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const appointmentData = await appointmentService.getAppointments(filters)
+      setAppointments(appointmentData)
+      setFilteredAppointments(appointmentData)
+
+      // Calculate stats from filtered data
+      const statsData = appointmentService.calculateAppointmentStats(appointmentData)
+      setStats(statsData)
+
+      console.log("Appointments loaded:", appointmentData)
+      console.log("Applied filters:", filters)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Không thể tải danh sách lịch hẹn"
+      setError(errorMessage)
+      message.error(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }, [filters])
+
+  useEffect(() => {
+    fetchAppointments()
+  }, [fetchAppointments])
+
+  const updateFilters = useCallback((newFilters: Partial<AppointmentFilters>) => {
+    setFilters((prev) => {
+      const updatedFilters = { ...prev, ...newFilters }
+      console.log("Updating filters:", updatedFilters)
+      return updatedFilters
+    })
+  }, [])
+
+  const clearDateFilter = useCallback(() => {
+    setFilters((prev) => {
+      const { date, ...rest } = prev
+      return rest
+    })
+  }, [])
+
+  const setTodayFilter = useCallback(() => {
+    updateFilters({ date: dayjs().format("YYYY-MM-DD") })
+  }, [updateFilters])
+
+  const updateAppointmentStatus = useCallback(
+    async (appointmentId: number, status: string) => {
+      try {
+        await appointmentService.updateAppointmentStatus(appointmentId, status)
+        message.success("Cập nhật trạng thái thành công")
+        fetchAppointments() // Refresh data
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Không thể cập nhật trạng thái"
+        message.error(errorMessage)
+      }
+    },
+    [fetchAppointments],
+  )
+
+  const updateAppointmentNotes = useCallback(
+    async (appointmentId: number, notes: string) => {
+      try {
+        await appointmentService.updateAppointmentNotes(appointmentId, notes)
+        message.success("Cập nhật ghi chú thành công")
+        fetchAppointments() // Refresh data
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Không thể cập nhật ghi chú"
+        message.error(errorMessage)
+      }
+    },
+    [fetchAppointments],
+  )
+
+  const refreshAppointments = useCallback(() => {
+    fetchAppointments()
+  }, [fetchAppointments])
+
+  return {
+    appointments,
+    filteredAppointments,
+    loading,
+    error,
+    filters,
+    stats,
+    updateFilters,
+    clearDateFilter,
+    setTodayFilter,
+    updateAppointmentStatus,
+    updateAppointmentNotes,
+    refreshAppointments,
+  }
+}
+
+export const useAppointmentPatients = () => {
+  const { appointments, loading, error, ...appointmentHook } = useAppointments()
+
+  // Transform appointments to patient format
+  const patients: Patient[] = appointments.map((appointment, index) => ({
+    id: appointment.appointmentId,
+    name: `Bệnh nhân ${appointment.number}`, // Since patientInfo is null, use generic name
+    code: `BN${appointment.appointmentId.toString().padStart(8, "0")}`,
+    appointment: "Đặt lịch",
+    date: formatAppointmentDate(appointment.schedule.workDate),
+    gender: "Chưa xác định", // Not available in appointment data
+    age: 0, // Not available in appointment data
+    symptom: appointment.symptoms,
+    status: getAppointmentStatusText(appointment.appointmentStatus),
+    priority: appointment.appointmentStatus === "PENDING" ? "high" : "medium",
+    appointmentData: appointment,
+  }))
+
+  return {
+    patients,
+    appointments,
+    loading,
+    error,
+    ...appointmentHook,
+  }
+}
