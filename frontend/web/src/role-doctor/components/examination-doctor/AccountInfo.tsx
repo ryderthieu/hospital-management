@@ -1,3 +1,5 @@
+"use client"
+
 import { useState } from "react"
 import { Form, Input, Select, Button, Avatar, Space, Upload, message } from "antd"
 import { EditOutlined, UserOutlined, UploadOutlined } from "@ant-design/icons"
@@ -190,6 +192,7 @@ const AccountInfo = () => {
               disabled={!editMode}
               onChange={(e) => handleChange("email", e.target.value)}
               placeholder="Nhập email (không bắt buộc)"
+              allowClear
             />
           </Form.Item>
 

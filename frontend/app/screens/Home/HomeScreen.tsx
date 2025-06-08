@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,24 +10,23 @@ import {
   Image,
   StatusBar,
   ImageSourcePropType,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFont, fontFamily } from '../../context/FontContext';
 import Header from '../../components/Header';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RouteProp } from '@react-navigation/native';
 import { HomeStackParamList } from '../../navigation/types';
 import { useNavigation } from '@react-navigation/native';
-
+import API from '../../services/api';
 
 type HomeScreenNavigationProp = StackNavigationProp<HomeStackParamList, 'Home'>;
-
 
 interface Doctor {
   id: number;
   name: string;
   specialty: string;
-  avatar: ImageSourcePropType;
+  avatar: string;
 }
 
 interface Specialty {
@@ -37,7 +36,7 @@ interface Specialty {
   icon: ImageSourcePropType;
 }
 
-export interface NewsItem {
+interface NewsItem {
   id: number;
   title: string;
   date: string;
@@ -45,30 +44,30 @@ export interface NewsItem {
   image: ImageSourcePropType;
 }
 
+interface AppointmentDto {
+  appointmentId: number;
+  doctorId: number;
+  patientId: number;
+  scheduleId: number;
+  symptoms: string;
+  number: number;
+  appointmentStatus: string;
+  createdAt: string;
+  appointmentNotes?: any[];
+}
+
+interface DoctorDto {
+  doctorId: number;
+  fullName: string | null; // Khớp với DoctorDto.java
+  specialization: string | null;
+  academicDegree: string | null; // Enum trong backend, trả về string
+}
+
 export default function HomeScreen() {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const { fontsLoaded } = useFont();
-
-  const recentDoctors: Doctor[] = [
-    {
-      id: 1,
-      name: 'BSCKII. Trần Nhật Trường',
-      specialty: 'Đa khoa',
-      avatar: require('../../assets/images/avatars/nhattruong.png'),
-    },
-    {
-      id: 2,
-      name: 'ThS BS. Trần Ngọc Anh Thơ',
-      specialty: 'Tim mạch',
-      avatar: require('../../assets/images/avatars/anhtho.png'),
-    },
-    {
-      id: 3,
-      name: 'ThS BS. Trần Đỗ Phương Nhi',
-      specialty: 'Tiêu hóa',
-      avatar: require('../../assets/images/avatars/phuongnhi.jpg'),
-    },
-  ];
+  const [recentDoctors, setRecentDoctors] = useState<Doctor[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const specialties: Specialty[] = [
     {
@@ -122,7 +121,59 @@ export default function HomeScreen() {
     },
   ];
 
-  if (!fontsLoaded) {
+  useEffect(() => {
+    fetchRecentDoctors();
+  }, []);
+
+  const fetchRecentDoctors = async () => {
+    setIsLoading(true);
+    try {
+      // Lấy danh sách cuộc hẹn
+      const appointmentsResponse = await API.get<AppointmentDto[]>('/appointments');
+      console.log('Debug - Appointments response:', appointmentsResponse.data);
+
+      // Lấy danh sách doctorId duy nhất và giới hạn 3
+      const doctorIds = Array.from(
+        new Set(appointmentsResponse.data.map((appt) => appt.doctorId)),
+      ).slice(0, 3);
+
+      // Gọi API cho từng doctorId
+      const doctorsPromises = doctorIds.map((doctorId) =>
+        API.get<DoctorDto>(`/doctors/${doctorId}`),
+      );
+      const doctorsResponses = await Promise.all(doctorsPromises);
+
+      // Ánh xạ dữ liệu sang Doctor
+      const doctors: Doctor[] = doctorsResponses.map((response) => {
+        const doctor = response.data;
+        // Kết hợp academicDegree và fullName
+        const academicPart = doctor.academicDegree ? `${doctor.academicDegree}.` : '';
+        const namePart = doctor.fullName || '';
+        const fullName = [academicPart, namePart]
+          .filter((part) => part !== '') // Loại bỏ chuỗi rỗng
+          .join(' ')
+          .trim() || 'Bác sĩ chưa có tên';
+        return {
+          id: doctor.doctorId,
+          name: fullName,
+          specialty: doctor.specialization || 'Đa khoa',
+          avatar: 'https://via.placeholder.com/70', // Placeholder
+        };
+      });
+
+      setRecentDoctors(doctors);
+    } catch (error: any) {
+      console.error('Fetch doctors error:', error.message, error.response?.data);
+      Alert.alert(
+        'Lỗi',
+        error.response?.data?.message || 'Không thể tải danh sách bác sĩ. Vui lòng thử lại.',
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!fontsLoaded || isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <Text>Loading...</Text>
@@ -179,15 +230,22 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.recentDoctorsContainer}
           >
-            {recentDoctors.map((doctor) => (
-              <TouchableOpacity key={doctor.id} style={styles.doctorCard}>
-                <Image source={doctor.avatar} style={styles.doctorAvatar} />
-                <Text style={styles.doctorName} numberOfLines={2}>
-                  {doctor.name}
-                </Text>
-                <Text style={styles.doctorSpecialty}>{doctor.specialty}</Text>
-              </TouchableOpacity>
-            ))}
+            {recentDoctors.length > 0 ? (
+              recentDoctors.map((doctor) => (
+                <TouchableOpacity key={doctor.id} style={styles.doctorCard}>
+                  <Image
+                    source={{ uri: doctor.avatar }}
+                    style={styles.doctorAvatar}
+                  />
+                  <Text style={styles.doctorName} numberOfLines={2}>
+                    {doctor.name}
+                  </Text>
+                  <Text style={styles.doctorSpecialty}>{doctor.specialty}</Text>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <Text style={styles.noDoctorsText}>Chưa có bác sĩ nào gần đây</Text>
+            )}
           </ScrollView>
         </View>
 
@@ -244,7 +302,6 @@ export default function HomeScreen() {
     </SafeAreaView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -368,6 +425,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#00B5B8',
     textAlign: 'center',
+  },
+  noDoctorsText: {
+    fontFamily: fontFamily.regular,
+    fontSize: 14,
+    color: '#757575',
+    paddingHorizontal: 20,
   },
   specialtiesContainer: {
     paddingLeft: 20,

@@ -6,10 +6,10 @@ import Patients from '../pages/test-doctor/Patients'
 import Account from '../pages/test-doctor/Account'
 
 const TestDoctorRoutes = [
-  <Route key="test-dashboard" path="/test/" element={<Dashboard />} />,
-  <Route key="test-patients" path="/test/patients" element={<Patients />} />,
-  <Route key="test-schedule" path="/test/schedule" element={<Schedule />} />,
-  <Route key="test-account" path="/test/account" element={<Account />} />
+  <Route key="test-dashboard" index element={<Dashboard />} />,
+  <Route key="test-patients" path="patients" element={<Patients />} />,
+  <Route key="test-schedule" path="schedule" element={<Schedule />} />,
+  <Route key="test-account" path="account" element={<Account />} />
 ]
 
 export default TestDoctorRoutes

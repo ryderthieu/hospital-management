@@ -1,11 +1,9 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "../context/AuthContext";
+import { Routes, Route } from "react-router-dom";
 import ExaminationDoctorLayout from "./layout/ExaminationDoctorLayout";
 import TestDoctorLayout from "./layout/TestDoctorLayout";
 import ExaminationDoctorRoutes from "./routes/ExaminationDoctorRoutes";
 import TestDoctorRoutes from "./routes/TestDoctorRoutes";
-import SignIn from "../role-doctor/pages/auth/SignIn";
 import { ConfigProvider, App as AntdApp } from "antd";
 import viVN from "antd/es/locale/vi_VN";
 import dayjs from "dayjs";
@@ -16,22 +14,20 @@ dayjs.locale("vi");
 
 const DoctorApp: React.FC = () => {
   return (
-    <ConfigProvider theme={theme} locale={viVN} componentSize="large">
-      <AuthProvider>
-        <Router>
+    <AntdApp>
+      <ConfigProvider theme={theme} locale={viVN} componentSize="large">
           <Routes>
-            <Route path="/examination" element={<ExaminationDoctorLayout />}>
+            <Route path="examination/*" element={<ExaminationDoctorLayout />}>
               {ExaminationDoctorRoutes}
             </Route>
-            <Route path="/test" element={<TestDoctorLayout />}>
+            <Route path="test/*" element={<TestDoctorLayout />}>
               {TestDoctorRoutes}
             </Route>
-            <Route path="/" element={<SignIn />} />
-            <Route path="*" element={<div>404 - Không tìm thấy trang</div>} />
+            {/* Thêm route mặc định cho doctor */}
+            <Route index element={<div>Doctor Dashboard</div>} />
           </Routes>
-        </Router>
-      </AuthProvider>
-    </ConfigProvider>
+      </ConfigProvider>
+    </AntdApp>
   );
 };
 

@@ -3,6 +3,7 @@ package org.example.doctorservice.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.doctorservice.dto.DoctorDto;
+import org.example.doctorservice.dto.PatientDto;
 import org.example.doctorservice.entity.Doctor;
 import org.example.doctorservice.service.DoctorService;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +26,7 @@ public class DoctorController {
         return ResponseEntity.ok(doctorService.getAllDoctors());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     @GetMapping("/{doctorId}")
     public ResponseEntity<DoctorDto> getDoctorById(@PathVariable Integer doctorId) {
         return ResponseEntity.ok(doctorService.getDoctorById(doctorId));
@@ -63,5 +64,12 @@ public class DoctorController {
                                                              @RequestParam(required = false) String specialization,
                                                              @RequestParam(required = false) Doctor.Type type) {
         return ResponseEntity.ok(doctorService.filterDoctors(gender, academicDegree, specialization, type));
+    }
+
+   // @PreAuthorize("hasAnyRole('DOCTOR', 'RECEPTIONIST', 'ADMIN')")
+    @GetMapping("/{doctorId}/patients")
+    public ResponseEntity<List<PatientDto>> getPatientsByDoctor(@PathVariable Integer doctorId) {
+        List<PatientDto> patients = doctorService.getPatientsByDoctor(doctorId);
+        return ResponseEntity.ok(patients);
     }
 }

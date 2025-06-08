@@ -3,18 +3,24 @@ import { api } from "./api"
 import { doctorService } from "./doctorService"
 
 export const authService = {
-  // Login
+  // Login - only returns token, then fetch user info
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    const response = await api.post<{ token: string; user: AuthUser }>("users/auth/login", credentials)
+    // Step 1: Login to get token
+    const loginResponse = await api.post<{ token: string }>("/users/auth/login", credentials)
+    const { token } = loginResponse.data
 
-    const { token, user } = response.data
-
-    // Store token and user info
+    // Step 2: Store token temporarily to make authenticated requests
     localStorage.setItem("authToken", token)
+
+    // Step 3: Use token to get current user info from /users/me
+    const userResponse = await api.get<AuthUser>("/users/me")
+    const user = userResponse.data
+
+    // Step 4: Store user info
     localStorage.setItem("authUser", JSON.stringify(user))
     localStorage.setItem("currentUserId", user.userId.toString())
 
-    // If user is a doctor, fetch doctor info
+    // Step 5: If user is a doctor, fetch doctor info
     let doctorInfo: DoctorInfo | undefined
     if (user.role === "DOCTOR") {
       try {
@@ -40,7 +46,7 @@ export const authService = {
   // Logout
   async logout(): Promise<void> {
     try {
-      await api.post("users/auth/logout")
+      await api.post("/auth/logout")
     } catch (error) {
       console.error("Logout error:", error)
     } finally {
@@ -53,7 +59,7 @@ export const authService = {
     }
   },
 
-  // Get current user info using the new endpoint
+  // Get current user info using the /users/me endpoint
   async getCurrentUser(): Promise<AuthUser> {
     const response = await api.get<AuthUser>("/users/me")
     return response.data
@@ -81,7 +87,7 @@ export const authService = {
 
   // Refresh token
   async refreshToken(): Promise<string> {
-    const response = await api.post<{ token: string }>("users/auth/refresh")
+    const response = await api.post<{ token: string }>("/auth/refresh")
 
     // Update token in localStorage
     if (response.data.token) {
@@ -94,7 +100,7 @@ export const authService = {
   // Verify token
   async verifyToken(token: string): Promise<boolean> {
     try {
-      const response = await api.post<{ valid: boolean }>("users/auth/verify", { token })
+      const response = await api.post<{ valid: boolean }>("/auth/verify", { token })
       return response.data.valid
     } catch (error) {
       return false

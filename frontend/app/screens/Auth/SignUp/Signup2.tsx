@@ -15,11 +15,12 @@ import API from '../../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../../context/AuthContext';
 
+// Định nghĩa kiểu cho navigation và route
 type RootStackParamList = {
   Login: undefined;
   Signup3: undefined;
   Signup1: undefined;
-  Signup2: { phone: string; password: string };
+  Signup2: { phone: string; password: string; userId: number }; // userId bắt buộc
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup2'>;
@@ -32,7 +33,7 @@ interface Signup2Props {
 
 export default function Signup2({ navigation, route }: Signup2Props) {
   const { setLoggedIn } = useAuth();
-  const { phone, password } = route.params;
+  const { phone, userId } = route.params; // Lấy phone và userId từ Signup1
 
   const [fullName, setFullName] = useState<string>('');
   const [idNumber, setIdNumber] = useState<string>('');
@@ -46,7 +47,7 @@ export default function Signup2({ navigation, route }: Signup2Props) {
   const handleContinue = async () => {
     if (isLoading) return;
 
-    // Debug: Kiểm tra giá trị các trường
+    // Debug: Kiểm tra giá trị
     console.log('Debug - Input values:', {
       fullName,
       idNumber,
@@ -55,9 +56,10 @@ export default function Signup2({ navigation, route }: Signup2Props) {
       gender,
       address,
       termsAccepted,
+      userId,
     });
 
-    // Kiểm tra các trường bắt buộc với lỗi cụ thể
+    // Kiểm tra các trường bắt buộc
     const errors: string[] = [];
     if (!fullName.trim()) errors.push('Tên không được để trống');
     if (!idNumber) errors.push('CCCD/CMND không được để trống');
@@ -70,64 +72,91 @@ export default function Signup2({ navigation, route }: Signup2Props) {
     }
 
     if (!termsAccepted) {
-      Alert.alert('Lỗi', 'Bạn phải đồng ý với Điều khoản Dịch vụ và Chính sách Bảo mật');
+      Alert.alert('Lỗi', 'Vui lòng đồng ý với Điều khoản Dịch vụ và Chính sách Bảo mật');
       return;
     }
 
-    // Kiểm tra định dạng CCCD/CMND (9 hoặc 12 số)
+    // Kiểm tra định dạng
     const idNumberRegex = /^\d{9,12}$/;
     if (!idNumberRegex.test(idNumber)) {
-      Alert.alert('Lỗi', 'Số CCCD/CMND phải có 9 hoặc 12 chữ số');
+      Alert.alert('Lỗi', 'Số CCCD/CMND phải có 9 hoặc 12 số');
       return;
     }
 
-    // Kiểm tra định dạng số bảo hiểm y tế (10 hoặc 15 số)
     const insuranceRegex = /^\d{10,15}$/;
     if (!insuranceRegex.test(insuranceNumber)) {
-      Alert.alert('Lỗi', 'Số bảo hiểm y tế phải có 10-15 chữ số');
+      Alert.alert('Lỗi', 'Số bảo hiểm y tế phải từ 10-15 số');
       return;
     }
 
-    // Kiểm tra ngày sinh
     const today = new Date();
     if (isNaN(dob.getTime()) || dob >= today) {
       Alert.alert('Lỗi', 'Ngày sinh không hợp lệ');
       return;
     }
 
+    if (!userId) {
+      Alert.alert('Lỗi', 'Không tìm thấy thông tin tài khoản. Vui lòng đăng ký lại từ đầu.');
+      return;
+    }
+
     setIsLoading(true);
-    try {
-      // Chuyển đổi dob thành chuỗi YYYY-MM-DD
-      const dobString = dob.toISOString().split('T')[0];
+    const maxRetries = 3;
+    let retries = 0;
 
-      // Gửi yêu cầu tới endpoint /patients
-      const response = await API.post<{ message: string; token?: string }>('/patients', {
-        identityNumber: idNumber,
-        insuranceNumber,
-        fullName: fullName.trim(),
-        birthday: dobString,
-        gender: gender || undefined,
-        address: address || undefined,
-        phone,
-      });
+    while (retries < maxRetries) {
+      try {
+        const dobString = dob.toISOString().split('T')[0];
 
-      const { message, token } = response.data;
+        // Debug: Kiểm tra payload
+        const payload = {
+          userId, // Thêm userId
+          identityNumber: idNumber,
+          insuranceNumber,
+          fullName: fullName.trim(),
+          birthday: dobString,
+          gender: gender || undefined,
+          address: address || undefined,
+        };
+        console.log('Debug - Payload:', payload);
 
-      // Nếu backend trả về token, lưu và đăng nhập
-      if (token) {
-        await AsyncStorage.setItem('token', token);
-        setLoggedIn(true);
+        // Gửi yêu cầu
+        const response = await API.post<{ message: string; token?: string }>('/patients', payload);
+
+        const { message, token } = response.data;
+
+        if (token) {
+          await AsyncStorage.setItem('token', token);
+          setLoggedIn(true);
+        }
+
+        Alert.alert('Thành công', message || 'Thông tin bệnh nhân đã được lưu', [
+          { text: 'OK', onPress: () => navigation.navigate('Signup3') },
+        ]);
+        break;
+      } catch (error: any) {
+        retries++;
+        let errorMessage = 'Lưu thông tin thất bại. Vui lòng thử lại.';
+        if (error.response?.status === 400) {
+          const errors = error.response.data.errors || [];
+          errorMessage = errors
+            .map((err: any) => err.defaultMessage || 'Dữ liệu không hợp lệ')
+            .join('\n');
+        } else if (error.response?.status === 503) {
+          errorMessage = 'Dịch vụ tạm thời không khả dụng. Vui lòng thử lại sau.';
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+
+        if (retries === maxRetries || error.response?.status !== 503) {
+          Alert.alert('Lỗi', errorMessage);
+          console.error('Signup2 error:', error.message, error.response?.data);
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retries));
+      } finally {
+        if (retries === maxRetries) setIsLoading(false);
       }
-
-      Alert.alert('Thành công', message || 'Thông tin bệnh nhân đã được lưu', [
-        { text: 'OK', onPress: () => navigation.navigate('Signup3') },
-      ]);
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Lưu thông tin thất bại. Vui lòng thử lại.';
-      Alert.alert('Lỗi', errorMessage);
-      console.error('Signup2 error:', error.message, error.response?.data);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -149,7 +178,7 @@ export default function Signup2({ navigation, route }: Signup2Props) {
           <FloatingLabelInputNotIcon
             value={fullName}
             onChangeText={(text: string) => {
-              console.log('fullName input:', text);
+              console.log('fullName:', text);
               setFullName(text);
             }}
             placeholder="Nhập họ và tên"
@@ -161,7 +190,7 @@ export default function Signup2({ navigation, route }: Signup2Props) {
           <FloatingLabelInputNotIcon
             value={idNumber}
             onChangeText={(text: string) => {
-              console.log('idNumber input:', text);
+              console.log('idNumber:', text);
               setIdNumber(text);
             }}
             placeholder="Nhập CCCD/CMND"
@@ -172,7 +201,7 @@ export default function Signup2({ navigation, route }: Signup2Props) {
           <FloatingLabelInputNotIcon
             value={insuranceNumber}
             onChangeText={(text: string) => {
-              console.log('insuranceNumber input:', text);
+              console.log('insuranceNumber:', text);
               setInsuranceNumber(text);
             }}
             placeholder="Nhập số bảo hiểm y tế"
@@ -206,7 +235,7 @@ export default function Signup2({ navigation, route }: Signup2Props) {
           <FloatingLabelInputNotIcon
             value={address}
             onChangeText={(text: string) => {
-              console.log('address input:', text);
+              console.log('address:', text);
               setAddress(text);
             }}
             placeholder="Nhập địa chỉ đầy đủ"

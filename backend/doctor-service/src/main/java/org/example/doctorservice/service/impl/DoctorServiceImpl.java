@@ -1,7 +1,11 @@
 package org.example.doctorservice.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.example.doctorservice.client.AppointmentServiceClient;
+import org.example.doctorservice.client.PatientServiceClient;
+import org.example.doctorservice.dto.AppointmentDto;
 import org.example.doctorservice.dto.DoctorDto;
+import org.example.doctorservice.dto.PatientDto;
 import org.example.doctorservice.entity.Department;
 import org.example.doctorservice.entity.Doctor;
 import org.example.doctorservice.repository.DepartmentRepository;
@@ -9,8 +13,7 @@ import org.example.doctorservice.repository.DoctorRepository;
 import org.example.doctorservice.service.DoctorService;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -18,6 +21,8 @@ import java.util.stream.Collectors;
 public class DoctorServiceImpl implements DoctorService {
     private final DoctorRepository doctorRepository;
     private final DepartmentRepository departmentRepository;
+    private final AppointmentServiceClient appointmentServiceClient;
+    private final PatientServiceClient patientServiceClient;
 
     @Override
     public List<DoctorDto> getAllDoctors() {
@@ -103,5 +108,34 @@ public class DoctorServiceImpl implements DoctorService {
         return doctorRepository.filterDoctors(gender, academicDegree, specialization, type)
                 .map(DoctorDto::new);
     }
+
+    @Override
+    public List<PatientDto> getPatientsByDoctor(Integer doctorId) {
+        List<AppointmentDto> appointments = appointmentServiceClient.getAppointmentsByDoctorId(doctorId);
+
+        if (appointments == null || appointments.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Set<Integer> patientIds = appointments.stream()
+                .map(AppointmentDto::getPatientId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        List<PatientDto> patients = new ArrayList<>();
+        for (Integer patientId : patientIds) {
+            try {
+                PatientDto patient = patientServiceClient.getPatientById(patientId);
+                if (patient != null) {
+                    patients.add(patient);
+                }
+            } catch (Exception e) {
+//                logger.error("Error getting patient id: " + patientId, e);
+            }
+        }
+
+        return patients;
+    }
+
 }
 

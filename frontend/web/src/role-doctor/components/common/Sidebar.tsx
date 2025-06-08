@@ -18,14 +18,14 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ role }) => {
   const location = useLocation()
-  const basePath = `/${role}`
+  const basePath = `/doctor/${role}`
 
   const menuItems = [
     {
-      key: `${basePath}/`,
+      key: `${basePath}`,
       icon: <BarChartOutlined />,
       label: "Dashboard",
-      link: `${basePath}/`,
+      link: `${basePath}`,
     },
     {
       key: `${basePath}/schedule`,
@@ -52,7 +52,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role }) => {
       link: `${basePath}/account`,
     },
     {
-      key: "/",
+      key: "logout",
       icon: <LogoutOutlined />,
       label: "Đăng xuất",
       link: "/",

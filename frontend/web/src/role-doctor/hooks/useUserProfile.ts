@@ -43,6 +43,7 @@ export const useUserProfile = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Update the fetchProfile method to handle null email properly
   const fetchProfile = useCallback(async () => {
     try {
       setLoading(true)
@@ -53,7 +54,7 @@ export const useUserProfile = () => {
 
       let combinedProfile: CombinedProfile = {
         userId: userData.userId,
-        email: userData.email || "",
+        email: userData.email || "", // Handle null email from backend
         phoneNumber: userData.phone,
         role: userData.role,
         accountType: getAccountTypeLabel(userData.role),
@@ -106,6 +107,7 @@ export const useUserProfile = () => {
     setProfile((prev) => (prev ? { ...prev, [field]: value } : null))
   }, [])
 
+  // Update handleSave to handle null email properly
   const handleSave = useCallback(async (): Promise<boolean> => {
     if (!profile || !originalProfile) return false
 
@@ -123,7 +125,7 @@ export const useUserProfile = () => {
       // Prepare user update data
       const userUpdates: UserUpdateRequest = {}
       if (profile.email !== originalProfile.email) {
-        userUpdates.email = profile.email
+        userUpdates.email = profile.email || null // Handle empty string as null
       }
       if (profile.phoneNumber !== originalProfile.phoneNumber) {
         userUpdates.phone = profile.phoneNumber
