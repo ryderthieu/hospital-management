@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import PageMeta from "../../components/common/PageMeta";
 import ReturnButton from "../../components/ui/button/ReturnButton";
-import Badge from "../../components/ui/badge/Badge";
+import { departmentService } from "../../../services/departmentService";
 
 interface Doctor {
-  id: string;
-  name: string;
-  specialty: string;
-  photo: string;
-  position: string;
+  doctorId: number;
+  fullName: string;
   academicDegree: string;
-  isAvailable: boolean;
+  specialty?: string;
+  profileImage?: string;
+  isAvailable?: boolean;
+  departmentId?: number;
 }
 
 interface Equipment {
@@ -24,14 +24,13 @@ interface Equipment {
 }
 
 interface DepartmentRoom {
-  id: string;
-  name: string;
-  type: string;
+  roomId: number;
+  roomName: string;
+  departmentId: number;
   capacity: number;
-  floor: number;
-  building: string;
-  currentOccupancy: number;
-  status: 'available' | 'full' | 'maintenance';
+  isAvailable: boolean;
+  equipment?: string;
+  createdAt: string;
 }
 
 interface Service {
@@ -50,23 +49,25 @@ interface DepartmentStats {
 }
 
 interface Department {
-  id: string;
-  name: string;
-  description: string;
-  location: string;
-  floor: string;
-  head: string;
+  departmentId: number;
+  departmentName: string;
+  description?: string;
+  location?: string;
+  headDoctorName?: string;
+  headDoctorImage?: string;
   staffCount: number;
-  foundedYear: number;
-  phoneNumber: string;
-  email: string;
-  workingHours: string;
+  foundedYear?: number;
+  phoneNumber?: string;
+  email?: string;
+  staffImages?: string[];
+  examinationRoomDtos?: DepartmentRoom[];
 }
 
 const DepartmentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [department, setDepartment] = useState<Department | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -80,211 +81,90 @@ const DepartmentDetail: React.FC = () => {
     averageStay: 0
   });
 
+  // Helper function to extract numeric ID from formatted ID
+  const extractDepartmentId = (formattedId: string): number => {
+    // Extract numeric part from "KH2025-003" format
+    const match = formattedId.match(/\d+$/);
+    return match ? parseInt(match[0]) : parseInt(formattedId);
+  };
+
   useEffect(() => {
     const fetchDepartmentData = async () => {
       try {
         setLoading(true);
+        setError(null);
         
-        // Demo data - trong thực tế bạn sẽ gọi API
-        setTimeout(() => {
-          setDepartment({
-            id: id || "KH2025-003",
-            name: "Khoa Xét Nghiệm",
-            description: "Thực hiện các xét nghiệm mẫu bệnh phẩm và chẩn đoán kết quả để hỗ trợ bác sĩ trong điều trị. Khoa có trang bị các thiết bị hiện đại nhập khẩu từ Mỹ, Đức và Nhật Bản.",
-            location: "Khu A - Bệnh viện Đa khoa Trung tâm",
-            floor: "Tầng 2",
-            head: "PGS.TS Trần Minh Khoa",
-            staffCount: 18,
-            foundedYear: 2010,
-            phoneNumber: "028 3456 7890",
-            email: "xetnghiem@hospital.com",
-            workingHours: "7:30 - 16:30 (Thứ 2 - Thứ 7)",
-          });
+        if (!id) {
+          setError("ID khoa không hợp lệ");
+          return;
+        }
 
-          setDoctors([
-            {
-              id: "doc-1",
-              name: "PGS.TS Trần Minh Khoa",
-              specialty: "Xét nghiệm Vi sinh",
-              photo: "/images/user/user-22.jpg",
-              position: "Trưởng khoa",
-              academicDegree: "PGS.TS",
-              isAvailable: true
-            },
-            {
-              id: "doc-2",
-              name: "TS.BS Lê Thị Mai Hương",
-              specialty: "Xét nghiệm Hóa sinh",
-              photo: "/images/user/user-23.jpg",
-              position: "Phó khoa",
-              academicDegree: "TS.BS",
-              isAvailable: true
-            },
-            {
-              id: "doc-3",
-              name: "ThS.BS Trần Minh Tuấn",
-              specialty: "Xét nghiệm Huyết học",
-              photo: "/images/user/user-24.jpg",
-              position: "Bác sĩ",
-              academicDegree: "ThS.BS",
-              isAvailable: false
-            },
-            {
-              id: "doc-4",
-              name: "BS.CKI Nguyễn Thị Lan",
-              specialty: "Xét nghiệm Sinh học phân tử",
-              photo: "/images/user/user-17.jpg",
-              position: "Bác sĩ",
-              academicDegree: "BS.CKI",
-              isAvailable: true
-            },
-          ]);
+        const numericId = extractDepartmentId(id);
+        
+        // Fetch department details
+        const departmentData = await departmentService.getDepartmentById(numericId);
+        setDepartment(departmentData);
 
-          setEquipment([
-            {
-              id: "TB-001",
-              name: "Máy xét nghiệm sinh hóa tự động",
-              model: "Cobas c501",
-              manufacturer: "Roche Diagnostics",
-              purchaseYear: 2023,
-              status: 'operational'
-            },
-            {
-              id: "TB-002",
-              name: "Máy xét nghiệm huyết học",
-              model: "Sysmex XN-1000",
-              manufacturer: "Sysmex Corporation",
-              purchaseYear: 2022,
-              status: 'operational'
-            },
-            {
-              id: "TB-003",
-              name: "Máy xét nghiệm miễn dịch",
-              model: "Cobas e801",
-              manufacturer: "Roche Diagnostics",
-              purchaseYear: 2022,
-              status: 'maintenance'
-            },
-            {
-              id: "TB-004",
-              name: "Máy PCR thời gian thực",
-              model: "LightCycler 480",
-              manufacturer: "Roche Molecular Systems",
-              purchaseYear: 2021,
-              status: 'operational'
-            },
-            {
-              id: "TB-005",
-              name: "Máy xét nghiệm nước tiểu",
-              model: "Urisys 2400",
-              manufacturer: "Roche Diagnostics",
-              purchaseYear: 2021,
-              status: 'out-of-order'
-            },
-          ]);
+        // Fetch doctors for this department
+        try {
+          const doctorsData = await departmentService.getDoctorsByDepartmentId(numericId);
+          setDoctors(doctorsData as Doctor[]);
+        } catch (docError) {
+          console.error("Error fetching doctors:", docError);
+          setDoctors([]);
+        }
 
-          setRooms([
-            {
-              id: "P-XN-001",
-              name: "Phòng lấy mẫu 1",
-              type: "Phòng lấy mẫu",
-              capacity: 10,
-              floor: 1,
-              building: "A",
-              currentOccupancy: 6,
-              status: 'available'
-            },
-            {
-              id: "P-XN-002",
-              name: "Phòng lấy mẫu 2",
-              type: "Phòng lấy mẫu",
-              capacity: 10,
-              floor: 1,
-              building: "A",
-              currentOccupancy: 10,
-              status: 'full'
-            },
-            {
-              id: "P-XN-003",
-              name: "Phòng xét nghiệm sinh hóa",
-              type: "Phòng xét nghiệm",
-              capacity: 0,
-              floor: 2,
-              building: "A",
-              currentOccupancy: 0,
-              status: 'available'
-            },
-            {
-              id: "P-XN-004",
-              name: "Phòng xét nghiệm huyết học",
-              type: "Phòng xét nghiệm",
-              capacity: 0,
-              floor: 2,
-              building: "A",
-              currentOccupancy: 0,
-              status: 'available'
-            },
-            {
-              id: "P-XN-005",
-              name: "Phòng xét nghiệm vi sinh",
-              type: "Phòng xét nghiệm",
-              capacity: 0,
-              floor: 2,
-              building: "A",
-              currentOccupancy: 0,
-              status: 'maintenance'
-            }
-          ]);
+        // For now, set demo data for equipment, rooms, and services
+        // These can be replaced with actual API calls when available
+        setEquipment([
+          {
+            id: "TB-001",
+            name: "Máy xét nghiệm sinh hóa tự động",
+            model: "Cobas c501",
+            manufacturer: "Roche Diagnostics",
+            purchaseYear: 2023,
+            status: 'operational'
+          },
+          {
+            id: "TB-002",
+            name: "Máy xét nghiệm huyết học",
+            model: "Sysmex XN-1000",
+            manufacturer: "Sysmex Corporation",
+            purchaseYear: 2022,
+            status: 'operational'
+          },
+        ]);
 
-          setServices([
-            {
-              id: "DV-XN-001",
-              name: "Xét nghiệm máu cơ bản",
-              duration: "5 phút",
-              price: "150.000 đ",
-              insurance_covered: true
-            },
-            {
-              id: "DV-XN-002",
-              name: "Xét nghiệm sinh hóa máu",
-              duration: "20 phút",
-              price: "280.000 đ",
-              insurance_covered: true
-            },
-            {
-              id: "DV-XN-003",
-              name: "Xét nghiệm nước tiểu",
-              duration: "15 phút",
-              price: "100.000 đ",
-              insurance_covered: true
-            },
-            {
-              id: "DV-XN-004",
-              name: "Xét nghiệm vi sinh",
-              duration: "2 ngày",
-              price: "320.000 đ",
-              insurance_covered: true
-            },
-            {
-              id: "DV-XN-005",
-              name: "Xét nghiệm đông máu",
-              duration: "60 phút",
-              price: "450.000 đ",
-              insurance_covered: true
-            }
-          ]);
+        setRooms(departmentData.examinationRoomDtos || []);
 
-          setStats({
-            totalPatients: 7845,
-            todayPatients: 132,
-            occupancyRate: 80,
-            averageStay: 0
-          });
+        setServices([
+          {
+            id: "DV-001",
+            name: "Khám tổng quát",
+            duration: "30 phút",
+            price: "200.000 đ",
+            insurance_covered: true
+          },
+          {
+            id: "DV-002",
+            name: "Tư vấn chuyên môn",
+            duration: "45 phút",
+            price: "300.000 đ",
+            insurance_covered: true
+          },
+        ]);
 
-          setLoading(false);
-        }, 800);
-      } catch (error) {
-        console.error("Lỗi khi lấy dữ liệu khoa:", error);
+        setStats({
+          totalPatients: 1250,
+          todayPatients: 24,
+          occupancyRate: 75,
+          averageStay: 2.5
+        });
+
+      } catch (err) {
+        console.error("Error fetching department data:", err);
+        setError("Không thể tải thông tin khoa. Vui lòng thử lại.");
+      } finally {
         setLoading(false);
       }
     };
@@ -308,11 +188,43 @@ const DepartmentDetail: React.FC = () => {
         return null;
     }
   };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-base-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-10">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-16 w-16 text-red-400 mx-auto mb-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L4.316 16.5c-.77.833.192 2.5 1.732 2.5z"
+          />
+        </svg>
+        <h3 className="text-lg font-medium text-red-700 mb-2">
+          Có lỗi xảy ra
+        </h3>
+        <p className="text-red-500 mb-6">
+          {error}
+        </p>
+        <button
+          onClick={() => navigate("/admin/departments")}
+          className="inline-flex items-center px-4 py-2 bg-base-600 text-white font-medium rounded-lg hover:bg-base-700"
+        >
+          Quay lại danh sách khoa
+        </button>
       </div>
     );
   }
@@ -352,8 +264,7 @@ const DepartmentDetail: React.FC = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'overview':
-        return (
+      case 'overview':        return (
           <div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               {/* Thông tin cơ bản */}
@@ -362,7 +273,7 @@ const DepartmentDetail: React.FC = () => {
                 <div className="space-y-3">
                   <div className="flex">
                     <span className="font-medium w-32 text-gray-600">Trưởng khoa:</span>
-                    <span>{department.head}</span>
+                    <span>{department.headDoctorName || "Chưa cập nhật"}</span>
                   </div>
                   <div className="flex">
                     <span className="font-medium w-32 text-gray-600">Số nhân viên:</span>
@@ -370,23 +281,19 @@ const DepartmentDetail: React.FC = () => {
                   </div>
                   <div className="flex">
                     <span className="font-medium w-32 text-gray-600">Vị trí:</span>
-                    <span>{department.location}, {department.floor}</span>
+                    <span>{department.location || "Chưa cập nhật"}</span>
                   </div>
                   <div className="flex">
                     <span className="font-medium w-32 text-gray-600">Thành lập:</span>
-                    <span>Năm {department.foundedYear}</span>
+                    <span>Năm {department.foundedYear || "Chưa cập nhật"}</span>
                   </div>
                   <div className="flex">
                     <span className="font-medium w-32 text-gray-600">Số điện thoại:</span>
-                    <span>{department.phoneNumber}</span>
+                    <span>{department.phoneNumber || "Chưa cập nhật"}</span>
                   </div>
                   <div className="flex">
                     <span className="font-medium w-32 text-gray-600">Email:</span>
-                    <span>{department.email}</span>
-                  </div>
-                  <div className="flex">
-                    <span className="font-medium w-32 text-gray-600">Giờ làm việc:</span>
-                    <span>{department.workingHours}</span>
+                    <span>{department.email || "Chưa cập nhật"}</span>
                   </div>
                 </div>
               </div>
@@ -413,12 +320,10 @@ const DepartmentDetail: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Mô tả khoa */}
+            </div>            {/* Mô tả khoa */}
             <div className="bg-white p-5 rounded-lg shadow-sm mb-6">
               <h3 className="text-lg font-medium text-gray-800 mb-4">Mô tả</h3>
-              <p className="text-gray-600">{department.description}</p>
+              <p className="text-gray-600">{department.description || "Chưa có mô tả cho khoa này."}</p>
             </div>
 
             {/* Nhân sự nổi bật */}
@@ -426,16 +331,28 @@ const DepartmentDetail: React.FC = () => {
               <h3 className="text-lg font-medium text-gray-800 mb-4">Nhân sự nổi bật</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {doctors.slice(0, 4).map(doctor => (
-                  <div key={doctor.id} className="bg-gray-50 p-4 rounded-lg flex flex-col items-center">
-                    <img src={doctor.photo} alt={doctor.name} className="w-20 h-20 rounded-full object-cover" />
-                    <h4 className="font-medium text-gray-800 mt-2">{doctor.name}</h4>
-                    <p className="text-sm text-gray-500">{doctor.position}</p>
-                    <p className="text-xs text-gray-500 mt-1">{doctor.specialty}</p>
+                  <div key={doctor.doctorId} className="bg-gray-50 p-4 rounded-lg flex flex-col items-center">
+                    <img 
+                      src={doctor.profileImage || "/images/user/default-avatar.jpg"} 
+                      alt={doctor.fullName} 
+                      className="w-20 h-20 rounded-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = "/images/user/default-avatar.jpg";
+                      }}
+                    />
+                    <h4 className="font-medium text-gray-800 mt-2">{doctor.fullName}</h4>
+                    <p className="text-sm text-gray-500">{doctor.academicDegree}</p>
+                    <p className="text-xs text-gray-500 mt-1">{doctor.specialty || "Chưa cập nhật"}</p>
                     <span className={`mt-2 px-2 py-0.5 text-xs rounded-full ${doctor.isAvailable ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                       {doctor.isAvailable ? 'Có mặt' : 'Vắng mặt'}
                     </span>
                   </div>
                 ))}
+                {doctors.length === 0 && (
+                  <div className="col-span-4 text-center text-gray-500 py-8">
+                    Chưa có thông tin nhân sự
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -454,26 +371,32 @@ const DepartmentDetail: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
                   </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                </thead>                <tbody className="bg-white divide-y divide-gray-200">
                   {doctors.map((doctor) => (
-                    <tr key={doctor.id}>
+                    <tr key={doctor.doctorId}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
-                            <img className="h-10 w-10 rounded-full" src={doctor.photo} alt={doctor.name} />
+                            <img 
+                              className="h-10 w-10 rounded-full object-cover" 
+                              src={doctor.profileImage || "/images/user/default-avatar.jpg"} 
+                              alt={doctor.fullName}
+                              onError={(e) => {
+                                e.currentTarget.src = "/images/user/default-avatar.jpg";
+                              }}
+                            />
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{doctor.name}</div>
+                            <div className="text-sm font-medium text-gray-900">{doctor.fullName}</div>
                             <div className="text-sm text-gray-500">{doctor.academicDegree}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{doctor.specialty}</div>
+                        <div className="text-sm text-gray-900">{doctor.specialty || "Chưa cập nhật"}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{doctor.position}</div>
+                        <div className="text-sm text-gray-900">{doctor.academicDegree}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${doctor.isAvailable ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
@@ -483,11 +406,17 @@ const DepartmentDetail: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex gap-2">
                           <button className="text-indigo-600 hover:text-indigo-900">Xem lịch</button>
-                          <button className="text-blue-600 hover:text-blue-900">Chi tiết</button>
-                        </div>
+                          <button className="text-blue-600 hover:text-blue-900">Chi tiết</button>                        </div>
                       </td>
                     </tr>
                   ))}
+                  {doctors.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                        Chưa có thông tin bác sĩ trong khoa này
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -549,31 +478,40 @@ const DepartmentDetail: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
                   </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                </thead>                <tbody className="bg-white divide-y divide-gray-200">
                   {rooms.map((room) => (
-                    <tr key={room.id}>
+                    <tr key={room.roomId}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{room.name}</div>
-                        <div className="text-xs text-gray-500">{room.id}</div>
+                        <div className="text-sm font-medium text-gray-900">{room.roomName}</div>
+                        <div className="text-xs text-gray-500">ID: {room.roomId}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {room.type}
+                        Phòng khám
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        Tòa {room.building}, Tầng {room.floor}
+                        Khoa {department.departmentName}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {room.capacity > 0 ? `${room.currentOccupancy}/${room.capacity}` : 'N/A'}
+                        {room.capacity} người
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(room.status)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {room.isAvailable ? (
+                          <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Còn chỗ</span>
+                        ) : (
+                          <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Đã đầy</span>
+                        )}
+                      </td>                      <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <button className="text-blue-600 hover:text-blue-900">Chi tiết</button>
                       </td>
                     </tr>
                   ))}
+                  {rooms.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                        Chưa có thông tin phòng trong khoa này
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -629,16 +567,15 @@ const DepartmentDetail: React.FC = () => {
   };
 
   return (
-    <>
-      <PageMeta
-        title={`${department.name} | Bệnh viện Đa khoa Trung tâm`}
-        description={`Thông tin chi tiết về ${department.name}`}
+    <>      <PageMeta
+        title={`${department.departmentName} | Bệnh viện Đa khoa Trung tâm`}
+        description={`Thông tin chi tiết về ${department.departmentName}`}
       />
 
       <div className="mb-6">
         <div className="flex items-center mb-4">
           <ReturnButton />
-          <h2 className="text-xl font-semibold">Chi tiết khoa: {department.name}</h2>
+          <h2 className="text-xl font-semibold">Chi tiết khoa: {department.departmentName}</h2>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
@@ -648,7 +585,7 @@ const DepartmentDetail: React.FC = () => {
                 onClick={() => setActiveTab('overview')}
                 className={`inline-block py-3 px-4 text-sm font-medium ${
                   activeTab === 'overview'
-                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    ? 'border-b-2 border-base-600 text-base-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -660,7 +597,7 @@ const DepartmentDetail: React.FC = () => {
                 onClick={() => setActiveTab('doctors')}
                 className={`inline-block py-3 px-4 text-sm font-medium ${
                   activeTab === 'doctors'
-                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    ? 'border-b-2 border-base-600 text-base-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -672,7 +609,7 @@ const DepartmentDetail: React.FC = () => {
                 onClick={() => setActiveTab('equipment')}
                 className={`inline-block py-3 px-4 text-sm font-medium ${
                   activeTab === 'equipment'
-                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    ? 'border-b-2 border-base-600 text-base-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -684,7 +621,7 @@ const DepartmentDetail: React.FC = () => {
                 onClick={() => setActiveTab('rooms')}
                 className={`inline-block py-3 px-4 text-sm font-medium ${
                   activeTab === 'rooms'
-                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    ? 'border-b-2 border-base-600 text-base-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -696,7 +633,7 @@ const DepartmentDetail: React.FC = () => {
                 onClick={() => setActiveTab('services')}
                 className={`inline-block py-3 px-4 text-sm font-medium ${
                   activeTab === 'services'
-                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    ? 'border-b-2 border-base-600 text-base-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >

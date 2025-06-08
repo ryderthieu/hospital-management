@@ -39,6 +39,15 @@ public class DoctorDto {
     @NotBlank(message = "Chuyên môn không được để trống")
     private String specialization;
 
+    private String profileImage;
+
+    public String getProfileImage() {
+        return profileImage;
+    }
+
+    public void setProfileImage(String profileImage) {
+        this.profileImage = profileImage;
+    }
     @NotNull(message = "Loại bác sĩ không được để trống")
     private Doctor.Type type;
 
@@ -58,6 +67,7 @@ public class DoctorDto {
         this.address = doctor.getAddress();
         this.academicDegree = doctor.getAcademicDegree();
         this.specialization = doctor.getSpecialization();
+        this.profileImage = doctor.getProfileImage();
         this.type = doctor.getType();
         this.departmentId = doctor.getDepartment().getDepartmentId();
         this.departmentName = doctor.getDepartment().getDepartmentName();

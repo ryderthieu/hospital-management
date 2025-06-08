@@ -4,6 +4,21 @@ export interface Department {
 }
 
 export interface Doctor {
+<<<<<<< HEAD
+  doctorId: number
+  userId: number
+  identityNumber: string
+  fullName: string
+  birthday: string
+  gender: "MALE" | "FEMALE" 
+  address: string
+  academicDegree: "BS" | "BS_CKI" | "BS_CKII" | "THS_BS" | "TS_BS" | "PGS_TS_BS" | "GS_TS_BS"
+  specialization: string
+  type: "EXAMINATION" | "SERVICE"
+  department: Department;
+  profileImage?: string;
+  createdAt: string;
+=======
   doctorId: number;
   userId: number;
   identityNumber: string;
@@ -23,6 +38,7 @@ export interface Doctor {
   type: "EXAMINATION" | "SERVICE";
   department: Department;
   createdAt: string;
+>>>>>>> cc1c0d83dc8fb10d3d60a80e4047ffa2462300ad
 }
 
 export interface DoctorDto {
