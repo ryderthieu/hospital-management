@@ -7,7 +7,7 @@ import API from '../../../services/api';
 
 type RootStackParamList = {
   Login: undefined;
-  Signup2: { phone: string; password: string; userId: number }; // Thêm userId
+  Signup2: { phone: string; password: string };
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -18,8 +18,6 @@ interface Signup1Props {
 
 interface RegisterResponse {
   message: string;
-  userId: number; // Khớp với AuthDTOs.UserResponse
-  role: string;
 }
 
 export default function Signup1({ navigation }: Signup1Props) {
@@ -62,20 +60,22 @@ export default function Signup1({ navigation }: Signup1Props) {
 
     setIsLoading(true);
     try {
-      const response = await API.post<RegisterResponse>('/users/auth/register', {
+      const payload = {
         phone: formattedPhone,
         password,
-        role: 'PATIENT',
-      });
+        fullName: 'temp',
+        identityNumber: 'temp',
+        insuranceNumber: 'temp',
+        birthday: '2000-01-01',
+        gender: 'OTHER',
+        address: 'temp',
+      };
+      const response = await API.post<RegisterResponse>('/users/auth/register', payload);
 
-      const { message, userId } = response.data;
-      console.log('Debug - Register response:', { message, userId });
-
-      Alert.alert('Thành công', message || 'Đăng ký thành công, vui lòng tiếp tục', [
+      Alert.alert('Thành công', response.data.message || 'Vui lòng nhập thông tin cá nhân', [
         {
           text: 'OK',
-          onPress: () =>
-            navigation.navigate('Signup2', { phone: formattedPhone, password, userId }), // Truyền userId
+          onPress: () => navigation.navigate('Signup2', { phone: formattedPhone, password }),
         },
       ]);
     } catch (error: any) {

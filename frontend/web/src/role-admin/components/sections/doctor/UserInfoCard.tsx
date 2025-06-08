@@ -1,17 +1,15 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { doctorApi } from "../../../api/doctorApi";
-import { DoctorDto } from "../../../types/DoctorDto";
 import { useModal } from "../../../hooks/useModal";
 import { Modal } from "../../ui/modal";
 import Button from "../../ui/button/Button";
 import Input from "../../form/input/InputField";
 import Label from "../../form/Label";
-
+import { Doctor } from "../../../../types/doctor";
 interface UserInfoCardProps {
-  doctorData: DoctorDto;
-  setDoctorData: React.Dispatch<React.SetStateAction<DoctorDto | null>>;
+  doctorData: Doctor;
+  setDoctorData: React.Dispatch<React.SetStateAction<Doctor | null>>;
 }
 
 export default function UserInfoCard({
@@ -168,9 +166,9 @@ export default function UserInfoCard({
                       <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                         Khoa trực thuộc
                       </p>
-                      <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                        {doctorData.departmentId}
-                      </p>
+                      {/* <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                        {doctorData.department.departmentName}
+                      </p> */}
                     </div>
 
                     <div>
@@ -295,13 +293,16 @@ export default function UserInfoCard({
 
               {doctorData && (
                 <>
-                  <div>
+                  {/* <div>
                     <Label>Khoa trực thuộc</Label>
-                    <Input type="text" value={doctorData.departmentId} />
-                  </div>
+                    <Input
+                      type="text"
+                      value={doctorData.department.departmentName}
+                    />
+                  </div> */}
                   <div>
                     <Label>Mã bác sĩ</Label>
-                    <Input type="text" value={doctorData.doctorId} />
+                    <Input type="text" value={doctorData.doctorId} disabled />
                   </div>
                   <div>
                     <Label>Chức danh</Label>

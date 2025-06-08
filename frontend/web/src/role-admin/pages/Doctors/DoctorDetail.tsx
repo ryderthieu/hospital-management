@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { doctorApi } from "../../api/doctorApi";
+import { doctorService } from "../../../services/doctorService";
 import UserMetaCard from "../../components/sections/doctor/UserMetaCard";
 import UserInfoCard from "../../components/sections/doctor/UserInfoCard";
 import UserAddressCard from "../../components/sections/doctor/UserAddressCard";
@@ -11,7 +11,7 @@ import Button from "../../components/ui/button/Button";
 import Input from "../../components/form/input/InputField";
 import Label from "../../components/form/Label";
 import ReturnButton from "../../components/ui/button/ReturnButton";
-import { DoctorDto } from "../../types/DoctorDto";
+import { Doctor } from "../../../types/doctor";
 
 export default function DoctorDetail() {
   const { doctorId } = useParams();
@@ -31,7 +31,7 @@ export default function DoctorDetail() {
     closeModal: closeAddressModal,
   } = useModal();
 
-  const [doctorData, setDoctorData] = useState<DoctorDto | null>(null);
+  const [doctorData, setDoctorData] = useState<Doctor | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function DoctorDetail() {
       return;
     }
     setLoading(true);
-    doctorApi
+    doctorService
       .getDoctorById(Number(doctorId))
       .then((data) => setDoctorData(data))
       .catch((err) => {
@@ -105,14 +105,19 @@ export default function DoctorDetail() {
           </h3>
         </div>
 
-        <div className="space-y-6">
-          <UserMetaCard doctorData={doctorData} setDoctorData={setDoctorData} />
-          <UserInfoCard doctorData={doctorData} setDoctorData={setDoctorData} />
-          {/* <UserAddressCard
-            doctorData={doctorData}
-            setDoctorData={setDoctorData}
-          /> */}
-        </div>
+        {doctorData && (
+          <div className="space-y-6">
+            <UserMetaCard
+              doctorData={doctorData}
+              setDoctorData={setDoctorData}
+            />
+            <UserInfoCard
+              doctorData={doctorData}
+              setDoctorData={setDoctorData}
+            />
+            {/* <UserAddressCard doctorData={doctorData} setDoctorData={setDoctorData} /> */}
+          </div>
+        )}
       </div>
 
       {/* Profile Image Edit Modal */}
@@ -210,10 +215,13 @@ export default function DoctorDetail() {
                 <Label>Số điện thoại</Label>
                 <Input type="tel" defaultValue={doctorData.phone} />
               </div> */}
-              <div>
+              {/* <div>
                 <Label>Khoa trực thuộc</Label>
-                <Input type="text" value={doctorData.departmentId} />
-              </div>
+                <Input
+                  type="text"
+                  value={doctorData.department.departmentName || ""}
+                />
+              </div> */}
               <div>
                 <Label>Mã bác sĩ</Label>
                 <Input type="text" value={doctorData.doctorId} />

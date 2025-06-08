@@ -3,19 +3,18 @@ import DoctorCard from "./DoctorCard";
 import SearchInput from "../../common/SearchInput";
 import Pagination from "../../common/Pagination";
 import { useNavigate } from "react-router-dom";
-import { doctorApi } from "../../../api/doctorApi";
-import { DoctorDto } from "../../../types/DoctorDto";
-
+import { doctorService } from "../../../../services/doctorService";
+import { Doctor } from "../../../../types/doctor";
 const PAGE_SIZE = 10;
 
 const DoctorTable: React.FC = () => {
-  const [doctors, setDoctors] = useState<DoctorDto[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
 
   useEffect(() => {
-    doctorApi
+    doctorService
       .getAllDoctors()
       .then((data) => setDoctors(data))
       .finally(() => setLoading(false));
