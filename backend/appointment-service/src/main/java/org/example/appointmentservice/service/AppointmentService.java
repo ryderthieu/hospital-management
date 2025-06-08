@@ -2,6 +2,7 @@ package org.example.appointmentservice.service;
 
 import org.example.appointmentservice.dto.AppointmentDto;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface AppointmentService {
@@ -16,4 +17,8 @@ public interface AppointmentService {
     void deleteAppointment(Integer appointmentId);
 
     List<AppointmentDto> getAppointmentsByDoctorId(Integer doctorId);
+
+    List<AppointmentDto> getAppointmentsByDoctorIdAndDate(Integer doctorId, LocalDate date);
+
+    List<AppointmentDto> getTodayAppointmentsByDoctorId(Integer doctorId);
 }

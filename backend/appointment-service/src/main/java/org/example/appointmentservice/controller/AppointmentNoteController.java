@@ -15,34 +15,28 @@ import java.util.List;
 public class AppointmentNoteController {
     private final AppointmentNoteService appointmentNoteService;
 
-    @GetMapping("/{appointmentId}/appointment-notes")
-    public ResponseEntity<List<AppointmentNoteDto>> getAllAppointmentNotes(@PathVariable Integer appointmentId) {
-        return ResponseEntity.ok(appointmentNoteService.getAllAppointmentNotes(appointmentId));
+    @GetMapping("/{appointmentId}/notes")
+    public ResponseEntity<List<AppointmentNoteDto>> getNotesByAppointmentId(@PathVariable Integer appointmentId) {
+        return ResponseEntity.ok(appointmentNoteService.getNotesByAppointmentId(appointmentId));
     }
 
-    @GetMapping("/{appointmentId}/appointment-notes/{noteId}")
-    public ResponseEntity<AppointmentNoteDto> getAppointmentNoteById(@PathVariable Integer noteId,
-                                                                     @PathVariable Integer appointmentId) {
-        return ResponseEntity.ok(appointmentNoteService.getAppointmentNoteById(noteId, appointmentId));
+    @PostMapping("/{appointmentId}/notes")
+    public ResponseEntity<AppointmentNoteDto> createNote(
+            @PathVariable Integer appointmentId,
+            @RequestBody @Valid AppointmentNoteDto noteDto) {
+        return ResponseEntity.ok(appointmentNoteService.createNote(appointmentId, noteDto));
     }
 
-    @PostMapping("/{appointmentId}/appointment-notes")
-    public ResponseEntity<AppointmentNoteDto> createAppointmentNote(@PathVariable Integer appointmentId,
-                                                                    @RequestBody @Valid AppointmentNoteDto appointmentNoteDto) {
-        return ResponseEntity.ok(appointmentNoteService.createAppointmentNote(appointmentId, appointmentNoteDto));
+    @PutMapping("/notes/{noteId}")
+    public ResponseEntity<AppointmentNoteDto> updateNote(
+            @PathVariable Integer noteId,
+            @RequestBody @Valid AppointmentNoteDto noteDto) {
+        return ResponseEntity.ok(appointmentNoteService.updateNote(noteId, noteDto));
     }
 
-    @PutMapping("/{appointmentId}/appointment-notes/{noteId}")
-    public ResponseEntity<AppointmentNoteDto> updateAppointmentNote(@PathVariable Integer appointmentId,
-                                                                    @PathVariable Integer noteId,
-                                                                    @RequestBody @Valid AppointmentNoteDto appointmentNoteDto) {
-        return ResponseEntity.ok(appointmentNoteService.updateAppointmentNote(appointmentId, noteId, appointmentNoteDto));
-    }
-
-    @DeleteMapping("/{appointmentId}/appointment-notes/{noteId}")
-    public ResponseEntity<String> deleteAppointmentNote(@PathVariable Integer noteId,
-                                                        @PathVariable Integer appointmentId) {
-        appointmentNoteService.deleteAppointmentNote(noteId, appointmentId);
-        return ResponseEntity.ok("Chú thích cuộc hẹn được xóa thành công");
+    @DeleteMapping("/notes/{noteId}")
+    public ResponseEntity<Void> deleteNote(@PathVariable Integer noteId) {
+        appointmentNoteService.deleteNote(noteId);
+        return ResponseEntity.ok().build();
     }
 }

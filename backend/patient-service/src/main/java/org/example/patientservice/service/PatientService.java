@@ -18,4 +18,6 @@ public interface PatientService {
     void deletePatient(Integer patientId);
 
     Optional<PatientDto> searchPatient(String identityNumber, String insuranceNumber, String fullName);
+
+    PatientDto getPatientByUserId(Integer userId);
 }

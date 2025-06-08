@@ -58,4 +58,9 @@ public class PatientController {
         Optional<PatientDto> patientDto = patientService.searchPatient(identityNumber, insuranceNumber, fullName);
         return patientDto.isPresent() ? ResponseEntity.ok(patientDto) : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
+
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<PatientDto> getPatientByUserId(@PathVariable Integer userId) {
+        return ResponseEntity.ok(patientService.getPatientByUserId(userId));
+    }
 }

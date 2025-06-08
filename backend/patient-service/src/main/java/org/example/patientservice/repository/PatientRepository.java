@@ -22,4 +22,6 @@ public interface PatientRepository extends JpaRepository<Patient, Integer> {
             String insuranceNumber,
             String fullName
     );
+
+    Optional<Patient> findByUserId(Integer userId);
 }
