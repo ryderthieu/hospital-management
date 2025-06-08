@@ -46,6 +46,8 @@ public class DoctorDto {
 
     private Integer departmentId;
 
+    private String departmentName;
+
     private String createdAt;
 
     public DoctorDto(Doctor doctor) {
@@ -61,6 +63,7 @@ public class DoctorDto {
         this.profileImage = doctor.getProfileImage();
         this.type = doctor.getType();
         this.departmentId = doctor.getDepartment().getDepartmentId();
+        this.departmentName = doctor.getDepartment().getDepartmentName();
         this.createdAt = doctor.getCreatedAt() != null ? doctor.getCreatedAt().toLocalDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null;
     }
 }

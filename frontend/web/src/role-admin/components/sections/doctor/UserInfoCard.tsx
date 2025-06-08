@@ -1,5 +1,5 @@
 "use client";
-
+import { format } from "date-fns";
 import React, { useEffect, useState } from "react";
 import { useModal } from "../../../hooks/useModal";
 import { Modal } from "../../ui/modal";
@@ -66,7 +66,11 @@ export default function UserInfoCard({
                           Giới tính
                         </p>
                         <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                          {doctorData.gender}
+                          {doctorData.gender === "MALE"
+                            ? "Nam"
+                            : doctorData.gender === "FEMALE"
+                            ? "Nữ"
+                            : "Khác"}
                         </p>
                       </div>
 
@@ -75,7 +79,34 @@ export default function UserInfoCard({
                           Ngày sinh
                         </p>
                         <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                          {doctorData.birthday}
+                          {format(new Date(doctorData.birthday), "dd-MM-yyyy")}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                          Địa chỉ
+                        </p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                          {doctorData.address}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                          Căn cước công dân
+                        </p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                          {doctorData.identityNumber}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                          Ngày tạo
+                        </p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                          {format(new Date(doctorData.createdAt), "dd-MM-yyyy")}
                         </p>
                       </div>
                     </>
@@ -166,9 +197,9 @@ export default function UserInfoCard({
                       <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                         Khoa trực thuộc
                       </p>
-                      {/* <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                        {doctorData.department.departmentName}
-                      </p> */}
+                      <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                        {doctorData.departmentName}
+                      </p>
                     </div>
 
                     <div>
@@ -185,7 +216,11 @@ export default function UserInfoCard({
                         Loại tài khoản
                       </p>
                       <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                        {doctorData.type}
+                        {doctorData.type === "SERVICE"
+                          ? "Khám dịch vụ"
+                          : doctorData.type === "EXAMINATION"
+                          ? "Khám thường"
+                          : "Khác"}
                       </p>
                     </div>
 
@@ -258,10 +293,6 @@ export default function UserInfoCard({
                   onChange={() => {}}
                 />
               </div>
-              {/* <div>
-                <Label>{doctorData ? "Tên" : "Last Name"}</Label>
-                <Input type="text" defaultValue={doctorData.lastName} />
-              </div> */}
 
               {doctorData && (
                 <>
