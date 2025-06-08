@@ -1,9 +1,10 @@
 export interface Department {
-  departmentId: number
-  departmentName: string
+  departmentId: number;
+  departmentName: string;
 }
 
 export interface Doctor {
+<<<<<<< HEAD
   doctorId: number
   userId: number
   identityNumber: string
@@ -14,22 +15,51 @@ export interface Doctor {
   academicDegree: "BS" | "BS_CKI" | "BS_CKII" | "THS_BS" | "TS_BS" | "PGS_TS_BS" | "GS_TS_BS"
   specialization: string
   type: "EXAMINATION" | "SERVICE"
-  department: Department
-  createdAt: string
+  department: Department;
+  profileImage?: string;
+  createdAt: string;
+=======
+  doctorId: number;
+  userId: number;
+  identityNumber: string;
+  fullName: string;
+  birthday: string;
+  gender: "MALE" | "FEMALE";
+  address: string;
+  academicDegree:
+    | "BS"
+    | "BS_CKI"
+    | "BS_CKII"
+    | "THS_BS"
+    | "TS_BS"
+    | "PGS_TS_BS"
+    | "GS_TS_BS";
+  specialization: string;
+  type: "EXAMINATION" | "SERVICE";
+  department: Department;
+  createdAt: string;
+>>>>>>> cc1c0d83dc8fb10d3d60a80e4047ffa2462300ad
 }
 
 export interface DoctorDto {
-  doctorId?: number
-  userId?: number
-  identityNumber: string
-  fullName: string
-  birthday: string
-  gender: "MALE" | "FEMALE" 
-  address: string
-  academicDegree: "BS" | "BS_CKI" | "BS_CKII" | "THS_BS" | "TS_BS" | "PGS_TS_BS" | "GS_TS_BS"
-  specialization: string
-  type: "EXAMINATION" | "SERVICE"
-  departmentId: number
+  doctorId?: number;
+  userId?: number;
+  identityNumber: string;
+  fullName: string;
+  birthday: string;
+  gender: "MALE" | "FEMALE";
+  address: string;
+  academicDegree:
+    | "BS"
+    | "BS_CKI"
+    | "BS_CKII"
+    | "THS_BS"
+    | "TS_BS"
+    | "PGS_TS_BS"
+    | "GS_TS_BS";
+  specialization: string;
+  type: "EXAMINATION" | "SERVICE";
+  departmentId: number;
 }
 
 // Academic degree labels for display
@@ -41,4 +71,4 @@ export const ACADEMIC_DEGREE_LABELS: Record<string, string> = {
   TS_BS: "TS.BS",
   PGS_TS_BS: "PGS.TS.BS",
   GS_TS_BS: "GS.TS.BS",
-}
+};

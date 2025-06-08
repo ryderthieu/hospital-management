@@ -2,7 +2,8 @@ package org.example.doctorservice.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.doctorservice.client.AppointmentServiceClient;
+// TODO: Fix AppointmentServiceClient import issue
+// import org.example.doctorservice.client.AppointmentServiceClient;
 import org.example.doctorservice.client.PatientServiceClient;
 import org.example.doctorservice.dto.AppointmentDto;
 import org.example.doctorservice.dto.DoctorDto;
@@ -24,7 +25,8 @@ import java.util.stream.Collectors;
 public class DoctorServiceImpl implements DoctorService {
     private final DoctorRepository doctorRepository;
     private final DepartmentRepository departmentRepository;
-    private final AppointmentServiceClient appointmentServiceClient;
+    // TODO: Fix AppointmentServiceClient dependency issue
+    // private final AppointmentServiceClient appointmentServiceClient;
     private final PatientServiceClient patientServiceClient;
 
     @Override

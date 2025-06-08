@@ -10,8 +10,8 @@ import { format } from "date-fns";
 import Badge from "../../ui/badge/Badge";
 import AppointmentCard from "./AppointmentCard";
 import { useState, useEffect } from "react";
-import { Patient, EmergencyContact } from "../../../../types/patient";
-import { patientService } from "../../../../services/patientService";
+import { patientService } from "../../../services/patientService";
+import { Patient, EmergencyContact } from "../../../types/patient";
 import { useParams } from "react-router-dom";
 
 export function MedicalRecordsContent() {

@@ -2,10 +2,9 @@ import { useParams } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 import { PatientDetailLayout } from "../../components/sections/patient";
 import ReturnButton from "../../components/ui/button/ReturnButton";
-import { Patient } from "../../../types/patient";
 import { useEffect, useState } from "react";
-import { patientService } from "../../../services/patientService";
-
+import { patientService } from "../../services/patientService";
+import { Patient } from "../../types/patient";
 export default function PatientDetail() {
   const { patientId } = useParams<{ patientId: string }>();
 

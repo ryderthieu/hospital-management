@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { patientService } from "../../../../services/patientService";
-import { Patient } from "../../../../types/patient";
 import SearchInput from "../../common/SearchInput";
 import DatePicker from "../appointments/DatePicker";
 import Badge from "../../ui/badge/Badge";
@@ -13,6 +11,8 @@ import {
   TableRow,
 } from "../../ui/table";
 import { DeleteConfirmationModal } from "../../ui/modal/DeleteConfirmationModal";
+import { patientService } from "../../../services/patientService";
+import { Patient } from "../../../types/patient";
 
 export default function PatientTable() {
   const inputRef = useRef<HTMLInputElement>(null);
