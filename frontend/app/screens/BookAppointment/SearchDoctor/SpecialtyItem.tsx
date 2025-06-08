@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, ImageSourcePropType } from 'react-native';
 import { Specialty } from '../types';
 import { colors } from '../../../styles/globalStyles';
+import { useFont, fontFamily } from '../../../context/FontContext';
 
 interface SpecialtyItemProps {
   specialty: Specialty;
@@ -9,18 +10,27 @@ interface SpecialtyItemProps {
 }
 
 export const SpecialtyItem: React.FC<SpecialtyItemProps> = ({ specialty, onPress }) => {
-  const Icon = specialty.icon
+  const { fontsLoaded } = useFont();
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <TouchableOpacity style={styles.specialtyItem} onPress={onPress}>
       <View style={styles.specialtyIconContainer}>
-        {specialty.iconType === 'svg' && typeof specialty.icon === 'function' ? (
-            <specialty.icon width={38} height={38} />
-          ) : (
-            <Image source={specialty.icon as ImageSourcePropType}  style={styles.specialtyIcon} />
-          )}
+        <Image source={specialty.icon} style={styles.specialtyIcon} />
       </View>
-      <Text style={styles.specialtyName}>{specialty.name}</Text>
-      <Text style={styles.doctorCount}>{specialty.count}</Text>
+      <Text
+        style={[styles.specialtyName, { fontFamily: fontFamily.bold }]}
+        numberOfLines={1}
+        ellipsizeMode="tail"
+      >
+        {specialty.name}
+      </Text>
+      <Text style={[styles.doctorCount, { fontFamily: fontFamily.regular }]}>
+        {specialty.doctorCount > 0 ? `${specialty.doctorCount} bác sĩ` : 'Không có bác sĩ'}
+      </Text>
     </TouchableOpacity>
   );
 };
@@ -31,7 +41,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginHorizontal: 8,
-    marginBottom: 16, 
+    marginBottom: 16,
     width: '45%',
     alignItems: 'center',
     shadowColor: colors.base900,
@@ -58,6 +68,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.text,
     marginBottom: 4,
+    textAlign: 'center',
   },
   doctorCount: {
     fontSize: 14,

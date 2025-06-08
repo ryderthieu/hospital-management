@@ -1,29 +1,36 @@
 "use client"
 
-import type React from "react"
-import { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import { View, Text, TouchableOpacity, FlatList, ScrollView, StyleSheet, SafeAreaView, Alert } from "react-native"
-import type { StackNavigationProp } from "@react-navigation/stack"
-import type { RouteProp } from "@react-navigation/native"
+import { StackNavigationProp } from "@react-navigation/stack"
+import { RouteProp } from "@react-navigation/native"
 import { Ionicons } from "@expo/vector-icons"
-import type { RootStackParamList, DateOption, Doctor } from "../types"
+import { BookAppointmentStackParamList, DateOption, Doctor, DoctorDto } from "../types"
 import { globalStyles, colors } from "../../../styles/globalStyles"
 import Header from "../../../components/Header"
 import { DateCard } from "./DateCard"
 import { TimeSlot } from "./TimeSlot"
 import { SimilarDoctorCard } from "./SimilarDoctorCard"
 import { DoctorHeader } from "./DoctorHeader"
-import { getSimilarDoctors, generateRealTimeDates, generateTimeSlots } from "../data"
+import { generateRealTimeDates, generateTimeSlots } from "../data"
 import { useFont, fontFamily } from "../../../context/FontContext"
 import Sun from "../../../assets/images/ThoiGian/sun.svg"
 import Moon from "../../../assets/images/ThoiGian/moon.svg"
+import API from "../../../services/api"
 
 type BookAppointmentScreenProps = {
-  navigation: StackNavigationProp<RootStackParamList, "BookAppointment">
-  route: RouteProp<RootStackParamList, "BookAppointment">
+  navigation: StackNavigationProp<BookAppointmentStackParamList, "BookAppointment">
+  route: RouteProp<BookAppointmentStackParamList, "BookAppointment">
 }
 
 type DayPart = "morning" | "afternoon"
+
+interface TimeSlotData {
+  id: string
+  time: string
+  available: boolean
+  price: string
+}
 
 export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ navigation, route }) => {
   const { fontsLoaded } = useFont()
@@ -34,10 +41,18 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
   const [selectedDayPart, setSelectedDayPart] = useState<DayPart>("morning")
   const [hasInsurance, setHasInsurance] = useState<boolean>(true)
   const [favorites, setFavorites] = useState<string[]>([])
+  const [similarDoctors, setSimilarDoctors] = useState<Doctor[]>([])
 
+  // Debug log for route.params and doctor
+  console.log('route.params:', route.params)
+  console.log('doctor:', doctor)
+
+  // Generate dates statically
   const dates = useMemo(() => {
     try {
+      console.log('Generating dates...')
       const generatedDates = generateRealTimeDates(7) || []
+      console.log('Generated dates:', generatedDates)
       if (!selectedDate && generatedDates.length > 0) {
         setSelectedDate(generatedDates[0].id)
       }
@@ -48,55 +63,84 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
     }
   }, [selectedDate])
 
+  // Generate time slots statically
   const timeSlots = useMemo(() => {
     if (!selectedDate) return []
-
     try {
+      console.log('Generating time slots for date:', selectedDate)
       const slots = generateTimeSlots(selectedDate)
+      console.log('Generated slots:', slots)
       if (!slots || !Array.isArray(slots)) {
         console.warn("generateTimeSlots returned invalid data:", slots)
         return []
       }
-
-      return slots.filter((slot) => {
+      const filteredSlots = slots.filter((slot) => {
         if (!slot || !slot.time) return false
-
         const timeParts = slot.time.split(":")
         if (timeParts.length < 2) return false
-
         const hour = Number.parseInt(timeParts[0])
         const isPM = slot.time.includes("PM")
         const hour24 = isPM && hour !== 12 ? hour + 12 : hour === 12 && !isPM ? 0 : hour
-
-        if (selectedDayPart === "morning") {
-          return hour24 >= 8 && hour24 < 12
-        } else {
-          return hour24 >= 13 && hour24 <= 17
-        }
+        return selectedDayPart === "morning" ? hour24 >= 8 && hour24 < 12 : hour24 >= 13 && hour24 <= 17
       })
+      console.log('Filtered slots:', filteredSlots)
+      return filteredSlots
     } catch (error) {
       console.error("Error generating time slots:", error)
       return []
     }
   }, [selectedDate, selectedDayPart])
 
-  const similarDoctors = useMemo(() => {
-    try {
-      if (!doctor || !doctor.id || !doctor.specialty) {
-        return []
-      }
-      const similar = getSimilarDoctors(doctor.id, doctor.specialty, 4)
-      return Array.isArray(similar) ? similar : []
-    } catch (error) {
-      console.error("Error getting similar doctors:", error)
-      return []
+  // Fetch similar doctors based on departmentId
+  useEffect(() => {
+    if (!doctor?.id || !doctor?.departmentId) {
+      console.log('Skipping fetchSimilarDoctors: doctor or departmentId is undefined');
+      return;
     }
-  }, [doctor])
+
+    const fetchSimilarDoctors = async () => {
+      try {
+        console.log('Fetching similar doctors for departmentId:', doctor.departmentId);
+        const response = await API.get<DoctorDto[]>(`/doctors/departments/${doctor.departmentId}/doctors`);
+        console.log('Similar doctors response:', response.data);
+        const allDoctors = response.data.map((dto) => ({
+          id: dto.doctorId.toString(),
+          name: [dto.academicDegree, dto.fullName].filter(Boolean).join(" ").trim() || "Bác sĩ chưa có tên",
+          specialty: dto.specialization || doctor.specialty,
+          departmentId: dto.departmentId,
+          image: { uri: "https://via.placeholder.com/80" },
+          price: doctor.price || "200,000 VNĐ",
+          room: null,
+          rating: 0,
+          experience: null,
+          isOnline: false,
+          joinDate: null,
+        }));
+
+        const filteredDoctors = allDoctors.filter((d) => d.id !== doctor.id);
+        const shuffledDoctors = filteredDoctors.sort(() => Math.random() - 0.5);
+        setSimilarDoctors(shuffledDoctors.slice(0, 4));
+      } catch (error: any) {
+        console.error("Error fetching similar doctors:", error.message, error.response?.data);
+        Alert.alert(
+          "Lỗi",
+          error.response?.data?.message || "Không thể tải bác sĩ tương tự. Vui lòng thử lại sau.",
+          [
+            { text: "OK" },
+            { text: "Thử lại", onPress: () => fetchSimilarDoctors() },
+          ],
+        );
+        setSimilarDoctors([]);
+      }
+    };
+
+    fetchSimilarDoctors();
+  }, [doctor?.id, doctor?.departmentId]);
 
   const handleDateSelect = (date: DateOption) => {
     if (!date || date.disabled) return
     setSelectedDate(date.id)
-    setSelectedTime("") 
+    setSelectedTime("")
   }
 
   const handleTimeSelect = (time: string) => {
@@ -105,7 +149,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
 
   const handleDayPartSelect = (dayPart: DayPart) => {
     setSelectedDayPart(dayPart)
-    setSelectedTime("") 
+    setSelectedTime("")
   }
 
   const handleSimilarDoctorPress = (selectedDoctor: Doctor) => {
@@ -145,12 +189,12 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
         isSelected={selectedDate === item.id}
         onPress={() => handleDateSelect(item)}
         showAvailability={true}
-        availableSlots={Math.floor(Math.random() * 8) + 1} 
+        availableSlots={Math.floor(Math.random() * 8) + 1}
       />
     )
   }
 
-  const renderTimeSlot = (slot: any) => {
+  const renderTimeSlot = (slot: TimeSlotData) => {
     if (!slot) return null
     return (
       <TimeSlot
@@ -166,11 +210,31 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
 
   const renderSimilarDoctor = ({ item }: { item: Doctor }) => {
     if (!item) return null
-    return <SimilarDoctorCard doctor={item} onPress={() => handleSimilarDoctorPress(item)} showRating={true} />
+    return (
+      <SimilarDoctorCard
+        doctor={item}
+        onPress={() => handleSimilarDoctorPress(item)}
+        showRating={true}
+      />
+    )
   }
 
   if (!fontsLoaded || !doctor) {
-    return null
+    console.log('fontsLoaded:', fontsLoaded, 'doctor:', doctor)
+    return (
+      <SafeAreaView style={globalStyles.container}>
+        <Header title="Chọn thời gian khám" showBack={true} onBackPress={() => navigation.goBack()} />
+        <View style={styles.loadingContainer}>
+          {!fontsLoaded ? (
+            <Text style={[styles.loadingText, { fontFamily: fontFamily.regular }]}>Đang tải font...</Text>
+          ) : (
+            <Text style={[styles.loadingText, { fontFamily: fontFamily.regular }]}>
+              Lỗi: Không tìm thấy thông tin bác sĩ. Vui lòng thử lại.
+            </Text>
+          )}
+        </View>
+      </SafeAreaView>
+    )
   }
 
   return (
@@ -182,21 +246,18 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
         contentContainerStyle={styles.bookingContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Doctor Information */}
         <DoctorHeader
           doctor={doctor}
           showFavorite={true}
           isFavorite={favorites.includes(doctor.id)}
           onFavoritePress={() => handleFavoritePress(doctor.id)}
           showStatus={true}
-          isOnline={true}
+          isOnline={doctor.isOnline || true}
         />
 
-        {/* Date and Time Selection */}
         <View style={styles.dateSelectionContainer}>
           <Text style={[styles.selectionTitle, { fontFamily: fontFamily.bold }]}>CHỌN THỜI GIAN</Text>
 
-          {/* Date Selection */}
           {dates.length > 0 && (
             <FlatList
               data={dates}
@@ -208,7 +269,6 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
             />
           )}
 
-          {/* Day Part Selection */}
           <View style={styles.dayPartSelection}>
             <TouchableOpacity
               style={[styles.dayPartButton, selectedDayPart === "morning" && styles.selectedDayPartButton]}
@@ -245,8 +305,9 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
             </TouchableOpacity>
           </View>
 
-          {/* Time Slot Grid */}
-          <View style={styles.timeSlotGrid}>{timeSlots.length > 0 ? timeSlots.map(renderTimeSlot) : null}</View>
+          <View style={styles.timeSlotGrid}>
+            {timeSlots.length > 0 ? timeSlots.map(renderTimeSlot) : null}
+          </View>
 
           {timeSlots.length === 0 && selectedDate && (
             <View style={styles.noSlotsContainer}>
@@ -261,7 +322,6 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
           )}
         </View>
 
-        {/* Insurance Selection */}
         <View style={styles.insuranceContainer}>
           <Text style={[styles.insuranceLabel, { fontFamily: fontFamily.bold }]}>Bảo hiểm Y Tế</Text>
           <View style={styles.insuranceOptions}>
@@ -287,7 +347,6 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
           )}
         </View>
 
-        {/* Similar Doctors */}
         {similarDoctors.length > 0 && (
           <View style={styles.similarDoctorsContainer}>
             <Text style={[styles.similarDoctorsTitle, { fontFamily: fontFamily.bold }]}>
@@ -304,7 +363,6 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
           </View>
         )}
 
-        {/* Continue Button */}
         <TouchableOpacity
           style={[globalStyles.button, (!selectedDate || !selectedTime) && styles.disabledButton]}
           onPress={handleContinue}
@@ -326,153 +384,52 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
   },
-  selectionTitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 16,
-    letterSpacing: 0.5,
-  },
-  dateList: {
-    paddingVertical: 8,
-  },
-  dayPartSelection: {
-    flexDirection: "row",
-    gap: 12,
-    marginVertical: 16,
-  },
+  selectionTitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 16, letterSpacing: 0.5 },
+  dateList: { paddingVertical: 8 },
+  dayPartSelection: { flexDirection: "row", gap: 12, marginVertical: 16 },
   dayPartButton: {
     flexDirection: "row",
-    gap: 12,
+    gap: 8,
     flex: 1,
     alignItems: "center",
     backgroundColor: colors.white,
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    borderRadius: 6,
+    padding: 12,
     borderWidth: 1,
     borderColor: colors.border,
     shadowColor: colors.base900,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 5,
     elevation: 2,
   },
-  selectedDayPartButton: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  dayPartText: {
-    fontSize: 16,
-    color: colors.text,
-    flex: 1,
-  },
-  selectedDayPartText: {
-    color: colors.white,
-  },
-  timeSlotGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  noSlotsContainer: {
-    alignItems: "center",
-    paddingVertical: 32,
-  },
-  noSlotsText: {
-    fontSize: 16,
-    color: colors.text,
-    marginTop: 16,
-    textAlign: "center",
-  },
-  noSlotsSubtext: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginTop: 8,
-    textAlign: "center",
-  },
-  insuranceContainer: {
-    padding: 16,
-    marginBottom: 16,
-  },
-  insuranceLabel: {
-    fontSize: 16,
-    color: colors.text,
-    marginBottom: 16,
-  },
-  insuranceOptions: {
-    flexDirection: "row",
-    gap: 24,
-  },
-  insuranceOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
+  selectedDayPartButton: { backgroundColor: colors.primary, borderColor: colors.primary },
+  dayPartText: { fontSize: 16, color: colors.text, flex: 1 },
+  selectedDayPartText: { color: colors.white },
+  timeSlotGrid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", gap: 8 },
+  noSlotsContainer: { alignItems: "center", paddingVertical: 24 },
+  noSlotsText: { fontSize: 16, color: colors.text, marginTop: 8, textAlign: "center" },
+  noSlotsSubtext: { fontSize: 14, color: colors.textSecondary, marginTop: 4, textAlign: "center" },
+  insuranceContainer: { padding: 16, marginBottom: 16 },
+  insuranceLabel: { fontSize: 16, color: colors.text, marginBottom: 16 },
+  insuranceOptions: { flexDirection: "row", gap: 24 },
+  insuranceOption: { flexDirection: "row", alignItems: "center", gap: 8 },
   checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
+    width: 20,
+    height: 20,
+    borderRadius: 4,
     borderWidth: 2,
     borderColor: colors.border,
     justifyContent: "center",
     alignItems: "center",
   },
-  checkedBox: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  insuranceText: {
-    fontSize: 16,
-    color: colors.text,
-  },
-  insuranceNote: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 12,
-    fontStyle: "italic",
-  },
-  similarDoctorsContainer: {
-    padding: 16,
-    marginBottom: 16,
-  },
-  similarDoctorsTitle: {
-    fontSize: 16,
-    color: colors.text,
-    marginBottom: 16,
-  },
-  similarDoctorsList: {
-    paddingVertical: 8,
-  },
-  summaryContainer: {
-    padding: 16,
-    marginBottom: 16,
-  },
-  summaryTitle: {
-    fontSize: 16,
-    color: colors.text,
-    marginBottom: 16,
-  },
-  summaryItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  summaryLabel: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  summaryValue: {
-    fontSize: 14,
-    color: colors.text,
-    flex: 1,
-    textAlign: "right",
-  },
-  summaryPrice: {
-    fontSize: 14,
-    color: colors.primary,
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-})
+  checkedBox: { backgroundColor: colors.primary, borderColor: colors.primary },
+  insuranceText: { fontSize: 16, color: colors.text },
+  insuranceNote: { fontSize: 12, color: colors.textSecondary, marginTop: 8, fontStyle: "italic" },
+  similarDoctorsContainer: { padding: 16, marginBottom: 16 },
+  similarDoctorsTitle: { fontSize: 16, color: colors.text, marginBottom: 12 },
+  similarDoctorsList: { paddingVertical: 8 },
+  disabledButton: { opacity: 0.5 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { fontSize: 16, color: colors.textSecondary },
+});
