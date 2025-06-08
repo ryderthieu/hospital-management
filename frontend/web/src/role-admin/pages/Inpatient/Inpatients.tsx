@@ -1,6 +1,6 @@
 import PageMeta from "../../components/common/PageMeta";
 import AddButton from "../../components/ui/button/AddButton";
-import MedicineTable from "../Medicines/MedicineTable";
+import MedicineTable from "../../components/sections/medicines/MedicineTable";
 
 
 export default function Inpatient() {

@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import AdminApp from "./role-admin/AdminApp";
 import DoctorApp from "./role-doctor/DoctorApp";
 import SignIn from "./role-doctor/pages/auth/SignIn";
