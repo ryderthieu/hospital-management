@@ -1,11 +1,9 @@
-// AccountInfoScreen.tsx
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert } from "react-native";
+import React from "react";
+import { View, Text, StyleSheet, SafeAreaView, ScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { fontFamily } from "../../../context/FontContext";
+import { useAuth } from "../../../context/AuthContext";
 import Header from "../../../components/Header";
-import API from "../../../services/api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { AccountInfoScreenNavigationProp } from "../../../navigation/types";
 
 interface PatientData {
@@ -23,36 +21,23 @@ interface PatientData {
   emergencyContactDtos: { phone: string; name: string; relationship: string }[];
 }
 
+interface UserData {
+  userId: number;
+  phone: string;
+  email: string;
+}
+
 const AccountInfoScreen: React.FC = () => {
   const navigation = useNavigation<AccountInfoScreenNavigationProp>();
-  const [patientData, setPatientData] = useState<PatientData | null>(null);
-
-  useEffect(() => {
-    const fetchPatientData = async () => {
-      try {
-        const patientId = await AsyncStorage.getItem('patientId');
-        if (!patientId) {
-          Alert.alert('Lỗi', 'Không tìm thấy patientId. Vui lòng đăng nhập lại.');
-          return;
-        }
-
-        const response = await API.get<PatientData>(`/patients/${patientId}`);
-        setPatientData(response.data);
-      } catch (error: any) {
-        const errorMessage = error.response?.data?.message || 'Không thể tải thông tin bệnh nhân. Vui lòng thử lại.';
-        Alert.alert('Lỗi', errorMessage);
-        console.error('Fetch patient error:', error.message, error.response?.data);
-      }
-    };
-
-    fetchPatientData();
-  }, []);
+  const { patient, user } = useAuth();
 
   // Info section component
-  const InfoItem = ({ label, value }: { label: string; value: string }) => (
+  const InfoItem = ({ label, value }: { label: string; value: string | null | undefined }) => (
     <View style={styles.infoItem}>
       <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
+      <Text style={[styles.infoValue, !value && styles.placeholderText]}>
+        {value || "Chưa cập nhật"}
+      </Text>
     </View>
   );
 
@@ -68,7 +53,7 @@ const AccountInfoScreen: React.FC = () => {
     navigation.navigate("EditAccountInfo");
   };
 
-  if (!patientData) {
+  if (!patient || !user) {
     return (
       <SafeAreaView style={styles.container}>
         <Header
@@ -77,7 +62,7 @@ const AccountInfoScreen: React.FC = () => {
           onBackPress={() => navigation.goBack()}
         />
         <View style={styles.scrollView}>
-          <Text>Đang tải dữ liệu...</Text>
+          <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
         </View>
       </SafeAreaView>
     );
@@ -98,51 +83,48 @@ const AccountInfoScreen: React.FC = () => {
         {/* Personal Information Section */}
         <Section title="Thông tin cá nhân">
           <View style={styles.infoRow}>
-            <InfoItem label="Mã bệnh nhân" value={patientData.patientId.toString()} />
-            <InfoItem label="CCCD/CMND" value={patientData.identityNumber || ""} />
+            <InfoItem label="Mã bệnh nhân" value={patient.patientId.toString()} />
+            <InfoItem label="CCCD/CMND" value={patient.identityNumber} />
           </View>
           <View style={styles.infoRow}>
-            <InfoItem label="Họ tên" value={patientData.fullName} />
-            <InfoItem label="Giới tính" value={patientData.gender || ""} />
+            <InfoItem label="Họ tên" value={patient.fullName} />
+            <InfoItem label="Giới tính" value={patient.gender} />
           </View>
           <View style={styles.infoRow}>
-            <InfoItem label="Ngày sinh" value={patientData.birthday || ""} />
+            <InfoItem label="Ngày sinh" value={patient.birthday} />
           </View>
         </Section>
 
         {/* Contact Information Section */}
         <Section title="Liên hệ">
           <View style={styles.infoRow}>
-            <InfoItem label="Số điện thoại" value={patientData.phone || ""} />
-            <InfoItem label="Email" value={patientData.email || ""} />
-          </View>
-          <View style={styles.infoRow}>
-            <InfoItem label="Tỉnh/Thành phố" value={patientData.province || ""} />
-            <InfoItem label="Quận/Huyện" value={patientData.district || ""} />
-          </View>
-          <View style={styles.infoRow}>
-            <InfoItem label="Xã/Phường" value={patientData.ward || ""} />
+            <InfoItem label="Số điện thoại" value={user.phone} />
+            <InfoItem label="Email" value={patient.email} />
           </View>
           <View style={styles.fullWidthItem}>
             <Text style={styles.infoLabel}>Địa chỉ</Text>
-            <Text style={styles.infoValue}>{patientData.address || ""}</Text>
+            <Text style={[styles.infoValue, !patient.address && styles.placeholderText]}>
+              {patient.address || "Chưa cập nhật"}
+            </Text>
           </View>
         </Section>
 
         {/* Emergency Contact Section */}
         <Section title="Liên hệ khẩn cấp">
-          {patientData.emergencyContactDtos?.length > 0 && (
+          {patient.emergencyContactDtos?.length > 0 ? (
             <>
               <View style={styles.infoRow}>
-                <InfoItem label="Số điện thoại" value={patientData.emergencyContactDtos[0].phone || ""} />
+                <InfoItem label="Số điện thoại" value={patient.emergencyContactDtos[0].phone} />
               </View>
               <View style={styles.infoRow}>
-                <InfoItem label="Họ tên" value={patientData.emergencyContactDtos[0].name || ""} />
+                <InfoItem label="Họ tên" value={patient.emergencyContactDtos[0].name} />
               </View>
               <View style={styles.infoRow}>
-                <InfoItem label="Mối quan hệ" value={patientData.emergencyContactDtos[0].relationship || ""} />
+                <InfoItem label="Mối quan hệ" value={patient.emergencyContactDtos[0].relationship} />
               </View>
             </>
+          ) : (
+            <Text style={styles.placeholderText}>Chưa có thông tin liên hệ khẩn cấp</Text>
           )}
         </Section>
       </ScrollView>
@@ -157,49 +139,62 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    padding: 16,
+    padding: 20, // Tăng padding
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 32, // Tăng khoảng cách giữa các section
   },
   sectionTitle: {
     fontFamily: fontFamily.medium,
     fontSize: 18,
     color: "#6B7280",
-    marginBottom: 12,
+    marginBottom: 16,
   },
   sectionContent: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
-    padding: 16,
+    padding: 20, // Tăng padding trong section
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 20, // Tăng khoảng cách giữa các hàng
   },
   infoItem: {
     width: "48%",
   },
   fullWidthItem: {
     width: "100%",
-    marginBottom: 16,
+    marginBottom: 20,
   },
   infoLabel: {
     fontFamily: fontFamily.regular,
     fontSize: 14,
     color: "#9CA3AF",
-    marginBottom: 4,
+    marginBottom: 8,
   },
   infoValue: {
     fontFamily: fontFamily.bold,
     fontSize: 16,
     color: "#111827",
+  },
+  placeholderText: {
+    fontFamily: fontFamily.regular,
+    fontSize: 16,
+    color: "#9CA3AF",
+    fontStyle: "italic",
+  },
+  loadingText: {
+    fontFamily: fontFamily.regular,
+    fontSize: 16,
+    color: "#6B7280",
+    textAlign: "center",
+    marginTop: 20,
   },
 });
 

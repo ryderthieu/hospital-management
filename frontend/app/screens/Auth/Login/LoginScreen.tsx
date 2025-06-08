@@ -1,5 +1,4 @@
-// LoginScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, SafeAreaView, StatusBar, ScrollView, Alert } from 'react-native';
 import { useAuth } from '../../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
@@ -17,12 +16,46 @@ type RootStackParamList = {
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+interface UserData {
+  userId: number;
+  phone: string;
+  email: string;
+}
+
+interface PatientData {
+  patientId: number;
+  userId: number;
+  identityNumber: string;
+  insuranceNumber: string;
+  fullName: string;
+  birthday: string;
+  gender: string;
+  address: string;
+  phone: string;
+  email: string;
+  province: string;
+  district: string;
+  ward: string;
+  emergencyContactDtos: { phone: string; name: string; relationship: string }[];
+}
+
 export default function LoginScreen() {
-  const { setLoggedIn } = useAuth();
+  const { setLoggedIn, setUser, setPatient } = useAuth();
   const navigation = useNavigation<NavigationProp>();
 
   const [phone, setPhone] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (showSuccessAlert) {
+      const timer = setTimeout(() => {
+        setShowSuccessAlert(false);
+        console.log('Success alert auto-dismissed');
+      }, 2000); // Tự đóng sau 2 giây
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessAlert]);
 
   const handleLogin = async () => {
     if (!phone || !password) {
@@ -39,25 +72,51 @@ export default function LoginScreen() {
     }
 
     try {
-      const response = await API.post<{ token: string, patientId: number }>('/users/auth/login', {
+      console.log('Calling login API with phone:', formattedPhone);
+      const loginResponse = await API.post<{ token: string }>('/users/auth/login', {
         phone: formattedPhone,
         password,
       });
 
-      const { token, patientId } = response.data;
+      const { token } = loginResponse.data;
+      console.log('Login success, token:', token);
 
-      if (token && patientId) {
+      if (token) {
         await AsyncStorage.setItem('token', token);
-        await AsyncStorage.setItem('patientId', patientId.toString());
-        setLoggedIn(true);
-        Alert.alert('Thành công', 'Đăng nhập thành công');
+
+        console.log('Calling /users/me API');
+        const userResponse = await API.get<UserData>('/users/me');
+        const userData = userResponse.data;
+        console.log('User data:', userData);
+
+        if (userData.userId) {
+          await AsyncStorage.setItem('user', JSON.stringify(userData));
+          setUser(userData);
+
+          console.log('Calling /patients/users/', userData.userId);
+          const patientResponse = await API.get<PatientData>(`/patients/users/${userData.userId}`);
+          const patientData = patientResponse.data;
+          console.log('Patient data:', patientData);
+
+          if (patientData.patientId) {
+            await AsyncStorage.setItem('patient', JSON.stringify(patientData));
+            setPatient(patientData);
+            console.log('Setting loggedIn to true');
+            setLoggedIn(true);
+            setShowSuccessAlert(true); // Kích hoạt alert
+          } else {
+            Alert.alert('Lỗi', 'Không tìm thấy thông tin bệnh nhân cho tài khoản này');
+          }
+        } else {
+          Alert.alert('Lỗi', 'Không nhận được userId từ server');
+        }
       } else {
-        Alert.alert('Lỗi', 'Không nhận được token hoặc patientId từ server');
+        Alert.alert('Lỗi', 'Không nhận được token từ server');
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra kết nối hoặc thử lại.';
-      Alert.alert('Lỗi', errorMessage);
       console.error('Login error:', error.message, error.response?.data);
+      Alert.alert('Lỗi', errorMessage);
     }
   };
 
@@ -120,6 +179,17 @@ export default function LoginScreen() {
           />
         </View>
       </ScrollView>
+      {showSuccessAlert && (
+        Alert.alert('Thành công', 'Đăng nhập thành công', [
+          {
+            text: 'OK',
+            onPress: () => {
+              setShowSuccessAlert(false);
+              console.log('Alert OK pressed');
+            },
+          },
+        ])
+      )}
     </SafeAreaView>
   );
 }
