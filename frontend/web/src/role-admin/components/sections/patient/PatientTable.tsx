@@ -20,7 +20,7 @@ export default function PatientTable() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setModalOpen] = useState(false);
-  const [patientToDelete, setPatientToDelete] = useState<string | null>(null);
+  const [patientToDelete, setPatientToDelete] = useState<number | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -34,23 +34,22 @@ export default function PatientTable() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleView = (patientId: Number) => {
+  const handleView = (patientId: number) => {
     navigate(`/admin/patients/${patientId}`);
   };
 
-  const handleDelete = (patientId: Number) => {
-    setPatientToDelete(patientId.toString());
+  const handleDelete = (patientId: number) => {
+    setPatientToDelete(patientId);
     setModalOpen(true);
   };
 
   const handleConfirmDelete = () => {
+    if (patientToDelete === null) return;
     patientService
-      .deletePatient(patientToDelete!)
+      .deletePatient(patientToDelete)
       .then(() => {
         setPatients((prev) =>
-          prev.filter(
-            (patient) => patient.patientId.toString() !== patientToDelete
-          )
+          prev.filter((patient) => patient.patientId !== patientToDelete)
         );
       })
       .catch((err) => {

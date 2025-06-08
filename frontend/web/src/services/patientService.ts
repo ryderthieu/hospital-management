@@ -1,5 +1,10 @@
 import { api } from "./api";
-import { Patient, PatientDto } from "../types/patient";
+import {
+  Patient,
+  PatientDto,
+  EmergencyContact,
+  EmergencyContactDto,
+} from "../types/patient";
 
 export const patientService = {
   async getAllPatients(): Promise<Patient[]> {
@@ -7,7 +12,7 @@ export const patientService = {
     return response.data;
   },
 
-  async getPatientById(patientId: string): Promise<Patient> {
+  async getPatientById(patientId: number): Promise<Patient> {
     const response = await api.get<Patient>(`/patients/${patientId}`);
     return response.data;
   },
@@ -28,7 +33,7 @@ export const patientService = {
     return response.data;
   },
 
-  async deletePatient(patientId: string): Promise<string> {
+  async deletePatient(patientId: number): Promise<string> {
     const response = await api.delete<string>(`/patients/${patientId}`);
     return response.data;
   },
@@ -40,6 +45,14 @@ export const patientService = {
   }): Promise<Patient | null> {
     const query = new URLSearchParams(params).toString();
     const response = await api.get<Patient | null>(`/patients/search?${query}`);
+    return response.data;
+  },
+
+  // Emergency Contacts
+  async getEmergencyContacts(patientId: number): Promise<EmergencyContact[]> {
+    const response = await api.get<EmergencyContact[]>(
+      `/patients/${patientId}/contacts`
+    );
     return response.data;
   },
 };
