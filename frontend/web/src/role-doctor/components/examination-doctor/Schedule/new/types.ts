@@ -2,10 +2,12 @@ export interface Schedule {
   id: string
   title: "Khám bệnh"
   shift: string
-  startTime: string // Format: "HH:mm"
-  endTime: string // Format: "HH:mm"
-  date: Date
-  roomId: number
+  startTime: string // Format: "HH:mm:ss" from backend
+  endTime: string // Format: "HH:mm:ss" from backend
+  date: string // Format: "YYYY-MM-DD" from backend
+  roomNote: string
+  floor: string
+  building: string
 }
 
 export interface CalendarDay {
