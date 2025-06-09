@@ -1,32 +1,12 @@
 import { StyleSheet, View, Text, SafeAreaView, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import type { RootStackParamList, Appointment } from "./type";
+import type { RootStackParamList, Appointment, AppointmentResponseDto } from "./type";
 import { useFont, fontFamily } from "../../context/FontContext";
 import { useState, useEffect } from "react";
 import API from "../../services/api";
 
 type AppointmentDetailScreenRouteProp = RouteProp<RootStackParamList, "AppointmentDetail">;
-
-interface AppointmentResponseDto {
-  appointmentId: number;
-  doctorId: number;
-  schedule: { scheduleId: number };
-  symptoms: string;
-  number: number;
-  slotStart: string;
-  slotEnd: string;
-  appointmentStatus: string;
-  createdAt: string;
-  patientInfo: { patientId: number; fullName: string; birthday: string; gender: string; address: string } | null;
-  appointmentNotes: any[];
-  doctorInfo?: {
-    fullName: string;
-    academicDegree: string;
-    specialization: string;
-    departmentId: number;
-  };
-}
 
 const AppointmentDetailScreen = () => {
   const { fontsLoaded } = useFont();
@@ -55,7 +35,7 @@ const AppointmentDetailScreen = () => {
           doctorInfo = doctorResponse.data;
         }
 
-        const scheduleResponse = await API.get(`/doctors/schedules/${response.data.schedule.scheduleId}`);
+        const scheduleResponse = await API.get(`/doctors/schedules/${response.data.schedule?.scheduleId || ""}`);
         const schedule = scheduleResponse.data;
 
         const workDate = new Date(response.data.createdAt).toLocaleDateString("vi-VN", {
@@ -80,7 +60,7 @@ const AppointmentDetailScreen = () => {
           patientBirthday: response.data.patientInfo?.birthday || "Không xác định",
           patientGender: response.data.patientInfo?.gender || "Không xác định",
           patientLocation: response.data.patientInfo?.address || "Không xác định",
-          appointmentFee: "150.000 VND", // TODO: Fetch from API or configuration
+          appointmentFee: "150.000 VND",
           codes: {
             appointmentCode: response.data.appointmentId.toString(),
             transactionCode: `TX${response.data.appointmentId}`,
@@ -139,9 +119,9 @@ const AppointmentDetailScreen = () => {
           <Text style={styles.cardTitle}>PHIẾU KHÁM BỆNH</Text>
 
           <View style={styles.codeSection}>
-            <Text style={styles.codeText}>Mã phiếu: {appointment.codes.appointmentCode}</Text>
-            <Text style={styles.codeText}>Mã giao dịch: {appointment.codes.transactionCode}</Text>
-            <Text style={styles.codeText}>Mã bệnh nhân: {appointment.codes.patientCode}</Text>
+            <Text style={styles.codeText}>Mã phiếu: {appointment.codes?.appointmentCode}</Text>
+            <Text style={styles.codeText}>Mã giao dịch: {appointment.codes?.transactionCode}</Text>
+            <Text style={styles.codeText}>Mã bệnh nhân: {appointment.codes?.patientCode}</Text>
           </View>
 
           <Text style={styles.departmentName}>{appointment.department}</Text>
@@ -232,12 +212,12 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 16,
+    borderRadius: 10,
     padding: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 4,
     elevation: 2,
   },
   cardTitle: {
@@ -315,7 +295,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.regular,
     fontSize: 16,
     color: "#4B5563",
-    marginRight: 4,
+    marginRight: 8,
   },
   infoValue: {
     fontFamily: fontFamily.bold,

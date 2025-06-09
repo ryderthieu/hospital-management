@@ -15,7 +15,7 @@ import {
   type RouteProp,
 } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import type { RootStackParamList, Appointment } from "./type";
+import type { RootStackParamList, Appointment, AppointmentResponseDto } from "./type";
 import { useFont, fontFamily } from "../../context/FontContext";
 import { useState, useEffect } from "react";
 import API from "../../services/api";
@@ -24,26 +24,6 @@ type CompletedAppointmentDetailScreenRouteProp = RouteProp<
   RootStackParamList,
   "CompletedAppointmentDetail"
 >;
-
-interface AppointmentResponseDto {
-  appointmentId: number;
-  doctorId: number;
-  schedule: { scheduleId: number };
-  symptoms: string;
-  number: number;
-  slotStart: string;
-  slotEnd: string;
-  appointmentStatus: string;
-  createdAt: string;
-  patientInfo: { patientId: number; fullName: string; birthday: string; gender: string; address: string } | null;
-  appointmentNotes: { id: number; appointmentId: number; noteType: string; content: string; createdAt: string }[] | null;
-  doctorInfo?: {
-    fullName: string;
-    academicDegree: string;
-    specialization: string;
-    departmentId: number;
-  };
-}
 
 const CompletedAppointmentDetailScreen = () => {
   const { fontsLoaded } = useFont();
@@ -72,7 +52,7 @@ const CompletedAppointmentDetailScreen = () => {
           doctorInfo = doctorResponse.data;
         }
 
-        const scheduleResponse = await API.get(`/doctors/schedules/${response.data.schedule.scheduleId}`);
+        const scheduleResponse = await API.get(`/doctors/schedules/${response.data.schedule?.scheduleId || ""}`);
         const schedule = scheduleResponse.data;
 
         const workDate = new Date(response.data.createdAt).toLocaleDateString("vi-VN", {
@@ -97,7 +77,7 @@ const CompletedAppointmentDetailScreen = () => {
           patientBirthday: response.data.patientInfo?.birthday || "Không xác định",
           patientGender: response.data.patientInfo?.gender || "Không xác định",
           patientLocation: response.data.patientInfo?.address || "Không xác định",
-          appointmentFee: "200.000 VND", // TODO: Fetch from API or configuration
+          appointmentFee: "200.000 VND",
           examTime: `${response.data.slotStart.slice(0, 5)} - ${response.data.slotEnd.slice(0, 5)}`,
           followUpDate: new Date(new Date(response.data.createdAt).getTime() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString("vi-VN", {
             day: "2-digit",
@@ -390,7 +370,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontFamily: fontFamily.regular,
     fontSize: 16,
-    color: "#6B7280",                    
+    color: "#6B7280",
     marginTop: 8,
   },
 });
