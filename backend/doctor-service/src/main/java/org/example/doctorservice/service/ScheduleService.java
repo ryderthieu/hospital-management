@@ -2,11 +2,13 @@ package org.example.doctorservice.service;
 
 import org.example.doctorservice.dto.ScheduleDto;
 import org.example.doctorservice.dto.TimeSlotDto;
+import org.example.doctorservice.entity.Schedule;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface ScheduleService {
-    List<ScheduleDto> getAllSchedules(Integer doctorId);
+    List<ScheduleDto> getAllSchedules(Integer doctorId, Schedule.Shift shift, LocalDate workDate);
 
     ScheduleDto getScheduleById(Integer doctorId);
 

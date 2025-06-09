@@ -13,6 +13,7 @@ import org.example.doctorservice.repository.ScheduleRepository;
 import org.example.doctorservice.service.ScheduleService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,10 +28,12 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final ExaminationRoomRepository examinationRoomRepository;
 
     @Override
-    public List<ScheduleDto> getAllSchedules(Integer doctorId) {
-        return scheduleRepository
-                .findByDoctor_DoctorId(doctorId)
-                .stream()
+    public List<ScheduleDto> getAllSchedules(Integer doctorId, Schedule.Shift shift, LocalDate workDate) {
+        List<Schedule> schedules = scheduleRepository.findByDoctor_DoctorId(doctorId);
+        
+        return schedules.stream()
+                .filter(schedule -> shift == null || schedule.getShift() == shift)
+                .filter(schedule -> workDate == null || schedule.getWorkDate().equals(workDate))
                 .map(ScheduleDto::new)
                 .collect(Collectors.toList());
     }

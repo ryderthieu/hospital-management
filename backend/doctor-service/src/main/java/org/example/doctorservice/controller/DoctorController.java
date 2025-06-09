@@ -4,12 +4,15 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.doctorservice.dto.DoctorDto;
 import org.example.doctorservice.dto.PatientDto;
+import org.example.doctorservice.dto.ScheduleDto;
 import org.example.doctorservice.entity.Doctor;
+import org.example.doctorservice.entity.Schedule;
 import org.example.doctorservice.service.DoctorService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -71,4 +74,5 @@ public class DoctorController {
     public ResponseEntity<DoctorDto> getDoctorByUserId(@PathVariable Integer userId) {
         return ResponseEntity.ok(doctorService.getDoctorByUserId(userId));
     }
+
 }

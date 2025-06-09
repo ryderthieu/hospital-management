@@ -4,13 +4,16 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.doctorservice.dto.ScheduleDto;
 import org.example.doctorservice.dto.TimeSlotDto;
+import org.example.doctorservice.entity.Schedule;
 import org.example.doctorservice.service.ScheduleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
+
 @RestController
 @RequestMapping("/doctors")
 @RequiredArgsConstructor
@@ -25,8 +28,10 @@ public class ScheduleController {
 
 //    @PreAuthorize("hasAnyRole('DOCTOR')")
     @GetMapping("/{doctorId}/schedules")
-    public ResponseEntity<List<ScheduleDto>> getAllSchedules(@PathVariable Integer doctorId) {
-        return ResponseEntity.ok(scheduleService.getAllSchedules(doctorId));
+    public ResponseEntity<List<ScheduleDto>> getAllSchedules(@PathVariable Integer doctorId,
+            @RequestParam(required = false) Schedule.Shift shift,
+            @RequestParam(required = false) LocalDate workDate) {
+        return ResponseEntity.ok(scheduleService.getAllSchedules(doctorId, shift, workDate));
     }
 
 //    @PreAuthorize("hasAnyRole('DOCTOR')")
