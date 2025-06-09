@@ -7,7 +7,11 @@ type BadgeColor =
   | "warning"
   | "info"
   | "light"
-  | "dark";
+  | "dark"
+  | "confirmed"
+  | "cancelled"
+  | "completed"
+  | "pending";
 
 interface BadgeProps {
   variant?: BadgeVariant; // Light or solid variant
@@ -36,7 +40,7 @@ const Badge: React.FC<BadgeProps> = ({
   };
 
   // Define color styles for variants
-  const variants = {
+  const variants: Record<BadgeVariant, Record<BadgeColor, string>> = {
     light: {
       primary:
         "bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-400",
@@ -49,6 +53,13 @@ const Badge: React.FC<BadgeProps> = ({
       info: "bg-blue-light-50 text-blue-light-500 dark:bg-blue-light-500/15 dark:text-blue-light-500",
       light: "bg-gray-100 text-gray-700 dark:bg-white/5 dark:text-white/80",
       dark: "bg-gray-500 text-white dark:bg-white/5 dark:text-white",
+      confirmed:
+        "bg-green-50 text-green-600 dark:bg-green-500/15 dark:text-green-500",
+      cancelled: "bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-500",
+      completed:
+        "bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-500",
+      pending:
+        "bg-yellow-50 text-yellow-600 dark:bg-yellow-500/15 dark:text-yellow-500",
     },
     solid: {
       primary: "bg-brand-500 text-white dark:text-white",
@@ -58,6 +69,10 @@ const Badge: React.FC<BadgeProps> = ({
       info: "bg-blue-light-500 text-white dark:text-white",
       light: "bg-gray-400 dark:bg-white/5 text-white dark:text-white/80",
       dark: "bg-gray-700 text-white dark:text-white",
+      confirmed: "bg-green-600 text-white dark:text-white",
+      cancelled: "bg-red-600 text-white dark:text-white",
+      completed: "bg-blue-600 text-white dark:text-white",
+      pending: "bg-yellow-600 text-white dark:text-white",
     },
   };
 

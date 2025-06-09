@@ -8,13 +8,16 @@ import {
 } from "../../ui/table";
 import { format } from "date-fns";
 import Badge from "../../ui/badge/Badge";
-import AppointmentCard from "./AppointmentCard";
 import { useState, useEffect } from "react";
 import { patientService } from "../../../services/patientService";
 import { Patient, EmergencyContact } from "../../../types/patient";
 import { useParams } from "react-router-dom";
 import { appointmentService } from "../../../services/appointmentService";
 import { Appointment } from "../../../types/appointment";
+import { AppointmentModal, DeleteAppointmentModal } from "./AppointmentModal";
+import { Bill } from "../../../types/payment";
+import { paymentService } from "../../../services/paymentService";
+import { BillModal, DeleteBillModal } from "./BillModal";
 
 export function MedicalRecordsContent() {
   return (
@@ -72,82 +75,214 @@ export function MedicalRecordsContent() {
 export function AppointmentsContent() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const { patientId } = useParams();
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<Appointment | null>(null);
+  const [deleteModal, setDeleteModal] = useState<Appointment | null>(null);
+
+  const formatHHmm = (timeStr: string) => {
+    if (!timeStr) return "N/A";
+    const parts = timeStr.split(":");
+    if (parts.length < 2) return "N/A";
+    return `${parts[0]}:${parts[1]}`;
+  };
+
+  const reloadAppointments = async () => {
+    if (!patientId) return;
+    try {
+      const data = await appointmentService.getAppointmentsByPatientId(
+        Number(patientId)
+      );
+      setAppointments(data);
+    } catch (error) {
+      console.error("Failed to fetch appointments:", error);
+    }
+  };
 
   useEffect(() => {
-    if (!patientId) return;
-
-    const fetchAppointments = async () => {
-      try {
-        const data = await appointmentService.getAppointmentsByPatientId(
-          Number(patientId)
-        );
-        setAppointments(data);
-      } catch (error) {
-        console.error("Failed to fetch appointments:", error);
-      }
-    };
-
-    fetchAppointments();
+    reloadAppointments();
   }, [patientId]);
 
   return (
     <div className="bg-white py-6 px-4 rounded-lg border border-gray-200">
       <h2 className="text-xl font-semibold mb-4 ml-1">Lịch khám</h2>
-      <div className="grid gap-4">
-        {appointments.length > 0 ? (
-          appointments.map((appt) => (
-            <AppointmentCard
-              key={appt.appointmentId}
-              symptoms={appt.symptoms || "Lịch khám"}
-              doctor={`BS. ${appt.doctorId}`}
-              date={
-                appt.createdAt
-                  ? format(new Date(appt.createdAt), "dd/MM/yyyy")
-                  : ""
-              }
-              time={`${appt.slotStart} - ${appt.slotEnd}` || "Chưa xác định"}
-              status={appt.status}
-            />
-          ))
-        ) : (
-          <div className="text-gray-500">Không có lịch khám nào.</div>
-        )}
-      </div>
+      <Table>
+        {/* Table Header */}
+        <TableHeader className="border-b border-gray-100 bg-slate-600/10 dark:border-white/[0.05]">
+          <TableRow>
+            <TableCell
+              isHeader
+              className="px-4 py-3 font-medium text-gray-800 text-start text-theme-sm dark:text-gray-400"
+            >
+              Mã đặt lịch
+            </TableCell>
+            <TableCell
+              isHeader
+              className="px-4 py-3 font-medium text-gray-800 text-theme-sm dark:text-gray-400"
+            >
+              Tên bác sĩ
+            </TableCell>
+            <TableCell
+              isHeader
+              className="px-4 py-3 font-medium text-gray-800 text-theme-sm dark:text-gray-400"
+            >
+              Tình trạng
+            </TableCell>
+            <TableCell
+              isHeader
+              className="px-4 py-3 font-medium text-gray-800 text-theme-sm dark:text-gray-400"
+            >
+              Thời gian khám
+            </TableCell>
+            <TableCell
+              isHeader
+              className="px-3 py-3 font-medium text-gray-800 text-theme-sm dark:text-gray-400"
+            >
+              Hành động
+            </TableCell>
+          </TableRow>
+        </TableHeader>
+
+        {/* Table Body */}
+        <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+          {appointments.length > 0 ? (
+            appointments.map((appt) => (
+              <TableRow key={appt.appointmentId}>
+                <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
+                  {appt.appointmentId}
+                </TableCell>
+                <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
+                  {appt.doctorInfo?.fullName}
+                </TableCell>
+                <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
+                  <Badge
+                    size="sm"
+                    color={
+                      appt.appointmentStatus === "PENDING"
+                        ? "pending"
+                        : appt.appointmentStatus === "COMPLETED"
+                        ? "completed"
+                        : appt.appointmentStatus === "CANCELLED"
+                        ? "cancelled"
+                        : appt.appointmentStatus === "CONFIRMED"
+                        ? "confirmed"
+                        : "light"
+                    }
+                  >
+                    {appt.appointmentStatus === "PENDING"
+                      ? "Chờ xác nhận"
+                      : appt.appointmentStatus === "COMPLETED"
+                      ? "Đã khám"
+                      : appt.appointmentStatus === "CANCELLED"
+                      ? "Đã hủy"
+                      : appt.appointmentStatus === "CONFIRMED"
+                      ? "Đã xác nhận"
+                      : "Chưa xác định"}
+                  </Badge>
+                </TableCell>
+                <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
+                  {formatHHmm(appt.slotStart)} - {formatHHmm(appt.slotEnd)}
+                </TableCell>
+                <TableCell className="px-4 py-3 flex items-center text-gray-500 text-theme-md dark:text-gray-400">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setSelectedAppointment(appt)}
+                      className="flex size-10 justify-center items-center gap-1 px-3 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                        <path
+                          fillRule="evenodd"
+                          d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+
+                    <button
+                      onClick={() => setDeleteModal(appt)}
+                      className="flex size-10 justify-center items-center gap-1 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell className="text-center text-gray-500">
+                <span className="block col-span-5">
+                  Không có lịch khám nào.
+                </span>
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+      {/* Hiển thị modal xem chi tiết */}
+      {selectedAppointment && (
+        <AppointmentModal
+          {...selectedAppointment}
+          isOpen={true}
+          onClose={() => setSelectedAppointment(null)}
+        />
+      )}
+      {/* Hiển thị modal xóa */}
+      {deleteModal && (
+        <DeleteAppointmentModal
+          isOpen={true}
+          onClose={() => setDeleteModal(null)}
+          appointmentId={deleteModal.appointmentId}
+          onDelete={async () => {
+            await appointmentService.deleteAppointment(
+              deleteModal.appointmentId
+            );
+            setDeleteModal(null);
+            reloadAppointments();
+          }}
+        />
+      )}
     </div>
   );
 }
 
-interface Invoice {
-  id: string;
-  createDate: string;
-  dueDate: string;
-  amount: string;
-}
-
-// Define the table data using the interface
-const tableData: Invoice[] = [
-  {
-    id: "HD12313",
-    createDate: "2023-02-15",
-    dueDate: "2023-03-15",
-    amount: "1.200.000 VNĐ",
-  },
-  {
-    id: "HD98786",
-    createDate: "2023-01-14",
-    dueDate: "2023-02-14",
-    amount: "980.000 VNĐ",
-  },
-  {
-    id: "HD76542",
-    createDate: "2023-01-13",
-    dueDate: "2023-02-13",
-    amount: "220.000 VNĐ",
-  },
-];
-
 // InvoicesContent
 export function InvoicesContent() {
+  const [bills, setBills] = useState<Bill[]>([]);
+  const { patientId } = useParams();
+  const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
+  const [deleteBillModal, setDeleteBillModal] = useState<Bill | null>(null);
+
+  const reloadBills = async () => {
+    if (!patientId) return;
+    try {
+      const data = await paymentService.getBillsByPatientId(Number(patientId));
+      setBills(data);
+    } catch (error) {
+      console.error("Failed to fetch bills:", error);
+    }
+  };
+
+  useEffect(() => {
+    reloadBills();
+  }, [patientId]);
+
   return (
     <div className="bg-white py-6 px-4 rounded-lg border border-gray-200">
       <h2 className="text-xl font-semibold mb-4 ml-1">Hóa đơn</h2>
@@ -173,7 +308,7 @@ export function InvoicesContent() {
                   isHeader
                   className="px-4 py-3 font-medium text-gray-800 text-start text-theme-sm dark:text-gray-400"
                 >
-                  Hạn thanh toán
+                  Tình trạng
                 </TableCell>
                 <TableCell
                   isHeader
@@ -192,36 +327,62 @@ export function InvoicesContent() {
 
             {/* Table Body */}
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {tableData.map((invoice) => (
-                <TableRow key={invoice.id}>
+              {bills.map((bill) => (
+                <TableRow key={bill.billId}>
                   <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
-                    {invoice.id}
+                    {bill.billId}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
-                    {invoice.createDate}
+                    {format(new Date(bill.createdAt), "dd-MM-yyyy")}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
-                    {invoice.dueDate}
+                    {bill.status === "PAID"
+                      ? "Đã thanh toán"
+                      : bill.status === "UNPAID"
+                      ? "Chưa thanh toán"
+                      : "Đã hủy"}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
-                    {invoice.amount}
+                    {bill.totalCost.toLocaleString("vi-VN")} VNĐ
                   </TableCell>
                   <TableCell className="px-4 py-3 flex items-center text-gray-500 text-theme-md dark:text-gray-400">
-                    <button className="flex items-center gap-2 px-5 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
+                    <div className="flex gap-2">
+                      <button
+                        className="flex size-10 justify-center items-center gap-1 px-3 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                        onClick={() => setSelectedBill(bill)}
                       >
-                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                        <path
-                          fillRule="evenodd"
-                          d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path
+                            fillRule="evenodd"
+                            d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        className="flex size-10 justify-center items-center gap-1 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                        onClick={() => setDeleteBillModal(bill)}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -229,6 +390,36 @@ export function InvoicesContent() {
           </Table>
         </div>
       </div>
+      {/* BillModal hiển thị khi chọn */}
+      {selectedBill && (
+        <BillModal
+          {...selectedBill}
+          isOpen={true}
+          onClose={() => setSelectedBill(null)}
+        />
+      )}
+      {/* DeleteBillModal hiển thị khi chọn xóa */}
+      {deleteBillModal && (
+        <DeleteBillModal
+          isOpen={true}
+          onClose={() => setDeleteBillModal(null)}
+          billId={deleteBillModal.billId}
+          onDelete={async () => {
+            try {
+              await paymentService.deleteBill(deleteBillModal.billId);
+              setDeleteBillModal(null);
+              reloadBills();
+            } catch (error: any) {
+              alert(
+                "Xóa hóa đơn thất bại: " +
+                  (error?.response?.data?.message ||
+                    error.message ||
+                    "Lỗi không xác định")
+              );
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
