@@ -196,7 +196,7 @@ export default function MedicineTable() {
             <TableRow>
               <TableCell
                 isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                className="py-3 pr-6 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
                 Mã thuốc
               </TableCell>
@@ -208,7 +208,7 @@ export default function MedicineTable() {
               </TableCell>
               <TableCell
                 isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                className="py-3 pr-6 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
                 Đơn giá
               </TableCell>
@@ -220,19 +220,19 @@ export default function MedicineTable() {
               </TableCell>
               <TableCell
                 isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                className="py-3 pr-6 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
                 Tình trạng
               </TableCell>
               <TableCell
                 isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                className="py-3 pr-6 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
                 Tồn kho
               </TableCell>
               <TableCell
                 isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                className="py-3 pr-6 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
                 Đơn vị
               </TableCell>
@@ -240,7 +240,7 @@ export default function MedicineTable() {
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
-                Hành động
+                Thao tác
               </TableCell>
             </TableRow>
           </TableHeader>
@@ -309,7 +309,7 @@ export default function MedicineTable() {
                     </button>
                     <button
                       onClick={() => handleEdit(medicine.medicineId)}
-                      className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 transition-colors dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50"
+                      className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"

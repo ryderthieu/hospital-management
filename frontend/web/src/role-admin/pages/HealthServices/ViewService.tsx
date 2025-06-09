@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "../../components/ui/table";
+import ReturnButton from "../../components/ui/button/ReturnButton";
 
 export default function ViewService() {
   const navigate = useNavigate();
@@ -107,25 +108,22 @@ export default function ViewService() {
       />
 
       <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">
-          Chi tiết dịch vụ
-        </h2>
+        <div className="flex items-center">
+          <ReturnButton />
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">
+            Chi tiết dịch vụ
+          </h2>
+        </div>
+
         <div className="flex gap-3">
           <button
             onClick={() =>
               navigate(`/admin/health-services/edit/${service.serviceId}`)
             }
-            className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+            className="flex items-center gap-2 px-4 py-2 bg-base-600 text-white rounded-lg hover:bg-base-700"
           >
             <Edit className="h-4 w-4" />
             Chỉnh sửa
-          </button>
-          <button
-            onClick={() => navigate("/admin/health-services")}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Quay lại
           </button>
         </div>
       </div>
@@ -139,7 +137,7 @@ export default function ViewService() {
                 <HeartPulse className="h-10 w-10 text-gray-400" />
               </div>
               <div className="flex-1">
-                <h3 className="text-2xl font-bold text-gray-800 dark:text-white/90 mb-2">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white/90 mb-2">
                   {service.serviceName}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-2">

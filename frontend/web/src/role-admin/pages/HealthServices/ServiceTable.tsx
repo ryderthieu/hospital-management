@@ -80,7 +80,7 @@ export default function ServiceTable() {
             Danh sách dịch vụ y tế
           </h2>
           <span className="ml-5 text-sm bg-base-600/20 text-base-600 py-1 px-4 rounded-full font-bold">
-            120 dịch vụ
+            {services.length} dịch vụ
           </span>
         </div>
 
@@ -219,7 +219,7 @@ export default function ServiceTable() {
                     </button>
                     <button
                       onClick={() => handleEdit(service.serviceId)}
-                      className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 transition-colors dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50"
+                      className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors dark:bg-slate-900/30 dark:text-slate-400 dark:hover:bg-slate-900/50"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"

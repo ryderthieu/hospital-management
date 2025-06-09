@@ -8,6 +8,7 @@ import { medicineService } from "../../services/pharmacyService"
 import type { Medicine, MedicineUpdateRequest } from "../../types/pharmacy"
 import PageMeta from "../../components/common/PageMeta"
 import { Save, X } from "lucide-react"
+import ReturnButton from "../../components/ui/button/ReturnButton"
 
 export default function EditMedicine() {
   const navigate = useNavigate()
@@ -94,7 +95,8 @@ export default function EditMedicine() {
         description="Chỉnh sửa thông tin thuốc"
       />
 
-      <div className="mb-6">
+      <div className="mb-6 flex items-center">
+        <ReturnButton />
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">
           Chỉnh sửa thuốc: {medicine.medicineName}
         </h2>
@@ -104,14 +106,14 @@ export default function EditMedicine() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tên thuốc *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tên thuốc <span className="text-red-500"><span className="text-red-500">*</span></span></label>
               <input
                 type="text"
                 name="medicineName"
                 value={formData.medicineName || ""}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
               />
             </div>
 
@@ -122,18 +124,18 @@ export default function EditMedicine() {
                 name="manufactor"
                 value={formData.manufactor || ""}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Danh mục *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Danh mục <span className="text-red-500">*</span></label>
               <select
                 name="category"
                 value={formData.category || ""}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
               >
                 <option value="">Chọn danh mục</option>
                 <option value="Pain Reliever">Thuốc giảm đau</option>
@@ -145,13 +147,13 @@ export default function EditMedicine() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Đơn vị *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Đơn vị <span className="text-red-500">*</span></label>
               <select
                 name="unit"
                 value={formData.unit || ""}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
               >
                 <option value="">Chọn đơn vị</option>
                 <option value="Viên">Viên</option>
@@ -163,7 +165,7 @@ export default function EditMedicine() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Giá (VND) *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Giá (VND) <span className="text-red-500">*</span></label>
               <input
                 type="number"
                 name="price"
@@ -171,12 +173,12 @@ export default function EditMedicine() {
                 onChange={handleChange}
                 required
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Số lượng *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Số lượng <span className="text-red-500">*</span></label>
               <input
                 type="number"
                 name="quantity"
@@ -184,7 +186,7 @@ export default function EditMedicine() {
                 onChange={handleChange}
                 required
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
               />
             </div>
 
@@ -200,7 +202,7 @@ export default function EditMedicine() {
                 min="0"
                 max="1"
                 step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
               />
             </div>
           </div>
@@ -212,19 +214,19 @@ export default function EditMedicine() {
               value={formData.description || ""}
               onChange={handleChange}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cách sử dụng *</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cách sử dụng <span className="text-red-500">*</span></label>
             <textarea
               name="usage"
               value={formData.usage || ""}
               onChange={handleChange}
               required
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
             />
           </div>
 
@@ -235,15 +237,15 @@ export default function EditMedicine() {
               value={formData.sideEffects || ""}
               onChange={handleChange}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
             />
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex gap-4 justify-end">
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="flex items-center gap-2 px-6 py-2 bg-base-600 text-white rounded-lg hover:bg-base-700 disabled:opacity-50"
             >
               <Save className="h-4 w-4" />
               {loading ? "Đang cập nhật..." : "Cập nhật"}
@@ -251,9 +253,8 @@ export default function EditMedicine() {
             <button
               type="button"
               onClick={() => navigate("/admin/medicines")}
-              className="flex items-center gap-2 px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+              className="flex items-center gap-2 px-6 py-2 bg-gray-500/70 text-white rounded-lg hover:bg-gray-600/70"
             >
-              <X className="h-4 w-4" />
               Hủy
             </button>
           </div>
