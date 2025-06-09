@@ -2,16 +2,22 @@ package org.example.doctorservice.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.doctorservice.entity.Department;
 import org.example.doctorservice.entity.Doctor;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 @Data
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class DoctorDto {
     private Integer doctorId;
     private Integer userId;

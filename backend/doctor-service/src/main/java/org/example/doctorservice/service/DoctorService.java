@@ -4,6 +4,7 @@ import org.example.doctorservice.dto.CreateDoctorRequest;
 import org.example.doctorservice.dto.DoctorDto;
 import org.example.doctorservice.dto.PatientDto;
 import org.example.doctorservice.entity.Doctor;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,5 +28,9 @@ public interface DoctorService {
                                       Doctor.Type type);
 
     DoctorDto getDoctorByUserId(Integer userId);
+
+    DoctorDto uploadAvatar(Integer id, MultipartFile file);
+
+    DoctorDto deleteAvatar(Integer id);
 
 }
