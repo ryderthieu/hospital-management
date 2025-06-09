@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useState, useMemo, useEffect } from "react"
-import { View, Text, TouchableOpacity, FlatList, ScrollView, StyleSheet, SafeAreaView, Alert } from "react-native"
+import React, { useState, useEffect } from "react"
+import { View, Text, TouchableOpacity, FlatList, ScrollView, StyleSheet, SafeAreaView, Alert, ActivityIndicator } from "react-native"
 import { StackNavigationProp } from "@react-navigation/stack"
 import { RouteProp } from "@react-navigation/native"
 import { Ionicons } from "@expo/vector-icons"
@@ -12,7 +12,7 @@ import { DateCard } from "./DateCard"
 import { TimeSlot } from "./TimeSlot"
 import { SimilarDoctorCard } from "./SimilarDoctorCard"
 import { DoctorHeader } from "./DoctorHeader"
-import { generateRealTimeDates, generateTimeSlots } from "../data"
+import { fetchRealTimeDates, fetchTimeSlots } from "../data"
 import { useFont, fontFamily } from "../../../context/FontContext"
 import Sun from "../../../assets/images/ThoiGian/sun.svg"
 import Moon from "../../../assets/images/ThoiGian/moon.svg"
@@ -30,6 +30,7 @@ interface TimeSlotData {
   time: string
   available: boolean
   price: string
+  isBooked: boolean
 }
 
 export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ navigation, route }) => {
@@ -42,124 +43,184 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
   const [hasInsurance, setHasInsurance] = useState<boolean>(true)
   const [favorites, setFavorites] = useState<string[]>([])
   const [similarDoctors, setSimilarDoctors] = useState<Doctor[]>([])
+  const [dates, setDates] = useState<DateOption[]>([])
+  const [timeSlots, setTimeSlots] = useState<TimeSlotData[]>([])
+  const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(null)
+  const [isLoadingDates, setIsLoadingDates] = useState<boolean>(false)
+  const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(false)
 
-  // Debug log for route.params and doctor
-  console.log('route.params:', route.params)
-  console.log('doctor:', doctor)
-
-  // Generate dates statically
-  const dates = useMemo(() => {
-    try {
-      console.log('Generating dates...')
-      const generatedDates = generateRealTimeDates(7) || []
-      console.log('Generated dates:', generatedDates)
-      if (!selectedDate && generatedDates.length > 0) {
-        setSelectedDate(generatedDates[0].id)
-      }
-      return generatedDates
-    } catch (error) {
-      console.error("Error generating dates:", error)
-      return []
+  // Fetch dates
+  useEffect(() => {
+    if (!doctor?.id) {
+      console.log('[BookAppointmentScreen] Skipping fetchDates: doctor or doctor.id is undefined')
+      Alert.alert("Lỗi", "Thông tin bác sĩ không hợp lệ.", [{ text: "OK", onPress: () => navigation.goBack() }])
+      return
     }
-  }, [selectedDate])
 
-  // Generate time slots statically
-  const timeSlots = useMemo(() => {
-    if (!selectedDate) return []
-    try {
-      console.log('Generating time slots for date:', selectedDate)
-      const slots = generateTimeSlots(selectedDate)
-      console.log('Generated slots:', slots)
-      if (!slots || !Array.isArray(slots)) {
-        console.warn("generateTimeSlots returned invalid data:", slots)
-        return []
+    const fetchDates = async () => {
+      setIsLoadingDates(true)
+      try {
+        console.log('[BookAppointmentScreen] Fetching dates for doctorId:', doctor.id)
+        const generatedDates = await fetchRealTimeDates(doctor.id, 7)
+        console.log('[BookAppointmentScreen] Generated dates:', JSON.stringify(generatedDates, null, 2))
+        
+        if (generatedDates.length === 0) {
+          Alert.alert(
+            "Thông báo",
+            `Hiện tại không có lịch làm việc nào khả dụng cho bác sĩ ${doctor.name} trong 7 ngày tới.`,
+            [
+              { text: "Chọn bác sĩ khác", onPress: () => navigation.goBack() },
+              { text: "Thử lại", onPress: () => fetchDates() },
+            ]
+          )
+        }
+
+        setDates(generatedDates)
+        if (generatedDates.length > 0 && !selectedDate) {
+          const firstAvailableDate = generatedDates.find((date) => !date.disabled)
+          if (firstAvailableDate) {
+            console.log('[BookAppointmentScreen] Auto-selecting date:', firstAvailableDate.id, 'scheduleId:', firstAvailableDate.scheduleId)
+            setSelectedDate(firstAvailableDate.id)
+            setSelectedScheduleId(firstAvailableDate.scheduleId || null)
+          } else {
+            console.warn('[BookAppointmentScreen] No non-disabled dates found')
+          }
+        }
+      } catch (error: any) {
+        console.error("[BookAppointmentScreen] Error fetching dates:", error.message, error.response?.data)
+        Alert.alert(
+          "Lỗi",
+          error.response?.data?.message || "Không thể tải danh sách ngày. Vui lòng thử lại sau.",
+          [
+            { text: "Chọn bác sĩ khác", onPress: () => navigation.goBack() },
+            { text: "Thử lại", onPress: () => fetchDates() },
+          ]
+        )
+        setDates([])
+      } finally {
+        setIsLoadingDates(false)
       }
-      const filteredSlots = slots.filter((slot) => {
-        if (!slot || !slot.time) return false
-        const timeParts = slot.time.split(":")
-        if (timeParts.length < 2) return false
-        const hour = Number.parseInt(timeParts[0])
-        const isPM = slot.time.includes("PM")
-        const hour24 = isPM && hour !== 12 ? hour + 12 : hour === 12 && !isPM ? 0 : hour
-        return selectedDayPart === "morning" ? hour24 >= 8 && hour24 < 12 : hour24 >= 13 && hour24 <= 17
-      })
-      console.log('Filtered slots:', filteredSlots)
-      return filteredSlots
-    } catch (error) {
-      console.error("Error generating time slots:", error)
-      return []
     }
-  }, [selectedDate, selectedDayPart])
 
-  // Fetch similar doctors based on departmentId
+    fetchDates()
+  }, [doctor?.id])
+
+  // Fetch time slots
+  useEffect(() => {
+    if (!selectedScheduleId) {
+      console.log('[BookAppointmentScreen] Skipping fetchTimeSlots: selectedScheduleId is null')
+      setTimeSlots([])
+      return
+    }
+
+    const fetchSlots = async () => {
+      setIsLoadingSlots(true)
+      try {
+        console.log('[BookAppointmentScreen] Fetching time slots for scheduleId:', selectedScheduleId)
+        const slots = await fetchTimeSlots(selectedScheduleId)
+        console.log('[BookAppointmentScreen] Generated slots:', JSON.stringify(slots, null, 2))
+        const filteredSlots = slots.filter((slot) => {
+          const hour = parseInt(slot.time.split(":")[0])
+          return selectedDayPart === "morning" ? hour >= 8 && hour < 12 : hour >= 12 && hour <= 17
+        })
+        setTimeSlots(filteredSlots)
+        if (filteredSlots.length === 0) {
+          console.warn('[BookAppointmentScreen] No slots available for selected day part:', selectedDayPart)
+        }
+      } catch (error: any) {
+        console.error("[BookAppointmentScreen] Error fetching time slots:", error.message, error.response?.data)
+        Alert.alert(
+          "Lỗi",
+          error.response?.data?.message || "Không thể tải khung giờ khả dụng. Vui lòng thử lại.",
+          [
+            { text: "OK" },
+            { text: "Thử lại", onPress: () => fetchSlots() },
+          ]
+        )
+        setTimeSlots([])
+      } finally {
+        setIsLoadingSlots(false)
+      }
+    }
+
+    fetchSlots()
+  }, [selectedScheduleId, selectedDayPart])
+
+  // Fetch similar doctors
   useEffect(() => {
     if (!doctor?.id || !doctor?.departmentId) {
-      console.log('Skipping fetchSimilarDoctors: doctor or departmentId is undefined');
-      return;
+      console.log('[BookAppointmentScreen] Skipping fetchSimilarDoctors: doctor or departmentId is undefined')
+      return
     }
 
     const fetchSimilarDoctors = async () => {
       try {
-        console.log('Fetching similar doctors for departmentId:', doctor.departmentId);
-        const response = await API.get<DoctorDto[]>(`/doctors/departments/${doctor.departmentId}/doctors`);
-        console.log('Similar doctors response:', response.data);
+        console.log('[BookAppointmentScreen] Fetching similar doctors for departmentId:', doctor.departmentId)
+        const response = await API.get<DoctorDto[]>(`/doctors/departments/${doctor.departmentId}/doctors`)
+        console.log('[BookAppointmentScreen] Similar doctors response:', JSON.stringify(response.data, null, 2))
         const allDoctors = response.data.map((dto) => ({
           id: dto.doctorId.toString(),
           name: [dto.academicDegree, dto.fullName].filter(Boolean).join(" ").trim() || "Bác sĩ chưa có tên",
           specialty: dto.specialization || doctor.specialty,
-          departmentId: dto.departmentId,
+          departmentId: dto.departmentId.toString(),
           image: { uri: "https://via.placeholder.com/80" },
-          price: doctor.price || "200,000 VNĐ",
+          price: doctor.price || "150.000 VND",
           room: null,
           rating: 0,
           experience: null,
-          isOnline: false,
+          isOnline: null,
           joinDate: null,
-        }));
+        }))
 
-        const filteredDoctors = allDoctors.filter((d) => d.id !== doctor.id);
-        const shuffledDoctors = filteredDoctors.sort(() => Math.random() - 0.5);
-        setSimilarDoctors(shuffledDoctors.slice(0, 4));
+        const filteredDoctors = allDoctors.filter((d) => d.id !== doctor.id)
+        const shuffledDoctors = filteredDoctors.sort(() => Math.random() - 0.5)
+        setSimilarDoctors(shuffledDoctors.slice(0, 4))
       } catch (error: any) {
-        console.error("Error fetching similar doctors:", error.message, error.response?.data);
+        console.error("[BookAppointmentScreen] Error fetching similar doctors:", error.message, error.response?.data)
         Alert.alert(
           "Lỗi",
-          error.response?.data?.message || "Không thể tải bác sĩ tương tự. Vui lòng thử lại sau.",
+          error.response?.data?.message || "Không thể tải bác sĩ tương tự.",
           [
             { text: "OK" },
             { text: "Thử lại", onPress: () => fetchSimilarDoctors() },
-          ],
-        );
-        setSimilarDoctors([]);
+          ]
+        )
+        setSimilarDoctors([])
       }
-    };
+    }
 
-    fetchSimilarDoctors();
-  }, [doctor?.id, doctor?.departmentId]);
+    fetchSimilarDoctors()
+  }, [doctor?.id, doctor?.departmentId])
 
   const handleDateSelect = (date: DateOption) => {
     if (!date || date.disabled) return
+    console.log('[BookAppointmentScreen] Selected date:', date.id, 'scheduleId:', date.scheduleId)
     setSelectedDate(date.id)
     setSelectedTime("")
+    setSelectedScheduleId(date.scheduleId || null)
   }
 
   const handleTimeSelect = (time: string) => {
+    console.log('[BookAppointmentScreen] Selected time:', time)
     setSelectedTime(time)
   }
 
   const handleDayPartSelect = (dayPart: DayPart) => {
+    console.log('[BookAppointmentScreen] Selected day part:', dayPart)
     setSelectedDayPart(dayPart)
     setSelectedTime("")
   }
 
   const handleSimilarDoctorPress = (selectedDoctor: Doctor) => {
     if (!selectedDoctor) return
+    console.log('[BookAppointmentScreen] Selected similar doctor:', selectedDoctor.id)
     navigation.replace("BookAppointment", { doctor: selectedDoctor })
   }
 
   const handleFavoritePress = (doctorId: string) => {
     if (!doctorId) return
-    setFavorites((prev) => (prev.includes(doctorId) ? prev.filter((id) => id !== doctorId) : [...prev, doctorId]))
+    console.log('[BookAppointmentScreen] Toggled favorite for doctorId:', doctorId)
+    setFavorites((prev) => prev.includes(doctorId) ? prev.filter((id) => id !== doctorId) : [...prev, doctorId])
   }
 
   const handleContinue = () => {
@@ -173,6 +234,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
       return
     }
 
+    console.log('[BookAppointmentScreen] Navigating to SymptomSelection with:', { doctor, selectedDate, selectedTime, hasInsurance })
     navigation.navigate("SymptomSelection", {
       doctor,
       selectedDate,
@@ -189,7 +251,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
         isSelected={selectedDate === item.id}
         onPress={() => handleDateSelect(item)}
         showAvailability={true}
-        availableSlots={Math.floor(Math.random() * 8) + 1}
+        availableSlots={item.availableSlots}
       />
     )
   }
@@ -198,10 +260,11 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
     if (!slot) return null
     return (
       <TimeSlot
-        key={slot.id || slot.time}
+        key={slot.id}
         time={slot.time}
         isSelected={selectedTime === slot.time}
         isAvailable={slot.available}
+        isBooked={slot.isBooked}
         price={slot.price}
         onPress={() => handleTimeSelect(slot.time)}
       />
@@ -220,7 +283,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
   }
 
   if (!fontsLoaded || !doctor) {
-    console.log('fontsLoaded:', fontsLoaded, 'doctor:', doctor)
+    console.log('[BookAppointmentScreen] fontsLoaded:', fontsLoaded, 'doctor:', doctor)
     return (
       <SafeAreaView style={globalStyles.container}>
         <Header title="Chọn thời gian khám" showBack={true} onBackPress={() => navigation.goBack()} />
@@ -240,12 +303,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
   return (
     <SafeAreaView style={globalStyles.container}>
       <Header title="Chọn thời gian khám" showBack={true} onBackPress={() => navigation.goBack()} />
-
-      <ScrollView
-        style={globalStyles.container}
-        contentContainerStyle={styles.bookingContainer}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView style={globalStyles.container} contentContainerStyle={styles.contentContainer}>
         <DoctorHeader
           doctor={doctor}
           showFavorite={true}
@@ -254,99 +312,115 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
           showStatus={true}
           isOnline={doctor.isOnline || true}
         />
-
         <View style={styles.dateSelectionContainer}>
           <Text style={[styles.selectionTitle, { fontFamily: fontFamily.bold }]}>CHỌN THỜI GIAN</Text>
-
-          {dates.length > 0 && (
+          {isLoadingDates ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={[styles.loadingText, { fontFamily: fontFamily.regular }]}>Đang tải lịch làm việc...</Text>
+            </View>
+          ) : dates.length > 0 ? (
             <FlatList
               data={dates}
               renderItem={renderDateItem}
-              keyExtractor={(item) => item?.id || Math.random().toString()}
+              keyExtractor={(item) => item.id}
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.dateList}
             />
-          )}
-
-          <View style={styles.dayPartSelection}>
-            <TouchableOpacity
-              style={[styles.dayPartButton, selectedDayPart === "morning" && styles.selectedDayPartButton]}
-              onPress={() => handleDayPartSelect("morning")}
-              activeOpacity={0.7}
-            >
-              <Sun width={24} height={24} />
-              <Text
-                style={[
-                  styles.dayPartText,
-                  { fontFamily: fontFamily.bold },
-                  selectedDayPart === "morning" && styles.selectedDayPartText,
-                ]}
-              >
-                Sáng
+          ) : (
+            <View style={styles.noDataContainer}>
+              <Ionicons name="calendar-outline" size={48} color={colors.gray500} />
+              <Text style={[styles.noDataText, { fontFamily: fontFamily.medium }]}>
+                Không có lịch làm việc nào khả dụng
               </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.dayPartButton, selectedDayPart === "afternoon" && styles.selectedDayPartButton]}
-              onPress={() => handleDayPartSelect("afternoon")}
-              activeOpacity={0.7}
-            >
-              <Moon width={24} height={24} />
-              <Text
-                style={[
-                  styles.dayPartText,
-                  { fontFamily: fontFamily.bold },
-                  selectedDayPart === "afternoon" && styles.selectedDayPartText,
-                ]}
-              >
-                Chiều
+              <Text style={[styles.noDataSubtext, { fontFamily: fontFamily.regular }]}>
+                Vui lòng chọn bác sĩ khác hoặc thử lại sau
               </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.timeSlotGrid}>
-            {timeSlots.length > 0 ? timeSlots.map(renderTimeSlot) : null}
-          </View>
-
-          {timeSlots.length === 0 && selectedDate && (
-            <View style={styles.noSlotsContainer}>
-              <Ionicons name="calendar-outline" size={48} color={colors.textSecondary} />
-              <Text style={[styles.noSlotsText, { fontFamily: fontFamily.medium }]}>
-                Không có khung giờ nào khả dụng cho {selectedDayPart === "morning" ? "buổi sáng" : "buổi chiều"}
-              </Text>
-              <Text style={[styles.noSlotsSubtext, { fontFamily: fontFamily.regular }]}>
-                Vui lòng chọn buổi khác hoặc ngày khác
-              </Text>
+              <TouchableOpacity style={[styles.button, styles.retryButton]} onPress={() => fetchDates()}>
+                <Text style={[styles.buttonText, { fontFamily: fontFamily.bold }]}>Thử lại</Text>
+              </TouchableOpacity>
             </View>
           )}
+          {dates.length > 0 && (
+            <>
+              <View style={styles.dayPartSelection}>
+                <TouchableOpacity
+                  style={[styles.dayPartButton, selectedDayPart === "morning" && styles.selectedDayPartButton]}
+                  onPress={() => handleDayPartSelect("morning")}
+                >
+                  <Sun width={24} height={24} />
+                  <Text
+                    style={[
+                      styles.dayPartText,
+                      { fontFamily: fontFamily.bold },
+                      selectedDayPart === "morning" && styles.selectedDayPartText,
+                    ]}
+                  >
+                    Sáng
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.dayPartButton, selectedDayPart === "afternoon" && styles.selectedDayPartButton]}
+                  onPress={() => handleDayPartSelect("afternoon")}
+                >
+                  <Moon width={24} height={24} />
+                  <Text
+                    style={[
+                      styles.dayPartText,
+                      { fontFamily: fontFamily.bold },
+                      selectedDayPart === "afternoon" && styles.selectedDayPartText,
+                    ]}
+                  >
+                    Chiều
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.timeSlotGrid}>
+                {isLoadingSlots ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                    <Text style={[styles.loadingText, { fontFamily: fontFamily.regular }]}>Đang tải khung giờ...</Text>
+                  </View>
+                ) : timeSlots.length > 0 ? (
+                  timeSlots.map((slot) => renderTimeSlot(slot))
+                ) : selectedDate ? (
+                  <View style={styles.noDataContainer}>
+                    <Ionicons name="time-outline" size={48} color={colors.gray500} />
+                    <Text style={[styles.noDataText, { fontFamily: fontFamily.medium }]}>
+                      Không có khung giờ nào khả dụng cho {selectedDayPart === "morning" ? "buổi sáng" : "buổi chiều"}
+                    </Text>
+                    <Text style={[styles.noDataSubtext, { fontFamily: fontFamily.regular }]}>
+                      Vui lòng chọn buổi khác hoặc ngày khác
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </>
+          )}
         </View>
-
         <View style={styles.insuranceContainer}>
-          <Text style={[styles.insuranceLabel, { fontFamily: fontFamily.bold }]}>Bảo hiểm Y Tế</Text>
+          <Text style={[styles.insuranceTitle, { fontFamily: fontFamily.bold }]}>BẢO HIỂM Y TẾ</Text>
           <View style={styles.insuranceOptions}>
-            <TouchableOpacity style={styles.insuranceOption} onPress={() => setHasInsurance(true)} activeOpacity={0.7}>
-              <View style={[styles.checkbox, hasInsurance && styles.checkedBox]}>
-                {hasInsurance && <Ionicons name="checkmark" size={14} color="#fff" />}
+            <TouchableOpacity style={styles.insuranceOption} onPress={() => setHasInsurance(true)}>
+              <View style={[styles.radioButton, hasInsurance && styles.radioButtonSelected]}>
+                {hasInsurance && <View style={styles.radioButtonInner} />}
               </View>
-              <Text style={[styles.insuranceText, { fontFamily: fontFamily.medium }]}>Có bảo hiểm</Text>
+              <Text style={[styles.insuranceText, { fontFamily: fontFamily.regular }]}>Có bảo hiểm</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity style={styles.insuranceOption} onPress={() => setHasInsurance(false)} activeOpacity={0.7}>
-              <View style={[styles.checkbox, !hasInsurance && styles.checkedBox]}>
-                {!hasInsurance && <Ionicons name="checkmark" size={14} color="#fff" />}
+            <TouchableOpacity style={styles.insuranceOption} onPress={() => setHasInsurance(false)}>
+              <View style={[styles.radioButton, !hasInsurance && styles.radioButtonSelected]}>
+                {!hasInsurance && <View style={styles.radioButtonInner} />}
               </View>
-              <Text style={[styles.insuranceText, { fontFamily: fontFamily.medium }]}>Không có</Text>
+              <Text style={[styles.insuranceText, { fontFamily: fontFamily.regular }]}>Không có bảo hiểm</Text>
             </TouchableOpacity>
           </View>
-
           {hasInsurance && (
             <Text style={[styles.insuranceNote, { fontFamily: fontFamily.regular }]}>
-              Vui lòng mang theo thẻ bảo hiểm Y tế khi đến khám
+              Vui lòng mang theo thẻ bảo hiểm y tế khi đến khám
             </Text>
           )}
         </View>
-
         {similarDoctors.length > 0 && (
           <View style={styles.similarDoctorsContainer}>
             <Text style={[styles.similarDoctorsTitle, { fontFamily: fontFamily.bold }]}>
@@ -355,20 +429,19 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
             <FlatList
               data={similarDoctors}
               renderItem={renderSimilarDoctor}
-              keyExtractor={(item) => item?.id || Math.random().toString()}
+              keyExtractor={(item) => item.id}
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.similarDoctorsList}
             />
           </View>
         )}
-
         <TouchableOpacity
-          style={[globalStyles.button, (!selectedDate || !selectedTime) && styles.disabledButton]}
+          style={[styles.button, (!selectedDate || !selectedTime) && styles.buttonDisabled]}
           onPress={handleContinue}
           disabled={!selectedDate || !selectedTime}
         >
-          <Text style={[globalStyles.buttonText, { fontFamily: fontFamily.bold }]}>Tiếp theo</Text>
+          <Text style={[styles.buttonText, { fontFamily: fontFamily.bold }]}>Tiếp tục</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -376,60 +449,161 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
 }
 
 const styles = StyleSheet.create({
-  bookingContainer: {
+  contentContainer: {
     paddingBottom: 24,
   },
   dateSelectionContainer: {
     backgroundColor: colors.base50,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 24,
   },
-  selectionTitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 16, letterSpacing: 0.5 },
-  dateList: { paddingVertical: 8 },
-  dayPartSelection: { flexDirection: "row", gap: 12, marginVertical: 16 },
-  dayPartButton: {
+  selectionTitle: {
+    fontSize: 14,
+    color: colors.gray600,
+    marginBottom: 16,
+    textTransform: "uppercase",
+  },
+  dateList: {
+    paddingVertical: 8,
+  },
+  dayPartSelection: {
     flexDirection: "row",
-    gap: 8,
+    justifyContent: "space-between",
+    marginVertical: 16,
+  },
+  dayPartButton: {
     flex: 1,
+    flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.white,
-    borderRadius: 6,
     padding: 12,
+    backgroundColor: colors.white,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.border,
-    shadowColor: colors.base900,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 2,
+    marginHorizontal: 4,
   },
-  selectedDayPartButton: { backgroundColor: colors.primary, borderColor: colors.primary },
-  dayPartText: { fontSize: 16, color: colors.text, flex: 1 },
-  selectedDayPartText: { color: colors.white },
-  timeSlotGrid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", gap: 8 },
-  noSlotsContainer: { alignItems: "center", paddingVertical: 24 },
-  noSlotsText: { fontSize: 16, color: colors.text, marginTop: 8, textAlign: "center" },
-  noSlotsSubtext: { fontSize: 14, color: colors.textSecondary, marginTop: 4, textAlign: "center" },
-  insuranceContainer: { padding: 16, marginBottom: 16 },
-  insuranceLabel: { fontSize: 16, color: colors.text, marginBottom: 16 },
-  insuranceOptions: { flexDirection: "row", gap: 24 },
-  insuranceOption: { flexDirection: "row", alignItems: "center", gap: 8 },
-  checkbox: {
+  selectedDayPartButton: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  dayPartText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: colors.text,
+  },
+  selectedDayPartText: {
+    color: colors.white,
+  },
+  timeSlotGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+  noDataContainer: {
+    alignItems: "center",
+    paddingVertical: 24,
+  },
+  noDataText: {
+    fontSize: 16,
+    color: colors.text,
+    marginTop: 8,
+    textAlign: "center",
+  },
+  noDataSubtext: {
+    fontSize: 14,
+    color: colors.gray600,
+    marginTop: 4,
+    textAlign: "center",
+  },
+  insuranceContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 24,
+  },
+  insuranceTitle: {
+    fontSize: 14,
+    color: colors.gray600,
+    marginBottom: 16,
+    textTransform: "uppercase",
+  },
+  insuranceOptions: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    marginBottom: 8,
+  },
+  insuranceOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 24,
+  },
+  radioButton: {
     width: 20,
     height: 20,
-    borderRadius: 4,
+    borderRadius: 10,
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: colors.gray400,
     justifyContent: "center",
     alignItems: "center",
+    marginRight: 8,
   },
-  checkedBox: { backgroundColor: colors.primary, borderColor: colors.primary },
-  insuranceText: { fontSize: 16, color: colors.text },
-  insuranceNote: { fontSize: 12, color: colors.textSecondary, marginTop: 8, fontStyle: "italic" },
-  similarDoctorsContainer: { padding: 16, marginBottom: 16 },
-  similarDoctorsTitle: { fontSize: 16, color: colors.text, marginBottom: 12 },
-  similarDoctorsList: { paddingVertical: 8 },
-  disabledButton: { opacity: 0.5 },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { fontSize: 16, color: colors.textSecondary },
-});
+  radioButtonSelected: {
+    borderColor: colors.primary,
+  },
+  radioButtonInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.primary,
+  },
+  insuranceText: {
+    fontSize: 16,
+    color: colors.text,
+  },
+  insuranceNote: {
+    fontSize: 12,
+    color: colors.gray600,
+    fontStyle: "italic",
+  },
+  similarDoctorsContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 24,
+  },
+  similarDoctorsTitle: {
+    fontSize: 16,
+    color: colors.text,
+    marginBottom: 12,
+  },
+  similarDoctorsList: {
+    paddingVertical: 8,
+  },
+  button: {
+    backgroundColor: colors.primary,
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  buttonDisabled: {
+    backgroundColor: colors.gray400,
+  },
+  retryButton: {
+    backgroundColor: colors.gray200,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    marginTop: 16,
+  },
+  buttonText: {
+    fontSize: 16,
+    color: colors.white,
+  },
+  loadingContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: colors.gray600,
+    marginTop: 8,
+  },
+})
