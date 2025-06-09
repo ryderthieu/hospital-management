@@ -1,47 +1,70 @@
-import { EventInput } from "@fullcalendar/core";
-
-// Kiểu trạng thái lịch khám
-export type EventStatus = "danger" | "success" | "waiting" | "cancel";
-
-// Ánh xạ tên trạng thái và giá trị
-export const EVENT_STATUS_MAP = {
-  "Khẩn cấp": "danger" as EventStatus,
-  "Đã khám": "success" as EventStatus,
-  "Chờ khám": "waiting" as EventStatus,
-  "Hủy": "cancel" as EventStatus,
-};
-
-// Interface cho sự kiện lịch
-export interface CalendarEvent extends EventInput {
-  extendedProps: {
-    calendar: EventStatus;
-    patientName: string;
-    patientId?: string;
-    insuranceId?: string;
-    phoneNumber?: string;
-    patientAge?: number;
-    symptoms?: string;
-    eventTime?: string;
-    doctorName?: string;
-    department?: string;
-    departmentId?: string;
-    doctorId?: string;
-  };
+export interface AppointmentRequest {
+  slotStart: string; // ISO time string, e.g. "08:00:00"
+  slotEnd: string;   // ISO time string
+  scheduleId: number;
+  symptoms: string;
+  doctorId: number;
+  patientId: number;
 }
 
-// Interface cho form dữ liệu
-export interface EventFormData {
-  patientName: string;
-  patientId: string;
-  insuranceId: string;
-  phoneNumber: string;
-  patientAge: number;
+export interface AppointmentResponse {
+  appointmentId: number;
+  doctorId: number;
+  schedule: ScheduleDto;
   symptoms: string;
-  date: string;
-  time: string;
-  doctorName: string;
-  doctorId: string;
-  department: string;
-  departmentId: string;
-  status: string;
+  number: number;
+  slotStart: string; // ISO time string
+  slotEnd: string;   // ISO time string
+  appointmentStatus: AppointmentStatus;
+  createdAt: string; // ISO timestamp
+  patientInfo: PatientDto;
+  appointmentNotes: AppointmentNoteDto[];
+}
+
+export interface AppointmentUpdateRequest {
+  appointmentId: number;
+  doctorId: number;
+  patientId: number;
+  scheduleId: number;
+  symptoms: string;
+  number: number;
+  appointmentStatus: AppointmentStatus;
+  slotStart: string; // ISO date string (yyyy-mm-dd)
+  slotEnd: string;   // ISO date string
+}
+
+export interface AvailableTimeSlotResponse {
+  slotStart: string; // ISO time string
+  slotEnd: string;   // ISO time string
+  isAvailable: boolean;
+  currentAppointments: number;
+  maxAppointments: number;
+}
+
+// Bạn cần định nghĩa thêm các interface/phụ thuộc sau:
+export type AppointmentStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED"; // hoặc enum thực tế backend
+
+export interface ScheduleDto {
+  // Định nghĩa các trường cần thiết theo backend
+  // Ví dụ:
+  scheduleId: number;
+  workDate: string;
+  startTime: string;
+  endTime: string;
+  // ...
+}
+
+export interface PatientDto {
+  // Định nghĩa các trường cần thiết theo backend
+  patientId: number;
+  fullName: string;
+  // ...
+}
+
+export interface AppointmentNoteDto {
+  // Định nghĩa các trường cần thiết theo backend
+  noteId: number;
+  content: string;
+  createdAt: string;
+  // ...
 }
