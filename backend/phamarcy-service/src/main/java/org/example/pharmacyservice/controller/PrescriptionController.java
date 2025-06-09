@@ -72,4 +72,11 @@ public class PrescriptionController {
             @PathVariable Integer patientId) {
         return ResponseEntity.ok(prescriptionService.getPrescriptionsByPatientId(patientId));
     }
+
+    @GetMapping("/appointment/{appointmentId}")
+    public ResponseEntity<List<PrescriptionDTOs.PrescriptionResponse>> getPrescriptionsByAppointmentId(
+            @PathVariable Long appointmentId
+    ) {
+        return ResponseEntity.ok(prescriptionService.getPrescriptionByAppointmentId(appointmentId));
+    }
 }

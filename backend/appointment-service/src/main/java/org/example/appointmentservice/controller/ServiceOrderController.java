@@ -46,4 +46,9 @@ public class ServiceOrderController {
         serviceOrderService.deleteOrder(serviceId, orderId);
         return ResponseEntity.ok("Đặt dịch vụ đã xóa thành công");
     }
+
+    @GetMapping("/appointments/{appointmentId}/orders")
+    public ResponseEntity<List<ServiceOrderDto>> getOrdersByAppointmentId(@PathVariable Integer appointmentId) {
+        return ResponseEntity.ok(serviceOrderService.getOrdersByAppointmentId(appointmentId));
+    }
 }

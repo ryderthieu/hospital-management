@@ -91,4 +91,12 @@ public class ServiceOrderServiceImpl implements ServiceOrderService {
 
         serviceOrderRepository.delete(serviceOrder);
     }
+
+    @Override
+    public List<ServiceOrderDto> getOrdersByAppointmentId(Integer appointmentId) {
+        return serviceOrderRepository.findByAppointment_AppointmentId(appointmentId)
+                .stream()
+                .map(ServiceOrderDto::new)
+                .collect(Collectors.toList());
+    }
 }

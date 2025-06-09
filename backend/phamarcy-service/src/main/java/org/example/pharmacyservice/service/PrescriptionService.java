@@ -247,4 +247,12 @@ public class PrescriptionService {
                 .map(this::mapToPrescriptionResponse)
                 .collect(Collectors.toList());
     }
+
+    @Transactional(readOnly = true)
+    public List<PrescriptionDTOs.PrescriptionResponse> getPrescriptionByAppointmentId(Long appointmentId) {
+        List<Prescription> prescriptions = prescriptionRepository.findByAppointmentId(appointmentId);
+        return prescriptions.stream()
+                .map(this::mapToPrescriptionResponse)
+                .collect(Collectors.toList());
+    }
 }
