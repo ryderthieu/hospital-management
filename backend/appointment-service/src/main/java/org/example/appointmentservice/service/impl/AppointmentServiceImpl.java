@@ -188,6 +188,15 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    public List<AppointmentDtos.AppointmentResponse> getAppointmentsByPatientId(Integer patientId) {
+        List<Appointment> appointments = appointmentRepository.findByPatientId(patientId);
+        if (appointments.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return batchMapToAppointmentResponses(appointments);
+    }
+
+    @Override
     public List<AppointmentDtos.AppointmentResponse> getTodayAppointmentsByDoctorId(Integer doctorId) {
         log.info("Lấy danh sách cuộc hẹn trong ngày của bác sĩ ID: {}", doctorId);
         

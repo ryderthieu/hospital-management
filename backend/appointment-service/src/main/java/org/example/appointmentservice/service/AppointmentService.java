@@ -26,4 +26,6 @@ public interface AppointmentService {
     List<AppointmentDtos.AvailableTimeSlotResponse> getAvailableTimeSlots(Integer scheduleId);
 
     List<AppointmentDtos.AppointmentResponse> getAppointmentsByScheduleId(Integer scheduleId);
+
+    List<AppointmentDtos.AppointmentResponse> getAppointmentsByPatientId(Integer patientId);
 }

@@ -58,6 +58,11 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getAppointmentsByDoctorId(doctorId));
     }
 
+    @GetMapping("/patient/{patientId}")
+    public ResponseEntity<List<AppointmentDtos.AppointmentResponse>> getAppointmentsByPatientId(@PathVariable Integer patientId) {
+        return ResponseEntity.ok(appointmentService.getAppointmentsByPatientId(patientId));
+    }
+
     @GetMapping("/schedule/{scheduleId}/available-slots")
     public ResponseEntity<List<AppointmentDtos.AvailableTimeSlotResponse>> getAvailableTimeSlots(
             @PathVariable Integer scheduleId
