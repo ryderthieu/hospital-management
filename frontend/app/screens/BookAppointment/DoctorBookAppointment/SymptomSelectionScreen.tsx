@@ -21,6 +21,7 @@ import { globalStyles, colors } from "../../../styles/globalStyles"
 import Header from "../../../components/Header"
 import { DoctorHeader } from "./DoctorHeader"
 import { useFont, fontFamily } from "../../../context/FontContext"
+import API from "../../../services/api"
 
 type SymptomSelectionScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, "SymptomSelection">
@@ -31,6 +32,33 @@ interface Symptom {
   id: string
   name: string
   category?: string
+}
+
+interface AppointmentRequest {
+  slotStart: string
+  slotEnd: string
+  scheduleId: number
+  symptoms: string
+  doctorId: number
+  patientId: number
+}
+
+interface AppointmentResponse {
+  appointmentId: number
+  doctorId: number
+  schedule: {
+    scheduleId: number
+  }
+  symptoms: string
+  number: number
+  SlotStart: string
+  SlotEnd: string
+  appointmentStatus: string
+  createdAt: string
+  patientInfo: {
+    patientId: number
+  }
+  appointmentNotes: any[]
 }
 
 const symptomsData: Symptom[] = [
@@ -56,44 +84,84 @@ const symptomsData: Symptom[] = [
 
 export const SymptomSelectionScreen: React.FC<SymptomSelectionScreenProps> = ({ navigation, route }) => {
   const { fontsLoaded } = useFont()
-  const { doctor, selectedDate, selectedTime, hasInsurance } = route.params
+  const { doctor, selectedDate, selectedTime, hasInsurance, scheduleId, patientId } = route.params
 
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>(["1"]) // Default: "Đau lưng" selected
-  const [selectedCategory, setSelectedCategory] = useState<string>("Viêm ruột thừa")
+  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<string>("")
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
   // Filter symptoms based on search query
   const filteredSymptoms = useMemo(() => {
     if (!searchQuery.trim()) return symptomsData
-
     return symptomsData.filter((symptom) => symptom.name.toLowerCase().includes(searchQuery.toLowerCase().trim()))
   }, [searchQuery])
 
   const handleSymptomToggle = (symptomId: string) => {
-    setSelectedSymptoms((prev) =>
-      prev.includes(symptomId) ? prev.filter((id) => id !== symptomId) : [...prev, symptomId],
-    )
+    console.log('[SymptomSelectionScreen] Trước khi toggle - selectedSymptoms:', selectedSymptoms)
+    setSelectedSymptoms((prev) => {
+      const newState = prev.includes(symptomId) ? prev.filter((id) => id !== symptomId) : [...prev, symptomId]
+      console.log('[SymptomSelectionScreen] Sau khi toggle - newState:', newState)
+      return newState
+    })
   }
 
-  const handleContinue = () => {
-    if (selectedSymptoms.length === 0) {
-      Alert.alert("Thông báo", "Vui lòng chọn ít nhất một triệu chứng.", [{ text: "OK" }])
-      return
-    }
+  const handleContinue = async () => {
+  console.log('[SymptomSelectionScreen] selectedSymptoms:', selectedSymptoms);
 
-    const selectedSymptomNames = symptomsData
-      .filter((symptom) => selectedSymptoms.includes(symptom.id))
-      .map((symptom) => symptom.name)
+  if (!Array.isArray(selectedSymptoms) || selectedSymptoms.length === 0) {
+    Alert.alert("Thông báo", "Vui lòng chọn ít nhất một triệu chứng.", [{ text: "OK" }]);
+    return;
+  }
 
-    // Navigate to booking confirmation screen
+  if (!Array.isArray(symptomsData)) {
+    console.error("[SymptomSelectionScreen] symptomsData không phải là mảng:", symptomsData);
+    Alert.alert("Lỗi", "Dữ liệu triệu chứng không hợp lệ. Vui lòng thử lại.");
+    return;
+  }
+
+  // Tạo mảng các tên triệu chứng
+  const selectedSymptomNames = symptomsData
+    .filter((symptom) => selectedSymptoms.includes(symptom.id))
+    .map((symptom) => symptom.name);
+
+  setIsSubmitting(true);
+  try {
+    const [slotStart, slotEnd] = selectedTime.split(" - ").map((t) => `${t}:00`);
+    const appointmentRequest: AppointmentRequest = {
+      slotStart,
+      slotEnd,
+      scheduleId,
+      symptoms: selectedSymptomNames.join(", "), // Vẫn gửi chuỗi cho API
+      doctorId: parseInt(doctor.id),
+      patientId,
+    };
+
+    console.log('[SymptomSelectionScreen] Tạo cuộc hẹn với:', JSON.stringify(appointmentRequest, null, 2));
+    const responseAppt = await API.post<AppointmentResponse>("/appointments", appointmentRequest);
+    console.log('[SymptomSelectionScreen] Cuộc hẹn đã tạo:', JSON.stringify(responseAppt.data, null, 2));
+
     navigation.navigate("BookingConfirmation", {
       doctor,
       selectedDate,
       selectedTime,
       hasInsurance,
-      selectedSymptoms: selectedSymptomNames,
-    })
+      selectedSymptoms: selectedSymptomNames, // Truyền mảng thay vì chuỗi
+    });
+  } catch (error: any) {
+    console.error("[SymptomSelectionScreen] Lỗi khi tạo cuộc hẹn:", error.message, error.response?.data);
+    Alert.alert(
+      "Lỗi",
+      error.response?.data?.message || "Không thể tạo lịch khám. Vui lòng thử lại.",
+      [
+        { text: "OK" },
+        { text: "Thử lại", onPress: handleContinue },
+      ]
+    );
+  } finally {
+    setIsSubmitting(false);
   }
+};
 
   const renderSymptomItem = ({ item }: { item: Symptom }) => {
     const isSelected = selectedSymptoms.includes(item.id)
@@ -111,20 +179,26 @@ export const SymptomSelectionScreen: React.FC<SymptomSelectionScreenProps> = ({ 
   }
 
   if (!fontsLoaded) {
-    return null
+    return (
+      <SafeAreaView style={globalStyles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={[styles.loadingText, { fontFamily: fontFamily.regular }]}>Đang tải font...</Text>
+        </View>
+      </SafeAreaView>
+    )
   }
 
   return (
     <SafeAreaView style={globalStyles.container}>
-      <Header title="Đặt lịch hẹn" showBack={true} onBackPress={() => navigation.goBack()} />
+      <Header title="Chọn triệu chứng" showBack={true} onBackPress={() => navigation.goBack()} />
 
       <View style={styles.container}>
         {/* Doctor Information */}
         <DoctorHeader
           doctor={doctor}
           showFavorite={true}
-          isFavorite={false} // hoặc có thể manage state nếu cần
-          onFavoritePress={() => {}} // hoặc implement nếu cần
+          isFavorite={false}
+          onFavoritePress={() => {}}
           showStatus={true}
           isOnline={true}
         />
@@ -146,7 +220,9 @@ export const SymptomSelectionScreen: React.FC<SymptomSelectionScreenProps> = ({ 
           </View>
 
           {/* Category Label */}
-          <Text style={[styles.categoryLabel, { fontFamily: fontFamily.medium }]}>{selectedCategory}</Text>
+          {selectedCategory ? (
+            <Text style={[styles.categoryLabel, { fontFamily: fontFamily.medium }]}>{selectedCategory}</Text>
+          ) : null}
 
           {/* Symptoms List */}
           <FlatList
@@ -155,18 +231,20 @@ export const SymptomSelectionScreen: React.FC<SymptomSelectionScreenProps> = ({ 
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.symptomsList}
-            scrollEnabled={false} // Disable FlatList scroll, let parent ScrollView handle it
+            scrollEnabled={false}
           />
         </ScrollView>
 
         {/* Continue Button */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[globalStyles.button, selectedSymptoms.length === 0 && styles.disabledButton]}
+            style={[globalStyles.button, (selectedSymptoms.length === 0 || isSubmitting) && styles.disabledButton]}
             onPress={handleContinue}
-            disabled={selectedSymptoms.length === 0}
+            disabled={selectedSymptoms.length === 0 || isSubmitting}
           >
-            <Text style={[globalStyles.buttonText, { fontFamily: fontFamily.bold }]}>Tiếp theo</Text>
+            <Text style={[globalStyles.buttonText, { fontFamily: fontFamily.bold }]}>
+              {isSubmitting ? "Đang xử lý..." : "Tiếp theo"}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -181,7 +259,7 @@ const styles = StyleSheet.create({
   symptomSection: {
     flex: 1,
     marginTop: 24,
-    paddingHorizontal: 16, // Add this line
+    paddingHorizontal: 16,
   },
   sectionTitle: {
     fontSize: 18,
@@ -196,6 +274,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginBottom: 16,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.text,
   },
   categoryLabel: {
     fontSize: 16,
@@ -223,7 +309,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: "#00B5B8", 
+    backgroundColor: "#00B5B8",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -232,8 +318,19 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 34, 
+    paddingBottom: 34,
     paddingTop: 16,
     backgroundColor: colors.white,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingText: {
+    fontSize: 14,
+    color: colors.gray600,
+    marginTop: 12,
+    textAlign: "center",
   },
 })

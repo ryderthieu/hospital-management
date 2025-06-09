@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
 import SearchInput from "../../components/common/SearchInput";
 import { appointmentService } from "../../services/appointmentService";
 import { Service } from "../../types/appointment";
+import { useNavigate } from "react-router-dom";
 
 const PAGE_SIZE = 10;
 
@@ -19,6 +20,9 @@ export default function ServiceTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [serviceToDelete, setServiceToDelete] = useState<number | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     appointmentService.getAllServices().then((data) => {
@@ -26,6 +30,37 @@ export default function ServiceTable() {
       setLoading(false);
     });
   }, []);
+
+  // Xem chi tiết dịch vụ
+  const handleView = (serviceId: number) => {
+    navigate(`/admin/health-services/${serviceId}`);
+  };
+
+  // Sửa dịch vụ
+  const handleEdit = (serviceId: number) => {
+    navigate(`/admin/health-services/edit/${serviceId}`);
+  };
+
+  // Xóa dịch vụ
+  const handleDelete = (serviceId: number) => {
+    setServiceToDelete(serviceId);
+    setModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (serviceToDelete === null) return;
+    try {
+      await appointmentService.deleteService(serviceToDelete);
+      setServices((prev) =>
+        prev.filter((service) => service.serviceId !== serviceToDelete)
+      );
+    } catch (error) {
+      console.error("Error deleting service:", error);
+    } finally {
+      setModalOpen(false);
+      setServiceToDelete(null);
+    }
+  };
 
   const totalItems = services.length;
   const totalPages = Math.ceil(totalItems / PAGE_SIZE);
@@ -165,7 +200,7 @@ export default function ServiceTable() {
                 <TableCell className="py-3 text-theme-md">
                   <div className="flex gap-2">
                     <button
-                      onClick={() => {}}
+                      onClick={() => handleView(service.serviceId)}
                       className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
                     >
                       <svg
@@ -183,7 +218,7 @@ export default function ServiceTable() {
                       </svg>
                     </button>
                     <button
-                      onClick={() => {}}
+                      onClick={() => handleEdit(service.serviceId)}
                       className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 transition-colors dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50"
                     >
                       <svg
@@ -196,7 +231,7 @@ export default function ServiceTable() {
                       </svg>
                     </button>
                     <button
-                      onClick={() => {}}
+                      onClick={() => handleDelete(service.serviceId)}
                       className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
                     >
                       <svg
@@ -228,6 +263,29 @@ export default function ServiceTable() {
           />
         </div>
       </div>
+      {/* Modal xác nhận xóa */}
+      {modalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-50">
+          <div className="bg-white rounded-lg p-6 shadow-lg max-w-sm w-full">
+            <h3 className="text-lg font-semibold mb-4">Xác nhận xóa dịch vụ</h3>
+            <p>Bạn có chắc chắn muốn xóa dịch vụ này không?</p>
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                className="px-4 py-2 rounded bg-gray-200 text-gray-700"
+                onClick={() => setModalOpen(false)}
+              >
+                Hủy
+              </button>
+              <button
+                className="px-4 py-2 rounded bg-red-600 text-white"
+                onClick={handleConfirmDelete}
+              >
+                Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import PageMeta from "../../components/common/PageMeta";
 import AddButton from "../../components/ui/button/AddButton";
 import ServiceTable from "./ServiceTable";
-
+import { Link } from "react-router-dom";
 
 export default function Service() {
   return (
@@ -20,7 +20,9 @@ export default function Service() {
           <ServiceTable />
         </div>
         <div className="fixed right-5 bottom-5">
-          <AddButton />
+          <Link to="/admin/health-services/add">
+            <AddButton />
+          </Link>
         </div>
       </div>
     </div>

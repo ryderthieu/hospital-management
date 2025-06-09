@@ -215,7 +215,7 @@ export const fetchRealTimeDates = async (doctorId: string, days: number): Promis
         isToday: isToday(date),
         isTomorrow: isTomorrow(date),
         isWeekend: isWeekend(date),
-        scheduleId: schedules.length > 0 ? schedules[0].scheduleId : null, // Lấy scheduleId đầu tiên
+        scheduleIds: schedules.map(s => s.scheduleId), // Lưu tất cả scheduleIds
       });
     }
 
@@ -226,29 +226,29 @@ export const fetchRealTimeDates = async (doctorId: string, days: number): Promis
   }
 };
 
-// Cập nhật fetchTimeSlots để lấy khung giờ từ availableTimeSlots
-export const fetchTimeSlots = async (scheduleId: number): Promise<TimeSlot[]> => {
+export const fetchTimeSlots = async (scheduleIds: number[]): Promise<TimeSlot[]> => {
   try {
-    console.log(`[data.ts] Đang lấy khung giờ cho scheduleId: ${scheduleId}`);
-    const response = await API.get<ScheduleDto[]>(`/doctors/1/schedules`); // Gọi lại API để lấy schedule cụ thể
-    const schedule = response.data.find((s) => s.scheduleId === scheduleId);
-    
-    if (!schedule) {
-      throw new Error(`Không tìm thấy lịch với scheduleId: ${scheduleId}`);
+    console.log(`[data.ts] Đang lấy khung giờ cho scheduleIds: ${scheduleIds.join(', ')}`);
+    const response = await API.get<ScheduleDto[]>(`/doctors/1/schedules`);
+
+    const schedules = response.data.filter((s) => scheduleIds.includes(s.scheduleId));
+    if (schedules.length === 0) {
+      throw new Error(`Không tìm thấy lịch với scheduleIds: ${scheduleIds.join(', ')}`);
     }
 
-    console.log(`[data.ts] Phản hồi khung giờ cho scheduleId ${scheduleId}:`, JSON.stringify(schedule.availableTimeSlots, null, 2));
+    const timeSlots: TimeSlot[] = schedules.flatMap(schedule =>
+      schedule.availableTimeSlots.map((slot, index) => ({
+        id: `${schedule.scheduleId}-${index}`,
+        time: `${slot.slotStart.slice(0, 5)} - ${slot.slotEnd.slice(0, 5)}`,
+        available: slot.available,
+        price: "150.000 VND",
+        isSelected: false,
+        isPast: new Date(`${schedule.workDate}T${slot.slotStart}`).getTime() < Date.now(),
+        isBooked: !slot.available,
+      }))
+    );
 
-    const timeSlots: TimeSlot[] = schedule.availableTimeSlots.map((slot, index) => ({
-      id: `${scheduleId}-${index}`,
-      time: `${slot.slotStart.slice(0, 5)} - ${slot.slotEnd.slice(0, 5)}`,
-      available: slot.available,
-      price: "150.000 VND", // TODO: Lấy giá từ API nếu có
-      isSelected: false,
-      isPast: new Date(`${schedule.workDate}T${slot.slotStart}`).getTime() < Date.now(),
-      isBooked: !slot.available,
-    }));
-
+    console.log(`[data.ts] Phản hồi khung giờ:`, JSON.stringify(timeSlots, null, 2));
     return timeSlots;
   } catch (error: any) {
     console.error(`[data.ts] Lỗi khi lấy khung giờ:`, error.message, error.response?.data);
