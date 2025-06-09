@@ -1,6 +1,6 @@
 import type React from "react"
 import { useState } from "react"
-import { Table, Input, DatePicker, Button, Avatar, Space, Card, Select, Tag, Tooltip, Empty, Spin, Modal } from "antd"
+import { Table, Input, DatePicker, Button, Avatar, Space, Card, Select, Tooltip, Empty, Modal } from "antd"
 import {
   EditOutlined,
   StepForwardOutlined,
@@ -9,7 +9,6 @@ import {
   UserOutlined,
   CalendarOutlined,
   ReloadOutlined,
-  ClockCircleOutlined,
   MedicineBoxOutlined,
   ClearOutlined,
 } from "@ant-design/icons"
@@ -17,7 +16,6 @@ import WeCareLoading from "../../components/common/WeCareLoading"
 import { useNavigate } from "react-router-dom"
 import { useAppointments } from "../../hooks/useAppointment"
 import {
-  formatTimeSlot,
   getAppointmentStatusColor,
   formatAppointmentDate,
   getAppointmentStatusVietnameseText,
@@ -56,9 +54,7 @@ const Patients: React.FC = () => {
       // Navigate to PatientDetail with appointment data
       navigate("/doctor/examination/patient/detail", {
         state: {
-          appointmentNumber: appointment.number,
           appointmentId: appointment.appointmentId,
-          appointmentFullData: appointment
         },
       })
     }
@@ -178,14 +174,8 @@ const Patients: React.FC = () => {
         <div>
           <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
             <CalendarOutlined style={{ marginRight: 8, color: "#6b7280" }} />
-            <span style={{ color: "#374151" }}>{record.schedule.workDate}</span>
+            <span style={{ color: "#374151" }}>{formatAppointmentDate(record.schedule.workDate)}</span>
           </div>
-          {record && (
-            <div style={{ display: "flex", alignItems: "center", fontSize: "12px", color: "#6b7280" }}>
-              <ClockCircleOutlined style={{ marginRight: 4 }} />
-              {formatTimeSlot(record.slotStart, record.slotEnd)}
-            </div>
-          )}
         </div>
       ),
     },
