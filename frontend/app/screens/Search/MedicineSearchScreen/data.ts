@@ -1,5 +1,4 @@
-import { MedicineCategory } from '../type';
-import { Medicine } from '../type';
+import { MedicineCategory, Medicine } from '../type';
 import { SvgProps } from 'react-native-svg';
 import Icon from '../../../assets/images/ChuyenKhoa/medicine.svg';
 
@@ -19,22 +18,20 @@ export const medicineData: Medicine[] = [
     id: '1',
     name: 'Amoxicillin',
     category: 'Kháng sinh',
-    expiryDate: '12/2026',
     manufacturer: 'Pfizer',
     description: 'Kháng sinh điều trị nhiễm khuẩn đường hô hấp, tiết niệu.',
     sideEffects: 'Buồn nôn, tiêu chảy, phát ban.',
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTE5bqN-3d0odGzXDWsgd7o2Ft2snBP0i5L0w&s', // Thay bằng URL hoặc require()
+    avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTE5bqN-3d0odGzXDWsgd7o2Ft2snBP0i5L0w&s',
     price: '150,000 VNĐ',
   },
   {
     id: '2',
     name: 'Ciprofloxacin',
     category: 'Kháng sinh',
-    expiryDate: '06/2025',
     manufacturer: 'Bayer',
     description: 'Kháng sinh phổ rộng, điều trị nhiễm khuẩn nặng.',
     sideEffects: 'Đau đầu, chóng mặt, rối loạn tiêu hóa.',
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTE5bqN-3d0odGzXDWsgd7o2Ft2snBP0i5L0w&s',
+    avatar: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTE5bqN-3d0odGzXDWsgd7o2Ft2snBP0i5L0w&s',
     price: '200,000 VNĐ',
   },
 ];

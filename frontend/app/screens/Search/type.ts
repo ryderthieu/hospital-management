@@ -1,71 +1,138 @@
-import { ImageSourcePropType } from "react-native";
-
+// type.ts
 export type RootStackParamList = {
-  MedicineSearch: undefined;
-  MedicineList: { category: string };
-  MedicineDetail: { medicine: Medicine };
-  SortOptions: undefined;
-  FilterOptions: undefined;
-
-  DiseaseSearch: undefined;
-  DiseaseList: { category: string };
-  DiseaseDetail: { disease: Disease };
+  MainTabs: undefined;
+  Home: undefined;
+  Appointments: undefined;
+  AppointmentDetail: { appointment: Appointment };
+  CompletedAppointmentDetail: { appointment: Appointment };
 };
 
-
-export type MedicineCategory =
-| {
-    id: string;
-    name: string;
-    iconType: 'svg';
-    icon: React.ComponentType<any>; 
-  }
-| {
-    id: string;
-    name: string;
-    iconType: 'image';
-    icon: ImageSourcePropType; 
-  };
-
-export type DiseaseCategory =
-| {
-    id: string;
-    name: string;
-    iconType: 'svg';
-    icon: React.ComponentType<any>;
-  }
-| {
-    id: string;
-    name: string;
-    iconType: 'image';
-    icon: ImageSourcePropType;
-  };
-
-export interface Medicine {
-  id: string;               
-  name: string;            
-  category: string;         
-  expiryDate: string;        
-  manufacturer: string;      
-  description: string;      
-  sideEffects: string;       
-  image: string;             
-  price?: string;            
+export interface PageResponse<T> {
+  content: T[];
+  pageNo: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
 }
 
-export interface Disease {
+export interface Appointment {
   id: string;
-  name: string;             // Tên bệnh
-  description: string;      // Mô tả tổng quát
-  symptoms: string;         // Triệu chứng
-  suggestedMedicines: Medicine[]; // Gợi ý thuốc sử dụng
-  image?: string;           // Hình ảnh minh hoạ
+  date: string;
+  time: string;
+  doctorName: string;
+  specialty: string;
+  imageUrl: string;
+  status: "upcoming" | "completed";
+  department?: string;
+  room?: string;
+  queueNumber?: number;
+  patientName?: string;
+  patientBirthday?: string;
+  patientGender?: string;
+  patientLocation?: string;
+  appointmentFee?: string;
+  examTime?: string;
+  followUpDate?: string;
+  diagnosis?: string[];
+  doctorNotes?: string[];
+  testResults?: { name: string; fileUrl: string }[];
+  codes?: {
+    appointmentCode?: string;
+    transactionCode?: string;
+    patientCode?: string;
+  };
 }
 
-
-export interface FilterOption {
+export interface Doctor {
   id: string;
   name: string;
-  value: string;
-  selected?: boolean;
+  specialty: string;
+  imageUrl: string;
+  rating: number;
+  experience: string;
+  availability: string[];
+}
+
+export interface AppointmentResponseDto {
+  appointmentId: number;
+  doctorId: number;
+  doctorInfo?: {
+    doctorId: number;
+    userId: number;
+    identityNumber: string;
+    fullName: string;
+    birthday: string;
+    gender: string;
+    address: string;
+    academicDegree: string;
+    specialization: string;
+    type: string;
+    departmentId: number;
+    createdAt: string;
+  };
+  schedule: {
+    scheduleId: number;
+    doctorId: number;
+    workDate: string;
+    startTime: string;
+    endTime: string;
+    shift: string;
+    roomId: number;
+    createdAt: string;
+  } | null;
+  symptoms: string;
+  number: number;
+  slotStart: string;
+  slotEnd: string;
+  appointmentStatus: string;
+  createdAt: string;
+  patientInfo: {
+    patientId: number;
+    fullName: string;
+    birthday: string;
+    gender: string;
+    address: string;
+  } | null;
+  appointmentNotes: {
+    id: number;
+    appointmentId: number;
+    noteType: string;
+    content: string;
+    createdAt: string;
+  }[] | null;
+}
+
+export interface Medicine {
+  id: string;
+  name: string;
+  category: string;
+  manufacturer: string;
+  description: string;
+  sideEffects: string;
+  avatar: string; // Thay images: string[] bằng avatar: string
+  price: string;
+}
+
+export interface MedicineCategory {
+  id: string;
+  name: string;
+  iconType: 'svg' | 'image';
+  icon: any;
+}
+
+export interface MedicineResponse {
+  medicineId: number;
+  medicineName: string;
+  manufactor: string;
+  category: string;
+  description: string;
+  usage: string;
+  unit: string;
+  insuranceDiscountPercent: string;
+  insuranceDiscount: string;
+  sideEffects: string;
+  price: string;
+  quantity: number;
+  avatar: string;
 }

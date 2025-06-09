@@ -51,175 +51,174 @@ const AppointmentsScreen = () => {
     }
   }, [activeTab, startDate, endDate, loggedIn, patient]);
 
-  const fetchAppointments = async () => {
-    setIsLoading(true);
-    try {
-      const patientId = patient?.patientId;
-      if (!patientId) {
-        throw new Error("Patient ID not available");
+const fetchAppointments = async () => {
+  setIsLoading(true);
+  try {
+    const patientId = patient?.patientId;
+    if (!patientId) {
+      throw new Error("Patient ID not available");
+    }
+
+    console.log(
+      "[AppointmentsScreen] Fetching appointments for patientId:",
+      patientId
+    );
+    const response = await API.get<PageResponse<AppointmentResponseDto>>(
+      `/appointments/patient/${patientId}`,
+      {
+        params: {
+          ...(startDate &&
+            endDate && {
+              startDate: startDate.toISOString().split("T")[0],
+              endDate: endDate.toISOString().split("T")[0],
+            }),
+        },
       }
+    );
+    console.log(
+      "[AppointmentsScreen] API response:",
+      JSON.stringify(response.data, null, 2)
+    );
 
-      console.log(
-        "[AppointmentsScreen] Fetching appointments for patientId:",
-        patientId
-      );
-      const response = await API.get<AppointmentResponseDto[]>(
-        `/appointments/patient/${patientId}`,
-        {
-          params: {
-            ...(startDate &&
-              endDate && {
-                startDate: startDate.toISOString().split("T")[0],
-                endDate: endDate.toISOString().split("T")[0],
-              }),
-          },
-        }
-      );
-      console.log(
-        "[AppointmentsScreen] API response:",
-        JSON.stringify(response.data, null, 2)
-      );
+    const statusFilter =
+      activeTab === "upcoming" ? ["PENDING", "CONFIRMED"] : ["COMPLETED"];
+    const filteredData = Array.isArray(response.data.content)
+      ? response.data.content.filter((dto) =>
+          statusFilter.includes(dto.appointmentStatus)
+        )
+      : [];
 
-      const statusFilter =
-        activeTab === "upcoming" ? ["PENDING", "CONFIRMED"] : ["COMPLETED"];
-      const filteredData = response.data.filter((dto) =>
-        statusFilter.includes(dto.appointmentStatus)
-      );
-
-      const appointments: Appointment[] = await Promise.all(
-        filteredData.map(async (dto) => {
-          let doctorInfo = dto.doctorInfo;
-          if (!doctorInfo) {
-            try {
-              const doctorResponse = await API.get(`/doctors/${dto.doctorId}`);
-              doctorInfo = doctorResponse.data;
-            } catch (error) {
-              console.warn(
-                `[AppointmentsScreen] Error fetching doctor ${dto.doctorId}:`,
-                error
-              );
-            }
-          }
-
-          let schedule = dto.schedule;
-          if (!schedule && dto.schedule?.scheduleId) {
-            try {
-              const scheduleResponse = await API.get(
-                `/doctors/schedules/${dto.schedule.scheduleId}`
-              );
-              schedule = scheduleResponse.data;
-            } catch (error) {
-              console.warn(
-                `[AppointmentsScreen] Error fetching schedule ${dto.schedule.scheduleId} for appointment ${dto.appointmentId}:`,
-                error
-              );
-            }
-          } else if (!schedule) {
+    const appointments: Appointment[] = await Promise.all(
+      filteredData.map(async (dto) => {
+        let doctorInfo = dto.doctorInfo;
+        if (!doctorInfo) {
+          try {
+            const doctorResponse = await API.get(`/doctors/${dto.doctorId}`);
+            doctorInfo = doctorResponse.data;
+          } catch (error) {
             console.warn(
-              `[AppointmentsScreen] No schedule found for appointment ${dto.appointmentId}`
+              `[AppointmentsScreen] Error fetching doctor ${dto.doctorId}:`,
+              error
             );
           }
+        }
 
-          let roomInfo = null;
-          if (schedule?.roomId) {
-            try {
-              const roomResponse = await API.get(
-                `/examination-rooms/${schedule.roomId}`
-              );
-              roomInfo = roomResponse.data;
-            } catch (error) {
-              console.warn(
-                `[AppointmentsScreen] Error fetching room ${schedule.roomId}:`,
-                error
-              );
-            }
+        let schedule = dto.schedule;
+        if (!schedule && dto.schedule?.scheduleId) {
+          try {
+            const scheduleResponse = await API.get(
+              `/doctors/schedules/${dto.schedule.scheduleId}`
+            );
+            schedule = scheduleResponse.data;
+          } catch (error) {
+            console.warn(
+              `[AppointmentsScreen] Error fetching schedule ${dto.schedule.scheduleId} for appointment ${dto.appointmentId}:`,
+              error
+            );
           }
+        } else if (!schedule) {
+          console.warn(
+            `[AppointmentsScreen] No schedule found for appointment ${dto.appointmentId}`
+          );
+        }
 
-          const workDate = new Date(dto.createdAt).toLocaleDateString("vi-VN", {
-            weekday: "long",
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          });
+        let roomInfo = null;
+        if (schedule?.roomId) {
+          try {
+            const roomResponse = await API.get(
+              `/examination-rooms/${schedule.roomId}`
+            );
+            roomInfo = roomResponse.data;
+          } catch (error) {
+            console.warn(
+              `[AppointmentsScreen] Error fetching room ${schedule.roomId}:`,
+              error
+            );
+          }
+        }
 
-          return {
-            id: dto.appointmentId.toString(),
-            date: workDate,
-            time: `${dto.slotStart.slice(0, 5)} - ${dto.slotEnd.slice(0, 5)}`,
-            doctorName: `${doctorInfo?.academicDegree || ""} ${
-              doctorInfo?.fullName || "Bác sĩ chưa có tên"
-            }`.trim(),
-            specialty: doctorInfo?.specialization || "Chưa xác định",
-            imageUrl: "https://via.placeholder.com/60",
-            status: activeTab,
-            department: doctorInfo?.specialization,
-            room: roomInfo
-              ? `${roomInfo.note || "Phòng chưa xác định"} - Tầng ${
-                  roomInfo.floor || "X"
-                } ${roomInfo.building || ""}`
-              : "Phòng chưa xác định",
-            queueNumber: dto.number,
-            patientName: dto.patientInfo?.fullName || "Bệnh nhân chưa cung cấp",
-            patientBirthday: dto.patientInfo?.birthday || "Không xác định",
-            patientGender: dto.patientInfo?.gender || "Không xác định",
-            patientLocation: dto.patientInfo?.address || "Không xác định",
-            appointmentFee: "150.000 VND",
-            ...(activeTab === "completed" && {
-              examTime: `${dto.slotStart.slice(0, 5)} - ${dto.slotEnd.slice(
-                0,
-                5
-              )}`,
-              followUpDate: new Date(
-                new Date(dto.createdAt).getTime() + 14 * 24 * 60 * 60 * 1000
-              ).toLocaleDateString("vi-VN", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              }),
-              diagnosis: dto.appointmentNotes
-                ? dto.appointmentNotes
-                    .filter((note) => note.noteType === "DIAGNOSIS")
-                    .map((note) => note.content || "Chưa có chẩn đoán")
-                : [],
-              doctorNotes: dto.appointmentNotes
-                ? dto.appointmentNotes
-                    .filter((note) => note.noteType === "NOTE")
-                    .map((note) => note.content || "Chưa có ghi chú")
-                : [],
-              testResults: dto.appointmentNotes
-                ? dto.appointmentNotes
-                    .filter((note) => note.noteType === "TEST_RESULT")
-                    .map((note, index) => ({
-                      name: `Kết quả xét nghiệm ${index + 1}`,
-                      fileUrl: note.content || "/placeholder.pdf",
-                    }))
-                : [],
+        const workDate = new Date(dto.createdAt).toLocaleDateString("vi-VN", {
+          weekday: "long",
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+
+        return {
+          id: dto.appointmentId.toString(),
+          date: workDate,
+          time: `${dto.slotStart.slice(0, 5)} - ${dto.slotEnd.slice(0, 5)}`,
+          doctorName: `${doctorInfo?.academicDegree || ""} ${
+            doctorInfo?.fullName || "Bác sĩ chưa có tên"
+          }`.trim(),
+          specialty: doctorInfo?.specialization || "Chưa xác định",
+          imageUrl: "https://via.placeholder.com/60",
+          status: activeTab,
+          department: doctorInfo?.specialization,
+          room: roomInfo
+            ? `${roomInfo.note || "Phòng chưa xác định"} - Tầng ${
+                roomInfo.floor || "X"
+              } ${roomInfo.building || ""}`
+            : "Phòng chưa xác định",
+          queueNumber: dto.number,
+          patientName: dto.patientInfo?.fullName || "Bệnh nhân chưa cung cấp",
+          patientBirthday: dto.patientInfo?.birthday || "Không xác định",
+          patientGender: dto.patientInfo?.gender || "Không xác định",
+          patientLocation: dto.patientInfo?.address || "Không xác định",
+          appointmentFee: "150.000 VND",
+          ...(activeTab === "completed" && {
+            examTime: `${dto.slotStart.slice(0, 5)} - ${dto.slotEnd.slice(0, 5)}`,
+            followUpDate: new Date(
+              new Date(dto.createdAt).getTime() + 14 * 24 * 60 * 60 * 1000
+            ).toLocaleDateString("vi-VN", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
             }),
-          };
-        })
-      );
+            diagnosis: dto.appointmentNotes
+              ? dto.appointmentNotes
+                  .filter((note) => note.noteType === "DIAGNOSIS")
+                  .map((note) => note.content || "Chưa có chẩn đoán")
+              : [],
+            doctorNotes: dto.appointmentNotes
+              ? dto.appointmentNotes
+                  .filter((note) => note.noteType === "NOTE")
+                  .map((note) => note.content || "Chưa có ghi chú")
+              : [],
+            testResults: dto.appointmentNotes
+              ? dto.appointmentNotes
+                  .filter((note) => note.noteType === "TEST_RESULT")
+                  .map((note, index) => ({
+                    name: `Kết quả xét nghiệm ${index + 1}`,
+                    fileUrl: note.content || "/placeholder.pdf",
+                  }))
+              : [],
+          }),
+        };
+      })
+    );
 
-      console.log(
-        "[AppointmentsScreen] Mapped appointments:",
-        JSON.stringify(appointments, null, 2)
-      );
-      filterAppointments(appointments);
-    } catch (error: any) {
-      console.error(
-        "[AppointmentsScreen] Error fetching appointments:",
-        error.message,
-        error.response?.data
-      );
-      Alert.alert(
-        "Lỗi",
-        "Không thể tải danh sách lịch khám. Vui lòng thử lại.",
-        [{ text: "OK" }]
-      );
-      setFilteredAppointments([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    console.log(
+      "[AppointmentsScreen] Mapped appointments:",
+      JSON.stringify(appointments, null, 2)
+    );
+    filterAppointments(appointments);
+  } catch (error: any) {
+    console.error(
+      "[AppointmentsScreen] Error fetching appointments:",
+      error.message,
+      error.response?.data
+    );
+    Alert.alert(
+      "Lỗi",
+      "Không thể tải danh sách lịch khám. Vui lòng thử lại.",
+      [{ text: "OK" }]
+    );
+    setFilteredAppointments([]);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const filterAppointments = (appointments: Appointment[]) => {
     const filtered = appointments.filter((appointment) => {

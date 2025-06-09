@@ -19,4 +19,5 @@ public class ScheduleDto {
     private String shift;
     private Integer roomId;
     private String createdAt;
+    private String location;
 }

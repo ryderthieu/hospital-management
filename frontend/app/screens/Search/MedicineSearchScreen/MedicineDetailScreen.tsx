@@ -1,12 +1,13 @@
-import React from 'react';
-import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Image, ScrollView, StyleSheet } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { SearchStackParamList, Medicine } from '../../../navigation/types';
+import { SearchStackParamList, Medicine, MedicineResponse } from '../../../navigation/types';
 import { globalStyles, colors } from '../../../styles/globalStyles';
 import Header from '../../../components/Header';
-import Icon from 'react-native-vector-icons/MaterialIcons'; // For icons
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useFont, fontFamily } from '../../../context/FontContext';
+import API from '../../../services/api';
 
 type MedicineDetailScreenProps = {
   route: RouteProp<SearchStackParamList, 'MedicineDetail'>;
@@ -14,8 +15,49 @@ type MedicineDetailScreenProps = {
 };
 
 export const MedicineDetailScreen: React.FC<MedicineDetailScreenProps> = ({ route, navigation }) => {
-  const { medicine } = route.params;
-const { fontsLoaded } = useFont();
+  const { medicine: initialMedicine } = route.params;
+  const { fontsLoaded } = useFont();
+  const [medicine, setMedicine] = useState<Medicine | null>(null);
+
+  useEffect(() => {
+    const fetchMedicine = async () => {
+      try {
+        const response = await API.get<MedicineResponse>(`/pharmacy/medicines/${initialMedicine.id}`);
+        const fetchedMedicine: Medicine = {
+          id: response.data.medicineId.toString(),
+          name: response.data.medicineName,
+          category: response.data.category,
+          manufacturer: response.data.manufactor,
+          description: response.data.description,
+          sideEffects: response.data.sideEffects,
+          avatar: response.data.avatar || 'https://via.placeholder.com/150',
+          price: `${response.data.price} VNĐ`,
+        };
+        setMedicine(fetchedMedicine);
+      } catch (error: any) {
+        console.error(
+          '[MedicineDetailScreen] Error fetching medicine:',
+          error.message,
+          error.response ? {
+            status: error.response.status,
+            data: error.response.data,
+            headers: error.response.headers,
+          } : 'No response data'
+        );
+        setMedicine(initialMedicine);
+      }
+    };
+
+    fetchMedicine();
+  }, [initialMedicine.id]);
+
+  if (!medicine) {
+    return (
+      <View style={globalStyles.container}>
+        <Text>Đang tải...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={globalStyles.container}>
@@ -26,37 +68,17 @@ const { fontsLoaded } = useFont();
         showAction={false}
       />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Image Carousel Section */}
         <View style={styles.imageContainer}>
-          <TouchableOpacity style={styles.arrowButton}>
-            <Icon name="chevron-left" size={30} color="#000" />
-          </TouchableOpacity>
           <Image
-            source={{ uri: medicine.image }}
+            source={{ uri: medicine.avatar }}
             style={styles.medicineImage}
             resizeMode="cover"
           />
-          <TouchableOpacity style={styles.arrowButton}>
-            <Icon name="chevron-right" size={30} color="#000" />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.carouselDots}>
-          <View style={[styles.dot, styles.activeDot]} />
-          <View style={styles.dot} />
-          <View style={styles.dot} />
         </View>
 
-        {/* Medicine Name */}
         <Text style={styles.medicineName}>{medicine.name}</Text>
 
-        {/* Key Details Section with Larger Border */}
         <View style={styles.cardContainer}>
-          <View style={styles.innerCardContainer}>
-            <View style={styles.keyDetailItem}>
-              <Icon name="calendar-today" size={20} color={colors.textSecondary} />
-              <Text style={styles.keyDetailText}>Hạn sử dụng: {medicine.expiryDate}</Text>
-            </View>
-          </View>
           <View style={styles.innerCardContainer}>
             <View style={styles.keyDetailItem}>
               <Icon name="location-on" size={20} color={colors.textSecondary} />
@@ -65,13 +87,11 @@ const { fontsLoaded } = useFont();
           </View>
         </View>
 
-        {/* Description Section with Border */}
         <View style={styles.cardContainer}>
           <Text style={styles.sectionHeader}>MÔ TẢ</Text>
           <Text style={styles.sectionText}>{medicine.description}</Text>
         </View>
 
-        {/* Side Effects Section with Border */}
         <View style={styles.cardContainer}>
           <Text style={styles.sectionHeader}>TÁC DỤNG PHỤ</Text>
           <Text style={styles.sectionText}>{medicine.sideEffects}</Text>
@@ -86,33 +106,14 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   imageContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 16,
   },
   medicineImage: {
     width: '80%',
     height: 200,
     borderRadius: 12,
-  },
-  arrowButton: {
-    padding: 10,
-  },
-  carouselDots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#ccc',
-    marginHorizontal: 4,
-  },
-  activeDot: {
-    backgroundColor: '#000',
   },
   medicineName: {
     fontFamily: fontFamily.bold,

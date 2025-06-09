@@ -16,11 +16,14 @@ import org.example.doctorservice.entity.Doctor;
 import org.example.doctorservice.repository.DepartmentRepository;
 import org.example.doctorservice.repository.DoctorRepository;
 import org.example.doctorservice.service.DoctorService;
+import org.example.doctorservice.service.FileStorageService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @Service
@@ -32,6 +35,7 @@ public class DoctorServiceImpl implements DoctorService {
     // private final AppointmentServiceClient appointmentServiceClient;
     private final PatientServiceClient patientServiceClient;
     private final UserServiceClient userServiceClient;
+    private final FileStorageService fileStorageService;
 
     @Override
     public List<DoctorDto> getAllDoctors() {
@@ -200,6 +204,63 @@ public class DoctorServiceImpl implements DoctorService {
         return doctorRepository.findByUserId(userId)
                 .map(DoctorDto::new)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bác sĩ với User ID: " + userId));
+    }
+
+    @Override
+    @Transactional
+    public DoctorDto uploadAvatar(Integer id, MultipartFile file) {
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bác sĩ với id: " + id));
+
+        // Xóa avatar cũ nếu có và không phải avatar mặc định
+        if (doctor.getAvatar() != null && !doctor.getAvatar().equals("https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg")) {
+            fileStorageService.deleteFile(doctor.getAvatar());
+        }
+
+        // Lưu file mới và cập nhật đường dẫn
+        String fileUrl = fileStorageService.storeFile(file);
+        doctor.setAvatar(fileUrl);
+
+        Doctor updatedDoctor = doctorRepository.save(doctor);
+        return convertToDTO(updatedDoctor);
+    }
+
+    @Override
+    @Transactional
+    public DoctorDto deleteAvatar(Integer id) {
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bác sĩ với id: " + id));
+
+        // Xóa avatar hiện tại nếu không phải avatar mặc định
+        if (doctor.getAvatar() != null && !doctor.getAvatar().equals("https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg")) {
+            fileStorageService.deleteFile(doctor.getAvatar());
+        }
+
+        // Set về avatar mặc định
+        doctor.setAvatar("https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg");
+
+        Doctor updatedDoctor = doctorRepository.save(doctor);
+        return convertToDTO(updatedDoctor);
+    }
+
+    private DoctorDto convertToDTO(Doctor doctor) {
+        return DoctorDto.builder()
+                .doctorId(doctor.getDoctorId())
+                .userId(doctor.getUserId())
+                .identityNumber(doctor.getIdentityNumber())
+                .fullName(doctor.getFullName())
+                .birthday(doctor.getBirthday())
+                .gender(doctor.getGender())
+                .address(doctor.getAddress())
+                .academicDegree(doctor.getAcademicDegree())
+                .specialization(doctor.getSpecialization())
+                .avatar(doctor.getAvatar())
+                .type(doctor.getType())
+                .departmentId(doctor.getDepartment().getDepartmentId())
+                .departmentName(doctor.getDepartment().getDepartmentName())
+                .consultationFee(doctor.getConsultationFee())
+                .createdAt(doctor.getCreatedAt() != null ? doctor.getCreatedAt().toLocalDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null)
+                .build();
     }
 
     private void validateDoctorDto(DoctorDto doctorDto) {

@@ -9,9 +9,11 @@ import org.example.doctorservice.dto.ScheduleDto;
 import org.example.doctorservice.entity.Doctor;
 import org.example.doctorservice.entity.Schedule;
 import org.example.doctorservice.service.DoctorService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -76,4 +78,17 @@ public class DoctorController {
         return ResponseEntity.ok(doctorService.getDoctorByUserId(userId));
     }
 
+    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
+    @PostMapping(value = "/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<DoctorDto> uploadAvatar(
+            @PathVariable Integer id,
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(doctorService.uploadAvatar(id, file));
+    }
+
+    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
+    @DeleteMapping("/{id}/avatar")
+    public ResponseEntity<DoctorDto> deleteAvatar(@PathVariable Integer id) {
+        return ResponseEntity.ok(doctorService.deleteAvatar(id));
+    }
 }

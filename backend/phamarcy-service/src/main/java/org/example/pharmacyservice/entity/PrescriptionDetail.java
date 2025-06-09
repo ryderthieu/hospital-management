@@ -36,6 +36,9 @@ public class PrescriptionDetail {
     @Column(name = "prescription_notes")
     private String prescriptionNotes;
 
+    @Column(name = "quantity", nullable = false)
+    private Integer quantity;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 }
