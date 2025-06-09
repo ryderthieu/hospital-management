@@ -299,9 +299,15 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .distinct()
                 .collect(Collectors.toList());
 
+        List<Integer> doctorIds = appointments.stream()
+                .map(Appointment::getDoctorId)
+                .distinct()
+                .collect(Collectors.toList());
+
         // Tạo cache cho patient và schedule info
         Map<Integer, PatientDto> patientCache = new HashMap<>();
         Map<Integer, ScheduleDto> scheduleCache = new HashMap<>();
+        Map<Integer, DoctorDto> doctorCache = new HashMap<>();
 
         try {
             // Tạo danh sách CompletableFuture cho các API call
@@ -325,6 +331,26 @@ public class AppointmentServiceImpl implements AppointmentService {
                             }
                         }
                     });
+                futures.add(future);
+            }
+
+            for (Integer doctorId: doctorIds) {
+                CompletableFuture<Void> future = CompletableFuture
+                        .supplyAsync(() -> {
+                            try {
+                                return doctorServiceClient.getDoctorById(doctorId);
+                            } catch (Exception e) {
+                                log.error("Lỗi khi lấy thông tin bác sĩ ID {}: {}", doctorId, e.getMessage());
+                                return null;
+                            }
+                        }, executorService)
+                        .thenAccept(doctorInfo -> {
+                            if (doctorInfo != null) {
+                                synchronized (doctorCache) {
+                                    doctorCache.put(doctorId, doctorInfo);
+                                }
+                            }
+                        });
                 futures.add(future);
             }
 
@@ -381,6 +407,11 @@ public class AppointmentServiceImpl implements AppointmentService {
                         response.setSchedule(scheduleInfo);
                     }
 
+                    DoctorDto doctorInfo = doctorCache.get(appointment.getDoctorId());
+                    if (doctorInfo != null) {
+                        response.setDoctorInfo(doctorInfo);
+                    }
+
                     // Map appointment notes nếu có
                     if (appointment.getAppointmentNotes() != null && !appointment.getAppointmentNotes().isEmpty()) {
                         List<AppointmentNoteDto> notes = appointment.getAppointmentNotes().stream()
@@ -427,6 +458,16 @@ public class AppointmentServiceImpl implements AppointmentService {
             }
         } catch (Exception e) {
             log.error("Lỗi khi lấy thông tin lịch khám ID: {}", appointment.getScheduleId(), e);
+        }
+
+        try {
+            DoctorDto doctorInfo = doctorServiceClient.getDoctorById(appointment.getDoctorId());
+            log.info("Thông tin bác sĩ: {}", doctorInfo);
+            if (doctorInfo != null) {
+                response.setDoctorInfo(doctorInfo);
+            }
+        } catch (Exception e) {
+            log.error("Lỗi khi lấy thông tin bác sĩ ID: {}", appointment.getDoctorId(), e);
         }
 
         // Lấy thông tin ghi chú nếu có

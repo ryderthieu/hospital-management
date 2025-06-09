@@ -7,8 +7,7 @@ public class DoctorDto {
     private Integer doctorId;
     private Integer userId;
     private String identityNumber;
-    private String firstName;
-    private String lastName;
+    private String fullName;
     private String birthday;
     private String gender;
     private String address;

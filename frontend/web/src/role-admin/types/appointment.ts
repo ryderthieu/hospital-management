@@ -62,3 +62,41 @@ export interface ServiceDto {
   serviceType: ServiceType;
   price: number;
 }
+
+export interface Appointment {
+  appointmentId: number;
+  doctorId: number;
+  patientId: number;
+  scheduleId: number;
+  symptoms: string;
+  slotStart: string;
+  slotEnd: string;
+  number: number;
+  status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+  createdAt: string;
+}
+
+export interface AppointmentDto {
+  doctorId: number;
+  patientId: number;
+  scheduleId: number;
+  symptoms: string;
+  slotStart: string;
+  slotEnd: string;
+  number: number;
+  status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+}
+
+export interface AppointmentNote {
+  noteId: number;
+  appointmentId: number;
+  noteType: "DOCTOR" | "PATIENT";
+  noteText: string;
+  createdAt: string;
+}
+
+export interface AppointmentNoteDto {
+  appointmentId: number;
+  noteType: "DOCTOR" | "PATIENT";
+  noteText: string;
+}

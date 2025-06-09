@@ -108,23 +108,17 @@ export default function ServiceTable() {
               >
                 Tên dịch vụ
               </TableCell>
-              {/* <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
-              >
-                Khoa
-              </TableCell> */}
               <TableCell
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
-                Thời gian
+                Giá dịch vụ
               </TableCell>
               <TableCell
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
-                Ngày tạo
+                Thời gian tạo
               </TableCell>
               <TableCell
                 isHeader
@@ -160,7 +154,13 @@ export default function ServiceTable() {
                   {format(new Date(service.createdAt), "dd-MM-yyyy") || ""}
                 </TableCell>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {service.serviceType}
+                  {service.serviceType === "TEST"
+                    ? "Xét nghiệm"
+                    : service.serviceType === "IMAGING"
+                    ? "Chẩn đoán hình ảnh"
+                    : service.serviceType === "CONSULTATION"
+                    ? "Tư vấn"
+                    : "Khác"}
                 </TableCell>
                 <TableCell className="py-3 text-theme-md">
                   <div className="flex gap-2">

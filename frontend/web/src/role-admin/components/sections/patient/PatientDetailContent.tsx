@@ -13,6 +13,8 @@ import { useState, useEffect } from "react";
 import { patientService } from "../../../services/patientService";
 import { Patient, EmergencyContact } from "../../../types/patient";
 import { useParams } from "react-router-dom";
+import { appointmentService } from "../../../services/appointmentService";
+import { Appointment } from "../../../types/appointment";
 
 export function MedicalRecordsContent() {
   return (
@@ -68,31 +70,48 @@ export function MedicalRecordsContent() {
 
 // AppointmentsContent
 export function AppointmentsContent() {
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const { patientId } = useParams();
+
+  useEffect(() => {
+    if (!patientId) return;
+
+    const fetchAppointments = async () => {
+      try {
+        const data = await appointmentService.getAppointmentsByPatientId(
+          Number(patientId)
+        );
+        setAppointments(data);
+      } catch (error) {
+        console.error("Failed to fetch appointments:", error);
+      }
+    };
+
+    fetchAppointments();
+  }, [patientId]);
+
   return (
     <div className="bg-white py-6 px-4 rounded-lg border border-gray-200">
       <h2 className="text-xl font-semibold mb-4 ml-1">Lịch khám</h2>
       <div className="grid gap-4">
-        <AppointmentCard
-          title="Khám định kỳ"
-          doctor="BS. Nguyễn Văn A"
-          date="10/05/2025"
-          time="9:00 - 9:30"
-          status="pending"
-        />
-        <AppointmentCard
-          title="Khám tổng quát"
-          doctor="BS. Trần Thị B"
-          date="11/05/2025"
-          time="10:00 - 10:30"
-          status="completed"
-        />
-        <AppointmentCard
-          title="Khám chuyên khoa"
-          doctor="BS. Lê Văn C"
-          date="12/05/2025"
-          time="11:00 - 11:30"
-          status="cancelled"
-        />
+        {appointments.length > 0 ? (
+          appointments.map((appt) => (
+            <AppointmentCard
+              key={appt.appointmentId}
+              symptoms={appt.symptoms || "Lịch khám"}
+              doctor={`BS. ${appt.doctorId}`}
+              date={
+                appt.createdAt
+                  ? format(new Date(appt.createdAt), "dd/MM/yyyy")
+                  : ""
+              }
+              time={`${appt.slotStart} - ${appt.slotEnd}` || "Chưa xác định"}
+              status={appt.status}
+            />
+          ))
+        ) : (
+          <div className="text-gray-500">Không có lịch khám nào.</div>
+        )}
       </div>
     </div>
   );
