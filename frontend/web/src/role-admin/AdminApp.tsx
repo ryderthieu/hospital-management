@@ -19,7 +19,7 @@ import {
   EditService,
   ViewService,
 } from "./pages/HealthServices";
-import { Department, DepartmentDetail } from "./pages/Departments";
+import { Department, DepartmentDetail, AddDepartment } from "./pages/Departments";
 import { RoomDetail, Inpatients, InpatientRoom } from "./pages/Inpatient";
 import {
   OutpatientClinics,
@@ -75,6 +75,7 @@ const AdminApp: React.FC = () => {
 
           {/* Department Page */}
           <Route path="departments" element={<Department />} />
+          <Route path="departments/add" element={<AddDepartment />} />
           <Route path="departments/:id" element={<DepartmentDetail />} />
 
           {/* Authorization Page */}

@@ -1,10 +1,15 @@
 import PageMeta from "../../components/common/PageMeta";
 import AddButton from "../../components/ui/button/AddButton";
 import DepartmentCards from "./DepartmentCards";
-import DepartmentTable from "./DepartmentCards";
+import { useNavigate } from "react-router-dom";
 
 
 export default function Department() {
+  const navigate = useNavigate();
+
+  const handleAddDepartment = () => {
+    navigate("/admin/departments/add");
+  };
   return (
     <div>
       <PageMeta
@@ -21,7 +26,7 @@ export default function Department() {
           <DepartmentCards />
         </div>
         <div className="fixed right-5 bottom-5">
-          <AddButton />
+          <AddButton onClick={handleAddDepartment} />
         </div>
       </div>
     </div>

@@ -14,25 +14,6 @@ interface Doctor {
   departmentId?: number;
 }
 
-interface Equipment {
-  id: string;
-  name: string;
-  model: string;
-  manufacturer: string;
-  purchaseYear: number;
-  status: 'operational' | 'maintenance' | 'out-of-order';
-}
-
-interface DepartmentRoom {
-  roomId: number;
-  roomName: string;
-  departmentId: number;
-  capacity: number;
-  isAvailable: boolean;
-  equipment?: string;
-  createdAt: string;
-}
-
 interface Service {
   id: string;
   name: string;
@@ -67,12 +48,9 @@ const DepartmentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [error, setError] = useState<string | null>(null);  const [activeTab, setActiveTab] = useState('overview');
   const [department, setDepartment] = useState<Department | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [equipment, setEquipment] = useState<Equipment[]>([]);
-  const [rooms, setRooms] = useState<DepartmentRoom[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [stats, setStats] = useState<DepartmentStats>({
     totalPatients: 0,
@@ -112,31 +90,8 @@ const DepartmentDetail: React.FC = () => {
         } catch (docError) {
           console.error("Error fetching doctors:", docError);
           setDoctors([]);
-        }
-
-        // For now, set demo data for equipment, rooms, and services
-        // These can be replaced with actual API calls when available
-        setEquipment([
-          {
-            id: "TB-001",
-            name: "Máy xét nghiệm sinh hóa tự động",
-            model: "Cobas c501",
-            manufacturer: "Roche Diagnostics",
-            purchaseYear: 2023,
-            status: 'operational'
-          },
-          {
-            id: "TB-002",
-            name: "Máy xét nghiệm huyết học",
-            model: "Sysmex XN-1000",
-            manufacturer: "Sysmex Corporation",
-            purchaseYear: 2022,
-            status: 'operational'
-          },
-        ]);
-
-        setRooms(departmentData.examinationRoomDtos || []);
-
+        }        // For now, set demo data for services
+        // This can be replaced with actual API calls when available
         setServices([
           {
             id: "DV-001",
@@ -169,25 +124,8 @@ const DepartmentDetail: React.FC = () => {
       }
     };
 
-    fetchDepartmentData();
-  }, [id]);
+    fetchDepartmentData();  }, [id]);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "operational":
-        return <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Hoạt động tốt</span>;
-      case "maintenance":
-        return <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">Đang bảo trì</span>;
-      case "out-of-order":
-        return <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">Ngưng hoạt động</span>;
-      case "available":
-        return <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Còn chỗ</span>;
-      case "full":
-        return <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">Đã đầy</span>;
-      default:
-        return null;
-    }
-  };
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[60vh]">
@@ -332,7 +270,7 @@ const DepartmentDetail: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {doctors.slice(0, 4).map(doctor => (
                   <div key={doctor.doctorId} className="bg-gray-50 p-4 rounded-lg flex flex-col items-center">                    <img 
-                      src={doctor.avatar || "/images/user/owner.jpg"} 
+                      src={doctor.profileImage || "/images/user/owner.jpg"} 
                       alt={doctor.fullName} 
                       className="w-20 h-20 rounded-full object-cover"
                       onError={(e) => {
@@ -377,7 +315,7 @@ const DepartmentDetail: React.FC = () => {
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">                            <img 
                               className="h-10 w-10 rounded-full object-cover" 
-                              src={doctor.avatar || "/images/user/owner.jpg"} 
+                              src={doctor.profileImage || "/images/user/owner.jpg"} 
                               alt={doctor.fullName}
                               onError={(e) => {
                                 e.currentTarget.src = "/images/user/owner.jpg";
@@ -418,103 +356,7 @@ const DepartmentDetail: React.FC = () => {
                 </tbody>
               </table>
             </div>
-          </div>
-        );
-      case 'equipment':
-        return (
-          <div className="bg-white p-5 rounded-lg shadow-sm">
-            <h3 className="text-lg font-medium text-gray-800 mb-4">Trang thiết bị ({equipment.length})</h3>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên thiết bị</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nhà sản xuất</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Năm mua</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {equipment.map((item) => (
-                    <tr key={item.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                        <div className="text-xs text-gray-500">{item.id}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {item.model}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {item.manufacturer}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {item.purchaseYear}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(item.status)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      case 'rooms':
-        return (
-          <div className="bg-white p-5 rounded-lg shadow-sm">
-            <h3 className="text-lg font-medium text-gray-800 mb-4">Danh sách phòng ({rooms.length})</h3>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên phòng</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loại phòng</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vị trí</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Công suất</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
-                  </tr>
-                </thead>                <tbody className="bg-white divide-y divide-gray-200">
-                  {rooms.map((room) => (
-                    <tr key={room.roomId}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{room.roomName}</div>
-                        <div className="text-xs text-gray-500">ID: {room.roomId}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        Phòng khám
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        Khoa {department.departmentName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {room.capacity} người
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {room.isAvailable ? (
-                          <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Còn chỗ</span>
-                        ) : (
-                          <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Đã đầy</span>
-                        )}
-                      </td>                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button className="text-blue-600 hover:text-blue-900">Chi tiết</button>
-                      </td>
-                    </tr>
-                  ))}
-                  {rooms.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                        Chưa có thông tin phòng trong khoa này
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
+          </div>        );
       case 'services':
         return (
           <div className="bg-white p-5 rounded-lg shadow-sm">
@@ -589,8 +431,7 @@ const DepartmentDetail: React.FC = () => {
               >
                 Tổng quan
               </button>
-            </li>
-            <li className="mr-2">
+            </li>            <li className="mr-2">
               <button
                 onClick={() => setActiveTab('doctors')}
                 className={`inline-block py-3 px-4 text-sm font-medium ${
@@ -600,30 +441,6 @@ const DepartmentDetail: React.FC = () => {
                 }`}
               >
                 Bác sĩ & Nhân viên
-              </button>
-            </li>
-            <li className="mr-2">
-              <button
-                onClick={() => setActiveTab('equipment')}
-                className={`inline-block py-3 px-4 text-sm font-medium ${
-                  activeTab === 'equipment'
-                    ? 'border-b-2 border-base-600 text-base-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Trang thiết bị
-              </button>
-            </li>
-            <li className="mr-2">
-              <button
-                onClick={() => setActiveTab('rooms')}
-                className={`inline-block py-3 px-4 text-sm font-medium ${
-                  activeTab === 'rooms'
-                    ? 'border-b-2 border-base-600 text-base-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Phòng
               </button>
             </li>
             <li className="mr-2">
