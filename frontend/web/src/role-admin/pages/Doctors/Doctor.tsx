@@ -1,9 +1,15 @@
 import PageMeta from "../../components/common/PageMeta";
 import DoctorTable from "../../components/sections/doctor/DoctorTable";
 import AddButton from "../../components/ui/button/AddButton";
-import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Doctor() {
+  const navigate = useNavigate();
+
+  const handleAddDoctor = () => {
+    navigate("/admin/doctors/add");
+  };
+
   return (
     <div>
       <PageMeta
@@ -20,7 +26,7 @@ export default function Doctor() {
           <DoctorTable />
         </div>
         <div className="fixed right-5 bottom-5">
-          <AddButton />
+          <AddButton onClick={handleAddDoctor} />
         </div>
       </div>
     </div>

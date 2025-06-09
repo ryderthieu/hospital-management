@@ -1,4 +1,4 @@
-import type { Doctor, DoctorDto } from "../types/doctor";
+import type { Doctor, DoctorDto, CreateDoctorRequest } from "../types/doctor";
 import { api } from "../../services/api";
 
 export const doctorService = {
@@ -21,7 +21,7 @@ export const doctorService = {
   },
 
   // Create doctor
-  async createDoctor(doctorData: DoctorDto): Promise<Doctor> {
+  async createDoctor(doctorData: CreateDoctorRequest): Promise<Doctor> {
     const response = await api.post<Doctor>("/doctors", doctorData);
     return response.data;
   },

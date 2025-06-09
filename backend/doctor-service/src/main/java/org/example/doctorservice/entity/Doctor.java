@@ -50,7 +50,7 @@ public class Doctor {
     @Column(length = 100)
     private String specialization;
 
-    @Column(name = "avatar")
+    @Column(name = "avatar", columnDefinition = "TEXT")
     private String avatar;
 
     @Enumerated(EnumType.STRING)

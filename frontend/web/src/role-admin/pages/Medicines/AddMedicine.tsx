@@ -8,6 +8,7 @@ import { medicineService } from "../../services/pharmacyService"
 import type { MedicineRequest } from "../../types/pharmacy"
 import PageMeta from "../../components/common/PageMeta"
 import { Plus, X } from "lucide-react"
+import ReturnButton from "../../components/ui/button/ReturnButton"
 
 export default function AddMedicine() {
   const navigate = useNavigate()
@@ -51,7 +52,8 @@ export default function AddMedicine() {
     <div>
       <PageMeta title="Thêm thuốc mới | Admin Dashboard" description="Thêm thuốc mới vào hệ thống" />
 
-      <div className="mb-6">
+      <div className="mb-6 flex items-center">
+        <ReturnButton />
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">Thêm thuốc mới</h2>
       </div>
 
@@ -66,7 +68,7 @@ export default function AddMedicine() {
                 value={formData.medicineName}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                 placeholder="Nhập tên thuốc"
               />
             </div>
@@ -78,7 +80,7 @@ export default function AddMedicine() {
                 name="manufactor"
                 value={formData.manufactor}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                 placeholder="Nhập nhà sản xuất"
               />
             </div>
@@ -90,7 +92,7 @@ export default function AddMedicine() {
                 value={formData.category}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
               >
                 <option value="">Chọn danh mục</option>
                 <option value="Pain Reliever">Thuốc giảm đau</option>
@@ -108,7 +110,7 @@ export default function AddMedicine() {
                 value={formData.unit}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
               >
                 <option value="">Chọn đơn vị</option>
                 <option value="Viên">Viên</option>
@@ -128,7 +130,7 @@ export default function AddMedicine() {
                 onChange={handleChange}
                 required
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                 placeholder="Nhập giá thuốc"
               />
             </div>
@@ -142,7 +144,7 @@ export default function AddMedicine() {
                 onChange={handleChange}
                 required
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                 placeholder="Nhập số lượng"
               />
             </div>
@@ -159,7 +161,7 @@ export default function AddMedicine() {
                 min="0"
                 max="1"
                 step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                 placeholder="Ví dụ: 0.6 (60%)"
               />
             </div>
@@ -172,7 +174,7 @@ export default function AddMedicine() {
               value={formData.description}
               onChange={handleChange}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
               placeholder="Nhập mô tả thuốc"
             />
           </div>
@@ -185,7 +187,7 @@ export default function AddMedicine() {
               onChange={handleChange}
               required
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
               placeholder="Nhập cách sử dụng thuốc"
             />
           </div>
@@ -197,26 +199,25 @@ export default function AddMedicine() {
               value={formData.sideEffects}
               onChange={handleChange}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
               placeholder="Nhập tác dụng phụ"
             />
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex justify-end gap-4">
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="flex items-center gap-2 px-6 py-2 bg-base-600 text-white rounded-lg hover:bg-base-700 disabled:opacity-50"
             >
-              <Plus className="h-4 w-4" />
               {loading ? "Đang thêm..." : "Thêm thuốc"}
             </button>
             <button
               type="button"
               onClick={() => navigate("/admin/medicines")}
-              className="flex items-center gap-2 px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+              className="flex items-center gap-2 px-6 py-2 bg-gray-500/50 text-white rounded-lg hover:bg-gray-500/70"
             >
-              <X className="h-4 w-4" />
+              
               Hủy
             </button>
           </div>

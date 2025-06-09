@@ -6,7 +6,7 @@ import AppLayout from "./layouts/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import { Patient, PatientDetail, PatientAddForm } from "./pages/Patients";
-import { Doctor, DoctorDetail, DoctorSchedule } from "./pages/Doctors";
+import { Doctor, DoctorDetail, DoctorSchedule, AddDoctor } from "./pages/Doctors";
 import {
   Medicines,
   AddMedicine,
@@ -49,6 +49,7 @@ const AdminApp: React.FC = () => {
 
           {/* Doctors Page */}
           <Route path="doctors" element={<Doctor />} />
+          <Route path="doctors/add" element={<AddDoctor />} />
           <Route path="doctors/detail/:doctorId" element={<DoctorDetail />} />
           <Route path="doctors/schedule/:id" element={<DoctorSchedule />} />
 

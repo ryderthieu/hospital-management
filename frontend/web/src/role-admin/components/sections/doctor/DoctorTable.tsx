@@ -9,21 +9,49 @@ const PAGE_SIZE = 10;
 
 const DoctorTable: React.FC = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
-
   useEffect(() => {
     doctorService
       .getAllDoctors()
-      .then((data) => setDoctors(data))
+      .then((data) => {
+        setDoctors(data);
+        setFilteredDoctors(data);
+      })
       .finally(() => setLoading(false));
   }, []);
+  // Hàm xử lý tìm kiếm theo tên và mã số bác sĩ
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const searchValue = event.target.value;
+    setSearchTerm(searchValue);
+    setCurrentPage(1); // Reset về trang đầu khi tìm kiếm
+    
+    if (!searchValue.trim()) {
+      setFilteredDoctors(doctors);
+      return;
+    }
+    
+    const filtered = doctors.filter((doctor) => {
+      const searchLower = searchValue.toLowerCase();
+      const fullName = doctor.fullName?.toLowerCase() || '';
+      const doctorId = doctor.doctorId?.toString() || '';
+      const identityNumber = doctor.identityNumber?.toLowerCase() || '';
+      
+      return fullName.includes(searchLower) || 
+             doctorId.includes(searchLower) ||
+             identityNumber.includes(searchLower);
+    });
+    
+    setFilteredDoctors(filtered);
+  };
 
-  const totalItems = doctors.length;
+  const totalItems = filteredDoctors.length;
   const totalPages = Math.ceil(totalItems / PAGE_SIZE);
 
-  const paginatedData = doctors.slice(
+  const paginatedData = filteredDoctors.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
   );
@@ -52,9 +80,12 @@ const DoctorTable: React.FC = () => {
           <span className="ml-5 text-sm bg-base-600/20 text-base-600 py-1 px-4 rounded-full font-bold">
             {totalItems} bác sĩ
           </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <SearchInput placeholder="Tìm kiếm..." />
+        </div>        <div className="flex items-center gap-3">
+          <SearchInput 
+            placeholder="Tìm kiếm theo tên hoặc mã số..." 
+            value={searchTerm}
+            onChange={handleSearch}
+          />
           <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
             <svg
               className="stroke-current fill-white dark:fill-gray-800"

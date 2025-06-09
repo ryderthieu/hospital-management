@@ -122,7 +122,7 @@ export default function DepartmentCards() {
             <input
               type="text"
               placeholder="Tìm kiếm khoa..."
-              className="w-full p-3 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-base-500 focus:border-base-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+              className="w-full p-3 pl-10 rounded-lg border border-gray-300 outline-0 focus:ring-2 focus:ring-base-500/10 focus:border-base-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
