@@ -31,6 +31,8 @@ public class ScheduleDto {
 
     private Integer roomId;
 
+    private String location;
+
     private String roomNote;
 
     private Integer floor;
@@ -49,6 +51,7 @@ public class ScheduleDto {
         this.endTime = schedule.getEndTime();
         this.shift = schedule.getShift();
         this.roomId = schedule.getExaminationRoom().getRoomId();
+        this.location = schedule.getExaminationRoom().getBuilding() + schedule.getExaminationRoom().getFloor() + schedule.getExaminationRoom().getRoomName();
         this.roomNote = schedule.getExaminationRoom().getNote();
         this.floor = schedule.getExaminationRoom().getFloor();
         this.building = schedule.getExaminationRoom().getBuilding();

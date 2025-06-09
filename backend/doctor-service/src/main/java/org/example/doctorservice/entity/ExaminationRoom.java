@@ -34,6 +34,8 @@ public class ExaminationRoom {
 
     private Integer floor;
 
+    private String roomName;
+
     @Column(columnDefinition = "TEXT")
     private String note;
 
