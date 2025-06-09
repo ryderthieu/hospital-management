@@ -1,3 +1,12 @@
+
+export interface PageResponse<T> {
+  content: T[];
+  pageNo: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+}
 export type RootStackParamList = {
   MainTabs: undefined;
   Home: undefined;
@@ -5,7 +14,6 @@ export type RootStackParamList = {
   AppointmentDetail: { appointment: Appointment };
   CompletedAppointmentDetail: { appointment: Appointment };
 };
-
 export interface Appointment {
   id: string;
   date: string;

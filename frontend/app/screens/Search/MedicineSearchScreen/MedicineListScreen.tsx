@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { SearchStackParamList, Medicine } from '../../../navigation/types';
+import { SearchStackParamList, Medicine, MedicineResponse } from '../../../navigation/types';
 import { globalStyles, colors } from '../../../styles/globalStyles';
 import Header from '../../../components/Header';
-import { medicineData } from '../MedicineSearchScreen/data'; // Adjust path if needed
 import { Ionicons } from '@expo/vector-icons';
 import { useFont, fontFamily } from '../../../context/FontContext';
+import API from '../../../services/api';
 
 type MedicineListScreenProps = {
   route: RouteProp<SearchStackParamList, 'MedicineList'>;
@@ -15,13 +15,51 @@ type MedicineListScreenProps = {
 };
 
 export const MedicineListScreen: React.FC<MedicineListScreenProps> = ({ route, navigation }) => {
-    const { fontsLoaded } = useFont();
+  const { fontsLoaded } = useFont();
   const { category } = route.params || {};
-  const [medicines, setMedicines] = useState<Medicine[]>(medicineData.filter(medicine => medicine.category === category));
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    setMedicines(medicineData.filter(medicine => medicine.category === category));
-  }, [category]);
+    const fetchMedicines = async () => {
+      try {
+        console.log(`[MedicineListScreen] Fetching medicines for category: ${category}, searchQuery: ${searchQuery}`);
+        const response = await API.get<MedicineResponse[]>('/pharmacy/medicines/search', {
+          params: { category, name: searchQuery },
+        });
+        console.log('[MedicineListScreen] API response:', JSON.stringify(response.data, null, 2));
+        const medicines: Medicine[] = response.data.map((dto) => ({
+          id: dto.medicineId.toString(),
+          name: dto.medicineName,
+          category: dto.category,
+          manufacturer: dto.manufactor,
+          description: dto.description,
+          sideEffects: dto.sideEffects,
+          images: ['https://via.placeholder.com/150'],
+          price: `${dto.price} VNĐ`,
+        }));
+        setMedicines(medicines);
+      } catch (error: any) {
+        console.error(
+          '[MedicineListScreen] Error fetching medicines:',
+          error.message,
+          error.response ? {
+            status: error.response.status,
+            data: error.response.data,
+            headers: error.response.headers,
+          } : 'No response data'
+        );
+        Alert.alert(
+          'Lỗi',
+          'Không thể tải danh sách thuốc. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.',
+          [{ text: 'OK' }]
+        );
+        setMedicines([]);
+      }
+    };
+
+    fetchMedicines();
+  }, [category, searchQuery]);
 
   const renderMedicineItem = ({ item }: { item: Medicine }) => (
     <TouchableOpacity
@@ -29,7 +67,7 @@ export const MedicineListScreen: React.FC<MedicineListScreenProps> = ({ route, n
       onPress={() => navigation.navigate('MedicineDetail', { medicine: item })}
     >
       <Image
-        source={{ uri: item.image }}
+        source={{ uri: item.images[0] }}
         style={styles.medicineImage}
         resizeMode="cover"
       />
@@ -57,6 +95,8 @@ export const MedicineListScreen: React.FC<MedicineListScreenProps> = ({ route, n
             style={styles.searchInput}
             placeholder="Tìm kiếm thuốc"
             placeholderTextColor={colors.textSecondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
           />
         </View>
       </View>
