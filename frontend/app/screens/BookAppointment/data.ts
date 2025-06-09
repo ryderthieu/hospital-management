@@ -238,16 +238,16 @@ interface ScheduleDto {
   endTime: string // e.g., "17:00:00"
   shift: string
   roomId: number
+  roomNote?: string
+  floor?: number
+  building?: string
   createdAt: string
 }
 
-// Interface cho AvailableTimeSlotResponse từ backend
-interface AvailableTimeSlotResponse {
+// Interface cho TimeSlotDto từ backend
+interface TimeSlotDto {
   slotStart: string // e.g., "08:00:00"
   slotEnd: string // e.g., "08:30:00"
-  isAvailable: boolean
-  currentAppointments: number
-  maxAppointments: number
 }
 
 // Basic utility functions
@@ -279,20 +279,34 @@ export const getSimilarDoctors = (currentDoctorId: string, specialty: string, li
 export const fetchRealTimeDates = async (doctorId: string, daysCount = 7): Promise<DateOption[]> => {
   try {
     console.log(`[fetchRealTimeDates] Fetching schedules for doctorId: ${doctorId}`);
-    const response = await API.get<ScheduleDto[]>(`/doctors/${doctorId}/schedules`);
-    const schedules = response.data;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const maxDate = new Date(today);
+    maxDate.setDate(today.getDate() + daysCount);
+
+    // Gọi API cho từng ngày trong khoảng daysCount
+    const schedules: ScheduleDto[] = [];
+    for (let i = 0; i < daysCount; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      const workDate = date.toISOString().split("T")[0]; // e.g., "2025-06-09"
+      for (const shift of ["MORNING", "AFTERNOON"]) {
+        try {
+          const response = await API.get<ScheduleDto[]>(`/doctors/${doctorId}/schedules?shift=${shift}&workDate=${workDate}`);
+          if (response.data && response.data.length > 0) {
+            schedules.push(...response.data.filter((schedule) => schedule.workDate === workDate && schedule.shift === shift));
+          }
+        } catch (error: any) {
+          console.warn(`[fetchRealTimeDates] No schedules for doctorId: ${doctorId}, shift: ${shift}, workDate: ${workDate}`, error.message);
+        }
+      }
+    }
     console.log(`[fetchRealTimeDates] Raw schedules response:`, JSON.stringify(schedules, null, 2));
 
     if (!schedules || schedules.length === 0) {
       console.warn(`[fetchRealTimeDates] No schedules found for doctorId: ${doctorId}`);
       return [];
     }
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset giờ để so sánh ngày
-    const maxDate = new Date(today);
-    maxDate.setDate(today.getDate() + daysCount);
-    console.log(`[fetchRealTimeDates] Filtering schedules between ${today.toISOString()} and ${maxDate.toISOString()}`);
 
     const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
@@ -329,11 +343,15 @@ export const fetchRealTimeDates = async (doctorId: string, daysCount = 7): Promi
           isWeekend,
           availableSlots: 0,
           scheduleId: schedule.scheduleId,
+          shift: schedule.shift,
         };
       });
 
+    // Loại bỏ các ngày trùng lặp
+    const uniqueDates = Array.from(new Map(dates.map((date) => [date.id, date])).values());
+
     // Lấy số lượng khung giờ khả dụng
-    for (const date of dates) {
+    for (const date of uniqueDates) {
       if (!date.disabled && date.scheduleId) {
         try {
           const slots = await fetchTimeSlots(date.scheduleId);
@@ -346,8 +364,8 @@ export const fetchRealTimeDates = async (doctorId: string, daysCount = 7): Promi
       }
     }
 
-    console.log(`[fetchRealTimeDates] Generated dates:`, JSON.stringify(dates, null, 2));
-    return dates;
+    console.log(`[fetchRealTimeDates] Generated dates:`, JSON.stringify(uniqueDates, null, 2));
+    return uniqueDates;
   } catch (error: any) {
     console.error("[fetchRealTimeDates] Error fetching schedules:", error.message, error.response?.data);
     return [];
@@ -358,7 +376,7 @@ export const fetchRealTimeDates = async (doctorId: string, daysCount = 7): Promi
 export const fetchTimeSlots = async (scheduleId: number): Promise<TimeSlot[]> => {
   try {
     console.log(`[fetchTimeSlots] Fetching time slots for scheduleId: ${scheduleId}`);
-    const response = await API.get<AvailableTimeSlotResponse[]>(`/appointments/schedule/${scheduleId}/available-slots`);
+    const response = await API.get<TimeSlotDto[]>(`/doctors/schedules/${scheduleId}/time-slots`);
     const slots = response.data;
     console.log(`[fetchTimeSlots] Raw slots response:`, JSON.stringify(slots, null, 2));
 
@@ -374,11 +392,11 @@ export const fetchTimeSlots = async (scheduleId: number): Promise<TimeSlot[]> =>
       return {
         id: `${scheduleId}-${slot.slotStart}`,
         time: `${slot.slotStart.slice(0, 5)} - ${slot.slotEnd.slice(0, 5)}`,
-        available: slot.isAvailable && !isPast,
-        price: "150.000 VND", // Có thể lấy từ API nếu có
+        available: !isPast,
+        price: "150.000 VND", // Giá mặc định
         isSelected: false,
         isPast,
-        isBooked: slot.currentAppointments >= slot.maxAppointments,
+        isBooked: false, // Giả định không có thông tin từ TimeSlotDto
       };
     });
   } catch (error: any) {

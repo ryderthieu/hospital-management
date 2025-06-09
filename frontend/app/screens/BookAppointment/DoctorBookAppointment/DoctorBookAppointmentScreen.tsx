@@ -23,7 +23,7 @@ type BookAppointmentScreenProps = {
   route: RouteProp<BookAppointmentStackParamList, "BookAppointment">
 }
 
-type DayPart = "morning" | "afternoon"
+type DayPart = "all" // Chỉ giữ "all" để hiển thị tất cả khung giờ
 
 interface TimeSlotData {
   id: string
@@ -33,13 +33,40 @@ interface TimeSlotData {
   isBooked: boolean
 }
 
+interface AppointmentRequest {
+  slotStart: string
+  slotEnd: string
+  scheduleId: number
+  symptoms: string
+  doctorId: number
+  patientId: number
+}
+
+interface AppointmentResponse {
+  appointmentId: number
+  doctorId: number
+  schedule: {
+    scheduleId: number
+  }
+  symptoms: string
+  number: number
+  SlotStart: string
+  SlotEnd: string
+  appointmentStatus: string
+  createdAt: string
+  patientInfo: {
+    patientId: number
+  }
+  appointmentNotes: any[]
+}
+
 export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ navigation, route }) => {
   const { fontsLoaded } = useFont()
   const { doctor } = route.params
 
   const [selectedDate, setSelectedDate] = useState<string>("")
   const [selectedTime, setSelectedTime] = useState<string>("")
-  const [selectedDayPart, setSelectedDayPart] = useState<DayPart>("morning")
+  const [selectedDayPart] = useState<DayPart>("all") // Mặc định là "all"
   const [hasInsurance, setHasInsurance] = useState<boolean>(true)
   const [favorites, setFavorites] = useState<string[]>([])
   const [similarDoctors, setSimilarDoctors] = useState<Doctor[]>([])
@@ -48,6 +75,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(null)
   const [isLoadingDates, setIsLoadingDates] = useState<boolean>(false)
   const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(false)
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
   // Fetch dates
   useEffect(() => {
@@ -119,13 +147,9 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
         console.log('[BookAppointmentScreen] Fetching time slots for scheduleId:', selectedScheduleId)
         const slots = await fetchTimeSlots(selectedScheduleId)
         console.log('[BookAppointmentScreen] Generated slots:', JSON.stringify(slots, null, 2))
-        const filteredSlots = slots.filter((slot) => {
-          const hour = parseInt(slot.time.split(":")[0])
-          return selectedDayPart === "morning" ? hour >= 8 && hour < 12 : hour >= 12 && hour <= 17
-        })
-        setTimeSlots(filteredSlots)
-        if (filteredSlots.length === 0) {
-          console.warn('[BookAppointmentScreen] No slots available for selected day part:', selectedDayPart)
+        setTimeSlots(slots) // Bỏ lọc selectedDayPart để hiển thị tất cả khung giờ
+        if (slots.length === 0) {
+          console.warn('[BookAppointmentScreen] No slots available for scheduleId:', selectedScheduleId)
         }
       } catch (error: any) {
         console.error("[BookAppointmentScreen] Error fetching time slots:", error.message, error.response?.data)
@@ -144,7 +168,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
     }
 
     fetchSlots()
-  }, [selectedScheduleId, selectedDayPart])
+  }, [selectedScheduleId])
 
   // Fetch similar doctors
   useEffect(() => {
@@ -205,12 +229,6 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
     setSelectedTime(time)
   }
 
-  const handleDayPartSelect = (dayPart: DayPart) => {
-    console.log('[BookAppointmentScreen] Selected day part:', dayPart)
-    setSelectedDayPart(dayPart)
-    setSelectedTime("")
-  }
-
   const handleSimilarDoctorPress = (selectedDoctor: Doctor) => {
     if (!selectedDoctor) return
     console.log('[BookAppointmentScreen] Selected similar doctor:', selectedDoctor.id)
@@ -223,24 +241,54 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
     setFavorites((prev) => prev.includes(doctorId) ? prev.filter((id) => id !== doctorId) : [...prev, doctorId])
   }
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!selectedDate || !selectedTime) {
       Alert.alert("Thông báo", "Vui lòng chọn ngày và giờ khám.", [{ text: "OK" }])
       return
     }
 
-    if (!doctor) {
-      Alert.alert("Lỗi", "Thông tin bác sĩ không hợp lệ.", [{ text: "OK" }])
+    if (!doctor || !selectedScheduleId) {
+      Alert.alert("Lỗi", "Thông tin bác sĩ hoặc lịch không hợp lệ.", [{ text: "OK" }])
       return
     }
 
-    console.log('[BookAppointmentScreen] Navigating to SymptomSelection with:', { doctor, selectedDate, selectedTime, hasInsurance })
-    navigation.navigate("SymptomSelection", {
-      doctor,
-      selectedDate,
-      selectedTime,
-      hasInsurance,
-    })
+    setIsSubmitting(true)
+    try {
+      const [slotStart, slotEnd] = selectedTime.split(" - ").map((t) => `${t}:00`);
+      const appointmentRequest: AppointmentRequest = {
+        slotStart,
+        slotEnd,
+        scheduleId: selectedScheduleId,
+        symptoms: "", // Sẽ được nhập ở màn hình SymptomSelection
+        doctorId: parseInt(doctor.id),
+        patientId: 1, // Giả định, cần thay bằng logic lấy patientId từ đăng nhập
+      };
+
+      console.log('[BookAppointmentScreen] Creating appointment with:', JSON.stringify(appointmentRequest, null, 2));
+      const response = await API.post<AppointmentResponse>("/appointments", appointmentRequest);
+      console.log('[BookAppointmentScreen] Appointment created:', JSON.stringify(response.data, null, 2));
+
+      Alert.alert(
+        "Thành công",
+        "Đặt lịch khám thành công! Vui lòng nhập triệu chứng.",
+        [{ text: "OK", onPress: () => navigation.navigate("SymptomSelection", {
+          doctor,
+          selectedDate,
+          selectedTime,
+          hasInsurance,
+          appointmentId: response.data.appointmentId,
+        }) }]
+      );
+    } catch (error: any) {
+      console.error("[BookAppointmentScreen] Error creating appointment:", error.message, error.response?.data)
+      Alert.alert(
+        "Lỗi",
+        error.response?.data?.message || "Không thể đặt lịch khám. Vui lòng thử lại.",
+        [{ text: "OK" }]
+      );
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const renderDateItem = ({ item }: { item: DateOption }) => {
@@ -248,7 +296,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
     return (
       <DateCard
         date={item}
-        isSelected={selectedDate === item.id}
+        isSelected cytotoxins={selectedDate === item.id}
         onPress={() => handleDateSelect(item)}
         showAvailability={true}
         availableSlots={item.availableSlots}
@@ -343,60 +391,26 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
             </View>
           )}
           {dates.length > 0 && (
-            <>
-              <View style={styles.dayPartSelection}>
-                <TouchableOpacity
-                  style={[styles.dayPartButton, selectedDayPart === "morning" && styles.selectedDayPartButton]}
-                  onPress={() => handleDayPartSelect("morning")}
-                >
-                  <Sun width={24} height={24} />
-                  <Text
-                    style={[
-                      styles.dayPartText,
-                      { fontFamily: fontFamily.bold },
-                      selectedDayPart === "morning" && styles.selectedDayPartText,
-                    ]}
-                  >
-                    Sáng
+            <View style={styles.timeSlotGrid}>
+              {isLoadingSlots ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color={colors.primary} />
+                  <Text style={[styles.loadingText, { fontFamily: fontFamily.regular }]}>Đang tải khung giờ...</Text>
+                </View>
+              ) : timeSlots.length > 0 ? (
+                timeSlots.map((slot) => renderTimeSlot(slot))
+              ) : selectedDate ? (
+                <View style={styles.noDataContainer}>
+                  <Ionicons name="time-outline" size={48} color={colors.gray500} />
+                  <Text style={[styles.noDataText, { fontFamily: fontFamily.medium }]}>
+                    Không có khung giờ nào khả dụng cho ngày đã chọn
                   </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.dayPartButton, selectedDayPart === "afternoon" && styles.selectedDayPartButton]}
-                  onPress={() => handleDayPartSelect("afternoon")}
-                >
-                  <Moon width={24} height={24} />
-                  <Text
-                    style={[
-                      styles.dayPartText,
-                      { fontFamily: fontFamily.bold },
-                      selectedDayPart === "afternoon" && styles.selectedDayPartText,
-                    ]}
-                  >
-                    Chiều
+                  <Text style={[styles.noDataSubtext, { fontFamily: fontFamily.regular }]}>
+                    Vui lòng chọn ngày khác
                   </Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.timeSlotGrid}>
-                {isLoadingSlots ? (
-                  <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={colors.primary} />
-                    <Text style={[styles.loadingText, { fontFamily: fontFamily.regular }]}>Đang tải khung giờ...</Text>
-                  </View>
-                ) : timeSlots.length > 0 ? (
-                  timeSlots.map((slot) => renderTimeSlot(slot))
-                ) : selectedDate ? (
-                  <View style={styles.noDataContainer}>
-                    <Ionicons name="time-outline" size={48} color={colors.gray500} />
-                    <Text style={[styles.noDataText, { fontFamily: fontFamily.medium }]}>
-                      Không có khung giờ nào khả dụng cho {selectedDayPart === "morning" ? "buổi sáng" : "buổi chiều"}
-                    </Text>
-                    <Text style={[styles.noDataSubtext, { fontFamily: fontFamily.regular }]}>
-                      Vui lòng chọn buổi khác hoặc ngày khác
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-            </>
+                </View>
+              ) : null}
+            </View>
           )}
         </View>
         <View style={styles.insuranceContainer}>
@@ -437,11 +451,11 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
           </View>
         )}
         <TouchableOpacity
-          style={[styles.button, (!selectedDate || !selectedTime) && styles.buttonDisabled]}
+          style={[styles.button, (!selectedDate || !selectedTime || isSubmitting) && styles.buttonDisabled]}
           onPress={handleContinue}
-          disabled={!selectedDate || !selectedTime}
+          disabled={!selectedDate || !selectedTime || isSubmitting}
         >
-          <Text style={[styles.buttonText, { fontFamily: fontFamily.bold }]}>Tiếp tục</Text>
+          <Text style={[styles.buttonText, { fontFamily: fontFamily.bold }]}>{isSubmitting ? "Đang xử lý..." : "Tiếp tục"}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -465,34 +479,6 @@ const styles = StyleSheet.create({
   },
   dateList: {
     paddingVertical: 8,
-  },
-  dayPartSelection: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 16,
-  },
-  dayPartButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    backgroundColor: colors.white,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginHorizontal: 4,
-  },
-  selectedDayPartButton: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  dayPartText: {
-    marginLeft: 8,
-    fontSize: 16,
-    color: colors.text,
-  },
-  selectedDayPartText: {
-    color: colors.white,
   },
   timeSlotGrid: {
     flexDirection: "row",
