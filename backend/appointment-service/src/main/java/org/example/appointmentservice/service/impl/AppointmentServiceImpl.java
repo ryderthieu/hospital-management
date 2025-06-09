@@ -7,6 +7,8 @@ import org.example.appointmentservice.dto.*;
 import org.example.appointmentservice.entity.Appointment;
 import org.example.appointmentservice.repository.AppointmentRepository;
 import org.example.appointmentservice.service.AppointmentService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,9 +37,20 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     @Override
-    public List<AppointmentDtos.AppointmentResponse> getAllAppointments() {
-        List<Appointment> appointments = appointmentRepository.findAll();
-        return batchMapToAppointmentResponses(appointments);
+    public PageResponse<AppointmentDtos.AppointmentResponse> getAllAppointments(int pageNo, int pageSize) {
+        Page<Appointment> appointmentPage = appointmentRepository.findAll(PageRequest.of(pageNo, pageSize));
+        if (appointmentPage.isEmpty()) {
+            return new PageResponse<>(Collections.emptyList(), pageNo, pageSize, 0, 0, true);
+        }
+        List<AppointmentDtos.AppointmentResponse> responses = batchMapToAppointmentResponses(appointmentPage.getContent());
+        return new PageResponse<>(
+            responses,
+            appointmentPage.getNumber(),
+            appointmentPage.getSize(),
+            appointmentPage.getTotalElements(),
+            appointmentPage.getTotalPages(),
+            appointmentPage.isLast()
+        );
     }
 
     @Override
@@ -475,13 +488,15 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public List<AppointmentResponseTypes.DoctorViewResponse> getAppointmentsByDoctorIdOptimized(Integer doctorId) {
+    public PageResponse<AppointmentResponseTypes.DoctorViewResponse> getAppointmentsByDoctorIdOptimized(Integer doctorId, int pageNo, int pageSize) {
         log.info("Lấy danh sách cuộc hẹn tối ưu cho bác sĩ ID: {}", doctorId);
         
-        List<Appointment> appointments = appointmentRepository.findByDoctorId(doctorId);
-        if (appointments.isEmpty()) {
-            return Collections.emptyList();
+        Page<Appointment> appointmentPage = appointmentRepository.findByDoctorId(doctorId, PageRequest.of(pageNo, pageSize));
+        if (appointmentPage.isEmpty()) {
+            return new PageResponse<>(Collections.emptyList(), pageNo, pageSize, 0, 0, true);
         }
+
+        List<Appointment> appointments = appointmentPage.getContent();
 
         // Thu thập unique patient IDs
         List<Integer> patientIds = appointments.stream()
@@ -539,7 +554,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             log.error("Lỗi khi lấy thông tin lịch khám: {}", e.getMessage());
         }
 
-        return appointments.stream()
+        List<AppointmentResponseTypes.DoctorViewResponse> responses = appointments.stream()
                 .map(appointment -> {
                     AppointmentResponseTypes.DoctorViewResponse response = new AppointmentResponseTypes.DoctorViewResponse();
                     response.setAppointmentId(appointment.getAppointmentId());
@@ -566,16 +581,27 @@ public class AppointmentServiceImpl implements AppointmentService {
                 })
                 .sorted(Comparator.comparing(AppointmentResponseTypes.DoctorViewResponse::getNumber))
                 .collect(Collectors.toList());
+
+        return new PageResponse<>(
+            responses,
+            appointmentPage.getNumber(),
+            appointmentPage.getSize(),
+            appointmentPage.getTotalElements(),
+            appointmentPage.getTotalPages(),
+            appointmentPage.isLast()
+        );
     }
 
     @Override
-    public List<AppointmentResponseTypes.PatientViewResponse> getAppointmentsByPatientIdOptimized(Integer patientId) {
+    public PageResponse<AppointmentResponseTypes.PatientViewResponse> getAppointmentsByPatientIdOptimized(Integer patientId, int pageNo, int pageSize) {
         log.info("Lấy danh sách cuộc hẹn tối ưu cho bệnh nhân ID: {}", patientId);
         
-        List<Appointment> appointments = appointmentRepository.findByPatientId(patientId);
-        if (appointments.isEmpty()) {
-            return Collections.emptyList();
+        Page<Appointment> appointmentPage = appointmentRepository.findByPatientId(patientId, PageRequest.of(pageNo, pageSize));
+        if (appointmentPage.isEmpty()) {
+            return new PageResponse<>(Collections.emptyList(), pageNo, pageSize, 0, 0, true);
         }
+
+        List<Appointment> appointments = appointmentPage.getContent();
 
         // Thu thập unique IDs
         List<Integer> scheduleIds = appointments.stream()
@@ -643,7 +669,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             log.error("Lỗi khi lấy thông tin: {}", e.getMessage());
         }
 
-        return appointments.stream()
+        List<AppointmentResponseTypes.PatientViewResponse> responses = appointments.stream()
                 .map(appointment -> {
                     AppointmentResponseTypes.PatientViewResponse response = new AppointmentResponseTypes.PatientViewResponse();
                     response.setAppointmentId(appointment.getAppointmentId());
@@ -674,6 +700,15 @@ public class AppointmentServiceImpl implements AppointmentService {
                 })
                 .sorted(Comparator.comparing(AppointmentResponseTypes.PatientViewResponse::getNumber))
                 .collect(Collectors.toList());
+
+        return new PageResponse<>(
+            responses,
+            appointmentPage.getNumber(),
+            appointmentPage.getSize(),
+            appointmentPage.getTotalElements(),
+            appointmentPage.getTotalPages(),
+            appointmentPage.isLast()
+        );
     }
 
     // Thêm phương thức để đóng ExecutorService khi service bị destroy

@@ -2,6 +2,7 @@ package org.example.appointmentservice.service;
 
 import org.example.appointmentservice.dto.AppointmentDtos;
 import org.example.appointmentservice.dto.AppointmentResponseTypes;
+import org.example.appointmentservice.dto.PageResponse;
 import org.example.appointmentservice.dto.ScheduleTimeDto;
 import org.example.appointmentservice.entity.Appointment;
 
@@ -9,7 +10,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface AppointmentService {
-    List<AppointmentDtos.AppointmentResponse> getAllAppointments();
+    PageResponse<AppointmentDtos.AppointmentResponse> getAllAppointments(int pageNo, int pageSize);
 
     AppointmentDtos.AppointmentResponse getAppointmentById(Integer appointmentId);
 
@@ -19,9 +20,9 @@ public interface AppointmentService {
 
     void deleteAppointment(Integer appointmentId);
 
-    List<AppointmentResponseTypes.DoctorViewResponse> getAppointmentsByDoctorIdOptimized(Integer doctorId);
+    PageResponse<AppointmentResponseTypes.DoctorViewResponse> getAppointmentsByDoctorIdOptimized(Integer doctorId, int pageNo, int pageSize);
 
-    List<AppointmentResponseTypes.PatientViewResponse> getAppointmentsByPatientIdOptimized(Integer patientId);
+    PageResponse<AppointmentResponseTypes.PatientViewResponse> getAppointmentsByPatientIdOptimized(Integer patientId, int pageNo, int pageSize);
 
     List<AppointmentDtos.AppointmentResponse> getAppointmentsByDoctorId(Integer doctorId);
 

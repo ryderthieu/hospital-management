@@ -2,9 +2,7 @@ package org.example.appointmentservice.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.appointmentservice.dto.AppointmentDtos;
-import org.example.appointmentservice.dto.AppointmentResponseTypes;
-import org.example.appointmentservice.dto.ScheduleTimeDto;
+import org.example.appointmentservice.dto.*;
 import org.example.appointmentservice.service.AppointmentService;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,8 +22,10 @@ public class AppointmentController {
 
 //    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'PATIENT')")
     @GetMapping
-    public ResponseEntity<List<AppointmentDtos.AppointmentResponse>> getAllAppointments() {
-        return ResponseEntity.ok(appointmentService.getAllAppointments());
+    public ResponseEntity<PageResponse<AppointmentDtos.AppointmentResponse>> getAllAppointments(
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        return ResponseEntity.ok(appointmentService.getAllAppointments(pageNo, pageSize));
     }
 
     @GetMapping("/{appointmentId}")
@@ -57,15 +57,19 @@ public class AppointmentController {
 
     //@PreAuthorize("hasAnyRole('RECEPTIONIST', 'DOCTOR', 'ADMIN')")
     @GetMapping("/doctor/{doctorId}")
-    public ResponseEntity<List<AppointmentResponseTypes.DoctorViewResponse>> getAppointmentsByDoctorId(
-            @PathVariable Integer doctorId) {
-        return ResponseEntity.ok(appointmentService.getAppointmentsByDoctorIdOptimized(doctorId));
+    public ResponseEntity<PageResponse<AppointmentResponseTypes.DoctorViewResponse>> getAppointmentsByDoctorId(
+            @PathVariable Integer doctorId,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        return ResponseEntity.ok(appointmentService.getAppointmentsByDoctorIdOptimized(doctorId, pageNo, pageSize));
     }
 
     @GetMapping("/patient/{patientId}")
-    public ResponseEntity<List<AppointmentResponseTypes.PatientViewResponse>> getAppointmentsByPatientId(
-            @PathVariable Integer patientId) {
-        return ResponseEntity.ok(appointmentService.getAppointmentsByPatientIdOptimized(patientId));
+    public ResponseEntity<PageResponse<AppointmentResponseTypes.PatientViewResponse>> getAppointmentsByPatientId(
+            @PathVariable Integer patientId,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        return ResponseEntity.ok(appointmentService.getAppointmentsByPatientIdOptimized(patientId, pageNo, pageSize));
     }
 
     @PostMapping("/schedule/{scheduleId}/available-slots")

@@ -1,6 +1,8 @@
 package org.example.appointmentservice.repository;
 
 import org.example.appointmentservice.entity.Appointment;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +14,12 @@ import java.util.List;
 
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Integer> {
+    Page<Appointment> findAll(Pageable pageable);
+    
+    Page<Appointment> findByDoctorId(Integer doctorId, Pageable pageable);
+
+    Page<Appointment> findByPatientId(Integer patientId, Pageable pageable);
+
     List<Appointment> findByDoctorId(Integer doctorId);
 
     List<Appointment> findByPatientId(Integer patientId);
