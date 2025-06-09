@@ -11,7 +11,7 @@ import Button from "../../components/ui/button/Button";
 import Input from "../../components/form/input/InputField";
 import Label from "../../components/form/Label";
 import ReturnButton from "../../components/ui/button/ReturnButton";
-import { Doctor } from "../../../types/doctor";
+import { Doctor } from "../../types/doctor";
 
 export default function DoctorDetail() {
   const { doctorId } = useParams();
@@ -44,7 +44,13 @@ export default function DoctorDetail() {
     setLoading(true);
     doctorService
       .getDoctorById(Number(doctorId))
-      .then((data) => setDoctorData(data))
+      .then((data) => {
+        setDoctorData({
+          ...data,
+          departmentId: data.department?.departmentId ?? "",
+          departmentName: data.department?.departmentName ?? "",
+        });
+      })
       .catch((err) => {
         console.error("API error:", err);
         setDoctorData(null);
