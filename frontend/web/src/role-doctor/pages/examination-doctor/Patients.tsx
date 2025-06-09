@@ -22,7 +22,6 @@ import {
   formatAppointmentDate,
   getAppointmentStatusVietnameseText,
 } from "../../services/appointmentServices"
-import type { Patient } from "../../types/patient"
 import type { Appointment } from "../../types/appointment"
 import dayjs, { type Dayjs } from "dayjs"
 

@@ -1,6 +1,7 @@
 import { Appointment } from "./appointment"
 import { Schedule } from "./schedule"
 import { AppointmentNote } from "./appointmentNote"
+import { DoctorInfo } from "./doctor"
 
 export interface Patient {
   id: number
@@ -22,14 +23,14 @@ export interface PatientInfo {
   identityNumber: string;
   insuranceNumber: string;
   fullName: string;
-  birthday: string; // yyyy-mm-dd
-  gender: 'MALE' | 'FEMALE' | 'OTHER'; // hoặc chỉ 'FEMALE' nếu không có enum đầy đủ
+  birthday: string; 
+  gender: 'MALE' | 'FEMALE'
   address: string;
-  allergies?: string | null;
-  height?: number | null;
-  weight?: number | null;
-  bloodType?: string | null;
-  createdAt: string; // ISO datetime
+  allergies?: string | "Không xác định";
+  height?: number | "Không xác định" ;
+  weight?: number | "Không xác định";
+  bloodType?: string | "Không xác định";
+  createdAt: string; 
 }
 
 export interface PatientDetail {
@@ -41,8 +42,8 @@ export interface PatientDetail {
   appointmentStatus: string,
   createdAt: string,
   patientInfo: PatientInfo
-
+  doctorInfo: DoctorInfo
   appointmentNote: AppointmentNote
-
-
+  slotEnd: string
+  slotStart: string
 }
