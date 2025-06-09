@@ -1,6 +1,4 @@
-import type { ImageSourcePropType } from "react-native"
-
-// Navigation types
+// type.ts
 export type RootStackParamList = {
   Home: undefined
   Profile: undefined
@@ -25,11 +23,10 @@ export type RootStackParamList = {
   FilterOptions: { onFilter: (filters: FilterOption[]) => void; currentFilters?: FilterOption[] }
 }
 
-// User profile type
 export interface User {
   name: string
   email: string
-  avatar: ImageSourcePropType
+  avatar: string
   phone?: string
   dob?: string
   gender?: string
@@ -43,14 +40,12 @@ export interface User {
   emergencyContact?: EmergencyContact
 }
 
-// Add EmergencyContact interface
 export interface EmergencyContact {
   name: string
   phone: string
   relationship: string
 }
 
-// Menu item type
 export interface MenuItem {
   id: string
   title: string
@@ -60,7 +55,6 @@ export interface MenuItem {
   route?: keyof RootStackParamList
 }
 
-// Insurance type
 export interface Insurance {
   id: string
   name: string
@@ -81,7 +75,6 @@ export interface Insurance {
   nextPaymentDate?: string
 }
 
-// Health profile type
 export interface HealthProfile {
   height?: number
   weight?: number
@@ -92,14 +85,12 @@ export interface HealthProfile {
   medicalHistory?: MedicalRecord[]
 }
 
-// Allergy option type
 export interface AllergyOption {
   id: string
   name: string
   selected: boolean
 }
 
-// Medication type
 export interface Medication {
   id: string
   name: string
@@ -110,7 +101,6 @@ export interface Medication {
   isActive: boolean
 }
 
-// Medical record type
 export interface MedicalRecord {
   id: string
   title: string
@@ -121,7 +111,6 @@ export interface MedicalRecord {
   fileUrl?: string
 }
 
-// Settings type
 export interface Setting {
   id: string
   title: string
@@ -132,7 +121,6 @@ export interface Setting {
   action?: () => void
 }
 
-// Notification type
 export interface Notification {
   id: string
   title: string
@@ -142,7 +130,6 @@ export interface Notification {
   isRead: boolean
 }
 
-// Appointment type
 export interface Appointment {
   id: string
   date: string
@@ -174,7 +161,6 @@ export interface Appointment {
   }
 }
 
-// Filter Option
 export interface FilterOption {
   id: string
   name: string
@@ -182,20 +168,17 @@ export interface FilterOption {
   selected?: boolean
 }
 
-// Medicine type
 export interface Medicine {
   id: string
   name: string
   category: string
-  expiryDate: string
   manufacturer: string
   description: string
   sideEffects: string
-  image: string
+  avatar: string // Sử dụng avatar thay vì image
   price?: string
 }
 
-// Disease type
 export interface Disease {
   id: string
   name: string
