@@ -35,8 +35,8 @@ interface AppointmentResponseDto {
   slotEnd: string;
   appointmentStatus: string;
   createdAt: string;
-  patientInfo: { patientId: number } | null;
-  appointmentNotes: any[];
+  patientInfo: { patientId: number; fullName: string; birthday: string; gender: string; address: string } | null;
+  appointmentNotes: { id: number; appointmentId: number; noteType: string; content: string; createdAt: string }[] | null;
   doctorInfo?: {
     fullName: string;
     academicDegree: string;
@@ -93,23 +93,29 @@ const CompletedAppointmentDetailScreen = () => {
           department: doctorInfo.specialization,
           room: `${schedule.roomNote || "Phòng chưa xác định"} - Tầng ${schedule.floor || "X"} ${schedule.building || ""}`,
           queueNumber: response.data.number,
-          patientName: "LÊ THIỆN NHI", // Cần lấy từ patientInfo
-          patientBirthday: "28/04/2004", // Cần lấy từ patientInfo
-          patientGender: "Nữ", // Cần lấy từ patientInfo
-          patientLocation: "Cà Mau", // Cần lấy từ patientInfo
-          appointmentFee: "200.000 VND", // Cần lấy từ cấu hình
+          patientName: response.data.patientInfo?.fullName || "Bệnh nhân chưa cung cấp",
+          patientBirthday: response.data.patientInfo?.birthday || "Không xác định",
+          patientGender: response.data.patientInfo?.gender || "Không xác định",
+          patientLocation: response.data.patientInfo?.address || "Không xác định",
+          appointmentFee: "200.000 VND", // TODO: Fetch from API or configuration
           examTime: `${response.data.slotStart.slice(0, 5)} - ${response.data.slotEnd.slice(0, 5)}`,
           followUpDate: new Date(new Date(response.data.createdAt).getTime() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString("vi-VN", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
           }),
-          diagnosis: response.data.appointmentNotes.map((note: any) => note.diagnosis || "Chưa có chẩn đoán"),
-          doctorNotes: response.data.appointmentNotes.map((note: any) => note.note || "Chưa có ghi chú"),
-          testResults: response.data.appointmentNotes.map((note: any, index: number) => ({
-            name: `File ${index + 1}`,
-            fileUrl: note.fileUrl || "/placeholder.pdf",
-          })),
+          diagnosis: response.data.appointmentNotes
+            ? response.data.appointmentNotes.filter((note) => note.noteType === "DIAGNOSIS").map((note) => note.content || "Chưa có chẩn đoán")
+            : ["Chưa có chẩn đoán"],
+          doctorNotes: response.data.appointmentNotes
+            ? response.data.appointmentNotes.filter((note) => note.noteType === "NOTE").map((note) => note.content || "Chưa có ghi chú")
+            : ["Chưa có ghi chú"],
+          testResults: response.data.appointmentNotes
+            ? response.data.appointmentNotes.filter((note) => note.noteType === "TEST_RESULT").map((note, index) => ({
+                name: `Kết quả xét nghiệm ${index + 1}`,
+                fileUrl: note.content || "/placeholder.pdf",
+              }))
+            : [],
           codes: {
             appointmentCode: response.data.appointmentId.toString(),
             transactionCode: `TX${response.data.appointmentId}`,
@@ -167,20 +173,18 @@ const CompletedAppointmentDetailScreen = () => {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>PHIẾU KẾT QUẢ</Text>
 
-          {/* Compact Code Section */}
           <View style={styles.codeSection}>
             <Text style={styles.codeText}>
-              Mã phiếu: {appointment.codes?.appointmentCode || "312893710"}
+              Mã phiếu: {appointment.codes?.appointmentCode || "N/A"}
             </Text>
             <Text style={styles.codeText}>
-              Mã BN: {appointment.codes?.patientCode || "47298347293847"}
+              Mã BN: {appointment.codes?.patientCode || "N/A"}
             </Text>
             <Text style={styles.codeText}>
-              Khám: {appointment.examTime || "14:00 - 15:30"} ({appointment.date.split(", ")[1] || "29/06/2025"})
+              Khám: {appointment.examTime || "N/A"} ({appointment.date.split(", ")[1] || "N/A"})
             </Text>
           </View>
 
-          {/* Compact Doctor & Patient Info */}
           <View style={styles.compactInfoSection}>
             <View style={styles.infoGroup}>
               <Text style={styles.groupTitle}>Bác sĩ</Text>
@@ -195,7 +199,6 @@ const CompletedAppointmentDetailScreen = () => {
             </View>
           </View>
 
-          {/* Diagnosis */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Chẩn đoán</Text>
             {appointment.diagnosis?.map((item, index) => (
@@ -205,7 +208,6 @@ const CompletedAppointmentDetailScreen = () => {
             ))}
           </View>
 
-          {/* Doctor Notes */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Ghi chú bác sĩ</Text>
             {appointment.doctorNotes?.map((note, index) => (
@@ -216,7 +218,6 @@ const CompletedAppointmentDetailScreen = () => {
             ))}
           </View>
 
-          {/* Files */}
           <View style={styles.lastSection}>
             <Text style={styles.sectionTitle}>Kết quả & Toa thuốc</Text>
             <View style={styles.filesList}>
@@ -389,7 +390,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontFamily: fontFamily.regular,
     fontSize: 16,
-    color: "#6B7280",
+    color: "#6B7280",                    
     marginTop: 8,
   },
 });

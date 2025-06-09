@@ -55,7 +55,7 @@ interface AppointmentResponseDto {
     noteType: string;
     content: string;
     createdAt: string;
-  }[];
+  }[] | null;
   doctorInfo?: {
     doctorId: number;
     firstName: string;
@@ -99,22 +99,24 @@ const AppointmentsScreen = () => {
         throw new Error("Patient ID not available");
       }
 
-      const status = activeTab === "upcoming" ? ["PENDING", "CONFIRMED"] : ["COMPLETED"];
-      const params: any = {
-        patientId,
-        status: status.join(","),
-      };
-      if (startDate && endDate) {
-        params.startDate = startDate.toISOString().split("T")[0];
-        params.endDate = endDate.toISOString().split("T")[0];
-      }
-
-      console.log("[AppointmentsScreen] Fetching appointments with params:", params);
-      const response = await API.get<AppointmentResponseDto[]>("/appointments", { params });
+      // Lấy tất cả cuộc hẹn của bệnh nhân mà không gửi query param status
+      console.log("[AppointmentsScreen] Fetching appointments for patientId:", patientId);
+      const response = await API.get<AppointmentResponseDto[]>(`/appointments/patient/${patientId}`, {
+        params: {
+          ...(startDate && endDate && {
+            startDate: startDate.toISOString().split("T")[0],
+            endDate: endDate.toISOString().split("T")[0],
+          }),
+        },
+      });
       console.log("[AppointmentsScreen] API response:", JSON.stringify(response.data, null, 2));
 
+      // Lọc dữ liệu theo trạng thái trong frontend
+      const statusFilter = activeTab === "upcoming" ? ["PENDING", "CONFIRMED"] : ["COMPLETED"];
+      const filteredData = response.data.filter((dto) => statusFilter.includes(dto.appointmentStatus));
+
       const appointments: Appointment[] = await Promise.all(
-        response.data.map(async (dto) => {
+        filteredData.map(async (dto) => {
           let doctorInfo = dto.doctorInfo;
           if (!doctorInfo) {
             try {
@@ -171,7 +173,7 @@ const AppointmentsScreen = () => {
             patientBirthday: dto.patientInfo?.birthday || "Không xác định",
             patientGender: dto.patientInfo?.gender || "Không xác định",
             patientLocation: dto.patientInfo?.address || "Không xác định",
-            appointmentFee: "150.000 VND", // Cần lấy từ cấu hình
+            appointmentFee: "150.000 VND", // TODO: Fetch from API or configuration
             codes: {
               appointmentCode: dto.appointmentId.toString(),
               transactionCode: `TX${dto.appointmentId}`,
@@ -184,17 +186,24 @@ const AppointmentsScreen = () => {
                 month: "2-digit",
                 year: "numeric",
               }),
-              diagnosis: dto.appointmentNotes.filter((note) => note.noteType === "DIAGNOSIS").map((note) => note.content || "Chưa có chẩn đoán"),
-              doctorNotes: dto.appointmentNotes.filter((note) => note.noteType === "NOTE").map((note) => note.content || "Chưa có ghi chú"),
-              testResults: dto.appointmentNotes.filter((note) => note.noteType === "TEST_RESULT").map((note, index) => ({
-                name: `Kết quả xét nghiệm ${index + 1}`,
-                fileUrl: note.content || "/placeholder.pdf",
-              })),
+              diagnosis: dto.appointmentNotes
+                ? dto.appointmentNotes.filter((note) => note.noteType === "DIAGNOSIS").map((note) => note.content || "Chưa có chẩn đoán")
+                : [],
+              doctorNotes: dto.appointmentNotes
+                ? dto.appointmentNotes.filter((note) => note.noteType === "NOTE").map((note) => note.content || "Chưa có ghi chú")
+                : [],
+              testResults: dto.appointmentNotes
+                ? dto.appointmentNotes.filter((note) => note.noteType === "TEST_RESULT").map((note, index) => ({
+                    name: `Kết quả xét nghiệm ${index + 1}`,
+                    fileUrl: note.content || "/placeholder.pdf",
+                  }))
+                : [],
             }),
           };
         })
       );
 
+      console.log("[AppointmentsScreen] Mapped appointments:", JSON.stringify(appointments, null, 2));
       filterAppointments(appointments);
     } catch (error: any) {
       console.error("[AppointmentsScreen] Error fetching appointments:", error.message, error.response?.data);
@@ -216,6 +225,7 @@ const AppointmentsScreen = () => {
     });
 
     setFilteredAppointments(filtered);
+    console.log("[AppointmentsScreen] Filtered appointments:", JSON.stringify(filtered, null, 2));
   };
 
   const handleSearch = (text: string) => {
