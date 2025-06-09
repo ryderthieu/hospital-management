@@ -110,7 +110,7 @@ export interface Medicine {
   manufacturer: string;
   description: string;
   sideEffects: string;
-  images: string[]; // Thay image: string bằng images: string[]
+  avatar: string; // Thay images: string[] bằng avatar: string
   price: string;
 }
 
@@ -134,4 +134,5 @@ export interface MedicineResponse {
   sideEffects: string;
   price: string;
   quantity: number;
+  avatar: string;
 }

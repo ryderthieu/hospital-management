@@ -46,7 +46,7 @@ export const MedicineSearchScreen: React.FC<MedicineSearchScreenProps> = ({ navi
         manufacturer: dto.manufactor,
         description: dto.description,
         sideEffects: dto.sideEffects,
-        images: ['https://via.placeholder.com/150'], // Giả lập mảng hình ảnh
+        avatar: dto.avatar || 'https://via.placeholder.com/150', // Sử dụng avatar từ backend
         price: `${dto.price} VNĐ`,
       }));
       setSearchResults(medicines);
@@ -77,7 +77,7 @@ export const MedicineSearchScreen: React.FC<MedicineSearchScreenProps> = ({ navi
       onPress={() => navigation.navigate('MedicineDetail', { medicine: item })}
     >
       <Image
-        source={{ uri: item.images[0] }} // Lấy hình ảnh đầu tiên
+        source={{ uri: item.avatar }}
         style={styles.medicineImage}
         resizeMode="cover"
       />

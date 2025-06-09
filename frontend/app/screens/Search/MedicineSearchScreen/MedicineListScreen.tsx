@@ -35,7 +35,7 @@ export const MedicineListScreen: React.FC<MedicineListScreenProps> = ({ route, n
           manufacturer: dto.manufactor,
           description: dto.description,
           sideEffects: dto.sideEffects,
-          images: ['https://via.placeholder.com/150'],
+          avatar: dto.avatar || 'https://via.placeholder.com/150',
           price: `${dto.price} VNĐ`,
         }));
         setMedicines(medicines);
@@ -67,7 +67,7 @@ export const MedicineListScreen: React.FC<MedicineListScreenProps> = ({ route, n
       onPress={() => navigation.navigate('MedicineDetail', { medicine: item })}
     >
       <Image
-        source={{ uri: item.images[0] }}
+        source={{ uri: item.avatar }}
         style={styles.medicineImage}
         resizeMode="cover"
       />
