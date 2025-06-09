@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Row, Col, Form, Input, Button, Checkbox, Typography, Space, Spin, Tabs } from "antd"
@@ -349,7 +347,7 @@ const PatientDetail: React.FC = () => {
                 </Form.Item>
 
                 <Form.Item label="" name="followUpDate">
-                  <Input disabled={!isEditing || !patientDetail.hasFollowUp} prefix={<CalendarOutlined />} />
+                  <Input disabled={!isEditing || !patientDetail.hasFollowUp} prefix={<CalendarOutlined />} style={{width: 150}} />
                 </Form.Item>
               </Form>
 

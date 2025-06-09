@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import type { Indication } from "../types/medical"
+import type { Indication } from "../types/medicin"
 import { fetchMedicalOrder, updateMedicalOrder } from "../services/medicalService"
 
 export const useMedicalOrderModal = () => {
