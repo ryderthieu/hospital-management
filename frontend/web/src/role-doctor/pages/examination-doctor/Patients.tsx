@@ -13,6 +13,7 @@ import {
   MedicineBoxOutlined,
   ClearOutlined,
 } from "@ant-design/icons"
+import WeCareLoading from "../../components/common/WeCareLoading"
 import { useNavigate } from "react-router-dom"
 import { useAppointments } from "../../hooks/useAppointment"
 import {
@@ -148,7 +149,7 @@ const Patients: React.FC = () => {
       key: "id",
       width: 70,
       render: (id: number, record: Appointment, index: number) => (
-        <span style={{ fontWeight: 500, color: "#6b7280" }}>{(currentPage - 1) * itemsPerPage + index + 1}</span>
+        <span style={{ fontWeight: 500, color: "#6b7280" }}>{record.number}</span>
       ),
     },
     {
@@ -164,13 +165,8 @@ const Patients: React.FC = () => {
             icon={<UserOutlined />}
           />
           <div>
-            <div style={{ fontWeight: 600, color: "#111827", marginBottom: "2px" }}>{text}</div>
-            <div style={{ fontSize: "12px", color: "#6b7280" }}>{record.patientInfo?.patientId}</div>
-            {record && (
-              <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "2px" }}>
-                Số thứ tự: {record.number}
-              </div>
-            )}
+            <div style={{ fontWeight: 600, color: "#111827", marginBottom: "2px" }}>{record.patientInfo?.fullName}</div>
+            
           </div>
         </div>
       ),
@@ -183,7 +179,7 @@ const Patients: React.FC = () => {
         <div>
           <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
             <CalendarOutlined style={{ marginRight: 8, color: "#6b7280" }} />
-            <span style={{ color: "#374151" }}>{record.schedule.date}</span>
+            <span style={{ color: "#374151" }}>{record.schedule.workDate}</span>
           </div>
           {record && (
             <div style={{ display: "flex", alignItems: "center", fontSize: "12px", color: "#6b7280" }}>
@@ -380,6 +376,7 @@ const Patients: React.FC = () => {
           style={{
             borderRadius: "16px",
             boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+            height: "100%"
           }}
         >
           <div
@@ -417,9 +414,7 @@ const Patients: React.FC = () => {
           </div>
 
           {loading ? (
-            <div style={{ textAlign: "center", padding: "60px 0" }}>
-              <Spin size="large" />
-            </div>
+            <WeCareLoading mode="parent" />
           ) : error ? (
             <div style={{ textAlign: "center", padding: "60px 0" }}>
               <Empty description={error} />

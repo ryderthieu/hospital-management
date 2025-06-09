@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { Modal, Form, Input, Select, Button, Table, Typography, message } from "antd"
 import { SearchOutlined, DeleteOutlined, PlusOutlined, EyeOutlined } from "@ant-design/icons"
 import { useMedicalOrderModal } from "../../hooks/useServiceOrder"
-import type { Service } from "../../types/service"
+import type { Service } from "../../types/services"
 
 const { Text } = Typography
 

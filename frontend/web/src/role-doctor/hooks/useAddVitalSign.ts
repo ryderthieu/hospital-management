@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import type { VitalSignData } from "../types/medical"
+import type { VitalSignData } from "../types/medicin"
 import { addVitalSign } from "../services/medicalService"
 
 export const useAddVitalSign = (onClose: () => void) => {

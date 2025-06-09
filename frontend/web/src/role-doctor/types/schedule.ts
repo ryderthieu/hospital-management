@@ -4,7 +4,7 @@ export interface Schedule {
   shift: string
   startTime: string // Format: "HH:mm:ss" from backend
   endTime: string // Format: "HH:mm:ss" from backend
-  date: string // Format: "YYYY-MM-DD" from backend
+  workDate: string // Format: "YYYY-MM-DD" from backend
   roomNote: string
   floor: string
   building: string

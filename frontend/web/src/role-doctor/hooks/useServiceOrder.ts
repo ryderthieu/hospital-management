@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import type { Service, ServiceOrder, TestResult } from "../types/service"
+import type { Service, ServiceOrder, TestResult } from "../types/services"
 import { message } from "antd"
 
 // Mock data

@@ -4,7 +4,7 @@ import type {
   CreateServiceOrderRequest,
   UpdateServiceOrderRequest,
   TestResult,
-} from "../types/service"
+} from "../types/services"
 import { api } from "../../services/api"
 
 export const serviceService = {

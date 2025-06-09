@@ -1,9 +1,7 @@
-"use client"
-
 import { useState, useEffect, useCallback } from "react"
 import type { PatientDetail } from "../types/patient"
 import type { VitalSigns, MedicalHistory } from "../types/prescription"
-import type { TestResult } from "../types/service"
+import type { TestResult } from "../types/services"
 import type { AppointmentNote } from "../types/appointmentNote"
 // import { patientService } from "../services/patientServices"
 // import { prescriptionService } from "../services/prescriptionServices"

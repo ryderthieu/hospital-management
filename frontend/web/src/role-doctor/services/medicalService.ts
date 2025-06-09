@@ -1,4 +1,4 @@
-import type { Indication, Medication, VitalSignData } from "../types/medical"
+import type { Indication, Medication, VitalSignData } from "../types/medicin"
 
 export const fetchMedicalOrder = async (): Promise<Indication[]> => {
   // In a real app, this would be an API call
