@@ -41,6 +41,8 @@ public class MedicineDTOs {
 
         @Min(value = 0, message = "Số lượng phải lớn hơn hoặc bằng 0")
         private Long quantity;
+
+        private String avatar;
     }
 
     @Data
@@ -68,6 +70,8 @@ public class MedicineDTOs {
 
         @Min(value = 0, message = "Số lượng phải lớn hơn hoặc bằng 0")
         private Long quantity;
+
+        private String avatar;
     }
 
     @Data
@@ -86,5 +90,6 @@ public class MedicineDTOs {
         private String sideEffects;
         private BigDecimal price;
         private Long quantity;
+        private String avatar;
     }
 }

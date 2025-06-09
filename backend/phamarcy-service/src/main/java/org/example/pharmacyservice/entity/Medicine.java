@@ -57,6 +57,9 @@ public class Medicine {
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "avatar")
+    private String avatar;
+
     @OneToMany(mappedBy = "medicine", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PrescriptionDetail> prescriptionDetails = new ArrayList<>();
 }
