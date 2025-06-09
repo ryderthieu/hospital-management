@@ -1,159 +1,52 @@
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
 } from "../../components/ui/table";
-
+import { format } from "date-fns";
 import Badge from "../../components/ui/badge/Badge";
 import Pagination from "../../components/common/Pagination";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SearchInput from "../../components/common/SearchInput";
-  
-interface HealthService {
-  id: string;
-  name: string;
-  price: string;
-  category: string;
-  duration: string;
-  status: "Đang hoạt động" | "Tạm ngưng";
-  insurance_covered: boolean;
-  department: string;
-}
+import { appointmentService } from "../../services/appointmentService";
+import { Service } from "../../types/appointment";
 
-const tableData: HealthService[] = [
-  {
-    id: "DV2025-001",
-    name: "Khám tổng quát",
-    price: "200000",
-    category: "Khám bệnh",
-    duration: "30 phút",
-    status: "Đang hoạt động",
-    insurance_covered: true,
-    department: "Khám bệnh",
-  },
-  {
-    id: "DV2025-002",
-    name: "Siêu âm bụng tổng quát",
-    price: "250000",
-    category: "Chẩn đoán hình ảnh",
-    duration: "15 phút",
-    status: "Đang hoạt động",
-    insurance_covered: true,
-    department: "Chẩn đoán hình ảnh",
-  },
-  {
-    id: "DV2025-003",
-    name: "Xét nghiệm máu cơ bản",
-    price: "150000",
-    category: "Xét nghiệm",
-    duration: "5 phút",
-    status: "Đang hoạt động",
-    insurance_covered: true,
-    department: "Xét nghiệm",
-  },
-  {
-    id: "DV2025-004",
-    name: "Chụp X-quang ngực",
-    price: "180000",
-    category: "Chẩn đoán hình ảnh",
-    duration: "10 phút",
-    status: "Đang hoạt động",
-    insurance_covered: true,
-    department: "Chẩn đoán hình ảnh",
-  },
-  {
-    id: "DV2025-005",
-    name: "Khám nha khoa",
-    price: "120000",
-    category: "Nha khoa",
-    duration: "20 phút",
-    status: "Tạm ngưng",
-    insurance_covered: false,
-    department: "Răng Hàm Mặt",
-  },
-  {
-    id: "DV2025-006",
-    name: "Tư vấn dinh dưỡng",
-    price: "300000",
-    category: "Tư vấn",
-    duration: "45 phút",
-    status: "Đang hoạt động",
-    insurance_covered: false,
-    department: "Dinh dưỡng",
-  },
-  {
-    id: "DV2025-007",
-    name: "Chụp CT Scanner",
-    price: "1500000",
-    category: "Chẩn đoán hình ảnh",
-    duration: "30 phút",
-    status: "Đang hoạt động",
-    insurance_covered: true,
-    department: "Chẩn đoán hình ảnh",
-  },
-  {
-    id: "DV2025-008",
-    name: "Vật lý trị liệu",
-    price: "200000",
-    category: "Phục hồi chức năng",
-    duration: "60 phút",
-    status: "Đang hoạt động",
-    insurance_covered: true,
-    department: "Phục hồi chức năng",
-  },
-  {
-    id: "DV2025-009",
-    name: "Khám sản phụ khoa",
-    price: "250000",
-    category: "Sản khoa",
-    duration: "30 phút",
-    status: "Đang hoạt động",
-    insurance_covered: true,
-    department: "Sản",
-  },
-  {
-    id: "DV2025-010",
-    name: "Khám tim mạch",
-    price: "280000",
-    category: "Khám chuyên khoa",
-    duration: "30 phút",
-    status: "Đang hoạt động",
-    insurance_covered: true,
-    department: "Tim mạch",
-  },
-  {
-    id: "DV2025-011",
-    name: "Nội soi dạ dày",
-    price: "500000",
-    category: "Nội soi",
-    duration: "20 phút",
-    status: "Tạm ngưng",
-    insurance_covered: true,
-    department: "Tiêu hóa",
-  },
-];
-  
 const PAGE_SIZE = 10;
 
-export default function ServiceTable(){
+export default function ServiceTable() {
   const [currentPage, setCurrentPage] = useState(1);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const totalItems = tableData.length;
+  useEffect(() => {
+    appointmentService.getAllServices().then((data) => {
+      setServices(data);
+      setLoading(false);
+    });
+  }, []);
+
+  const totalItems = services.length;
   const totalPages = Math.ceil(totalItems / PAGE_SIZE);
 
-  const paginatedData = tableData.slice(
+  const paginatedData = services.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
   );
+
+  if (loading) return <div>Đang tải dữ liệu...</div>;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex justify-start items-center pt-5">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">Danh sách dịch vụ y tế</h2>
-          <span className="ml-5 text-sm bg-base-600/20 text-base-600 py-1 px-4 rounded-full font-bold">120 dịch vụ</span>
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+            Danh sách dịch vụ y tế
+          </h2>
+          <span className="ml-5 text-sm bg-base-600/20 text-base-600 py-1 px-4 rounded-full font-bold">
+            120 dịch vụ
+          </span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -204,8 +97,8 @@ export default function ServiceTable(){
           <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
             <TableRow>
               <TableCell
-                  isHeader
-                  className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                isHeader
+                className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
                 Mã dịch vụ
               </TableCell>
@@ -215,18 +108,12 @@ export default function ServiceTable(){
               >
                 Tên dịch vụ
               </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
-              >
-                Phí dịch vụ
-              </TableCell>
-              <TableCell
+              {/* <TableCell
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
                 Khoa
-              </TableCell>
+              </TableCell> */}
               <TableCell
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
@@ -237,7 +124,7 @@ export default function ServiceTable(){
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
-                Tình trạng
+                Ngày tạo
               </TableCell>
               <TableCell
                 isHeader
@@ -257,38 +144,23 @@ export default function ServiceTable(){
           {/* Table Body */}
           <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
             {paginatedData.map((service) => (
-              <TableRow key={service.id} className="">
+              <TableRow key={service.serviceId}>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {service.id}
+                  {service.serviceId}
                 </TableCell>
                 <TableCell className="py-3">
-                    <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                    {service.name} {service.insurance_covered && (<span className="bg-purple-500/30 ml-2 text-xs px-2 rounded-3xl font-bold text-purple-500">BHYT</span>)}
-                    </p>
+                  <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                    {service.serviceName}
+                  </p>
                 </TableCell>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {parseInt(service.price).toLocaleString('vi-VN')} ₫
+                  {service.price.toLocaleString("vi-VN")} ₫
                 </TableCell>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {service.department}
+                  {format(new Date(service.createdAt), "dd-MM-yyyy") || ""}
                 </TableCell>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {service.duration}
-                </TableCell>
-                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  <Badge
-                    size="sm"
-                    color={
-                      service.status === "Đang hoạt động"
-                        ? "success"
-                        : "error"
-                    }
-                  >
-                    {service.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {service.category}
+                  {service.serviceType}
                 </TableCell>
                 <TableCell className="py-3 text-theme-md">
                   <div className="flex gap-2">
@@ -296,29 +168,49 @@ export default function ServiceTable(){
                       onClick={() => {}}
                       className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
                         <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                        <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                        <path
+                          fillRule="evenodd"
+                          d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                          clipRule="evenodd"
+                        />
                       </svg>
-                      
                     </button>
                     <button
                       onClick={() => {}}
                       className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 transition-colors dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
                         <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                       </svg>
-                     
                     </button>
                     <button
                       onClick={() => {}}
                       className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
                       </svg>
-                      
                     </button>
                   </div>
                 </TableCell>
@@ -334,7 +226,7 @@ export default function ServiceTable(){
             totalItems={totalItems}
             onPageChange={setCurrentPage}
           />
-        </div>    
+        </div>
       </div>
     </div>
   );

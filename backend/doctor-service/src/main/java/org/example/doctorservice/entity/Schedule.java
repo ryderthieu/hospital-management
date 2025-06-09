@@ -37,6 +37,7 @@ public class Schedule {
     @Column(name = "end_time")
     private LocalTime endTime;
 
+    @Enumerated(EnumType.STRING)
     private Shift shift;
 
     @ManyToOne
@@ -48,6 +49,6 @@ public class Schedule {
     private Timestamp createdAt;
 
     public enum Shift {
-        MORNING, AFTERNOON, EVENING, NIGHT
+        MORNING, AFTERNOON
     }
 }
