@@ -3,22 +3,20 @@ package org.example.doctorservice.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.example.doctorservice.entity.Doctor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 @Data
-@NoArgsConstructor
-public class DoctorDto {
-    private Integer doctorId;
-    private Integer userId;
+public class CreateDoctorRequest {
     private String email;
 
     @NotBlank(message = "Số điện thoại không được để trống")
     private String phone;
+
+    @NotBlank(message = "Mật khẩu không được để trống")
+    private String password;
 
     @NotBlank(message = "CCCD không được để trống")
     private String identityNumber;
@@ -45,29 +43,8 @@ public class DoctorDto {
     @NotNull(message = "Loại bác sĩ không được để trống")
     private Doctor.Type type;
 
+    @NotNull(message = "ID khoa không được để trống")
     private Integer departmentId;
 
-    private String departmentName;
-
-    private String createdAt;
-
     private BigDecimal consultationFee;
-
-    public DoctorDto(Doctor doctor) {
-        this.doctorId = doctor.getDoctorId();
-        this.userId = doctor.getUserId();
-        this.identityNumber = doctor.getIdentityNumber();
-        this.fullName = doctor.getFullName();
-        this.birthday = doctor.getBirthday();
-        this.gender = doctor.getGender();
-        this.address = doctor.getAddress();
-        this.academicDegree = doctor.getAcademicDegree();
-        this.specialization = doctor.getSpecialization();
-        this.avatar = doctor.getAvatar();
-        this.type = doctor.getType();
-        this.departmentId = doctor.getDepartment().getDepartmentId();
-        this.departmentName = doctor.getDepartment().getDepartmentName();
-        this.consultationFee = doctor.getConsultationFee();
-        this.createdAt = doctor.getCreatedAt() != null ? doctor.getCreatedAt().toLocalDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null;
-    }
-}
+} 

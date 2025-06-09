@@ -2,6 +2,7 @@ package org.example.doctorservice.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.doctorservice.dto.CreateDoctorRequest;
 import org.example.doctorservice.dto.DoctorDto;
 import org.example.doctorservice.dto.PatientDto;
 import org.example.doctorservice.dto.ScheduleDto;
@@ -37,8 +38,8 @@ public class DoctorController {
 
 //    @PreAuthorize("hasAnyRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<DoctorDto> createDoctor(@RequestBody @Valid DoctorDto doctorDto) {
-        return ResponseEntity.ok(doctorService.createDoctor(doctorDto));
+    public ResponseEntity<DoctorDto> createDoctor(@RequestBody @Valid CreateDoctorRequest request) {
+        return ResponseEntity.ok(doctorService.createDoctor(request));
     }
 
 //    @PreAuthorize("hasAnyRole('ADMIN')")

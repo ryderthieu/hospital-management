@@ -1,6 +1,11 @@
 package org.example.pharmacyservice.service;
 
+import org.example.pharmacyservice.client.DoctorServiceClient;
+import org.example.pharmacyservice.client.PatientServiceClient;
+import org.example.pharmacyservice.dto.DoctorDto;
+import org.example.pharmacyservice.dto.PatientDto;
 import org.example.pharmacyservice.dto.PrescriptionDTOs;
+import org.example.pharmacyservice.dto.PrescriptionPdfDto;
 import org.example.pharmacyservice.entity.Medicine;
 import org.example.pharmacyservice.entity.Prescription;
 import org.example.pharmacyservice.entity.PrescriptionDetail;
@@ -13,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,16 +30,25 @@ public class PrescriptionService {
     private final PrescriptionDetailRepository prescriptionDetailRepository;
     private final MedicineRepository medicineRepository;
     private final MedicineService medicineService;
+    private final PdfService pdfService;
+    private final PatientServiceClient patientServiceClient;
+    private final DoctorServiceClient doctorServiceClient;
 
     @Autowired
     public PrescriptionService(PrescriptionRepository prescriptionRepository,
                                PrescriptionDetailRepository prescriptionDetailRepository,
                                MedicineRepository medicineRepository,
-                               MedicineService medicineService) {
+                               MedicineService medicineService,
+                               PdfService pdfService,
+                               PatientServiceClient patientServiceClient,
+                               DoctorServiceClient doctorServiceClient) {
         this.prescriptionRepository = prescriptionRepository;
         this.prescriptionDetailRepository = prescriptionDetailRepository;
         this.medicineRepository = medicineRepository;
         this.medicineService = medicineService;
+        this.pdfService = pdfService;
+        this.patientServiceClient = patientServiceClient;
+        this.doctorServiceClient = doctorServiceClient;
     }
 
     private PrescriptionDTOs.PrescriptionResponse mapToPrescriptionResponse(Prescription prescription) {
@@ -254,5 +269,76 @@ public class PrescriptionService {
         return prescriptions.stream()
                 .map(this::mapToPrescriptionResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] generatePrescriptionPdf(Long prescriptionId) {
+        // Lấy thông tin đơn thuốc
+        Prescription prescription = prescriptionRepository.findById(prescriptionId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn thuốc với ID: " + prescriptionId));
+
+        // Lấy thông tin bệnh nhân từ service khác
+        PatientDto patientInfo = patientServiceClient.getPatientById(prescription.getPatientId());
+        if (patientInfo == null) {
+            throw new RuntimeException("Không tìm thấy thông tin bệnh nhân");
+        }
+
+        // Lấy thông tin bác sĩ từ service khác
+        DoctorDto doctorInfo = doctorServiceClient.getDoctorById(prescription.getAppointmentId());
+        if (doctorInfo == null) {
+            throw new RuntimeException("Không tìm thấy thông tin bác sĩ");
+        }
+
+        // Tạo DTO cho PDF
+        PrescriptionPdfDto pdfDto = new PrescriptionPdfDto();
+        
+        // Set thông tin bệnh nhân
+        pdfDto.setPatientId(patientInfo.getPatientId());
+        pdfDto.setPatientName(patientInfo.getFullName());
+        pdfDto.setPatientGender(patientInfo.getGender());
+        pdfDto.setPatientBirthday(LocalDate.parse(patientInfo.getBirthday()));
+        pdfDto.setPatientPhone(patientInfo.getPhone());
+        pdfDto.setPatientEmail(patientInfo.getEmail());
+        pdfDto.setPatientAvatar(patientInfo.getAvatar());
+        pdfDto.setPatientAddress(patientInfo.getAddress());
+        pdfDto.setPatientIdentityNumber(patientInfo.getIdentityNumber());
+        pdfDto.setPatientInsuranceNumber(patientInfo.getInsuranceNumber());
+        
+        // Set thông tin bác sĩ
+        pdfDto.setDoctorId(doctorInfo.getDoctorId());
+        pdfDto.setDoctorName(doctorInfo.getFullName());
+        pdfDto.setDoctorSpecialization(doctorInfo.getSpecialization());
+        pdfDto.setDoctorAcademicDegree(doctorInfo.getAcademicDegree());
+        pdfDto.setDoctorDepartment(""); // Tạm thời để trống vì chưa có thông tin department từ DoctorDto
+        
+        // Set thông tin đơn thuốc
+        pdfDto.setPrescriptionId(prescription.getPrescriptionId());
+        pdfDto.setPrescriptionDate(prescription.getCreatedAt().toLocalDateTime().toLocalDate());
+        pdfDto.setDiagnosis(prescription.getDiagnosis());
+        pdfDto.setSystolicBloodPressure(prescription.getSystolicBloodPressure());
+        pdfDto.setDiastolicBloodPressure(prescription.getDiastolicBloodPressure());
+        pdfDto.setHeartRate(prescription.getHeartRate());
+        pdfDto.setBloodSugar(prescription.getBloodSugar());
+        pdfDto.setNote(prescription.getNote());
+        pdfDto.setFollowUpDate(prescription.getFollowUpDate());
+        pdfDto.setFollowUp(prescription.isFollowUp());
+        
+        // Set chi tiết thuốc
+        List<PrescriptionPdfDto.PrescriptionDetailInfo> details = prescription.getPrescriptionDetails().stream()
+                .map(detail -> {
+                    PrescriptionPdfDto.PrescriptionDetailInfo detailInfo = new PrescriptionPdfDto.PrescriptionDetailInfo();
+                    detailInfo.setMedicineName(detail.getMedicine().getMedicineName());
+                    detailInfo.setUnit(detail.getMedicine().getUnit());
+                    detailInfo.setDosage(detail.getDosage());
+                    detailInfo.setFrequency(detail.getFrequency());
+                    detailInfo.setDuration(detail.getDuration());
+                    detailInfo.setPrescriptionNotes(detail.getPrescriptionNotes());
+                    return detailInfo;
+                })
+                .collect(Collectors.toList());
+        pdfDto.setPrescriptionDetails(details);
+
+        // Tạo PDF
+        return pdfService.generatePrescriptionPdf(pdfDto);
     }
 }

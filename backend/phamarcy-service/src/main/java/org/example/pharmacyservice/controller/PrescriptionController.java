@@ -79,4 +79,13 @@ public class PrescriptionController {
     ) {
         return ResponseEntity.ok(prescriptionService.getPrescriptionByAppointmentId(appointmentId));
     }
+
+    @GetMapping("/{prescriptionId}/pdf")
+    public ResponseEntity<byte[]> getPrescriptionPdf(@PathVariable Long prescriptionId) {
+        byte[] pdfBytes = prescriptionService.generatePrescriptionPdf(prescriptionId);
+        return ResponseEntity.ok()
+                .header("Content-Type", "application/pdf")
+                .header("Content-Disposition", "attachment; filename=prescription_" + prescriptionId + ".pdf")
+                .body(pdfBytes);
+    }
 }

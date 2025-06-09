@@ -1,6 +1,6 @@
 package org.example.doctorservice.service;
 
-
+import org.example.doctorservice.dto.CreateDoctorRequest;
 import org.example.doctorservice.dto.DoctorDto;
 import org.example.doctorservice.dto.PatientDto;
 import org.example.doctorservice.entity.Doctor;
@@ -13,7 +13,7 @@ public interface DoctorService {
 
     DoctorDto getDoctorById(Integer doctorId);
 
-    DoctorDto createDoctor(DoctorDto doctorDto);
+    DoctorDto createDoctor(CreateDoctorRequest request);
 
     DoctorDto updateDoctor(Integer doctorId, DoctorDto doctorDto);
 

@@ -31,6 +31,12 @@ public class PatientDto {
     @NotNull(message = "Ngày sinh không được để trống")
     private LocalDate birthday;
 
+    private String phone;
+
+    private String email;
+
+    private String avatar;
+
     private Patient.Gender gender;
 
     private String address;
@@ -53,6 +59,9 @@ public class PatientDto {
         this.identityNumber = patient.getIdentityNumber();
         this.insuranceNumber = patient.getInsuranceNumber();
         this.fullName = patient.getFullName();
+        this.phone = patient.getPhone();
+        this.email = patient.getEmail();
+        this.avatar = patient.getAvatar();
         this.birthday = patient.getBirthday();
         this.gender = patient.getGender();
         this.address = patient.getAddress();

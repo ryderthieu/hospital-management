@@ -1,4 +1,4 @@
-package org.example.appointmentservice.dto;
+package org.example.pharmacyservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,17 +9,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PatientDto {
     private Integer patientId;
-    private Integer userId;
-    private String identityNumber;
-    private String insuranceNumber;
     private String fullName;
-    private String avatar;
     private String birthday;
     private String gender;
+    private String phone;
+    private String email;
+    private String avatar;
     private String address;
-    private String allergies;
-    private Integer height;
-    private Integer weight;
-    private String bloodType;
+    private String identityNumber;
+    private String insuranceNumber;
     private String createdAt;
-}
+} 

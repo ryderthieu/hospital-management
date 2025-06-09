@@ -1,5 +1,6 @@
 package org.example.patientservice.service;
 
+import org.example.patientservice.dto.CreatePatientRequest;
 import org.example.patientservice.dto.PatientDto;
 import org.example.patientservice.entity.Patient;
 
@@ -17,7 +18,9 @@ public interface PatientService {
 
     void deletePatient(Integer patientId);
 
-    Optional<PatientDto> searchPatient(String identityNumber, String insuranceNumber, String fullName);
+    Optional<PatientDto> searchPatient(String identityNumber, String insuranceNumber, String fullName, String email, String phone);
 
     PatientDto getPatientByUserId(Integer userId);
+
+    PatientDto registerPatient(CreatePatientRequest request);
 }

@@ -5,9 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 // TODO: Fix AppointmentServiceClient import issue
 // import org.example.doctorservice.client.AppointmentServiceClient;
 import org.example.doctorservice.client.PatientServiceClient;
+import org.example.doctorservice.client.UserServiceClient;
 import org.example.doctorservice.dto.AppointmentDto;
+import org.example.doctorservice.dto.CreateDoctorRequest;
 import org.example.doctorservice.dto.DoctorDto;
 import org.example.doctorservice.dto.PatientDto;
+import org.example.doctorservice.dto.UserDto;
 import org.example.doctorservice.entity.Department;
 import org.example.doctorservice.entity.Doctor;
 import org.example.doctorservice.repository.DepartmentRepository;
@@ -25,6 +28,7 @@ import java.util.stream.Collectors;
 public class DoctorServiceImpl implements DoctorService {
     private final DoctorRepository doctorRepository;
     private final DepartmentRepository departmentRepository;
+    private final UserServiceClient userServiceClient;
     // TODO: Fix AppointmentServiceClient dependency issue
     // private final AppointmentServiceClient appointmentServiceClient;
     private final PatientServiceClient patientServiceClient;
@@ -49,33 +53,47 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Override
     @Transactional
-    public DoctorDto createDoctor(DoctorDto doctorDto) {
-        log.info("Tạo bác sĩ mới với thông tin: {}", doctorDto);
+    public DoctorDto createDoctor(CreateDoctorRequest request) {
+        log.info("Tạo bác sĩ mới với thông tin: {}", request);
         
         // Validate required fields
-        validateDoctorDto(doctorDto);
+        validateCreateDoctorRequest(request);
+
+        // Create new user first
+        UserDto userDto = new UserDto();
+        if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
+            userDto.setEmail(request.getEmail());
+        }
+        userDto.setPhone(request.getPhone());
+        userDto.setPassword(request.getPassword());
+        userDto.setRole("DOCTOR");
+        
+        UserDto createdUser = userServiceClient.addUser(userDto);
+        log.info("Đã tạo user mới với ID: {}", createdUser.getUserId());
 
         // Validate department
-        Department department = departmentRepository.findById(doctorDto.getDepartmentId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khoa với ID: " + doctorDto.getDepartmentId()));
+        Department department = departmentRepository.findById(request.getDepartmentId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khoa với ID: " + request.getDepartmentId()));
 
         // Check if identity number already exists
-        doctorRepository.findByIdentityNumber(doctorDto.getIdentityNumber())
+        doctorRepository.findByIdentityNumber(request.getIdentityNumber())
                 .ifPresent(d -> {
                     throw new RuntimeException("Số CMND/CCCD đã tồn tại trong hệ thống");
                 });
 
         Doctor doctor = Doctor.builder()
-                .userId(doctorDto.getUserId())
-                .identityNumber(doctorDto.getIdentityNumber())
-                .fullName(doctorDto.getFullName())
-                .birthday(doctorDto.getBirthday())
-                .gender(doctorDto.getGender())
-                .address(doctorDto.getAddress())
-                .academicDegree(doctorDto.getAcademicDegree())
-                .specialization(doctorDto.getSpecialization())
-                .type(doctorDto.getType())
+                .userId(createdUser.getUserId().intValue())
+                .identityNumber(request.getIdentityNumber())
+                .fullName(request.getFullName())
+                .birthday(request.getBirthday())
+                .gender(request.getGender())
+                .address(request.getAddress())
+                .academicDegree(request.getAcademicDegree())
+                .specialization(request.getSpecialization())
+                .avatar(request.getAvatar())
+                .type(request.getType())
                 .department(department)
+                .consultationFee(request.getConsultationFee())
                 .build();
 
         Doctor createdDoctor = doctorRepository.save(doctor);
@@ -116,6 +134,7 @@ public class DoctorServiceImpl implements DoctorService {
         doctor.setAddress(doctorDto.getAddress());
         doctor.setAcademicDegree(doctorDto.getAcademicDegree());
         doctor.setSpecialization(doctorDto.getSpecialization());
+        doctor.setAvatar(doctorDto.getAvatar());
         doctor.setType(doctorDto.getType());
 
         Doctor updatedDoctor = doctorRepository.save(doctor);
@@ -169,6 +188,11 @@ public class DoctorServiceImpl implements DoctorService {
     private void validateDoctorDto(DoctorDto doctorDto) {
         List<String> errors = new ArrayList<>();
 
+        // Bỏ validation cho email vì email có thể trống
+        if (doctorDto.getPhone() == null || doctorDto.getPhone().trim().isEmpty()) {
+            errors.add("Số điện thoại không được để trống");
+        }
+
         if (doctorDto.getFullName() == null || doctorDto.getFullName().trim().isEmpty()) {
             errors.add("Họ tên bác sĩ không được để trống");
         }
@@ -186,6 +210,42 @@ public class DoctorServiceImpl implements DoctorService {
         }
 
         if (doctorDto.getDepartmentId() == null) {
+            errors.add("ID khoa không được để trống");
+        }
+
+        if (!errors.isEmpty()) {
+            throw new RuntimeException("Lỗi validation: " + String.join(", ", errors));
+        }
+    }
+
+    private void validateCreateDoctorRequest(CreateDoctorRequest request) {
+        List<String> errors = new ArrayList<>();
+
+        if (request.getPhone() == null || request.getPhone().trim().isEmpty()) {
+            errors.add("Số điện thoại không được để trống");
+        }
+
+        if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+            errors.add("Mật khẩu không được để trống");
+        }
+
+        if (request.getFullName() == null || request.getFullName().trim().isEmpty()) {
+            errors.add("Họ tên bác sĩ không được để trống");
+        }
+
+        if (request.getIdentityNumber() == null || request.getIdentityNumber().trim().isEmpty()) {
+            errors.add("Số CMND/CCCD không được để trống");
+        }
+
+        if (request.getBirthday() == null) {
+            errors.add("Ngày sinh không được để trống");
+        }
+
+        if (request.getGender() == null) {
+            errors.add("Giới tính không được để trống");
+        }
+
+        if (request.getDepartmentId() == null) {
             errors.add("ID khoa không được để trống");
         }
 
