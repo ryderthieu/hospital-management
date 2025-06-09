@@ -331,13 +331,12 @@ const DepartmentDetail: React.FC = () => {
               <h3 className="text-lg font-medium text-gray-800 mb-4">Nhân sự nổi bật</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {doctors.slice(0, 4).map(doctor => (
-                  <div key={doctor.doctorId} className="bg-gray-50 p-4 rounded-lg flex flex-col items-center">
-                    <img 
-                      src={doctor.profileImage || "/images/user/default-avatar.jpg"} 
+                  <div key={doctor.doctorId} className="bg-gray-50 p-4 rounded-lg flex flex-col items-center">                    <img 
+                      src={doctor.profileImage || "/images/user/owner.jpg"} 
                       alt={doctor.fullName} 
                       className="w-20 h-20 rounded-full object-cover"
                       onError={(e) => {
-                        e.currentTarget.src = "/images/user/default-avatar.jpg";
+                        e.currentTarget.src = "/images/user/owner.jpg";
                       }}
                     />
                     <h4 className="font-medium text-gray-800 mt-2">{doctor.fullName}</h4>
@@ -376,13 +375,12 @@ const DepartmentDetail: React.FC = () => {
                     <tr key={doctor.doctorId}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            <img 
+                          <div className="flex-shrink-0 h-10 w-10">                            <img 
                               className="h-10 w-10 rounded-full object-cover" 
-                              src={doctor.profileImage || "/images/user/default-avatar.jpg"} 
+                              src={doctor.profileImage || "/images/user/owner.jpg"} 
                               alt={doctor.fullName}
                               onError={(e) => {
-                                e.currentTarget.src = "/images/user/default-avatar.jpg";
+                                e.currentTarget.src = "/images/user/owner.jpg";
                               }}
                             />
                           </div>

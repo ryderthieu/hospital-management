@@ -9,6 +9,7 @@ export default function App() {
     <AuthProvider>
       <Routes>
         <Route path="" element={<SignIn />} />
+        <Route path="/login" element={<SignIn />} />
         <Route path="/admin/*" element={<AdminApp />} />
         <Route path="/doctor/*" element={<DoctorApp />} />
         <Route path="*" element={<div>404 - Không tìm thấy trang</div>} />

@@ -5,9 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.doctorservice.entity.Department;
 
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.stream.Collectors;
+
 
 @Data
 @NoArgsConstructor

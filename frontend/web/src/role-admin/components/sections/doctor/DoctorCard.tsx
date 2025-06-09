@@ -18,9 +18,13 @@ const DoctorCard: React.FC<DoctorCardProps> = ({
     <div className="flex items-center justify-center gap-4 w-full md:w-auto">
       <div className="">
         <img
-          src={"https://via.placeholder.com/80"}
+          src={doctor.profileImage || "/images/user/owner.jpg"}
           alt={doctor.fullName}
           className="w-20 h-20 rounded-lg object-cover"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = "/images/user/owner.jpg";
+          }}
         />
       </div>
       <div className="grid grid-rows-2 gap-2">

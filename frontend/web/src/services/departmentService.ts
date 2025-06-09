@@ -1,5 +1,5 @@
 import { api } from "./api";
-import { DepartmentFromAPI } from "../types/department";
+import { DepartmentFromAPI } from "../role-admin/types/department";
 
 export interface DepartmentDto {
   departmentName: string;

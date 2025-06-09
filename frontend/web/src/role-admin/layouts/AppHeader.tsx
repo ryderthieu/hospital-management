@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 
 import { Link } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
-import { ThemeToggleButton } from "../components/common/ThemeToggleButton";
 import NotificationDropdown from "../components/layout/header/NotificationDropdown";
 import UserDropdown from "../components/layout/header/UserDropdown";
 

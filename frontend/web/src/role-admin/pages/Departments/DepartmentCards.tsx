@@ -1,8 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { departmentService } from "../../../services/departmentService";
-import { Department, transformDepartmentData } from "../../../types/department";
+import { Department, transformDepartmentData } from "../../types/department";
 import Pagination from "../../components/common/Pagination";
+
+interface DoctorSimple {
+  doctorId: number;
+  fullName: string;
+  profileImage?: string;
+}
 
 export default function DepartmentCards() {
   const navigate = useNavigate();
@@ -14,11 +20,66 @@ export default function DepartmentCards() {
 
   // Fetch departments from API
   useEffect(() => {
-    const fetchDepartments = async () => {
+    const fetchDepartmentsOptimized = async () => {
       try {
         setLoading(true);
+        
+        // Step 1: Fetch all departments
         const apiDepartments = await departmentService.getAllDepartments();
-        const transformedDepartments = apiDepartments.map((dept, index) => transformDepartmentData(dept, index));
+        
+        // Step 2: Get all unique department IDs
+        const departmentIds = apiDepartments
+          .map(dept => dept.departmentId)
+          .filter(id => id !== undefined);
+        
+        // Step 3: Fetch doctors for all departments in parallel (batch)
+        const doctorPromises = departmentIds.map(id => 
+          departmentService.getDoctorsByDepartmentId(id).catch(error => {
+            console.error(`Error fetching doctors for department ${id}:`, error);
+            return []; // Return empty array on error
+          })
+        );
+        
+        // Wait for all doctor fetches to complete in parallel
+        const allDoctorArrays = await Promise.all(doctorPromises);
+        
+        // Step 4: Create a map of departmentId -> doctors for quick lookup
+        const doctorMap = new Map();
+        departmentIds.forEach((id, index) => {
+          doctorMap.set(id, allDoctorArrays[index] || []);
+        });
+        
+        // Step 5: Transform departments with doctor images
+        const transformedDepartments = apiDepartments.map((dept, index) => {
+          const transformedDept = transformDepartmentData(dept, index);
+          
+          // Get doctors for this department from our map
+          if (transformedDept.departmentId) {
+            const doctors = doctorMap.get(transformedDept.departmentId) || [];
+            
+            // Extract profile images from doctors (limit to 3)
+            const doctorImages = (doctors as DoctorSimple[])
+              .filter(doctor => doctor.profileImage && doctor.profileImage.trim() !== '') 
+              .slice(0, 3)
+              .map(doctor => doctor.profileImage!);
+            
+            // Set team images
+            if (doctorImages.length === 0) {
+              // Use default images if no doctor images available
+              const defaultImages = [
+                "/images/user/user-01.jpg",
+                "/images/user/user-02.jpg", 
+                "/images/user/user-03.jpg"
+              ];
+              transformedDept.team.images = defaultImages.slice(0, Math.min(3, transformedDept.staffCount || 1));
+            } else {
+              transformedDept.team.images = doctorImages;
+            }
+          }
+          
+          return transformedDept;
+        });
+        
         setDepartments(transformedDepartments);
         setError(null);
       } catch (err) {
@@ -29,7 +90,7 @@ export default function DepartmentCards() {
       }
     };
 
-    fetchDepartments();
+    fetchDepartmentsOptimized();
   }, []);
   // Function to handle navigation to department detail page
   const handleViewDetail = (department: Department) => {
@@ -136,14 +197,14 @@ export default function DepartmentCards() {
                 {/* Team photos */}
                 <div className="flex -space-x-2 mb-4">
                   {department.team.images.length > 0 ? (
-                    department.team.images.slice(0, 4).map((image, index) => (
+                    department.team.images.slice(0, 3).map((image, index) => (
                       <img
                         key={index}
                         className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800 object-cover"
                         src={image}
                         alt={`Nhân viên ${index + 1}`}
                         onError={(e) => {
-                          e.currentTarget.src = "/images/user/default-avatar.jpg";
+                          e.currentTarget.src = "/images/user/owner.jpg";
                         }}
                       />
                     ))

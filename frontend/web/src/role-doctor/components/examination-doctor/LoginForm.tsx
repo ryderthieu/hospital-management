@@ -3,7 +3,6 @@ import {
   Form,
   Input,
   Button,
-  Card,
   Typography,
   Alert,
   ConfigProvider,
@@ -11,6 +10,7 @@ import {
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useAuth } from "../../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import PageMeta from "../../../role-admin/components/common/PageMeta";
 
 const { Title } = Typography;
 
@@ -53,6 +53,7 @@ const LoginForm = () => {
   };
 
   return (
+
     <ConfigProvider
       theme={{
         token: {
@@ -60,11 +61,15 @@ const LoginForm = () => {
         },
       }}
     >
+          <PageMeta
+        title="SignIn Dashboard | Admin Dashboard"
+        description="This is SignIn Tables Dashboard"
+      />
       <div className="flex-1">
-        <div className="h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-          <Card className="w-full max-w-md">
+        <div className="h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 to-cyan-50">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
             <div className="text-center mb-8">
-              <Title level={2}>Đăng nhập</Title>
+              <Title level={2} className="text-gray-800 mb-2">Đăng nhập</Title>
             </div>
 
             {(error || loginError) && (
@@ -82,10 +87,11 @@ const LoginForm = () => {
               onFinish={onFinish}
               layout="vertical"
               size="large"
+              className="space-y-4"
             >
               <Form.Item
                 name="phone"
-                label="Số điện thoại"
+                label={<span className="text-gray-700 font-medium">Số điện thoại</span>}
                 rules={[
                   { required: true, message: "Vui lòng nhập số điện thoại!" },
                   {
@@ -98,26 +104,28 @@ const LoginForm = () => {
                   prefix={<UserOutlined className="text-gray-400" />}
                   placeholder="Nhập số điện thoại"
                   autoComplete="username"
+                  className="h-12 rounded-lg border-gray-200 hover:border-cyan-400 focus:border-cyan-500"
                 />
               </Form.Item>
 
               <Form.Item
                 name="password"
-                label="Mật khẩu"
+                label={<span className="text-gray-700 font-medium">Mật khẩu</span>}
                 rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
               >
                 <Input.Password
                   prefix={<LockOutlined className="text-gray-400" />}
                   placeholder="Nhập mật khẩu"
                   autoComplete="current-password"
+                  className="h-12 rounded-lg border-gray-200 hover:border-cyan-400 focus:border-cyan-500"
                 />
               </Form.Item>
 
-              <Form.Item>
+              <Form.Item className="mb-0 pt-4">
                 <Button
                   type="primary"
                   htmlType="submit"
-                  className="w-full"
+                  className="w-full h-12 rounded-lg bg-gradient-to-r from-cyan-600 to-base-600 hover:from-cyan-700 hover:to-base-700 border-none shadow-lg font-medium text-base"
                   loading={isLoading}
                 >
                   Đăng nhập
@@ -125,11 +133,11 @@ const LoginForm = () => {
               </Form.Item>
             </Form>
 
-            <div className="text-center text-sm text-gray-600">
-              <p>Hệ thống quản lý bệnh viện</p>
+            <div className="text-center text-sm text-gray-500 mt-6">
+              <p className="text-gray-500">Hệ thống quản lý bệnh viện</p>
               <p>Dành cho Admin và Bác sĩ</p>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
     </ConfigProvider>

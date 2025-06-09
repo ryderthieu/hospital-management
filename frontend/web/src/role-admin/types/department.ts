@@ -11,6 +11,7 @@ export interface Department {
   foundedYear: number;
   phoneNumber?: string;
   email?: string;
+  departmentId?: number; // Add this for API calls
 }
 
 export interface DepartmentFromAPI {
@@ -60,5 +61,6 @@ export const transformDepartmentData = (apiDepartment: DepartmentFromAPI, index?
     foundedYear: apiDepartment.foundedYear || 2020,
     phoneNumber: apiDepartment.phoneNumber,
     email: apiDepartment.email,
+    departmentId: apiDepartment.departmentId, // Add this for API calls
   };
 };

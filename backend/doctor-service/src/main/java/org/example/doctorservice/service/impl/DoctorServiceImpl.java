@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 public class DoctorServiceImpl implements DoctorService {
     private final DoctorRepository doctorRepository;
     private final DepartmentRepository departmentRepository;
-    // TODO: Fix AppointmentServiceClient dependency issue
     // private final AppointmentServiceClient appointmentServiceClient;
     private final PatientServiceClient patientServiceClient;
 
