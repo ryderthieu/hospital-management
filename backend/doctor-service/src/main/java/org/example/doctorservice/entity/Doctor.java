@@ -60,7 +60,7 @@ public class Doctor {
     @JoinColumn(name = "department_id")
     private Department department;
 
-    @Column(name = "consultation_fee")
+    @Column(name = "consultation_fee", precision = 38, scale = 2)
     private BigDecimal consultationFee;
 
     @Column(name = "created_at")

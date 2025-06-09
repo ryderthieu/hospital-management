@@ -19,5 +19,6 @@ public class DoctorDto {
     private String type;
     private BigDecimal consultationFee;
     private Integer departmentId;
+    private String departmentName;
     private String createdAt;
 }
