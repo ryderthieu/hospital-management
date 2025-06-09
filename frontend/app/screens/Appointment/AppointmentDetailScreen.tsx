@@ -18,7 +18,7 @@ interface AppointmentResponseDto {
   slotEnd: string;
   appointmentStatus: string;
   createdAt: string;
-  patientInfo: { patientId: number };
+  patientInfo: { patientId: number; fullName: string; birthday: string; gender: string; address: string } | null;
   appointmentNotes: any[];
   doctorInfo?: {
     fullName: string;
@@ -76,15 +76,15 @@ const AppointmentDetailScreen = () => {
           department: doctorInfo.specialization,
           room: `${schedule.roomNote || "Phòng chưa xác định"} - Tầng ${schedule.floor || "X"} ${schedule.building || ""}`,
           queueNumber: response.data.number,
-          patientName: "LÊ THIỆN NHI", // Cần lấy từ patientInfo
-          patientBirthday: "28/04/2004", // Cần lấy từ patientInfo
-          patientGender: "Nữ", // Cần lấy từ patientInfo
-          patientLocation: "Cà Mau", // Cần lấy từ patientInfo
-          appointmentFee: "150.000 VND", // Cần lấy từ cấu hình
+          patientName: response.data.patientInfo?.fullName || "Bệnh nhân chưa cung cấp",
+          patientBirthday: response.data.patientInfo?.birthday || "Không xác định",
+          patientGender: response.data.patientInfo?.gender || "Không xác định",
+          patientLocation: response.data.patientInfo?.address || "Không xác định",
+          appointmentFee: "150.000 VND", // TODO: Fetch from API or configuration
           codes: {
             appointmentCode: response.data.appointmentId.toString(),
             transactionCode: `TX${response.data.appointmentId}`,
-            patientCode: response.data.patientInfo.patientId.toString(),
+            patientCode: response.data.patientInfo?.patientId.toString() || "N/A",
           },
         };
 
