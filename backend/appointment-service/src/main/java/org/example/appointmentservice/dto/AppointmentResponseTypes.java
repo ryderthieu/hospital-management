@@ -15,8 +15,7 @@ public class AppointmentResponseTypes {
         private PatientDto patientInfo;
         private String symptoms;
         private Integer number;
-        private LocalTime slotStart;
-        private LocalTime slotEnd;
+        private ScheduleDto schedule;
         private Appointment.AppointmentStatus appointmentStatus;
         private Timestamp createdAt;
     }

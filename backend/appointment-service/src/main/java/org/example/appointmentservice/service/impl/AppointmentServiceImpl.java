@@ -491,33 +491,52 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         // Tạo cache cho patient info
         Map<Integer, PatientDto> patientCache = new HashMap<>();
-
         try {
-            // Batch lấy thông tin bệnh nhân song song
-            List<CompletableFuture<Void>> futures = new ArrayList<>();
-            for (Integer patientId : patientIds) {
-                CompletableFuture<Void> future = CompletableFuture
-                    .supplyAsync(() -> {
-                        try {
-                            return patientServiceClient.getPatientById(patientId);
-                        } catch (Exception e) {
-                            log.error("Lỗi khi lấy thông tin bệnh nhân ID {}: {}", patientId, e.getMessage());
-                            return null;
-                        }
-                    }, executorService)
-                    .thenAccept(patientInfo -> {
+            CompletableFuture<Void> patientFuture = CompletableFuture.runAsync(() -> {
+                patientIds.forEach(patientId -> {
+                    try {
+                        PatientDto patientInfo = patientServiceClient.getPatientById(patientId);
                         if (patientInfo != null) {
-                            synchronized (patientCache) {
-                                patientCache.put(patientId, patientInfo);
-                            }
+                            patientCache.put(patientId, patientInfo);
                         }
-                    });
-                futures.add(future);
-            }
+                    } catch (Exception e) {
+                        log.error("Lỗi khi lấy thông tin bệnh nhân ID: {}", patientId, e);
+                    }
+                });
+            }, executorService);
 
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            // Đợi hoàn thành
+            patientFuture.get();
         } catch (Exception e) {
             log.error("Lỗi khi lấy thông tin bệnh nhân: {}", e.getMessage());
+        }
+
+        // Thu thập unique schedule IDs
+        List<Integer> scheduleIds = appointments.stream()
+                .map(Appointment::getScheduleId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // Tạo cache cho schedule info
+        Map<Integer, ScheduleDto> scheduleCache = new HashMap<>();
+        try {
+            CompletableFuture<Void> scheduleFuture = CompletableFuture.runAsync(() -> {
+                scheduleIds.forEach(scheduleId -> {
+                    try {
+                        ScheduleDto scheduleInfo = doctorServiceClient.getScheduleById(scheduleId);
+                        if (scheduleInfo != null) {
+                            scheduleCache.put(scheduleId, scheduleInfo);
+                        }
+                    } catch (Exception e) {
+                        log.error("Lỗi khi lấy thông tin lịch khám ID: {}", scheduleId, e);
+                    }
+                });
+            }, executorService);
+
+            // Đợi hoàn thành
+            scheduleFuture.get();
+        } catch (Exception e) {
+            log.error("Lỗi khi lấy thông tin lịch khám: {}", e.getMessage());
         }
 
         return appointments.stream()
@@ -527,8 +546,13 @@ public class AppointmentServiceImpl implements AppointmentService {
                     response.setPatientId(appointment.getPatientId());
                     response.setSymptoms(appointment.getSymptoms());
                     response.setNumber(appointment.getNumber());
-                    response.setSlotStart(appointment.getSlotStart());
-                    response.setSlotEnd(appointment.getSlotEnd());
+                    
+                    // Set schedule info từ cache
+                    ScheduleDto scheduleInfo = scheduleCache.get(appointment.getScheduleId());
+                    if (scheduleInfo != null) {
+                        response.setSchedule(scheduleInfo);
+                    }
+                    
                     response.setAppointmentStatus(appointment.getAppointmentStatus());
                     response.setCreatedAt(appointment.getCreatedAt());
 
