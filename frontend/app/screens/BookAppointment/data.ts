@@ -230,30 +230,29 @@ const getAvailableSlots = async (scheduleId: number): Promise<number> => {
   }
 };
 
-// Fetch time slots for a schedule
+// data.ts
 export const fetchTimeSlots = async (scheduleId: number): Promise<TimeSlot[]> => {
   try {
-    console.log(`[data.ts] Fetching time slots for scheduleId: ${scheduleId}`);
+    console.log(`[data.ts] Đang lấy khung giờ cho scheduleId: ${scheduleId}`);
     const response = await API.get<AvailableTimeSlotResponse[]>(`/appointments/schedule/${scheduleId}/available-slots`);
-    console.log(`[data.ts] Time slots response:`, JSON.stringify(response.data, null, 2));
+    console.log(`[data.ts] Phản hồi khung giờ:`, JSON.stringify(response.data, null, 2));
 
     const timeSlots: TimeSlot[] = response.data.map((slot, index) => ({
       id: `${scheduleId}-${index}`,
       time: `${slot.slotStart.slice(0, 5)} - ${slot.slotEnd.slice(0, 5)}`,
-      available: slot.available,
-      price: "150.000 VND", // TODO: Lấy từ API hoặc cấu hình
+      available: slot.isAvailable,
+      price: "150.000 VND", // TODO: Lấy giá từ API hoặc cấu hình
       isSelected: false,
       isPast: new Date(`2025-06-09T${slot.slotStart}`).getTime() < Date.now(),
-      isBooked: slot.booked,
+      isBooked: !slot.isAvailable,
     }));
 
     return timeSlots;
   } catch (error: any) {
-    console.error(`[data.ts] Error fetching time slots:`, error.message, error.response?.data);
+    console.error(`[data.ts] Lỗi khi lấy khung giờ:`, error.message, error.response?.data);
     throw error;
   }
 };
-
 // Utility functions
 export const getSpecialtyById = (id: string): Specialty | undefined => {
   return specialtiesData.find((specialty) => specialty.id === id);

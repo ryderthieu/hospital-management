@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
-import type { Appointment, AppointmentFilters, AppointmentStats, Patient } from "../types/appointment"
-import { appointmentService, formatAppointmentDate, getAppointmentStatusText } from "../services/appointmentServices"
+import type { Appointment, AppointmentFilters, AppointmentStats} from "../types/appointment"
+import { appointmentService } from "../services/appointmentServices"
 import { message } from "antd"
 import dayjs from "dayjs"
 
