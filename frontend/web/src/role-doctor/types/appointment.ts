@@ -1,13 +1,6 @@
-export interface Schedule {
-  scheduleId: number
-  doctorId: number
-  workDate: string // Format: "YYYY-MM-DD"
-  startTime: string // Format: "HH:mm:ss"
-  endTime: string // Format: "HH:mm:ss"
-  shift: string
-  roomId: number
-  createdAt: string
-}
+import type { AppointmentNote } from "./appointmentNote"
+import type { Schedule } from "./schedule"
+
 
 export interface Appointment {
   appointmentId: number
@@ -17,8 +10,8 @@ export interface Appointment {
   number: number
   appointmentStatus: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED"
   createdAt: string
-  patientInfo: any | null
-  appointmentNotes: string | null
+  patientInfo: PatientInfo
+  appointmentNotes: AppointmentNote | null
   slotEnd: string // Format: "HH:mm:ss"
   slotStart: string // Format: "HH:mm:ss"
 }
@@ -34,8 +27,23 @@ export interface Patient {
   symptom: string
   status: string
   avatar?: string
-  priority?: "high" | "medium" | "low"
   appointmentData?: Appointment
+}
+
+export interface PatientInfo {
+  id: number
+  patientId: number
+  userId: number
+  identityNumber?: string | "Chưa xác định"
+  insuranceNumber?: string | "Chưa xác định"
+  fullName: string
+  birthday: string
+  gender: "MALE" | "FEMALE"
+  address?: string | "Chưa xác định"
+  allergies?: string | "Chưa xác định"
+  height?: number | "Chưa xác định"
+  weight?: number | "Chưa xác định"
+  bloodType?: string | "Chưa xác định"
 }
 
 export interface AppointmentFilters {

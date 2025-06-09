@@ -25,7 +25,7 @@ export const formatTimeSlot = (startTime: string, endTime: string): string => {
   return `${formattedStart} - ${formattedEnd}`
 }
 
-export const getAppointmentStatusText = (status: string): string => {
+export const getAppointmentStatusVietnameseText = (status: string): string => {
   const statusMap = {
     PENDING: "Đang chờ",
     CONFIRMED: "Đã xác nhận",
@@ -77,7 +77,7 @@ export const filterAppointments = (appointments: Appointment[], filters: Appoint
     }
 
     // Filter by date
-    if (filters.date && appointment.schedule.workDate !== filters.date) {
+    if (filters.date && appointment.schedule?.workDate !== filters.date) {
       return false
     }
 
@@ -130,6 +130,7 @@ export const appointmentService = {
 
       const response = await api.get(`/appointments/doctor/${doctorIdNumber}`, { params })
       let appointments = response.data
+      console.log("test data",appointments)
 
       // Apply client-side filters if needed
       if (filters) {
