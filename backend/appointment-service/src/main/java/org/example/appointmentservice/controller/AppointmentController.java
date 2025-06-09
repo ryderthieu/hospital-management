@@ -79,4 +79,5 @@ public class AppointmentController {
     ) {
         return ResponseEntity.ok(appointmentService.getAppointmentsByScheduleId(scheduleId));
     }
+
 }

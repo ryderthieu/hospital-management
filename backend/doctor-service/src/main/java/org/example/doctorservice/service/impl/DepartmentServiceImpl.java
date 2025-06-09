@@ -109,35 +109,35 @@ public class DepartmentServiceImpl implements DepartmentService {
         if (dto.getFoundedYear() == null) {
             dto.setFoundedYear(2020);
         }
-        if (dto.getPhoneNumber() == null || dto.getPhoneNumber().isEmpty()) {
-            dto.setPhoneNumber(generateDepartmentPhone(department.getDepartmentId()));
-        }
-        if (dto.getEmail() == null || dto.getEmail().isEmpty()) {
-            dto.setEmail(generateDepartmentEmail(department.getDepartmentName()));
-        }
+//        if (dto.getPhoneNumber() == null || dto.getPhoneNumber().isEmpty()) {
+//            dto.setPhoneNumber(generateDepartmentPhone(department.getDepartmentId()));
+//        }
+//        if (dto.getEmail() == null || dto.getEmail().isEmpty()) {
+//            dto.setEmail(generateDepartmentEmail(department.getDepartmentName()));
+//        }
         
         // Populate staff count
         int staffCount = doctorRepository.countByDepartment_DepartmentId(department.getDepartmentId());
         dto.setStaffCount(staffCount);
         
         // Populate head doctor information
-        if (department.getHeadDoctorId() != null) {
-            doctorRepository.findById(department.getHeadDoctorId())
-                .ifPresent(headDoctor -> {
-                    String formattedName = formatAcademicDegree(headDoctor.getAcademicDegree()) + " " + headDoctor.getFullName();
-                    dto.setHeadDoctorName(formattedName);
-                    dto.setHeadDoctorImage(headDoctor.getProfileImage());
-                });
-        }
-        
-        // Populate staff images (limit to 4)
-        List<String> staffImages = doctorRepository.findByDepartment_DepartmentId(department.getDepartmentId())
-                .stream()
-                .filter(doctor -> doctor.getProfileImage() != null && !doctor.getProfileImage().isEmpty())
-                .limit(4)
-                .map(doctor -> doctor.getProfileImage())
-                .collect(Collectors.toList());
-        dto.setStaffImages(staffImages);
+//        if (department.getHeadDoctorId() != null) {
+//            doctorRepository.findById(department.getHeadDoctorId())
+//                .ifPresent(headDoctor -> {
+//                    String formattedName = formatAcademicDegree(headDoctor.getAcademicDegree()) + " " + headDoctor.getFullName();
+//                    dto.setHeadDoctorName(formattedName);
+//                    dto.setHeadDoctorImage(headDoctor.getProfileImage());
+//                });
+//        }
+//
+//        // Populate staff images (limit to 4)
+//        List<String> staffImages = doctorRepository.findByDepartment_DepartmentId(department.getDepartmentId())
+//                .stream()
+//                .filter(doctor -> doctor.getProfileImage() != null && !doctor.getProfileImage().isEmpty())
+//                .limit(4)
+//                .map(doctor -> doctor.getProfileImage())
+//                .collect(Collectors.toList());
+//        dto.setStaffImages(staffImages);
         
         return dto;
     }
