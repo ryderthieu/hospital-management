@@ -1,6 +1,7 @@
 package org.example.appointmentservice.service;
 
 import org.example.appointmentservice.dto.AppointmentDtos;
+import org.example.appointmentservice.dto.AppointmentResponseTypes;
 import org.example.appointmentservice.entity.Appointment;
 
 import java.time.LocalDate;
@@ -11,11 +12,15 @@ public interface AppointmentService {
 
     AppointmentDtos.AppointmentResponse getAppointmentById(Integer appointmentId);
 
-    AppointmentDtos.AppointmentResponse createAppointment(AppointmentDtos.AppointmentRequest appointmentRequest);
+    AppointmentDtos.AppointmentResponse createAppointment(AppointmentDtos.AppointmentRequest request);
 
-    AppointmentDtos.AppointmentResponse updateAppointment(Integer appointmentId, AppointmentDtos.AppointmentUpdateRequest appointmentRequest);
+    AppointmentDtos.AppointmentResponse updateAppointment(Integer appointmentId, AppointmentDtos.AppointmentUpdateRequest request);
 
     void deleteAppointment(Integer appointmentId);
+
+    List<AppointmentResponseTypes.DoctorViewResponse> getAppointmentsByDoctorIdOptimized(Integer doctorId);
+
+    List<AppointmentResponseTypes.PatientViewResponse> getAppointmentsByPatientIdOptimized(Integer patientId);
 
     List<AppointmentDtos.AppointmentResponse> getAppointmentsByDoctorId(Integer doctorId);
 

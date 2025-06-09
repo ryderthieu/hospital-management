@@ -3,10 +3,7 @@ package org.example.appointmentservice.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.example.appointmentservice.client.DoctorServiceClient;
 import org.example.appointmentservice.client.PatientServiceClient;
-import org.example.appointmentservice.dto.AppointmentDtos;
-import org.example.appointmentservice.dto.AppointmentNoteDto;
-import org.example.appointmentservice.dto.PatientDto;
-import org.example.appointmentservice.dto.ScheduleDto;
+import org.example.appointmentservice.dto.*;
 import org.example.appointmentservice.entity.Appointment;
 import org.example.appointmentservice.repository.AppointmentRepository;
 import org.example.appointmentservice.service.AppointmentService;
@@ -441,6 +438,184 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         return response;
+    }
+
+    @Override
+    public List<AppointmentResponseTypes.DoctorViewResponse> getAppointmentsByDoctorIdOptimized(Integer doctorId) {
+        log.info("Lấy danh sách cuộc hẹn tối ưu cho bác sĩ ID: {}", doctorId);
+        
+        List<Appointment> appointments = appointmentRepository.findByDoctorId(doctorId);
+        if (appointments.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Thu thập unique patient IDs
+        List<Integer> patientIds = appointments.stream()
+                .map(Appointment::getPatientId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // Tạo cache cho patient info
+        Map<Integer, PatientDto> patientCache = new HashMap<>();
+
+        try {
+            // Batch lấy thông tin bệnh nhân song song
+            List<CompletableFuture<Void>> futures = new ArrayList<>();
+            for (Integer patientId : patientIds) {
+                CompletableFuture<Void> future = CompletableFuture
+                    .supplyAsync(() -> {
+                        try {
+                            return patientServiceClient.getPatientById(patientId);
+                        } catch (Exception e) {
+                            log.error("Lỗi khi lấy thông tin bệnh nhân ID {}: {}", patientId, e.getMessage());
+                            return null;
+                        }
+                    }, executorService)
+                    .thenAccept(patientInfo -> {
+                        if (patientInfo != null) {
+                            synchronized (patientCache) {
+                                patientCache.put(patientId, patientInfo);
+                            }
+                        }
+                    });
+                futures.add(future);
+            }
+
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        } catch (Exception e) {
+            log.error("Lỗi khi lấy thông tin bệnh nhân: {}", e.getMessage());
+        }
+
+        return appointments.stream()
+                .map(appointment -> {
+                    AppointmentResponseTypes.DoctorViewResponse response = new AppointmentResponseTypes.DoctorViewResponse();
+                    response.setAppointmentId(appointment.getAppointmentId());
+                    response.setPatientId(appointment.getPatientId());
+                    response.setSymptoms(appointment.getSymptoms());
+                    response.setNumber(appointment.getNumber());
+                    response.setSlotStart(appointment.getSlotStart());
+                    response.setSlotEnd(appointment.getSlotEnd());
+                    response.setAppointmentStatus(appointment.getAppointmentStatus());
+                    response.setCreatedAt(appointment.getCreatedAt());
+
+                    // Set patient info từ cache
+                    PatientDto patientInfo = patientCache.get(appointment.getPatientId());
+                    if (patientInfo != null) {
+                        response.setPatientInfo(patientInfo);
+                    }
+
+                    return response;
+                })
+                .sorted(Comparator.comparing(AppointmentResponseTypes.DoctorViewResponse::getNumber))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<AppointmentResponseTypes.PatientViewResponse> getAppointmentsByPatientIdOptimized(Integer patientId) {
+        log.info("Lấy danh sách cuộc hẹn tối ưu cho bệnh nhân ID: {}", patientId);
+        
+        List<Appointment> appointments = appointmentRepository.findByPatientId(patientId);
+        if (appointments.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Thu thập unique IDs
+        List<Integer> scheduleIds = appointments.stream()
+                .map(Appointment::getScheduleId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<Integer> doctorIds = appointments.stream()
+                .map(Appointment::getDoctorId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // Tạo cache cho schedule và doctor info
+        Map<Integer, ScheduleDto> scheduleCache = new HashMap<>();
+        Map<Integer, DoctorDto> doctorCache = new HashMap<>();
+
+        try {
+            List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+            // Batch lấy thông tin lịch khám song song
+            for (Integer scheduleId : scheduleIds) {
+                CompletableFuture<Void> future = CompletableFuture
+                    .supplyAsync(() -> {
+                        try {
+                            return doctorServiceClient.getScheduleById(scheduleId);
+                        } catch (Exception e) {
+                            log.error("Lỗi khi lấy thông tin lịch khám ID {}: {}", scheduleId, e.getMessage());
+                            return null;
+                        }
+                    }, executorService)
+                    .thenAccept(scheduleInfo -> {
+                        if (scheduleInfo != null) {
+                            synchronized (scheduleCache) {
+                                scheduleCache.put(scheduleId, scheduleInfo);
+                            }
+                        }
+                    });
+                futures.add(future);
+            }
+
+            // Batch lấy thông tin bác sĩ song song
+            for (Integer doctorId : doctorIds) {
+                CompletableFuture<Void> future = CompletableFuture
+                    .supplyAsync(() -> {
+                        try {
+                            return doctorServiceClient.getDoctorById(doctorId);
+                        } catch (Exception e) {
+                            log.error("Lỗi khi lấy thông tin bác sĩ ID {}: {}", doctorId, e.getMessage());
+                            return null;
+                        }
+                    }, executorService)
+                    .thenAccept(doctorInfo -> {
+                        if (doctorInfo != null) {
+                            synchronized (doctorCache) {
+                                doctorCache.put(doctorId, doctorInfo);
+                            }
+                        }
+                    });
+                futures.add(future);
+            }
+
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        } catch (Exception e) {
+            log.error("Lỗi khi lấy thông tin: {}", e.getMessage());
+        }
+
+        return appointments.stream()
+                .map(appointment -> {
+                    AppointmentResponseTypes.PatientViewResponse response = new AppointmentResponseTypes.PatientViewResponse();
+                    response.setAppointmentId(appointment.getAppointmentId());
+                    response.setDoctorId(appointment.getDoctorId());
+                    response.setSymptoms(appointment.getSymptoms());
+                    response.setNumber(appointment.getNumber());
+                    response.setSlotStart(appointment.getSlotStart());
+                    response.setSlotEnd(appointment.getSlotEnd());
+                    response.setAppointmentStatus(appointment.getAppointmentStatus());
+                    response.setCreatedAt(appointment.getCreatedAt());
+
+                    // Set schedule info từ cache
+                    ScheduleDto scheduleInfo = scheduleCache.get(appointment.getScheduleId());
+                    if (scheduleInfo != null) {
+                        response.setSchedule(scheduleInfo);
+                    }
+
+                    // Set doctor info từ cache
+                    DoctorDto doctorInfo = doctorCache.get(appointment.getDoctorId());
+                    if (doctorInfo != null) {
+                        response.setDoctorInfo(doctorInfo);
+                        log.info("Đã set thông tin bác sĩ: {}", doctorInfo);
+                    } else {
+                        log.warn("Không tìm thấy thông tin bác sĩ ID: {}", appointment.getDoctorId());
+                    }
+
+                    return response;
+                })
+                .sorted(Comparator.comparing(AppointmentResponseTypes.PatientViewResponse::getNumber))
+                .collect(Collectors.toList());
     }
 
     // Thêm phương thức để đóng ExecutorService khi service bị destroy

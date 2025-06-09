@@ -3,7 +3,7 @@ package org.example.appointmentservice.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.appointmentservice.dto.AppointmentDtos;
-import org.example.appointmentservice.dto.ScheduleDto;
+import org.example.appointmentservice.dto.AppointmentResponseTypes;
 import org.example.appointmentservice.service.AppointmentService;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -56,14 +56,15 @@ public class AppointmentController {
 
     //@PreAuthorize("hasAnyRole('RECEPTIONIST', 'DOCTOR', 'ADMIN')")
     @GetMapping("/doctor/{doctorId}")
-    public ResponseEntity<List<AppointmentDtos.AppointmentResponse>> getAppointmentsByDoctorId(
+    public ResponseEntity<List<AppointmentResponseTypes.DoctorViewResponse>> getAppointmentsByDoctorId(
             @PathVariable Integer doctorId) {
-        return ResponseEntity.ok(appointmentService.getAppointmentsByDoctorId(doctorId));
+        return ResponseEntity.ok(appointmentService.getAppointmentsByDoctorIdOptimized(doctorId));
     }
 
     @GetMapping("/patient/{patientId}")
-    public ResponseEntity<List<AppointmentDtos.AppointmentResponse>> getAppointmentsByPatientId(@PathVariable Integer patientId) {
-        return ResponseEntity.ok(appointmentService.getAppointmentsByPatientId(patientId));
+    public ResponseEntity<List<AppointmentResponseTypes.PatientViewResponse>> getAppointmentsByPatientId(
+            @PathVariable Integer patientId) {
+        return ResponseEntity.ok(appointmentService.getAppointmentsByPatientIdOptimized(patientId));
     }
 
     @GetMapping("/schedule/{scheduleId}/available-slots")
