@@ -1,4 +1,9 @@
-import type { Service, ServiceDto, Appointment } from "../types/appointment";
+import type {
+  Service,
+  ServiceDto,
+  Appointment,
+  ServiceOrder,
+} from "../types/appointment";
 import { api } from "../../services/api";
 
 export const appointmentService = {
@@ -41,6 +46,14 @@ export const appointmentService = {
   async deleteService(serviceId: number): Promise<string> {
     const response = await api.delete<string>(
       `/appointments/services/${serviceId}`
+    );
+    return response.data;
+  },
+
+  // Get all orders
+  async getAllOrders(serviceId: number): Promise<ServiceOrder[]> {
+    const response = await api.get<ServiceOrder[]>(
+      `/appointments/services/${serviceId}/service-orders`
     );
     return response.data;
   },

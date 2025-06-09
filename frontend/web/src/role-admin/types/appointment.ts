@@ -63,6 +63,30 @@ export interface ServiceDto {
   price: number;
 }
 
+export interface ServiceOrder {
+  orderId: number;
+  appointmentId: number;
+  roomId: number;
+  service: Service;
+  orderStatus: "ORDERED" | "COMPLETED";
+  result: string;
+  number: number;
+  orderTime: string;
+  resultTime: string;
+  createdAt: string;
+}
+
+export interface ServiceOrderDto {
+  appointmentId: number;
+  roomId: number;
+  serviceId: number;
+  orderStatus: "ORDERED" | "COMPLETED";
+  result: string;
+  number: number;
+  orderTime: string;
+  resultTime: string;
+}
+
 export interface Appointment {
   appointmentId: number;
   doctorId: number;

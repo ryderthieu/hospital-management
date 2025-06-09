@@ -175,7 +175,7 @@ export default function ServiceTable() {
             {paginatedData.map((service) => (
               <TableRow key={service.serviceId}>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {service.serviceId}
+                  DV{service.serviceId.toString().padStart(4, "0")}
                 </TableCell>
                 <TableCell className="py-3">
                   <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">

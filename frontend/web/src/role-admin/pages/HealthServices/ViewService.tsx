@@ -7,18 +7,34 @@ import type { Service } from "../../types/appointment";
 import PageMeta from "../../components/common/PageMeta";
 import { ArrowLeft, Edit, HeartPulse } from "lucide-react";
 import { format } from "date-fns";
+import type { ServiceOrder } from "../../types/appointment";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "../../components/ui/table";
 
 export default function ViewService() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(false);
   const [service, setService] = useState<Service | null>(null);
+  const [orders, setOrders] = useState<ServiceOrder[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
   useEffect(() => {
     if (id) {
       loadService(Number(id));
     }
   }, [id]);
+
+  useEffect(() => {
+    if (service?.serviceId) {
+      fetchOrders(service.serviceId);
+    }
+  }, [service?.serviceId]);
 
   const loadService = async (serviceId: number) => {
     try {
@@ -30,6 +46,18 @@ export default function ViewService() {
       alert("Không thể tải thông tin dịch vụ");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchOrders = async (serviceId: number) => {
+    setLoadingOrders(true);
+    try {
+      const data = await appointmentService.getAllOrders(serviceId);
+      setOrders(data);
+    } catch (error) {
+      console.error("Không thể tải đơn đặt dịch vụ:", error);
+    } finally {
+      setLoadingOrders(false);
     }
   };
 
@@ -182,6 +210,121 @@ export default function ViewService() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Order Tables */}
+        <div className="mt-10">
+          <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white/90">
+            Danh sách đơn đặt dịch vụ
+          </h4>
+          {loadingOrders ? (
+            <div className="text-gray-500">Đang tải...</div>
+          ) : orders.length === 0 ? (
+            <div className="text-gray-500">Chưa có đơn đặt dịch vụ nào.</div>
+          ) : (
+            <Table>
+              {/* Table Header */}
+              <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
+                <TableRow>
+                  <TableCell
+                    isHeader
+                    className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                  >
+                    Mã đơn
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                  >
+                    Mã lịch hẹn
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                  >
+                    Ngày tạo
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                  >
+                    Trạng thái
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                  >
+                    Số thứ tự
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                  >
+                    Thời gian đặt
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                  >
+                    Kết quả
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                  >
+                    Thời gian trả kết quả
+                  </TableCell>
+                </TableRow>
+              </TableHeader>
+
+              {/* Table Body */}
+              <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {orders.map((order) => (
+                  <TableRow key={order.orderId}>
+                    <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                      DH{order.orderId.toString().padStart(4, "0")}
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                        LH{order.appointmentId.toString().padStart(4, "0")}
+                      </p>
+                    </TableCell>
+                    <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                      {order.createdAt &&
+                      !isNaN(new Date(order.createdAt).getTime())
+                        ? format(new Date(order.createdAt), "dd-MM-yyyy")
+                        : ""}
+                    </TableCell>
+                    <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                      {order.orderStatus === "ORDERED"
+                        ? "Đã đặt"
+                        : order.orderStatus === "COMPLETED"
+                        ? "Đã hoàn thành"
+                        : "Chưa xác định"}
+                    </TableCell>
+                    <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                      {order.number}
+                    </TableCell>
+                    <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                      {order.orderTime &&
+                      !isNaN(new Date(order.orderTime).getTime())
+                        ? format(new Date(order.orderTime), "dd-MM-yyyy")
+                        : ""}
+                    </TableCell>
+                    <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                      {order.result}
+                    </TableCell>
+                    <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                      {order.resultTime &&
+                      !isNaN(new Date(order.resultTime).getTime())
+                        ? format(new Date(order.resultTime), "dd-MM-yyyy")
+                        : ""}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </div>
       </div>
     </div>
