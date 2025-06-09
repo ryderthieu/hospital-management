@@ -3,6 +3,7 @@ package org.example.patientservice.service;
 import org.example.patientservice.dto.CreatePatientRequest;
 import org.example.patientservice.dto.PatientDto;
 import org.example.patientservice.entity.Patient;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,4 +24,8 @@ public interface PatientService {
     PatientDto getPatientByUserId(Integer userId);
 
     PatientDto registerPatient(CreatePatientRequest request);
+
+    PatientDto uploadAvatar(Integer id, MultipartFile file);
+
+    PatientDto deleteAvatar(Integer id);
 }

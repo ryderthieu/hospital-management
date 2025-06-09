@@ -13,7 +13,12 @@ import {
   EditMedicine,
   ViewMedicine,
 } from "./pages/Medicines";
-import { Services } from "./pages/HealthServices";
+import {
+  Services,
+  AddService,
+  EditService,
+  ViewService,
+} from "./pages/HealthServices";
 import { Department, DepartmentDetail } from "./pages/Departments";
 import { RoomDetail, Inpatients, InpatientRoom } from "./pages/Inpatient";
 import {
@@ -55,6 +60,9 @@ const AdminApp: React.FC = () => {
 
           {/* Services Page */}
           <Route path="health-services" element={<Services />} />
+          <Route path="health-services/add" element={<AddService />} />
+          <Route path="health-services/edit/:id" element={<EditService />} />
+          <Route path="health-services/:id" element={<ViewService />} />
 
           {/* Inpatients Page */}
           <Route path="inpatients-rooms" element={<InpatientRoom />} />

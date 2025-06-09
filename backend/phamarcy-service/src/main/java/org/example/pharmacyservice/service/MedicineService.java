@@ -1,5 +1,6 @@
 package org.example.pharmacyservice.service;
 
+import lombok.RequiredArgsConstructor;
 import org.example.pharmacyservice.dto.MedicineDTOs;
 import org.example.pharmacyservice.entity.Medicine;
 import org.example.pharmacyservice.repository.MedicineRepository;
@@ -10,22 +11,18 @@ import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class MedicineService {
     private final MedicineRepository medicineRepository;
     private final PrescriptionDetailRepository prescriptionDetailRepository;
-
-    @Autowired
-    public MedicineService(MedicineRepository medicineRepository,
-                           PrescriptionDetailRepository prescriptionDetailRepository) {
-        this.medicineRepository = medicineRepository;
-        this.prescriptionDetailRepository = prescriptionDetailRepository;
-    }
+    private final FileStorageService fileStorageService;
 
     public MedicineDTOs.MedicineResponse mapToMedicineResponse(Medicine medicine) {
         return new MedicineDTOs.MedicineResponse(
@@ -40,7 +37,8 @@ public class MedicineService {
                 medicine.getInsuranceDiscount(),
                 medicine.getSideEffects(),
                 medicine.getPrice(),
-                medicine.getQuantity()
+                medicine.getQuantity(),
+                medicine.getAvatar()
         );
     }
 
@@ -167,5 +165,37 @@ public class MedicineService {
         }
 
         medicineRepository.delete(medicine);
+    }
+
+    @Transactional
+    public MedicineDTOs.MedicineResponse uploadAvatar(Long id, MultipartFile file) {
+        Medicine medicine = medicineRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thuốc với id: " + id));
+
+        // Xóa avatar cũ nếu có
+        if (medicine.getAvatar() != null) {
+            fileStorageService.deleteFile(medicine.getAvatar());
+        }
+
+        // Lưu file mới và cập nhật đường dẫn
+        String fileName = fileStorageService.storeFile(file);
+        medicine.setAvatar(fileName);
+
+        Medicine updatedMedicine = medicineRepository.save(medicine);
+        return mapToMedicineResponse(updatedMedicine);
+    }
+
+    @Transactional
+    public MedicineDTOs.MedicineResponse deleteAvatar(Long id) {
+        Medicine medicine = medicineRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thuốc với id: " + id));
+
+        if (medicine.getAvatar() != null) {
+            fileStorageService.deleteFile(medicine.getAvatar());
+            medicine.setAvatar(null);
+        }
+
+        Medicine updatedMedicine = medicineRepository.save(medicine);
+        return mapToMedicineResponse(updatedMedicine);
     }
 }

@@ -8,9 +8,11 @@ import org.example.patientservice.dto.PatientDto;
 import org.example.patientservice.dto.UserDto;
 import org.example.patientservice.entity.Patient;
 import org.example.patientservice.repository.PatientRepository;
+import org.example.patientservice.service.FileStorageService;
 import org.example.patientservice.service.PatientService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,7 @@ public class PatientServiceImpl implements PatientService {
 
     private final PatientRepository patientRepository;
     private final UserServiceClient userServiceClient;
+    private final FileStorageService fileStorageService;
 
     @Override
     public PatientDto createPatient(PatientDto patientDto) {
@@ -193,5 +196,42 @@ public class PatientServiceImpl implements PatientService {
         if (!errors.isEmpty()) {
             throw new RuntimeException("Lỗi validation: " + String.join(", ", errors));
         }
+    }
+
+    @Override
+    @Transactional
+    public PatientDto uploadAvatar(Integer id, MultipartFile file) {
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bệnh nhân với id: " + id));
+
+        // Xóa avatar cũ nếu có và không phải avatar mặc định
+        if (patient.getAvatar() != null && !patient.getAvatar().equals("https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg")) {
+            fileStorageService.deleteFile(patient.getAvatar());
+        }
+
+        // Lưu file mới và cập nhật đường dẫn
+        String fileUrl = fileStorageService.storeFile(file);
+        patient.setAvatar(fileUrl);
+
+        Patient updatedPatient = patientRepository.save(patient);
+        return new PatientDto(updatedPatient);
+    }
+
+    @Override
+    @Transactional
+    public PatientDto deleteAvatar(Integer id) {
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bệnh nhân với id: " + id));
+
+        // Xóa avatar hiện tại nếu không phải avatar mặc định
+        if (patient.getAvatar() != null && !patient.getAvatar().equals("https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg")) {
+            fileStorageService.deleteFile(patient.getAvatar());
+        }
+
+        // Set về avatar mặc định
+        patient.setAvatar("https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg");
+
+        Patient updatedPatient = patientRepository.save(patient);
+        return new PatientDto(updatedPatient);
     }
 }
