@@ -1,6 +1,7 @@
 package org.example.doctorservice.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.example.doctorservice.client.AppointmentServiceClient;
 import org.example.doctorservice.dto.ScheduleDto;
 import org.example.doctorservice.dto.TimeSlotDto;
 import org.example.doctorservice.entity.Department;
@@ -26,6 +27,14 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final DoctorRepository doctorRepository;
     private final ExaminationRoomRepository examinationRoomRepository;
+    private final AppointmentServiceClient appointmentServiceClient;
+
+    private ScheduleDto enrichScheduleWithTimeSlots(Schedule schedule) {
+        ScheduleDto scheduleDto = new ScheduleDto(schedule);
+        List<TimeSlotDto> availableTimeSlots = appointmentServiceClient.getTimeSlotsByScheduleId(schedule.getScheduleId(), schedule);
+        scheduleDto.setAvailableTimeSlots(availableTimeSlots);
+        return scheduleDto;
+    }
 
     @Override
     public List<ScheduleDto> getAllSchedules(Integer doctorId, Schedule.Shift shift, LocalDate workDate) {
@@ -34,7 +43,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         return schedules.stream()
                 .filter(schedule -> shift == null || schedule.getShift() == shift)
                 .filter(schedule -> workDate == null || schedule.getWorkDate().equals(workDate))
-                .map(ScheduleDto::new)
+                .map(this::enrichScheduleWithTimeSlots)
                 .collect(Collectors.toList());
     }
 
@@ -42,7 +51,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     public ScheduleDto getScheduleById(Integer scheduleId) {
         Schedule schedule = scheduleRepository.findByScheduleId(scheduleId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch với ID: " + scheduleId));
-        return new ScheduleDto(schedule);
+        return enrichScheduleWithTimeSlots(schedule);
     }
 
     @Override
@@ -61,7 +70,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .build();
 
         Schedule savedSchedule = scheduleRepository.save(schedule);
-        return new ScheduleDto(savedSchedule);
+        return enrichScheduleWithTimeSlots(savedSchedule);
     }
 
     @Override
@@ -87,7 +96,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         schedule.setShift(scheduleDto.getShift());
 
         Schedule updatedSchedule = scheduleRepository.save(schedule);
-        return new ScheduleDto(updatedSchedule);
+        return enrichScheduleWithTimeSlots(updatedSchedule);
     }
 
     @Override
@@ -102,28 +111,14 @@ public class ScheduleServiceImpl implements ScheduleService {
     public List<ScheduleDto> getAllSchedulesForAdmin() {
         return scheduleRepository.findAll()
                 .stream()
-                .map(ScheduleDto::new)
+                .map(this::enrichScheduleWithTimeSlots)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<TimeSlotDto> getAllTimeSlots(Integer scheduleId) {
         Schedule schedule = scheduleRepository.findByScheduleId(scheduleId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch"));
-
-        LocalTime startTime = schedule.getStartTime();
-        LocalTime endTime = schedule.getEndTime();
-        int slotMinutes = 60; // mỗi khung giờ dài 30 phút
-
-        List<TimeSlotDto> timeSlots = new ArrayList<>();
-        LocalTime currentStart = startTime;
-
-        while (currentStart.plusMinutes(slotMinutes).compareTo(endTime) <= 0) {
-            LocalTime currentEnd = currentStart.plusMinutes(slotMinutes);
-            timeSlots.add(new TimeSlotDto(currentStart, currentEnd));
-            currentStart = currentEnd;
-        }
-
-        return timeSlots;
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch với ID: " + scheduleId));
+        return appointmentServiceClient.getTimeSlotsByScheduleId(scheduleId, schedule);
     }
 }

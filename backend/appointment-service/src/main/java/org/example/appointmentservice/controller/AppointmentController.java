@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.appointmentservice.dto.AppointmentDtos;
 import org.example.appointmentservice.dto.AppointmentResponseTypes;
+import org.example.appointmentservice.dto.ScheduleTimeDto;
 import org.example.appointmentservice.service.AppointmentService;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -67,11 +68,12 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getAppointmentsByPatientIdOptimized(patientId));
     }
 
-    @GetMapping("/schedule/{scheduleId}/available-slots")
+    @PostMapping("/schedule/{scheduleId}/available-slots")
     public ResponseEntity<List<AppointmentDtos.AvailableTimeSlotResponse>> getAvailableTimeSlots(
-            @PathVariable Integer scheduleId
+            @PathVariable Integer scheduleId,
+            @RequestBody ScheduleTimeDto scheduleTime
     ) {
-        return ResponseEntity.ok(appointmentService.getAvailableTimeSlots(scheduleId));
+        return ResponseEntity.ok(appointmentService.getAvailableTimeSlots(scheduleId, scheduleTime));
     }
 
     @GetMapping("/schedule/{scheduleId}")

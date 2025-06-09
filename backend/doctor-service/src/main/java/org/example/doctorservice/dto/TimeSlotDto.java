@@ -15,7 +15,7 @@ public class TimeSlotDto {
 
   private LocalTime slotStart;
   private LocalTime slotEnd;
-
+  private Boolean available;
 }
 
 

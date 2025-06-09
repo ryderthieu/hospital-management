@@ -2,6 +2,7 @@ package org.example.appointmentservice.service;
 
 import org.example.appointmentservice.dto.AppointmentDtos;
 import org.example.appointmentservice.dto.AppointmentResponseTypes;
+import org.example.appointmentservice.dto.ScheduleTimeDto;
 import org.example.appointmentservice.entity.Appointment;
 
 import java.time.LocalDate;
@@ -28,7 +29,7 @@ public interface AppointmentService {
 
     List<AppointmentDtos.AppointmentResponse> getTodayAppointmentsByDoctorId(Integer doctorId);
 
-    List<AppointmentDtos.AvailableTimeSlotResponse> getAvailableTimeSlots(Integer scheduleId);
+    List<AppointmentDtos.AvailableTimeSlotResponse> getAvailableTimeSlots(Integer scheduleId, ScheduleTimeDto scheduleTime);
 
     List<AppointmentDtos.AppointmentResponse> getAppointmentsByScheduleId(Integer scheduleId);
 

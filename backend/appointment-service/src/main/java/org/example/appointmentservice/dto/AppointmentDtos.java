@@ -98,7 +98,5 @@ public class AppointmentDtos {
         private LocalTime slotStart;
         private LocalTime slotEnd;
         private boolean isAvailable;
-        private int currentAppointments;
-        private int maxAppointments = 10;
     }
 }

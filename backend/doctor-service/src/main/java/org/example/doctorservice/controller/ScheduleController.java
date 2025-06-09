@@ -3,7 +3,6 @@ package org.example.doctorservice.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.doctorservice.dto.ScheduleDto;
-import org.example.doctorservice.dto.TimeSlotDto;
 import org.example.doctorservice.entity.Schedule;
 import org.example.doctorservice.service.ScheduleService;
 import org.springframework.http.ResponseEntity;
@@ -63,10 +62,5 @@ public class ScheduleController {
     @GetMapping("/schedules/admin")
     public ResponseEntity<List<ScheduleDto>> getAllSchedulesForAdmin() {
         return ResponseEntity.ok(scheduleService.getAllSchedulesForAdmin());
-    }
-
-    @GetMapping("/schedules/{scheduleId}/time-slots")
-    public ResponseEntity<List<TimeSlotDto>> getAllTimeSlots(@PathVariable Integer scheduleId) {
-        return ResponseEntity.ok(scheduleService.getAllTimeSlots(scheduleId));
     }
 }

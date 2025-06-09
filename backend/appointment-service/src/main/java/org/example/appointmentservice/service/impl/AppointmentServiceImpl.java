@@ -228,18 +228,12 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public List<AppointmentDtos.AvailableTimeSlotResponse> getAvailableTimeSlots(Integer scheduleId) {
-        // Lấy thông tin lịch khám
-        ScheduleDto schedule = doctorServiceClient.getScheduleById(scheduleId);
-        if (schedule == null) {
-            throw new RuntimeException("Không tìm thấy thông tin lịch khám với ID: " + scheduleId);
-        }
-
+    public List<AppointmentDtos.AvailableTimeSlotResponse> getAvailableTimeSlots(Integer scheduleId, ScheduleTimeDto scheduleTime) {
         List<AppointmentDtos.AvailableTimeSlotResponse> availableSlots = new ArrayList<>();
-        LocalTime currentTime = schedule.getStartTime();
+        LocalTime currentTime = scheduleTime.getStartTime();
 
         // Tạo các khung giờ 1 tiếng cho đến hết ca trực
-        while (!currentTime.plusHours(1).isAfter(schedule.getEndTime())) {
+        while (!currentTime.plusHours(1).isAfter(scheduleTime.getEndTime())) {
             LocalTime slotStart = currentTime;
             LocalTime slotEnd = currentTime.plusHours(1);
 
@@ -253,7 +247,6 @@ public class AppointmentServiceImpl implements AppointmentService {
             AppointmentDtos.AvailableTimeSlotResponse slot = AppointmentDtos.AvailableTimeSlotResponse.builder()
                     .slotStart(slotStart)
                     .slotEnd(slotEnd)
-                    .currentAppointments(existingAppointments)
                     .isAvailable(existingAppointments < 10)
                     .build();
 
