@@ -82,6 +82,7 @@ public class PrescriptionService {
                 detail.getFrequency(),
                 detail.getDuration(),
                 detail.getPrescriptionNotes(),
+                detail.getQuantity(),
                 detail.getCreatedAt()
         );
     }
@@ -116,6 +117,7 @@ public class PrescriptionService {
                 detail.setFrequency(detailRequest.getFrequency());
                 detail.setDuration(detailRequest.getDuration());
                 detail.setPrescriptionNotes(detailRequest.getPrescriptionNotes());
+                detail.setQuantity(detailRequest.getQuantity());
                 details.add(detail);
             }
             prescription.setPrescriptionDetails(details);
@@ -204,6 +206,7 @@ public class PrescriptionService {
         detail.setFrequency(request.getFrequency());
         detail.setDuration(request.getDuration());
         detail.setPrescriptionNotes(request.getPrescriptionNotes());
+        detail.setQuantity(request.getQuantity());
 
         PrescriptionDetail savedDetail = prescriptionDetailRepository.save(detail);
         return mapToPrescriptionDetailResponse(savedDetail);
@@ -240,6 +243,10 @@ public class PrescriptionService {
 
         if (request.getPrescriptionNotes() != null && !request.getPrescriptionNotes().equals(detail.getPrescriptionNotes())) {
             detail.setPrescriptionNotes(request.getPrescriptionNotes());
+        }
+
+        if (request.getQuantity() != null && !request.getQuantity().equals(detail.getQuantity())) {
+            detail.setQuantity(request.getQuantity());
         }
 
         PrescriptionDetail updatedDetail = prescriptionDetailRepository.save(detail);

@@ -90,6 +90,9 @@ public class PrescriptionDTOs {
         @NotBlank(message = "Thời gian điều trị không được để trống")
         private String duration;
 
+        @NotNull(message = "Số lượng không được để trống")
+        private Integer quantity;
+
         private String prescriptionNotes;
     }
 
@@ -112,6 +115,9 @@ public class PrescriptionDTOs {
         @NotBlank(message = "Thời gian điều trị không được để trống")
         private String duration;
 
+        @NotNull(message = "Số lượng không được để trống")
+        private Integer quantity;
+
         private String prescriptionNotes;
     }
 
@@ -126,6 +132,8 @@ public class PrescriptionDTOs {
         private String frequency;
 
         private String duration;
+
+        private Integer quantity;
 
         private String prescriptionNotes;
     }
@@ -160,6 +168,7 @@ public class PrescriptionDTOs {
         private String frequency;
         private String duration;
         private String prescriptionNotes;
+        private Integer quantity;
         private LocalDateTime createdAt;
     }
 

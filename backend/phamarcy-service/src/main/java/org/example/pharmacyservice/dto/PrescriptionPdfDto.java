@@ -56,5 +56,6 @@ public class PrescriptionPdfDto {
         private String frequency;
         private String duration;
         private String prescriptionNotes;
+        private Integer quantity;
     }
 } 
