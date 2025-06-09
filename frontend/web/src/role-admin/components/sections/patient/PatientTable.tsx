@@ -13,6 +13,7 @@ import {
 import { DeleteConfirmationModal } from "../../ui/modal/DeleteConfirmationModal";
 import { patientService } from "../../../services/patientService";
 import { Patient } from "../../../types/patient";
+import { format } from "date-fns";
 
 export default function PatientTable() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -216,7 +217,7 @@ export default function PatientTable() {
                   {patient.bloodType}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {patient.birthday}
+                  {format(new Date(patient.birthday), "dd-MM-yyyy")}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-gray-500 text-theme-md dark:text-gray-400">
                   <div className="flex gap-2">

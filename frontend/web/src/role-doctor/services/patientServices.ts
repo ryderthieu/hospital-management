@@ -1,5 +1,4 @@
 import type { PatientDetail } from "../types/patient"
-import type { Prescription } from "../types/prescription"
 import { api } from "../../services/api"
 
 export const patientService = {
@@ -10,13 +9,4 @@ export const patientService = {
   },
 
 
-  // Thêm AppointmnetNote (lời dặn bác sĩ)
-
-  // Thêm sinh hiệu
-
-  // Thêm chỉ định xét nghiệm
-
-  // Lấy lịch sử khám (appointmnet trước)
-
-  // Lấy lịch sử xét nghiệm (appointmnet trước)
 }

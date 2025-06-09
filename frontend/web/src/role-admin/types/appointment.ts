@@ -72,8 +72,14 @@ export interface Appointment {
   slotStart: string;
   slotEnd: string;
   number: number;
-  status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+  appointmentStatus: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
   createdAt: string;
+  doctorInfo: {
+    doctorId: number;
+    fullName: string;
+    academicDegree: string;
+    specialization: string;
+  };
 }
 
 export interface AppointmentDto {
@@ -84,7 +90,7 @@ export interface AppointmentDto {
   slotStart: string;
   slotEnd: string;
   number: number;
-  status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+  appointmentStatus: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
 }
 
 export interface AppointmentNote {

@@ -52,4 +52,41 @@ export const appointmentService = {
     );
     return response.data;
   },
+
+  // Get appointment by ID
+  async getAppointmentById(appointmentId: number): Promise<Appointment> {
+    const response = await api.get<Appointment>(
+      `/appointments/${appointmentId}`
+    );
+    return response.data;
+  },
+
+  // Create appointment
+  async createAppointment(
+    appointmentData: Omit<Appointment, "appointmentId" | "createdAt">
+  ): Promise<Appointment> {
+    const response = await api.post<Appointment>(
+      "/appointments",
+      appointmentData
+    );
+    return response.data;
+  },
+
+  // Update appointment
+  async updateAppointment(
+    appointmentId: number,
+    appointmentData: Partial<Omit<Appointment, "appointmentId" | "createdAt">>
+  ): Promise<Appointment> {
+    const response = await api.put<Appointment>(
+      `/appointments/${appointmentId}`,
+      appointmentData
+    );
+    return response.data;
+  },
+
+  // Delete appointment
+  async deleteAppointment(appointmentId: number): Promise<string> {
+    const response = await api.delete<string>(`/appointments/${appointmentId}`);
+    return response.data;
+  },
 };

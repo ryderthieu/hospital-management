@@ -24,7 +24,7 @@ type BookAppointmentScreenProps = {
   route: RouteProp<BookAppointmentStackParamList, "BookAppointment">
 }
 
-type DayPart = "morning" | "afternoon" // Cập nhật DayPart
+type DayPart = "morning" | "afternoon"
 
 interface TimeSlotData {
   id: string
@@ -68,7 +68,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
 
   const [selectedDate, setSelectedDate] = useState<string>("")
   const [selectedTime, setSelectedTime] = useState<string>("")
-  const [selectedDayPart, setSelectedDayPart] = useState<DayPart>("morning") // Thay đổi mặc định thành morning
+  const [selectedDayPart, setSelectedDayPart] = useState<DayPart>("morning")
   const [hasInsurance, setHasInsurance] = useState<boolean>(true)
   const [favorites, setFavorites] = useState<string[]>([])
   const [similarDoctors, setSimilarDoctors] = useState<Doctor[]>([])

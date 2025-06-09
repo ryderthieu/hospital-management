@@ -16,12 +16,12 @@ export const formatAppointmentDate = (dateString: string): string => {
 
 export const formatAppointmentTime = (timeString: string): string => {
   // Convert "HH:mm:ss" to "HH:mm"
-  return timeString.substring(0, 5)
+  return timeString?.substring(0, 5)
 }
 
-export const formatTimeSlot = (startTime: string, endTime: string): string => {
-  const formattedStart = formatAppointmentTime(startTime)
-  const formattedEnd = formatAppointmentTime(endTime)
+export const formatTimeSlot = (slotStart: string, slotEnd: string): string => {
+  const formattedStart = formatAppointmentTime(slotStart)
+  const formattedEnd = formatAppointmentTime(slotEnd)
   return `${formattedStart} - ${formattedEnd}`
 }
 
@@ -100,14 +100,10 @@ export const filterAppointments = (appointments: Appointment[], filters: Appoint
 
 export const sortAppointmentsByTime = (appointments: Appointment[]): Appointment[] => {
   return [...appointments].sort((a, b) => {
-    // First sort by date
-    const dateCompare = a.schedule.workDate.localeCompare(b.schedule.workDate)
-    if (dateCompare !== 0) return dateCompare
-
-    // Then sort by slot start time
-    return a.slotStart.localeCompare(b.slotStart)
+    return a.schedule?.workDate?.localeCompare(b.schedule?.workDate || '') || 0
   })
 }
+
 
 export const appointmentService = {
   // Get appointments by doctorId
@@ -130,7 +126,6 @@ export const appointmentService = {
 
       const response = await api.get(`/appointments/doctor/${doctorIdNumber}`, { params })
       let appointments = response.data
-      console.log("test data",appointments)
 
       // Apply client-side filters if needed
       if (filters) {
