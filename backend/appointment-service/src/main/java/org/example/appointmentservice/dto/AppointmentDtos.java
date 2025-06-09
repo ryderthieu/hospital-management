@@ -61,6 +61,8 @@ public class AppointmentDtos {
 
         private PatientDto patientInfo;
 
+        private DoctorDto doctorInfo;
+
         private List<AppointmentNoteDto> appointmentNotes;
 
     }
@@ -82,9 +84,9 @@ public class AppointmentDtos {
 
         private Appointment.AppointmentStatus appointmentStatus;
 
-        private LocalDate slotStart;
+        private LocalTime slotStart;
 
-        private LocalDate slotEnd;
+        private LocalTime slotEnd;
 
     }
 

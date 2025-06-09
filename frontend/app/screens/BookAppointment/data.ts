@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Specialty, Doctor, DateOption, TimeSlot, SortOption } from "./types"
 import type { SvgProps } from "react-native-svg"
+import API from "../../services/api"
 
 // Import SVG icons
 import TimMach from "../../assets/images/ChuyenKhoa/TimMach.svg"
@@ -228,6 +229,27 @@ export const doctors: Doctor[] = [
   },
 ]
 
+// Interface cho ScheduleDto từ backend
+interface ScheduleDto {
+  scheduleId: number
+  doctorId: number
+  workDate: string // e.g., "2025-06-09"
+  startTime: string // e.g., "08:00:00"
+  endTime: string // e.g., "17:00:00"
+  shift: string
+  roomId: number
+  roomNote?: string
+  floor?: number
+  building?: string
+  createdAt: string
+}
+
+// Interface cho TimeSlotDto từ backend
+interface TimeSlotDto {
+  slotStart: string // e.g., "08:00:00"
+  slotEnd: string // e.g., "08:30:00"
+}
+
 // Basic utility functions
 export const getSpecialtyById = (id: string): Specialty | undefined => {
   return specialtiesData.find((specialty) => specialty.id === id)
@@ -253,86 +275,135 @@ export const getSimilarDoctors = (currentDoctorId: string, specialty: string, li
     .slice(0, limit)
 }
 
-// Enhanced: Generate real-time dates với better logic
-export const generateRealTimeDates = (daysCount = 7): DateOption[] => {
-  const dates: DateOption[] = []
-  const today = new Date()
+// Hàm lấy danh sách ngày khả dụng từ API
+export const fetchRealTimeDates = async (doctorId: string, daysCount = 7): Promise<DateOption[]> => {
+  try {
+    console.log(`[fetchRealTimeDates] Fetching schedules for doctorId: ${doctorId}`);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const maxDate = new Date(today);
+    maxDate.setDate(today.getDate() + daysCount);
 
-  for (let i = 0; i < daysCount; i++) {
-    const date = new Date(today)
-    date.setDate(today.getDate() + i)
+    // Gọi API cho từng ngày trong khoảng daysCount
+    const schedules: ScheduleDto[] = [];
+    for (let i = 0; i < daysCount; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      const workDate = date.toISOString().split("T")[0]; // e.g., "2025-06-09"
+      for (const shift of ["MORNING", "AFTERNOON"]) {
+        try {
+          const response = await API.get<ScheduleDto[]>(`/doctors/${doctorId}/schedules?shift=${shift}&workDate=${workDate}`);
+          if (response.data && response.data.length > 0) {
+            schedules.push(...response.data.filter((schedule) => schedule.workDate === workDate && schedule.shift === shift));
+          }
+        } catch (error: any) {
+          console.warn(`[fetchRealTimeDates] No schedules for doctorId: ${doctorId}, shift: ${shift}, workDate: ${workDate}`, error.message);
+        }
+      }
+    }
+    console.log(`[fetchRealTimeDates] Raw schedules response:`, JSON.stringify(schedules, null, 2));
 
-    const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"]
-    const isToday = i === 0
-    const isTomorrow = i === 1
-    const isWeekend = date.getDay() === 0 || date.getDay() === 6
-
-    let day: string
-    if (isToday) {
-      day = "Hôm nay"
-    } else if (isTomorrow) {
-      day = "Ngày mai"
-    } else {
-      day = dayNames[date.getDay()]
+    if (!schedules || schedules.length === 0) {
+      console.warn(`[fetchRealTimeDates] No schedules found for doctorId: ${doctorId}`);
+      return [];
     }
 
-    const dateStr = `${date.getDate()}/${date.getMonth() + 1}`
+    const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
-    // Auto-disable logic
-    const isPast = date < today && !isToday
-    const currentHour = new Date().getHours()
-    const isTooLateToday = isToday && currentHour >= 16 // After 4 PM
+    const dates: DateOption[] = schedules
+      .filter((schedule) => {
+        if (!schedule.workDate) {
+          console.warn(`[fetchRealTimeDates] Missing workDate in schedule:`, schedule);
+          return false;
+        }
+        const scheduleDate = new Date(schedule.workDate);
+        if (isNaN(scheduleDate.getTime())) {
+          console.warn(`[fetchRealTimeDates] Invalid workDate format: ${schedule.workDate}`);
+          return false;
+        }
+        const isValid = scheduleDate >= today && scheduleDate <= maxDate;
+        console.log(`[fetchRealTimeDates] Schedule ${schedule.scheduleId}: workDate=${schedule.workDate}, isValid=${isValid}`);
+        return isValid;
+      })
+      .map((schedule) => {
+        const date = new Date(schedule.workDate);
+        const isToday = date.toDateString() === today.toDateString();
+        const isTomorrow = date.toDateString() === new Date(today.getTime() + 24 * 60 * 60 * 1000).toDateString();
+        const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+        const isPast = date < today;
+        const isTooLateToday = isToday && new Date().getHours() >= 16;
 
-    dates.push({
-      id: date.toISOString().split("T")[0], // YYYY-MM-DD format
-      day,
-      date: dateStr,
-      disabled: isPast || isTooLateToday,
-      isToday,
-      isTomorrow,
-      isWeekend,
-      availableSlots: Math.floor(Math.random() * 8) + 1, // Mock available slots
-    })
+        return {
+          id: schedule.workDate,
+          day: isToday ? "Hôm nay" : isTomorrow ? "Ngày mai" : dayNames[date.getDay()],
+          date: `${date.getDate()}/${date.getMonth() + 1}`,
+          disabled: isPast || isTooLateToday,
+          isToday,
+          isTomorrow,
+          isWeekend,
+          availableSlots: 0,
+          scheduleId: schedule.scheduleId,
+          shift: schedule.shift,
+        };
+      });
+
+    // Loại bỏ các ngày trùng lặp
+    const uniqueDates = Array.from(new Map(dates.map((date) => [date.id, date])).values());
+
+    // Lấy số lượng khung giờ khả dụng
+    for (const date of uniqueDates) {
+      if (!date.disabled && date.scheduleId) {
+        try {
+          const slots = await fetchTimeSlots(date.scheduleId);
+          date.availableSlots = slots.filter((slot) => slot.available && !slot.isBooked).length;
+          console.log(`[fetchRealTimeDates] Available slots for ${date.id}: ${date.availableSlots}`);
+        } catch (error) {
+          console.error(`[fetchRealTimeDates] Error fetching slots for scheduleId ${date.scheduleId}:`, error);
+          date.availableSlots = 0;
+        }
+      }
+    }
+
+    console.log(`[fetchRealTimeDates] Generated dates:`, JSON.stringify(uniqueDates, null, 2));
+    return uniqueDates;
+  } catch (error: any) {
+    console.error("[fetchRealTimeDates] Error fetching schedules:", error.message, error.response?.data);
+    return [];
   }
+};
 
-  return dates
-}
+// Hàm lấy danh sách khung giờ khả dụng từ API
+export const fetchTimeSlots = async (scheduleId: number): Promise<TimeSlot[]> => {
+  try {
+    console.log(`[fetchTimeSlots] Fetching time slots for scheduleId: ${scheduleId}`);
+    const response = await API.get<TimeSlotDto[]>(`/doctors/schedules/${scheduleId}/time-slots`);
+    const slots = response.data;
+    console.log(`[fetchTimeSlots] Raw slots response:`, JSON.stringify(slots, null, 2));
 
-// Enhanced time slots generation
-export const generateTimeSlots = (date: string): TimeSlot[] => {
-  const morningSlots = ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30"]
-
-  const afternoonSlots = ["13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"]
-
-  const allSlots = [...morningSlots, ...afternoonSlots]
-
-  const selectedDate = new Date(date)
-  const today = new Date()
-  const isToday = selectedDate.toDateString() === today.toDateString()
-  const currentHour = today.getHours()
-  const currentMinute = today.getMinutes()
-
-  return allSlots.map((time, index) => {
-    const [hour, minute] = time.split(":").map(Number)
-    const slotTime = new Date(selectedDate)
-    slotTime.setHours(hour, minute, 0, 0)
-
-    // Check if slot is in the past
-    const isPast = isToday && slotTime <= today
-
-    // Random availability (80% chance)
-    const isRandomlyAvailable = Math.random() > 0.2
-
-    return {
-      id: `${date}-${time}`,
-      time: time,
-      available: !isPast && isRandomlyAvailable,
-      price: "150.000 VND",
-      isSelected: false,
-      isPast,
+    if (!slots || slots.length === 0) {
+      console.warn(`[fetchTimeSlots] No slots found for scheduleId: ${scheduleId}`);
+      return [];
     }
-  })
-}
+
+    const today = new Date();
+    return slots.map((slot) => {
+      const slotTime = new Date(`${today.toISOString().split("T")[0]}T${slot.slotStart}`);
+      const isPast = slotTime <= today;
+      return {
+        id: `${scheduleId}-${slot.slotStart}`,
+        time: `${slot.slotStart.slice(0, 5)} - ${slot.slotEnd.slice(0, 5)}`,
+        available: !isPast,
+        price: "150.000 VND", // Giá mặc định
+        isSelected: false,
+        isPast,
+        isBooked: false, // Giả định không có thông tin từ TimeSlotDto
+      };
+    });
+  } catch (error: any) {
+    console.error("[fetchTimeSlots] Error fetching time slots:", error.message, error.response?.data);
+    return [];
+  }
+};
 
 // Enhanced: Sort doctors function
 export const sortDoctors = (doctorList: Doctor[], sortOption: SortOption): Doctor[] => {

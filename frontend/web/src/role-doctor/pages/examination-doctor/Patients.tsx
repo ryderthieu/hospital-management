@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState } from "react"
 import { Table, Input, DatePicker, Button, Avatar, Space, Card, Select, Tag, Tooltip, Empty, Spin, Modal } from "antd"
@@ -16,14 +14,15 @@ import {
   ClearOutlined,
 } from "@ant-design/icons"
 import { useNavigate } from "react-router-dom"
-import { useAppointmentPatients } from "../../hooks/useAppointment"
+import { useAppointments } from "../../hooks/useAppointment"
 import {
   formatTimeSlot,
   getAppointmentStatusColor,
   formatAppointmentDate,
-  getAppointmentStatusText,
+  getAppointmentStatusVietnameseText,
 } from "../../services/appointmentServices"
 import type { Patient } from "../../types/patient"
+import type { Appointment } from "../../types/appointment"
 import dayjs, { type Dayjs } from "dayjs"
 
 const { Search } = Input
@@ -39,7 +38,7 @@ const Patients: React.FC = () => {
   const navigate = useNavigate()
 
   const {
-    patients,
+    appointments,
     loading,
     error,
     stats,
@@ -49,23 +48,22 @@ const Patients: React.FC = () => {
     setTodayFilter,
     updateAppointmentStatus,
     refreshAppointments,
-  } = useAppointmentPatients()
+  } = useAppointments()
 
   const handleViewPatient = (id: number) => {
-    const patient = patients.find((p) => p.id === id)
-    if (patient?.appointmentData) {
+    const appointment = appointments.find((a: Appointment) => a.appointmentId === id)
+    if (appointment) {
       // Navigate to PatientDetail with appointment data
       navigate("/doctor/examination/patient/detail", {
         state: {
-          appointmentId: patient.appointmentData.appointmentId,
-          patientData: patient,
-          appointmentData: patient.appointmentData,
+          appointmentNumber: appointment.number,
+          appointmentId: appointment.appointmentId,
+          appointmentFullData: appointment
         },
       })
-    } else {
-      navigate("/doctor/examination/patient/detail", { state: { patientId: id } })
     }
   }
+    
 
   const handleRefresh = () => {
     refreshAppointments()
@@ -95,7 +93,7 @@ const Patients: React.FC = () => {
     updateFilters({ searchTerm: value || undefined })
   }
 
-  const getStatusBadge = (status: string, appointmentStatus?: string) => {
+  const getStatusBadge = (appointmentStatus?: string) => {
     if (appointmentStatus) {
       const { color, bgColor } = getAppointmentStatusColor(appointmentStatus)
       return (
@@ -109,7 +107,7 @@ const Patients: React.FC = () => {
             fontWeight: 500,
           }}
         >
-          {status}
+          {getAppointmentStatusVietnameseText(appointmentStatus)}
         </span>
       )
     }
@@ -143,22 +141,13 @@ const Patients: React.FC = () => {
     )
   }
 
-  const getPriorityTag = (priority: string) => {
-    const colors = {
-      high: "#f04438",
-      medium: "#f79009",
-      low: "#12b76a",
-    }
-    return <Tag color={colors[priority as keyof typeof colors]}>{priority.toUpperCase()}</Tag>
-  }
-
   const columns = [
     {
       title: "STT",
       dataIndex: "id",
       key: "id",
       width: 70,
-      render: (id: number, record: Patient, index: number) => (
+      render: (id: number, record: Appointment, index: number) => (
         <span style={{ fontWeight: 500, color: "#6b7280" }}>{(currentPage - 1) * itemsPerPage + index + 1}</span>
       ),
     },
@@ -166,21 +155,20 @@ const Patients: React.FC = () => {
       title: "Bệnh nhân",
       dataIndex: "name",
       key: "name",
-      render: (text: string, record: Patient) => (
+      render: (text: string, record: Appointment) => (
         <div style={{ display: "flex", alignItems: "center" }}>
           <Avatar
-            src={record.avatar}
+            src="https://png.pngtree.com/png-clipart/20210608/ourlarge/pngtree-dark-gray-simple-avatar-png-image_3418404.jpg"
             size={48}
             style={{ marginRight: 12, border: "2px solid #f0f9ff" }}
             icon={<UserOutlined />}
           />
           <div>
             <div style={{ fontWeight: 600, color: "#111827", marginBottom: "2px" }}>{text}</div>
-            <div style={{ fontSize: "12px", color: "#6b7280" }}>{record.code}</div>
-            {record.priority && <div style={{ marginTop: "4px" }}>{getPriorityTag(record.priority)}</div>}
-            {record.appointmentData && (
+            <div style={{ fontSize: "12px", color: "#6b7280" }}>{record.patientInfo?.patientId}</div>
+            {record && (
               <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "2px" }}>
-                Số thứ tự: {record.appointmentData.number}
+                Số thứ tự: {record.number}
               </div>
             )}
           </div>
@@ -188,27 +176,19 @@ const Patients: React.FC = () => {
       ),
     },
     {
-      title: "Dạng khám",
-      dataIndex: "appointment",
-      key: "appointment",
-      render: (appointment: string) => (
-        <Tag color={appointment === "Đặt lịch" ? "#047481" : "#6b7280"}>{appointment}</Tag>
-      ),
-    },
-    {
       title: "Ngày khám",
       dataIndex: "date",
       key: "date",
-      render: (date: string, record: Patient) => (
+      render: (date: string, record: Appointment) => (
         <div>
           <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
             <CalendarOutlined style={{ marginRight: 8, color: "#6b7280" }} />
-            <span style={{ color: "#374151" }}>{date}</span>
+            <span style={{ color: "#374151" }}>{record.schedule.date}</span>
           </div>
-          {record.appointmentData && (
+          {record && (
             <div style={{ display: "flex", alignItems: "center", fontSize: "12px", color: "#6b7280" }}>
               <ClockCircleOutlined style={{ marginRight: 4 }} />
-              {formatTimeSlot(record.appointmentData.slotStart, record.appointmentData.slotEnd)}
+              {formatTimeSlot(record.slotStart, record.slotEnd)}
             </div>
           )}
         </div>
@@ -218,22 +198,22 @@ const Patients: React.FC = () => {
       title: "Giới tính",
       dataIndex: "gender",
       key: "gender",
-      render: (gender: string) => <span style={{ color: "#374151" }}>{gender}</span>,
+      render: (gender: string, record: Appointment) => <span style={{ color: "#374151" }}>{record.patientInfo?.gender === "MALE" ? "Nam" : "Nữ" }</span>,
     },
     {
-      title: "Tuổi",
-      dataIndex: "age",
-      key: "age",
-      render: (age: number) => <span style={{ color: "#374151", fontWeight: 500 }}>{age || "N/A"}</span>,
+      title: "Ngày sinh",
+      dataIndex: "birthday",
+      key: "birthday",
+      render: (birthday: string, record: Appointment) => <span style={{ color: "#374151", fontWeight: 500 }}>{record.patientInfo?.birthday.split("-").reverse().join("-") || "N/A"}</span>,
     },
     {
       title: "Triệu chứng",
-      dataIndex: "symptom",
-      key: "symptom",
+      dataIndex: "symptoms",
+      key: "symptoms",
       ellipsis: true,
-      render: (symptom: string) => (
-        <Tooltip title={symptom}>
-          <span style={{ color: "#374151" }}>{symptom}</span>
+      render: (symptoms: string) => (
+        <Tooltip title={symptoms}>
+          <span style={{ color: "#374151" }}>{symptoms}</span>
         </Tooltip>
       ),
     },
@@ -241,13 +221,13 @@ const Patients: React.FC = () => {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
-      render: (status: string, record: Patient) => getStatusBadge(status, record.appointmentData?.appointmentStatus),
+      render: (status: string, record: Appointment) => getStatusBadge(record.appointmentStatus),
     },
     {
       title: "Thao tác",
       key: "action",
       width: 120,
-      render: (_: any, record: Patient) => (
+      render: (_: any, record: Appointment) => (
         <Space size="small">
           <Tooltip title="Bỏ qua">
             <Button icon={<StepForwardOutlined />} type="text" size="small" style={{ color: "#6b7280" }} />
@@ -257,7 +237,7 @@ const Patients: React.FC = () => {
               icon={<EditOutlined />}
               type="text"
               size="small"
-              onClick={() => handleViewPatient(record.id)}
+              onClick={() => handleViewPatient(record.appointmentId)}
               style={{ color: "#047481" }}
             />
           </Tooltip>
@@ -267,19 +247,19 @@ const Patients: React.FC = () => {
   ]
 
   // Apply additional client-side filtering for search and gender
-  const filteredPatients = patients.filter((patient) => {
+  const filteredAppointments = appointments.filter((appointment: Appointment) => {
     const matchesSearch =
       !searchTerm ||
-      patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.symptom.toLowerCase().includes(searchTerm.toLowerCase())
+      appointment.patientInfo.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      appointment.patientInfo.patientId.toString().includes(searchTerm.toLowerCase())
+      appointment.symptoms.toLowerCase().includes(searchTerm.toLowerCase())
 
-    const matchesGender = genderFilter === "all" || patient.gender === genderFilter
+    const matchesGender = genderFilter === "all" || appointment.patientInfo.gender === genderFilter
 
     return matchesSearch && matchesGender
   })
 
-  const totalItems = filteredPatients.length
+  const totalItems = filteredAppointments.length
 
   return (
     <div style={{ background: "#f8fafc", minHeight: "100vh" }}>
@@ -368,8 +348,8 @@ const Patients: React.FC = () => {
 
             <Select placeholder="Giới tính" value={genderFilter} onChange={setGenderFilter} style={{ width: 120 }}>
               <Option value="all">Tất cả</Option>
-              <Option value="Nam">Nam</Option>
-              <Option value="Nữ">Nữ</Option>
+              <Option value="MALE">Nam</Option>
+              <Option value="FEMALE">Nữ</Option>
             </Select>
 
             <DatePicker
@@ -431,7 +411,7 @@ const Patients: React.FC = () => {
                   borderRadius: "20px",
                 }}
               >
-                {filteredPatients.length} bệnh nhân
+                {filteredAppointments.length} bệnh nhân
               </span>
             </div>
           </div>
@@ -444,12 +424,12 @@ const Patients: React.FC = () => {
             <div style={{ textAlign: "center", padding: "60px 0" }}>
               <Empty description={error} />
             </div>
-          ) : filteredPatients.length === 0 ? (
+          ) : filteredAppointments.length === 0 ? (
             <Empty description="Không tìm thấy bệnh nhân nào" style={{ padding: "60px 0" }} />
           ) : (
             <Table
               columns={columns}
-              dataSource={filteredPatients}
+              dataSource={filteredAppointments}
               rowKey="id"
               pagination={{
                 current: currentPage,

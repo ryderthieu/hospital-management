@@ -39,7 +39,7 @@ export const useAppointments = (initialFilters?: AppointmentFilters) => {
       console.log("Appointments loaded:", appointmentData)
       console.log("Applied filters:", filters)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Không thể tải danh sách lịch hẹn"
+      const errorMessage = err instanceof Error ? err.message : "Không thể tải danh sách lịch hẹn/bệnh nhân"
       setError(errorMessage)
       message.error(errorMessage)
     } finally {
@@ -118,29 +118,29 @@ export const useAppointments = (initialFilters?: AppointmentFilters) => {
   }
 }
 
-export const useAppointmentPatients = () => {
-  const { appointments, loading, error, ...appointmentHook } = useAppointments()
+// //Dành cho việc hiển thị bảng danh sách bệnh nhân
+// export const useAppointmentPatientsTable = () => {
+//   const { appointments, loading, error, ...appointmentHook } = useAppointments()
 
-  // Transform appointments to patient format
-  const patients: Patient[] = appointments.map((appointment, index) => ({
-    id: appointment.appointmentId,
-    name: `Bệnh nhân ${appointment.number}`, // Since patientInfo is null, use generic name
-    code: `BN${appointment.appointmentId.toString().padStart(8, "0")}`,
-    appointment: "Đặt lịch",
-    date: formatAppointmentDate(appointment.schedule.workDate),
-    gender: "Chưa xác định", // Not available in appointment data
-    age: 0, // Not available in appointment data
-    symptom: appointment.symptoms,
-    status: getAppointmentStatusText(appointment.appointmentStatus),
-    priority: appointment.appointmentStatus === "PENDING" ? "high" : "medium",
-    appointmentData: appointment,
-  }))
+//   // Transform appointments to patient format
 
-  return {
-    patients,
-    appointments,
-    loading,
-    error,
-    ...appointmentHook,
-  }
-}
+//     const transformAppointments = appointments.map((appointment, index) => ({
+//         appointmentId: appointment.appointmentId,
+//         number: appointment.number,
+//         patientName: appointment.patientInfo.fullName, 
+//         patientId: appointment.patientInfo.patientId,
+//         date: formatAppointmentDate(appointment.schedule.workDate),
+//         gender: appointment.patientInfo.gender,
+//         birthday: appointment.patientInfo.birthday,
+//         symptom: appointment.symptoms,
+//         status: getAppointmentStatusText(appointment.appointmentStatus),
+//         appointmentFullData: appointment
+//     }))
+
+//   return {
+//     transformAppointments ,
+//     loading,
+//     error,
+//     ...appointmentHook,
+//   }
+// }

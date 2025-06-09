@@ -1,36 +1,127 @@
-import { StyleSheet, View, Text, SafeAreaView, TouchableOpacity, ScrollView } from "react-native"
-import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native"
-import { Ionicons } from "@expo/vector-icons"
-import type { RootStackParamList } from "./type"
-import { useFont, fontFamily } from "../../context/FontContext"
-type AppointmentDetailScreenRouteProp = RouteProp<RootStackParamList, "AppointmentDetail">
+import { StyleSheet, View, Text, SafeAreaView, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
+import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import type { RootStackParamList, Appointment } from "./type";
+import { useFont, fontFamily } from "../../context/FontContext";
+import { useState, useEffect } from "react";
+import API from "../../services/api";
+
+type AppointmentDetailScreenRouteProp = RouteProp<RootStackParamList, "AppointmentDetail">;
+
+interface AppointmentResponseDto {
+  appointmentId: number;
+  doctorId: number;
+  schedule: { scheduleId: number };
+  symptoms: string;
+  number: number;
+  slotStart: string;
+  slotEnd: string;
+  appointmentStatus: string;
+  createdAt: string;
+  patientInfo: { patientId: number };
+  appointmentNotes: any[];
+  doctorInfo?: {
+    fullName: string;
+    academicDegree: string;
+    specialization: string;
+    departmentId: number;
+  };
+}
 
 const AppointmentDetailScreen = () => {
-    const { fontsLoaded } = useFont()
-  const navigation = useNavigation()
-  const route = useRoute<AppointmentDetailScreenRouteProp>()
+  const { fontsLoaded } = useFont();
+  const navigation = useNavigation();
+  const route = useRoute<AppointmentDetailScreenRouteProp>();
+  const appointmentId = route.params?.appointment?.id;
+  const [appointment, setAppointment] = useState<Appointment | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const appointment = route.params?.appointment || {
-    id: "1",
-    date: "Thứ 4, 28/04/2024",
-    time: "8:00 - 8:30 AM",
-    doctorName: "ThS BS. Trần Ngọc Anh Thơ",
-    specialty: "Da khoa",
-    imageUrl: "/placeholder.svg?height=60&width=60",
-    status: "upcoming",
-    department: "Da khoa",
-    room: "Phòng 45 - Tầng 2 Khu A",
-    queueNumber: 12,
-    patientName: "LÊ THIỆN NHI",
-    patientBirthday: "28/04/2004",
-    patientGender: "Nữ",
-    patientLocation: "Cà Mau",
-    appointmentFee: "150.000 VND",
-    codes: {
-      appointmentCode: "312893713",
-      transactionCode: "31283781293713",
-      patientCode: "47298347293847",
-    },
+  useEffect(() => {
+    if (!appointmentId) {
+      Alert.alert("Lỗi", "Không tìm thấy thông tin cuộc hẹn.", [{ text: "OK", onPress: () => navigation.goBack() }]);
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchAppointment = async () => {
+      try {
+        console.log("[AppointmentDetailScreen] Fetching appointment:", appointmentId);
+        const response = await API.get<AppointmentResponseDto>(`/appointments/${appointmentId}`);
+        console.log("[AppointmentDetailScreen] API response:", JSON.stringify(response.data, null, 2));
+
+        let doctorInfo = response.data.doctorInfo;
+        if (!doctorInfo) {
+          const doctorResponse = await API.get(`/doctors/${response.data.doctorId}`);
+          doctorInfo = doctorResponse.data;
+        }
+
+        const scheduleResponse = await API.get(`/doctors/schedules/${response.data.schedule.scheduleId}`);
+        const schedule = scheduleResponse.data;
+
+        const workDate = new Date(response.data.createdAt).toLocaleDateString("vi-VN", {
+          weekday: "long",
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+
+        const appointmentData: Appointment = {
+          id: response.data.appointmentId.toString(),
+          date: workDate,
+          time: `${response.data.slotStart.slice(0, 5)} - ${response.data.slotEnd.slice(0, 5)}`,
+          doctorName: `${doctorInfo.academicDegree || ""} ${doctorInfo.fullName || "Bác sĩ chưa có tên"}`.trim(),
+          specialty: doctorInfo.specialization || "Chưa xác định",
+          imageUrl: "https://via.placeholder.com/60",
+          status: "upcoming",
+          department: doctorInfo.specialization,
+          room: `${schedule.roomNote || "Phòng chưa xác định"} - Tầng ${schedule.floor || "X"} ${schedule.building || ""}`,
+          queueNumber: response.data.number,
+          patientName: "LÊ THIỆN NHI", // Cần lấy từ patientInfo
+          patientBirthday: "28/04/2004", // Cần lấy từ patientInfo
+          patientGender: "Nữ", // Cần lấy từ patientInfo
+          patientLocation: "Cà Mau", // Cần lấy từ patientInfo
+          appointmentFee: "150.000 VND", // Cần lấy từ cấu hình
+          codes: {
+            appointmentCode: response.data.appointmentId.toString(),
+            transactionCode: `TX${response.data.appointmentId}`,
+            patientCode: response.data.patientInfo.patientId.toString(),
+          },
+        };
+
+        setAppointment(appointmentData);
+      } catch (error: any) {
+        console.error("[AppointmentDetailScreen] Error fetching appointment:", error.message, error.response?.data);
+        Alert.alert("Lỗi", "Không thể tải chi tiết cuộc hẹn. Vui lòng thử lại.", [{ text: "OK", onPress: () => navigation.goBack() }]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAppointment();
+  }, [appointmentId]);
+
+  if (!fontsLoaded || isLoading || !appointment) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Chi tiết</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.loadingContainer}>
+          {isLoading ? (
+            <>
+              <ActivityIndicator size="large" color="#0BC5C5" />
+              <Text style={styles.loadingText}>Đang tải chi tiết cuộc hẹn...</Text>
+            </>
+          ) : (
+            <Text style={styles.loadingText}>Không tìm thấy thông tin cuộc hẹn.</Text>
+          )}
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -110,8 +201,8 @@ const AppointmentDetailScreen = () => {
         </View>
       </ScrollView>
     </SafeAreaView>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -252,31 +343,17 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
     textAlign: "center",
   },
-  actionButtonsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  actionButton: {
-    flexDirection: "row",
+  loadingContainer: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#0BC5C5",
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    width: "48%",
   },
-  cancelButton: {
-    backgroundColor: "#EF4444",
+  loadingText: {
+    fontFamily: fontFamily.regular,
+    fontSize: 16,
+    color: "#6B7280",
+    marginTop: 8,
   },
-  actionButtonText: {
-    fontFamily: fontFamily.bold,
-    fontSize: 14,
-    color: "#FFFFFF",
-    marginLeft: 8,
-  },
-})
+});
 
-export default AppointmentDetailScreen
+export default AppointmentDetailScreen;
