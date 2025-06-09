@@ -43,7 +43,7 @@ public class MedicineService {
     }
 
     @Transactional
-    public MedicineDTOs.MedicineResponse addNewMedicine(MedicineDTOs.NewMedicineRequest request) {
+    public MedicineDTOs.MedicineResponse addNewMedicine(MedicineDTOs.NewMedicineRequest request, MultipartFile avatar) {
         Medicine medicine = new Medicine();
         medicine.setMedicineName(request.getMedicineName());
         medicine.setManufactor(request.getManufactor());
@@ -60,6 +60,13 @@ public class MedicineService {
         medicine.setInsuranceDiscountPercent(request.getInsuranceDiscountPercent());
         medicine.setInsuranceDiscount(request.getInsuranceDiscountPercent().multiply(request.getPrice()));
         medicine.setSideEffects(request.getSideEffects());
+
+        // Xử lý tải lên ảnh nếu có
+        if (avatar != null && !avatar.isEmpty()) {
+            String avatarUrl = fileStorageService.storeFile(avatar);
+            medicine.setAvatar(avatarUrl);
+        }
+
         medicineRepository.save(medicine);
         return mapToMedicineResponse(medicine);
     }

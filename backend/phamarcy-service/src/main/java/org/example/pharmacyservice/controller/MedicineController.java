@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
@@ -17,11 +19,15 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MedicineController {
     private final MedicineService medicineService;
+    private final ObjectMapper objectMapper;
 
-    @PostMapping
+    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<MedicineDTOs.MedicineResponse> addNewMedicine(@RequestBody @Valid MedicineDTOs.NewMedicineRequest request) {
-        return ResponseEntity.status(201).body(medicineService.addNewMedicine(request));
+    public ResponseEntity<MedicineDTOs.MedicineResponse> addNewMedicine(
+            @RequestParam("medicine") String medicineJson,
+            @RequestPart(value = "avatar", required = false) MultipartFile avatar) throws JsonProcessingException {
+        MedicineDTOs.NewMedicineRequest request = objectMapper.readValue(medicineJson, MedicineDTOs.NewMedicineRequest.class);
+        return ResponseEntity.status(201).body(medicineService.addNewMedicine(request, avatar));
     }
 
     @GetMapping
