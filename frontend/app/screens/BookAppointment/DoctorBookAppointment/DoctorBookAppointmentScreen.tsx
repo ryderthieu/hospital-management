@@ -14,6 +14,7 @@ import { SimilarDoctorCard } from "./SimilarDoctorCard"
 import { DoctorHeader } from "./DoctorHeader"
 import { fetchRealTimeDates, fetchTimeSlots } from "../data"
 import { useFont, fontFamily } from "../../../context/FontContext"
+import { useAuth } from "../../../context/AuthContext"
 import Sun from "../../../assets/images/ThoiGian/sun.svg"
 import Moon from "../../../assets/images/ThoiGian/moon.svg"
 import API from "../../../services/api"
@@ -23,7 +24,7 @@ type BookAppointmentScreenProps = {
   route: RouteProp<BookAppointmentStackParamList, "BookAppointment">
 }
 
-type DayPart = "all" // Chỉ giữ "all" để hiển thị tất cả khung giờ
+type DayPart = "morning" | "afternoon" // Cập nhật DayPart
 
 interface TimeSlotData {
   id: string
@@ -63,10 +64,11 @@ interface AppointmentResponse {
 export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ navigation, route }) => {
   const { fontsLoaded } = useFont()
   const { doctor } = route.params
+  const { patient } = useAuth()
 
   const [selectedDate, setSelectedDate] = useState<string>("")
   const [selectedTime, setSelectedTime] = useState<string>("")
-  const [selectedDayPart] = useState<DayPart>("all") // Mặc định là "all"
+  const [selectedDayPart, setSelectedDayPart] = useState<DayPart>("morning") // Thay đổi mặc định thành morning
   const [hasInsurance, setHasInsurance] = useState<boolean>(true)
   const [favorites, setFavorites] = useState<string[]>([])
   const [similarDoctors, setSimilarDoctors] = useState<Doctor[]>([])
@@ -80,7 +82,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
   // Fetch dates
   useEffect(() => {
     if (!doctor?.id) {
-      console.log('[BookAppointmentScreen] Skipping fetchDates: doctor or doctor.id is undefined')
+      console.log('[BookAppointmentScreen] Bỏ qua fetchDates: doctor hoặc doctor.id không xác định')
       Alert.alert("Lỗi", "Thông tin bác sĩ không hợp lệ.", [{ text: "OK", onPress: () => navigation.goBack() }])
       return
     }
@@ -88,9 +90,9 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
     const fetchDates = async () => {
       setIsLoadingDates(true)
       try {
-        console.log('[BookAppointmentScreen] Fetching dates for doctorId:', doctor.id)
+        console.log('[BookAppointmentScreen] Đang lấy ngày cho doctorId:', doctor.id)
         const generatedDates = await fetchRealTimeDates(doctor.id, 7)
-        console.log('[BookAppointmentScreen] Generated dates:', JSON.stringify(generatedDates, null, 2))
+        console.log('[BookAppointmentScreen] Ngày đã tạo:', JSON.stringify(generatedDates, null, 2))
         
         if (generatedDates.length === 0) {
           Alert.alert(
@@ -107,15 +109,15 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
         if (generatedDates.length > 0 && !selectedDate) {
           const firstAvailableDate = generatedDates.find((date) => !date.disabled)
           if (firstAvailableDate) {
-            console.log('[BookAppointmentScreen] Auto-selecting date:', firstAvailableDate.id, 'scheduleId:', firstAvailableDate.scheduleId)
+            console.log('[BookAppointmentScreen] Tự động chọn ngày:', firstAvailableDate.id, 'scheduleId:', firstAvailableDate.scheduleId)
             setSelectedDate(firstAvailableDate.id)
             setSelectedScheduleId(firstAvailableDate.scheduleId || null)
           } else {
-            console.warn('[BookAppointmentScreen] No non-disabled dates found')
+            console.warn('[BookAppointmentScreen] Không tìm thấy ngày không bị vô hiệu hóa')
           }
         }
       } catch (error: any) {
-        console.error("[BookAppointmentScreen] Error fetching dates:", error.message, error.response?.data)
+        console.error("[BookAppointmentScreen] Lỗi khi lấy ngày:", error.message, error.response?.data)
         Alert.alert(
           "Lỗi",
           error.response?.data?.message || "Không thể tải danh sách ngày. Vui lòng thử lại sau.",
@@ -136,7 +138,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
   // Fetch time slots
   useEffect(() => {
     if (!selectedScheduleId) {
-      console.log('[BookAppointmentScreen] Skipping fetchTimeSlots: selectedScheduleId is null')
+      console.log('[BookAppointmentScreen] Bỏ qua fetchTimeSlots: selectedScheduleId là null')
       setTimeSlots([])
       return
     }
@@ -144,15 +146,15 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
     const fetchSlots = async () => {
       setIsLoadingSlots(true)
       try {
-        console.log('[BookAppointmentScreen] Fetching time slots for scheduleId:', selectedScheduleId)
+        console.log('[BookAppointmentScreen] Đang lấy khung giờ cho scheduleId:', selectedScheduleId)
         const slots = await fetchTimeSlots(selectedScheduleId)
-        console.log('[BookAppointmentScreen] Generated slots:', JSON.stringify(slots, null, 2))
-        setTimeSlots(slots) // Bỏ lọc selectedDayPart để hiển thị tất cả khung giờ
+        console.log('[BookAppointmentScreen] Khung giờ đã tạo:', JSON.stringify(slots, null, 2))
+        setTimeSlots(slots)
         if (slots.length === 0) {
-          console.warn('[BookAppointmentScreen] No slots available for scheduleId:', selectedScheduleId)
+          console.warn('[BookAppointmentScreen] Không có khung giờ nào cho scheduleId:', selectedScheduleId)
         }
       } catch (error: any) {
-        console.error("[BookAppointmentScreen] Error fetching time slots:", error.message, error.response?.data)
+        console.error("[BookAppointmentScreen] Lỗi khi lấy khung giờ:", error.message, error.response?.data)
         Alert.alert(
           "Lỗi",
           error.response?.data?.message || "Không thể tải khung giờ khả dụng. Vui lòng thử lại.",
@@ -173,15 +175,15 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
   // Fetch similar doctors
   useEffect(() => {
     if (!doctor?.id || !doctor?.departmentId) {
-      console.log('[BookAppointmentScreen] Skipping fetchSimilarDoctors: doctor or departmentId is undefined')
+      console.log('[BookAppointmentScreen] Bỏ qua fetchSimilarDoctors: doctor hoặc departmentId không xác định')
       return
     }
 
     const fetchSimilarDoctors = async () => {
       try {
-        console.log('[BookAppointmentScreen] Fetching similar doctors for departmentId:', doctor.departmentId)
+        console.log('[BookAppointmentScreen] Đang lấy bác sĩ tương tự cho departmentId:', doctor.departmentId)
         const response = await API.get<DoctorDto[]>(`/doctors/departments/${doctor.departmentId}/doctors`)
-        console.log('[BookAppointmentScreen] Similar doctors response:', JSON.stringify(response.data, null, 2))
+        console.log('[BookAppointmentScreen] Phản hồi bác sĩ tương tự:', JSON.stringify(response.data, null, 2))
         const allDoctors = response.data.map((dto) => ({
           id: dto.doctorId.toString(),
           name: [dto.academicDegree, dto.fullName].filter(Boolean).join(" ").trim() || "Bác sĩ chưa có tên",
@@ -200,7 +202,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
         const shuffledDoctors = filteredDoctors.sort(() => Math.random() - 0.5)
         setSimilarDoctors(shuffledDoctors.slice(0, 4))
       } catch (error: any) {
-        console.error("[BookAppointmentScreen] Error fetching similar doctors:", error.message, error.response?.data)
+        console.error("[BookAppointmentScreen] Lỗi khi lấy bác sĩ tương tự:", error.message, error.response?.data)
         Alert.alert(
           "Lỗi",
           error.response?.data?.message || "Không thể tải bác sĩ tương tự.",
@@ -218,85 +220,99 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
 
   const handleDateSelect = (date: DateOption) => {
     if (!date || date.disabled) return
-    console.log('[BookAppointmentScreen] Selected date:', date.id, 'scheduleId:', date.scheduleId)
+    console.log('[BookAppointmentScreen] Ngày được chọn:', date.id, 'scheduleId:', date.scheduleId)
     setSelectedDate(date.id)
     setSelectedTime("")
     setSelectedScheduleId(date.scheduleId || null)
   }
 
   const handleTimeSelect = (time: string) => {
-    console.log('[BookAppointmentScreen] Selected time:', time)
+    console.log('[BookAppointmentScreen] Khung giờ được chọn:', time)
     setSelectedTime(time)
   }
 
   const handleSimilarDoctorPress = (selectedDoctor: Doctor) => {
     if (!selectedDoctor) return
-    console.log('[BookAppointmentScreen] Selected similar doctor:', selectedDoctor.id)
+    console.log('[BookAppointmentScreen] Bác sĩ tương tự được chọn:', selectedDoctor.id)
     navigation.replace("BookAppointment", { doctor: selectedDoctor })
   }
 
   const handleFavoritePress = (doctorId: string) => {
     if (!doctorId) return
-    console.log('[BookAppointmentScreen] Toggled favorite for doctorId:', doctorId)
+    console.log('[BookAppointmentScreen] Chuyển đổi yêu thích cho doctorId:', doctorId)
     setFavorites((prev) => prev.includes(doctorId) ? prev.filter((id) => id !== doctorId) : [...prev, doctorId])
   }
 
   const handleContinue = async () => {
     if (!selectedDate || !selectedTime) {
-      Alert.alert("Thông báo", "Vui lòng chọn ngày và giờ khám.", [{ text: "OK" }])
+      Alert.alert("Thông báo", "Vui lòng chọn ngày và giờ khám.")
       return
     }
 
-    if (!doctor || !selectedScheduleId) {
-      Alert.alert("Lỗi", "Thông tin bác sĩ hoặc lịch không hợp lệ.", [{ text: "OK" }])
+    if (!doctor || !selectedScheduleId || !patient?.patientId) {
+      Alert.alert("Lỗi", "Thông tin bác sĩ, lịch hoặc bệnh nhân không hợp lệ.")
       return
     }
 
     setIsSubmitting(true)
     try {
-      const [slotStart, slotEnd] = selectedTime.split(" - ").map((t) => `${t}:00`);
+      const [slotStart, slotEnd] = selectedTime.split(" - ").map((t) => `${t}:00`)
       const appointmentRequest: AppointmentRequest = {
         slotStart,
         slotEnd,
         scheduleId: selectedScheduleId,
-        symptoms: "", // Sẽ được nhập ở màn hình SymptomSelection
+        symptoms: "",
         doctorId: parseInt(doctor.id),
-        patientId: 1, // Giả định, cần thay bằng logic lấy patientId từ đăng nhập
-      };
+        patientId: patient.patientId,
+      }
 
-      console.log('[BookAppointmentScreen] Creating appointment with:', JSON.stringify(appointmentRequest, null, 2));
-      const response = await API.post<AppointmentResponse>("/appointments", appointmentRequest);
-      console.log('[BookAppointmentScreen] Appointment created:', JSON.stringify(response.data, null, 2));
+      console.log('[BookAppointmentScreen] Tạo cuộc hẹn với:', JSON.stringify(appointmentRequest, null, 2))
+      const response = await API.post<AppointmentResponse>("/appointments", appointmentRequest)
+      console.log('[BookAppointmentScreen] Cuộc hẹn đã tạo:', JSON.stringify(response.data, null, 2))
 
       Alert.alert(
         "Thành công",
         "Đặt lịch khám thành công! Vui lòng nhập triệu chứng.",
-        [{ text: "OK", onPress: () => navigation.navigate("SymptomSelection", {
-          doctor,
-          selectedDate,
-          selectedTime,
-          hasInsurance,
-          appointmentId: response.data.appointmentId,
-        }) }]
-      );
+        [{
+          text: "OK",
+          onPress: () => navigation.navigate("SymptomSelection", {
+            doctor,
+            selectedDate,
+            selectedTime,
+            hasInsurance,
+            appointmentId: response.data.appointmentId,
+          })
+        }]
+      )
     } catch (error: any) {
-      console.error("[BookAppointmentScreen] Error creating appointment:", error.message, error.response?.data)
+      console.error("[BookAppointmentScreen] Lỗi khi tạo cuộc hẹn:", error.message, error.response?.data)
       Alert.alert(
         "Lỗi",
         error.response?.data?.message || "Không thể đặt lịch khám. Vui lòng thử lại.",
         [{ text: "OK" }]
-      );
+      )
     } finally {
       setIsSubmitting(false)
     }
   }
+
+  // Lọc khung giờ theo buổi
+  const morningSlots = timeSlots.filter(slot => {
+    const startHour = parseInt(slot.time.split(":")[0])
+    return startHour < 12
+  })
+
+  const afternoonSlots = timeSlots.filter(slot => {
+    const startHour = parseInt(slot.time.split(":")[0])
+    return startHour >= 12
+  })
 
   const renderDateItem = ({ item }: { item: DateOption }) => {
     if (!item) return null
     return (
       <DateCard
         date={item}
-        isSelected cytotoxins={selectedDate === item.id}
+        isSelected={selectedDate === item.id}
         onPress={() => handleDateSelect(item)}
         showAvailability={true}
         availableSlots={item.availableSlots}
@@ -391,22 +407,40 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
             </View>
           )}
           {dates.length > 0 && (
-            <View style={styles.timeSlotGrid}>
+            <View style={styles.timeSlotContainer}>
+              <View style={styles.dayPartTabs}>
+                <TouchableOpacity
+                  style={[styles.dayPartTab, selectedDayPart === "morning" && styles.dayPartTabSelected]}
+                  onPress={() => setSelectedDayPart("morning")}
+                >
+                  <Sun width={20} height={20} />
+                  <Text style={[styles.dayPartText, { fontFamily: fontFamily.bold }]}>Buổi sáng</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.dayPartTab, selectedDayPart === "afternoon" && styles.dayPartTabSelected]}
+                  onPress={() => setSelectedDayPart("afternoon")}
+                >
+                  <Moon width={20} height={20} />
+                  <Text style={[styles.dayPartText, { fontFamily: fontFamily.bold }]}>Buổi chiều</Text>
+                </TouchableOpacity>
+              </View>
               {isLoadingSlots ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="large" color={colors.primary} />
                   <Text style={[styles.loadingText, { fontFamily: fontFamily.regular }]}>Đang tải khung giờ...</Text>
                 </View>
-              ) : timeSlots.length > 0 ? (
-                timeSlots.map((slot) => renderTimeSlot(slot))
+              ) : (selectedDayPart === "morning" ? morningSlots : afternoonSlots).length > 0 ? (
+                <View style={styles.timeSlotGrid}>
+                  {(selectedDayPart === "morning" ? morningSlots : afternoonSlots).map((slot) => renderTimeSlot(slot))}
+                </View>
               ) : selectedDate ? (
                 <View style={styles.noDataContainer}>
                   <Ionicons name="time-outline" size={48} color={colors.gray500} />
                   <Text style={[styles.noDataText, { fontFamily: fontFamily.medium }]}>
-                    Không có khung giờ nào khả dụng cho ngày đã chọn
+                    Không có khung giờ nào khả dụng cho {selectedDayPart === "morning" ? "buổi sáng" : "buổi chiều"}
                   </Text>
                   <Text style={[styles.noDataSubtext, { fontFamily: fontFamily.regular }]}>
-                    Vui lòng chọn ngày khác
+                    Vui lòng chọn {selectedDayPart === "morning" ? "buổi chiều" : "buổi sáng"} hoặc ngày khác
                   </Text>
                 </View>
               ) : null}
@@ -479,6 +513,30 @@ const styles = StyleSheet.create({
   },
   dateList: {
     paddingVertical: 8,
+  },
+  timeSlotContainer: {
+    marginTop: 16,
+  },
+  dayPartTabs: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 16,
+  },
+  dayPartTab: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: colors.gray200,
+  },
+  dayPartTabSelected: {
+    backgroundColor: colors.primary,
+  },
+  dayPartText: {
+    fontSize: 14,
+    color: colors.text,
+    marginLeft: 8,
   },
   timeSlotGrid: {
     flexDirection: "row",
