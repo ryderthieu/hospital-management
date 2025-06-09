@@ -9,7 +9,7 @@ interface Doctor {
   fullName: string;
   academicDegree: string;
   specialty?: string;
-  profileImage?: string;
+  avatar?: string;
   isAvailable?: boolean;
   departmentId?: number;
 }
@@ -332,7 +332,7 @@ const DepartmentDetail: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {doctors.slice(0, 4).map(doctor => (
                   <div key={doctor.doctorId} className="bg-gray-50 p-4 rounded-lg flex flex-col items-center">                    <img 
-                      src={doctor.profileImage || "/images/user/owner.jpg"} 
+                      src={doctor.avatar || "/images/user/owner.jpg"} 
                       alt={doctor.fullName} 
                       className="w-20 h-20 rounded-full object-cover"
                       onError={(e) => {
@@ -377,7 +377,7 @@ const DepartmentDetail: React.FC = () => {
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">                            <img 
                               className="h-10 w-10 rounded-full object-cover" 
-                              src={doctor.profileImage || "/images/user/owner.jpg"} 
+                              src={doctor.avatar || "/images/user/owner.jpg"} 
                               alt={doctor.fullName}
                               onError={(e) => {
                                 e.currentTarget.src = "/images/user/owner.jpg";

@@ -16,12 +16,18 @@ public interface PatientRepository extends JpaRepository<Patient, Integer> {
         WHERE (p.identityNumber = :identityNumber OR :identityNumber IS NULL)
            AND (p.insuranceNumber = :insuranceNumber OR :insuranceNumber IS NULL)
            AND (p.fullName = :fullName OR :fullName IS NULL)
+           AND (p.email = :email OR :email IS NULL)
+           AND (p.phone = :phone OR :phone IS NULL)
     """)
     Optional<Patient> searchByIdentityNumberOrInsuranceNumberOrFullName(
             String identityNumber,
             String insuranceNumber,
-            String fullName
+            String fullName,
+            String email,
+            String phone
     );
 
     Optional<Patient> findByUserId(Integer userId);
+
+    Optional<Patient> findByIdentityNumber(String identityNumber);
 }

@@ -15,6 +15,7 @@ export interface Doctor {
     | "PGS_TS_BS"
     | "GS_TS_BS";
   specialization: string;
+  avatar?: string;
   type: "EXAMINATION" | "SERVICE";
   departmentId: number;
   departmentName: string;
@@ -38,6 +39,7 @@ export interface DoctorDto {
     | "PGS_TS_BS"
     | "GS_TS_BS";
   specialization: string;
+  avatar?: string;
   type: "EXAMINATION" | "SERVICE";
   departmentId: number;
 }

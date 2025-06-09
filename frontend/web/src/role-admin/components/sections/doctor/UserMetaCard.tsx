@@ -53,7 +53,7 @@ const UserMetaCard: React.FC<UserMetaCardProps> = ({
     fullName: "Musharof Chowdhury",
     position: "Team Manager",
     department: "Arizona, United States",
-    profileImage: "/images/user/owner.jpg",
+    avatar: "/images/user/owner.jpg",
   };
 
   return (

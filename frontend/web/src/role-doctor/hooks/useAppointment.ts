@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import type { Appointment, AppointmentFilters, AppointmentStats} from "../types/appointment"
-import { appointmentService } from "../services/appointmentServices"
+import { appointmentService, formatAppointmentDate } from "../services/appointmentServices"
 import { message } from "antd"
 import dayjs from "dayjs"
 
@@ -35,8 +35,6 @@ export const useAppointments = (initialFilters?: AppointmentFilters) => {
       // Calculate stats from filtered data
       const statsData = appointmentService.calculateAppointmentStats(appointmentData)
       setStats(statsData)
-
-      console.log("Appointments loaded:", appointmentData)
       console.log("Applied filters:", filters)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Không thể tải danh sách lịch hẹn/bệnh nhân"

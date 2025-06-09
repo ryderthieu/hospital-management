@@ -110,6 +110,7 @@ public class AuthService {
                 .identityNumber(registerRequest.getIdentityNumber())
                 .insuranceNumber(registerRequest.getInsuranceNumber())
                 .fullName(registerRequest.getFullName())
+                .phone(registerRequest.getPhone())
                 .birthday(registerRequest.getBirthday())
                 .gender(registerRequest.getGender().toUpperCase())
                 .address(registerRequest.getAddress())

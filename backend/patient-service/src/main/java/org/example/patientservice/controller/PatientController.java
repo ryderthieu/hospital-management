@@ -2,6 +2,7 @@ package org.example.patientservice.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.patientservice.dto.CreatePatientRequest;
 import org.example.patientservice.dto.PatientDto;
 import org.example.patientservice.service.PatientService;
 import org.springframework.http.HttpStatus;
@@ -56,13 +57,20 @@ public class PatientController {
     @GetMapping("/search")
     public ResponseEntity<Optional<PatientDto>> searchPatient(@RequestParam(required = false) String identityNumber,
                                                               @RequestParam(required = false) String insuranceNumber,
-                                                              @RequestParam(required = false) String fullName) {
-        Optional<PatientDto> patientDto = patientService.searchPatient(identityNumber, insuranceNumber, fullName);
+                                                              @RequestParam(required = false) String fullName,
+                                                              @RequestParam(required = false) String email,
+                                                              @RequestParam(required = false) String phone) {
+        Optional<PatientDto> patientDto = patientService.searchPatient(identityNumber, insuranceNumber, fullName, email, phone);
         return patientDto.isPresent() ? ResponseEntity.ok(patientDto) : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
     @GetMapping("/users/{userId}")
     public ResponseEntity<PatientDto> getPatientByUserId(@PathVariable Integer userId) {
         return ResponseEntity.ok(patientService.getPatientByUserId(userId));
+    }
+
+    @PostMapping("/add-patient")
+    public ResponseEntity<PatientDto> registerPatient(@RequestBody @Valid CreatePatientRequest request) {
+        return ResponseEntity.ok(patientService.registerPatient(request));
     }
 }

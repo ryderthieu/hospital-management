@@ -16,6 +16,7 @@ export interface Doctor {
   type: "EXAMINATION" | "SERVICE"
   department: Department;
   profileImage?: string;
+  avatar?: string;
   createdAt: string;
 }
 

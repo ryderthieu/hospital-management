@@ -1,3 +1,4 @@
+// DoctorBookAppointmentScreen.tsx
 "use client"
 
 import React, { useState, useEffect } from "react"
@@ -32,6 +33,7 @@ interface TimeSlotData {
   available: boolean
   price: string
   isBooked: boolean
+  isPast: boolean
 }
 
 interface AppointmentRequest {
@@ -74,10 +76,9 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
   const [similarDoctors, setSimilarDoctors] = useState<Doctor[]>([])
   const [dates, setDates] = useState<DateOption[]>([])
   const [timeSlots, setTimeSlots] = useState<TimeSlotData[]>([])
-  const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(null)
+  const [selectedScheduleIds, setSelectedScheduleIds] = useState<number[]>([])
   const [isLoadingDates, setIsLoadingDates] = useState<boolean>(false)
   const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(false)
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
   // Fetch dates
   useEffect(() => {
@@ -109,9 +110,9 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
         if (generatedDates.length > 0 && !selectedDate) {
           const firstAvailableDate = generatedDates.find((date) => !date.disabled)
           if (firstAvailableDate) {
-            console.log('[BookAppointmentScreen] Tự động chọn ngày:', firstAvailableDate.id, 'scheduleId:', firstAvailableDate.scheduleId)
+            console.log('[BookAppointmentScreen] Tự động chọn ngày:', firstAvailableDate.id, 'scheduleIds:', firstAvailableDate.scheduleIds)
             setSelectedDate(firstAvailableDate.id)
-            setSelectedScheduleId(firstAvailableDate.scheduleId || null)
+            setSelectedScheduleIds(firstAvailableDate.scheduleIds || [])
           } else {
             console.warn('[BookAppointmentScreen] Không tìm thấy ngày không bị vô hiệu hóa')
           }
@@ -137,8 +138,8 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
 
   // Fetch time slots
   useEffect(() => {
-    if (!selectedScheduleId) {
-      console.log('[BookAppointmentScreen] Bỏ qua fetchTimeSlots: selectedScheduleId là null')
+    if (selectedScheduleIds.length === 0) {
+      console.log('[BookAppointmentScreen] Bỏ qua fetchTimeSlots: selectedScheduleIds rỗng')
       setTimeSlots([])
       return
     }
@@ -146,12 +147,12 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
     const fetchSlots = async () => {
       setIsLoadingSlots(true)
       try {
-        console.log('[BookAppointmentScreen] Đang lấy khung giờ cho scheduleId:', selectedScheduleId)
-        const slots = await fetchTimeSlots(selectedScheduleId)
+        console.log('[BookAppointmentScreen] Đang lấy khung giờ cho scheduleIds:', selectedScheduleIds)
+        const slots = await fetchTimeSlots(selectedScheduleIds)
         console.log('[BookAppointmentScreen] Khung giờ đã tạo:', JSON.stringify(slots, null, 2))
         setTimeSlots(slots)
         if (slots.length === 0) {
-          console.warn('[BookAppointmentScreen] Không có khung giờ nào cho scheduleId:', selectedScheduleId)
+          console.warn('[BookAppointmentScreen] Không có khung giờ nào cho scheduleIds:', selectedScheduleIds)
         }
       } catch (error: any) {
         console.error("[BookAppointmentScreen] Lỗi khi lấy khung giờ:", error.message, error.response?.data)
@@ -170,7 +171,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
     }
 
     fetchSlots()
-  }, [selectedScheduleId])
+  }, [selectedScheduleIds])
 
   // Fetch similar doctors
   useEffect(() => {
@@ -220,10 +221,10 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
 
   const handleDateSelect = (date: DateOption) => {
     if (!date || date.disabled) return
-    console.log('[BookAppointmentScreen] Ngày được chọn:', date.id, 'scheduleId:', date.scheduleId)
+    console.log('[BookAppointmentScreen] Ngày được chọn:', date.id, 'scheduleIds:', date.scheduleIds)
     setSelectedDate(date.id)
     setSelectedTime("")
-    setSelectedScheduleId(date.scheduleId || null)
+    setSelectedScheduleIds(date.scheduleIds || [])
   }
 
   const handleTimeSelect = (time: string) => {
@@ -249,50 +250,39 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
       return
     }
 
-    if (!doctor || !selectedScheduleId || !patient?.patientId) {
+    if (!doctor || selectedScheduleIds.length === 0 || !patient?.patientId) {
       Alert.alert("Lỗi", "Thông tin bác sĩ, lịch hoặc bệnh nhân không hợp lệ.")
       return
     }
 
-    setIsSubmitting(true)
     try {
       const [slotStart, slotEnd] = selectedTime.split(" - ").map((t) => `${t}:00`)
-      const appointmentRequest: AppointmentRequest = {
-        slotStart,
-        slotEnd,
-        scheduleId: selectedScheduleId,
-        symptoms: "",
-        doctorId: parseInt(doctor.id),
-        patientId: patient.patientId,
+      const response = await API.get<ScheduleDto[]>(`/doctors/1/schedules`)
+      const schedule = response.data.find(s =>
+        selectedScheduleIds.includes(s.scheduleId) &&
+        s.availableTimeSlots.some(slot => slot.slotStart === slotStart && slot.slotEnd === slotEnd)
+      )
+
+      if (!schedule) {
+        throw new Error("Không tìm thấy lịch phù hợp với khung giờ được chọn")
       }
 
-      console.log('[BookAppointmentScreen] Tạo cuộc hẹn với:', JSON.stringify(appointmentRequest, null, 2))
-      const response = await API.post<AppointmentResponse>("/appointments", appointmentRequest)
-      console.log('[BookAppointmentScreen] Cuộc hẹn đã tạo:', JSON.stringify(response.data, null, 2))
-
-      Alert.alert(
-        "Thành công",
-        "Đặt lịch khám thành công! Vui lòng nhập triệu chứng.",
-        [{
-          text: "OK",
-          onPress: () => navigation.navigate("SymptomSelection", {
-            doctor,
-            selectedDate,
-            selectedTime,
-            hasInsurance,
-            appointmentId: response.data.appointmentId,
-          })
-        }]
-      )
+      // Chuyển hướng sang SymptomSelectionScreen thay vì gọi API
+      navigation.navigate("SymptomSelection", {
+        doctor,
+        selectedDate,
+        selectedTime,
+        hasInsurance,
+        scheduleId: schedule.scheduleId,
+        patientId: patient.patientId,
+      })
     } catch (error: any) {
-      console.error("[BookAppointmentScreen] Lỗi khi tạo cuộc hẹn:", error.message, error.response?.data)
+      console.error("[BookAppointmentScreen] Lỗi khi kiểm tra lịch:", error.message, error.response?.data)
       Alert.alert(
         "Lỗi",
-        error.response?.data?.message || "Không thể đặt lịch khám. Vui lòng thử lại.",
+        error.response?.data?.message || "Không thể xác thực lịch. Vui lòng thử lại.",
         [{ text: "OK" }]
       )
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -330,6 +320,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
         isAvailable={slot.available}
         isBooked={slot.isBooked}
         price={slot.price}
+        isPast={slot.isPast}
         onPress={() => handleTimeSelect(slot.time)}
       />
     )
@@ -376,8 +367,14 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
           showStatus={true}
           isOnline={doctor.isOnline || true}
         />
+        
+        {/* Date Selection Section */}
         <View style={styles.dateSelectionContainer}>
-          <Text style={[styles.selectionTitle, { fontFamily: fontFamily.bold }]}>CHỌN THỜI GIAN</Text>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="calendar" size={20} color={colors.primary} />
+            <Text style={[styles.selectionTitle, { fontFamily: fontFamily.bold }]}>Chọn ngày khám</Text>
+          </View>
+          
           {isLoadingDates ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={colors.primary} />
@@ -394,81 +391,157 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
             />
           ) : (
             <View style={styles.noDataContainer}>
-              <Ionicons name="calendar-outline" size={48} color={colors.gray500} />
-              <Text style={[styles.noDataText, { fontFamily: fontFamily.medium }]}>
-                Không có lịch làm việc nào khả dụng
+              <View style={styles.emptyStateIcon}>
+                <Ionicons name="calendar-outline" size={48} color={colors.gray400} />
+              </View>
+              <Text style={[styles.noDataText, { fontFamily: fontFamily.semibold }]}>
+                Không có lịch làm việc
               </Text>
               <Text style={[styles.noDataSubtext, { fontFamily: fontFamily.regular }]}>
                 Vui lòng chọn bác sĩ khác hoặc thử lại sau
               </Text>
-              <TouchableOpacity style={[styles.button, styles.retryButton]} onPress={() => fetchDates()}>
-                <Text style={[styles.buttonText, { fontFamily: fontFamily.bold }]}>Thử lại</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={() => fetchDates()}>
+                <Text style={[styles.retryButtonText, { fontFamily: fontFamily.medium }]}>Thử lại</Text>
               </TouchableOpacity>
             </View>
           )}
-          {dates.length > 0 && (
-            <View style={styles.timeSlotContainer}>
+        </View>
+
+        {/* Time Slot Selection */}
+        {dates.length > 0 && (
+          <View style={styles.timeSelectionContainer}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="time" size={20} color={colors.primary} />
+              <Text style={[styles.selectionTitle, { fontFamily: fontFamily.bold }]}>Chọn giờ khám</Text>
+            </View>
+            
+            {/* Day Part Tabs */}
+            <View style={styles.dayPartContainer}>
               <View style={styles.dayPartTabs}>
                 <TouchableOpacity
                   style={[styles.dayPartTab, selectedDayPart === "morning" && styles.dayPartTabSelected]}
                   onPress={() => setSelectedDayPart("morning")}
+                  activeOpacity={0.8}
                 >
-                  <Sun width={20} height={20} />
-                  <Text style={[styles.dayPartText, { fontFamily: fontFamily.bold }]}>Buổi sáng</Text>
+                  <View style={[styles.dayPartIcon, selectedDayPart === "morning" && styles.dayPartIconSelected]}>
+                    <Sun width={18} height={18} />
+                  </View>
+                  <Text style={[
+                    styles.dayPartText, 
+                    { fontFamily: fontFamily.medium },
+                    selectedDayPart === "morning" && styles.dayPartTextSelected
+                  ]}>
+                    Buổi sáng
+                  </Text>
+                  {morningSlots.length > 0 && (
+                    <View style={styles.availableBadge}>
+                      <Text style={[styles.availableBadgeText, { fontFamily: fontFamily.medium }]}>
+                        {morningSlots.filter(slot => slot.available).length}
+                      </Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
+                
                 <TouchableOpacity
                   style={[styles.dayPartTab, selectedDayPart === "afternoon" && styles.dayPartTabSelected]}
                   onPress={() => setSelectedDayPart("afternoon")}
+                  activeOpacity={0.8}
                 >
-                  <Moon width={20} height={20} />
-                  <Text style={[styles.dayPartText, { fontFamily: fontFamily.bold }]}>Buổi chiều</Text>
+                  <View style={[styles.dayPartIcon, selectedDayPart === "afternoon" && styles.dayPartIconSelected]}>
+                    <Moon width={18} height={18} />
+                  </View>
+                  <Text style={[
+                    styles.dayPartText, 
+                    { fontFamily: fontFamily.medium },
+                    selectedDayPart === "afternoon" && styles.dayPartTextSelected
+                  ]}>
+                    Buổi chiều
+                  </Text>
+                  {afternoonSlots.length > 0 && (
+                    <View style={styles.availableBadge}>
+                      <Text style={[styles.availableBadgeText, { fontFamily: fontFamily.medium }]}>
+                        {afternoonSlots.filter(slot => slot.available).length}
+                      </Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
               </View>
-              {isLoadingSlots ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color={colors.primary} />
-                  <Text style={[styles.loadingText, { fontFamily: fontFamily.regular }]}>Đang tải khung giờ...</Text>
-                </View>
-              ) : (selectedDayPart === "morning" ? morningSlots : afternoonSlots).length > 0 ? (
+            </View>
+
+            {/* Time Slots Grid */}
+            {isLoadingSlots ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={[styles.loadingText, { fontFamily: fontFamily.regular }]}>Đang tải khung giờ...</Text>
+              </View>
+            ) : (selectedDayPart === "morning" ? morningSlots : afternoonSlots).length > 0 ? (
+              <View style={styles.timeSlotWrapper}>
                 <View style={styles.timeSlotGrid}>
                   {(selectedDayPart === "morning" ? morningSlots : afternoonSlots).map((slot) => renderTimeSlot(slot))}
                 </View>
-              ) : selectedDate ? (
-                <View style={styles.noDataContainer}>
-                  <Ionicons name="time-outline" size={48} color={colors.gray500} />
-                  <Text style={[styles.noDataText, { fontFamily: fontFamily.medium }]}>
-                    Không có khung giờ nào khả dụng cho {selectedDayPart === "morning" ? "buổi sáng" : "buổi chiều"}
-                  </Text>
-                  <Text style={[styles.noDataSubtext, { fontFamily: fontFamily.regular }]}>
-                    Vui lòng chọn {selectedDayPart === "morning" ? "buổi chiều" : "buổi sáng"} hoặc ngày khác
-                  </Text>
+              </View>
+            ) : selectedDate ? (
+              <View style={styles.noSlotsContainer}>
+                <View style={styles.emptyStateIcon}>
+                  <Ionicons name="time-outline" size={40} color={colors.gray400} />
                 </View>
-              ) : null}
-            </View>
-          )}
-        </View>
-        <View style={styles.insuranceContainer}>
-          <Text style={[styles.insuranceTitle, { fontFamily: fontFamily.bold }]}>BẢO HIỂM Y TẾ</Text>
-          <View style={styles.insuranceOptions}>
-            <TouchableOpacity style={styles.insuranceOption} onPress={() => setHasInsurance(true)}>
-              <View style={[styles.radioButton, hasInsurance && styles.radioButtonSelected]}>
-                {hasInsurance && <View style={styles.radioButtonInner} />}
+                <Text style={[styles.noDataText, { fontFamily: fontFamily.medium }]}>
+                  Không có khung giờ {selectedDayPart === "morning" ? "buổi sáng" : "buổi chiều"}
+                </Text>
+                <Text style={[styles.noDataSubtext, { fontFamily: fontFamily.regular }]}>
+                  Thử chọn {selectedDayPart === "morning" ? "buổi chiều" : "buổi sáng"} hoặc ngày khác
+                </Text>
               </View>
-              <Text style={[styles.insuranceText, { fontFamily: fontFamily.regular }]}>Có bảo hiểm</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.insuranceOption} onPress={() => setHasInsurance(false)}>
-              <View style={[styles.radioButton, !hasInsurance && styles.radioButtonSelected]}>
-                {!hasInsurance && <View style={styles.radioButtonInner} />}
-              </View>
-              <Text style={[styles.insuranceText, { fontFamily: fontFamily.regular }]}>Không có bảo hiểm</Text>
-            </TouchableOpacity>
+            ) : null}
           </View>
-          {hasInsurance && (
-            <Text style={[styles.insuranceNote, { fontFamily: fontFamily.regular }]}>
-              Vui lòng mang theo thẻ bảo hiểm y tế khi đến khám
-            </Text>
-          )}
+        )}
+
+        {/* Insurance Section */}
+        <View style={styles.insuranceContainer}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="shield-checkmark" size={20} color={colors.primary} />
+            <Text style={[styles.selectionTitle, { fontFamily: fontFamily.bold }]}>Bảo hiểm y tế</Text>
+          </View>
+          
+          <View style={styles.insuranceCard}>
+            <View style={styles.insuranceOptions}>
+              <TouchableOpacity 
+                style={[styles.insuranceOption, hasInsurance && styles.insuranceOptionSelected]} 
+                onPress={() => setHasInsurance(true)}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.radioButton, hasInsurance && styles.radioButtonSelected]}>
+                  {hasInsurance && <View style={styles.radioButtonInner} />}
+                </View>
+                <Text style={[styles.insuranceText, { fontFamily: fontFamily.medium }]}>Có bảo hiểm</Text>
+                <Ionicons name="shield" size={16} color={hasInsurance ? colors.primary : colors.gray400} />
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.insuranceOption, !hasInsurance && styles.insuranceOptionSelected]} 
+                onPress={() => setHasInsurance(false)}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.radioButton, !hasInsurance && styles.radioButtonSelected]}>
+                  {!hasInsurance && <View style={styles.radioButtonInner} />}
+                </View>
+                <Text style={[styles.insuranceText, { fontFamily: fontFamily.medium }]}>Không có</Text>
+                <Ionicons name="card" size={16} color={!hasInsurance ? colors.primary : colors.gray400} />
+              </TouchableOpacity>
+            </View>
+            
+            {hasInsurance && (
+              <View style={styles.insuranceNote}>
+                <Ionicons name="information-circle" size={16} color={colors.blue500} />
+                <Text style={[styles.insuranceNoteText, { fontFamily: fontFamily.regular }]}>
+                  Vui lòng mang theo thẻ bảo hiểm y tế khi đến khám
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
+
+        {/* Similar Doctors */}
         {similarDoctors.length > 0 && (
           <View style={styles.similarDoctorsContainer}>
             <Text style={[styles.similarDoctorsTitle, { fontFamily: fontFamily.bold }]}>
@@ -484,13 +557,21 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ na
             />
           </View>
         )}
-        <TouchableOpacity
-          style={[styles.button, (!selectedDate || !selectedTime || isSubmitting) && styles.buttonDisabled]}
-          onPress={handleContinue}
-          disabled={!selectedDate || !selectedTime || isSubmitting}
-        >
-          <Text style={[styles.buttonText, { fontFamily: fontFamily.bold }]}>{isSubmitting ? "Đang xử lý..." : "Tiếp tục"}</Text>
-        </TouchableOpacity>
+
+        {/* Continue Button */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[styles.continueButton, (!selectedDate || !selectedTime) && styles.buttonDisabled]}
+            onPress={handleContinue}
+            disabled={!selectedDate || !selectedTime}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.buttonText, { fontFamily: fontFamily.bold }]}>
+              Tiếp tục
+            </Text>
+            <Ionicons name="arrow-forward" size={20} color={colors.white} />
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   )
@@ -500,154 +581,299 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingBottom: 24,
   },
-  dateSelectionContainer: {
-    backgroundColor: colors.base50,
-    padding: 16,
-    marginBottom: 24,
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    paddingHorizontal: 4,
   },
   selectionTitle: {
-    fontSize: 14,
-    color: colors.gray600,
-    marginBottom: 16,
-    textTransform: "uppercase",
+    fontSize: 16,
+    color: colors.text,
+    marginLeft: 8,
+  },
+  dateSelectionContainer: {
+    backgroundColor: colors.white,
+    margin: 16,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   dateList: {
     paddingVertical: 8,
   },
-  timeSlotContainer: {
-    marginTop: 16,
+  timeSelectionContainer: {
+    backgroundColor: colors.white,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  dayPartContainer: {
+    marginBottom: 20,
   },
   dayPartTabs: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    marginBottom: 16,
+    backgroundColor: colors.gray100,
+    borderRadius: 12,
+    padding: 4,
   },
   dayPartTab: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
+    justifyContent: "center",
+    paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
-    backgroundColor: colors.gray200,
+    position: "relative",
+    backgroundColor: "transparent",
   },
   dayPartTabSelected: {
     backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  dayPartIcon: {
+    marginRight: 8,
+    opacity: 0.6,
+  },
+  dayPartIconSelected: {
+    opacity: 1,
   },
   dayPartText: {
     fontSize: 14,
-    color: colors.text,
-    marginLeft: 8,
+    color: colors.gray600,
+  },
+  dayPartTextSelected: {
+    color: colors.white,
+    fontWeight: "600",
+  },
+  availableBadge: {
+    position: "absolute",
+    top: -2,
+    right: 8,
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 6,
+  },
+  availableBadgeText: {
+    fontSize: 11,
+    color: colors.white,
+    lineHeight: 14,
+  },
+  timeSlotWrapper: {
+    marginTop: 8,
   },
   timeSlotGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
   },
-  noDataContainer: {
-    alignItems: "center",
-    paddingVertical: 24,
-  },
-  noDataText: {
-    fontSize: 16,
-    color: colors.text,
-    marginTop: 8,
-    textAlign: "center",
-  },
-  noDataSubtext: {
-    fontSize: 14,
-    color: colors.gray600,
-    marginTop: 4,
-    textAlign: "center",
+  timeSlotItem: {
+    width: "31%",
+    marginBottom: 12,
   },
   insuranceContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
-  },
-  insuranceTitle: {
-    fontSize: 14,
-    color: colors.gray600,
+    backgroundColor: colors.white,
+    marginHorizontal: 16,
     marginBottom: 16,
-    textTransform: "uppercase",
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  insuranceCard: {
+    marginTop: 8,
   },
   insuranceOptions: {
     flexDirection: "row",
-    justifyContent: "flex-start",
-    marginBottom: 8,
+    justifyContent: "space-between",
+    marginBottom: 16,
   },
   insuranceOption: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    marginRight: 24,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginHorizontal: 6,
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.gray200,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  insuranceOptionSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + "08",
+    shadowColor: colors.primary,
+    shadowOpacity: 0.15,
   },
   radioButton: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: colors.gray400,
-    justifyContent: "center",
+    borderColor: colors.gray300,
     alignItems: "center",
+    justifyContent: "center",
     marginRight: 8,
   },
   radioButtonSelected: {
     borderColor: colors.primary,
   },
   radioButtonInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: colors.primary,
   },
   insuranceText: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.text,
+    flex: 1,
+    marginRight: 8,
   },
   insuranceNote: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.blue50,
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.blue500,
+  },
+  insuranceNoteText: {
     fontSize: 12,
-    color: colors.gray600,
-    fontStyle: "italic",
+    color: colors.blue700,
+    marginLeft: 8,
+    flex: 1,
+    lineHeight: 16,
   },
   similarDoctorsContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
+    backgroundColor: colors.white,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   similarDoctorsTitle: {
     fontSize: 16,
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   similarDoctorsList: {
     paddingVertical: 8,
   },
-  button: {
+  buttonContainer: {
+    paddingHorizontal: 16,
+    marginTop: 8,
+  },
+  continueButton: {
     backgroundColor: colors.primary,
-    paddingVertical: 16,
-    borderRadius: 8,
+    flexDirection: "row",
     alignItems: "center",
-    marginHorizontal: 16,
-    marginBottom: 16,
+    justifyContent: "center",
+    paddingVertical: 16,
+    borderRadius: 12,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   buttonDisabled: {
     backgroundColor: colors.gray400,
-  },
-  retryButton: {
-    backgroundColor: colors.gray200,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    marginTop: 16,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   buttonText: {
     fontSize: 16,
     color: colors.white,
+    marginRight: 8,
   },
   loadingContainer: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
+    paddingVertical: 40,
   },
   loadingText: {
     fontSize: 14,
     color: colors.gray600,
-    marginTop: 8,
+    marginTop: 12,
+    textAlign: "center",
+  },
+  noDataContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  noSlotsContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+  },
+  emptyStateIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.gray100,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  noDataText: {
+    fontSize: 16,
+    color: colors.text,
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  noDataSubtext: {
+    fontSize: 14,
+    color: colors.gray600,
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    fontSize: 14,
+    color: colors.white,
   },
 })

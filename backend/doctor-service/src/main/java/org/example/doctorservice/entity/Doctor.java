@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 
@@ -49,8 +50,8 @@ public class Doctor {
     @Column(length = 100)
     private String specialization;
 
-    @Column(name = "profile_image", length = 255)
-    private String profileImage;
+    @Column(name = "avatar")
+    private String avatar;
 
     @Enumerated(EnumType.STRING)
     private Type type;
@@ -59,9 +60,13 @@ public class Doctor {
     @JoinColumn(name = "department_id")
     private Department department;
 
+    @Column(name = "consultation_fee")
+    private BigDecimal consultationFee;
+
     @Column(name = "created_at")
     @CreationTimestamp
     private Timestamp createdAt;
+
 
     public enum Gender {
         MALE, FEMALE, OTHER
@@ -100,5 +105,14 @@ public class Doctor {
 
     public enum Type {
         EXAMINATION, SERVICE
+    }
+    @PrePersist
+    public void prePersist() {
+        if (this.avatar == null || this.avatar.trim().isEmpty()) {
+            this.avatar = "https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg";
+        }
+        if (this.consultationFee == null) {
+            this.consultationFee = new BigDecimal("200000");
+        }
     }
 }

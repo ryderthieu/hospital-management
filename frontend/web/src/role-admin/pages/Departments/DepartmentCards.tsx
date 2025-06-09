@@ -7,7 +7,7 @@ import Pagination from "../../components/common/Pagination";
 interface DoctorSimple {
   doctorId: number;
   fullName: string;
-  profileImage?: string;
+  avatar?: string;
 }
 
 export default function DepartmentCards() {
@@ -20,19 +20,16 @@ export default function DepartmentCards() {
 
   // Fetch departments from API
   useEffect(() => {
-    const fetchDepartmentsOptimized = async () => {
+    const fetchDepartmentsAndDoctors = async () => {
       try {
         setLoading(true);
         
-        // Step 1: Fetch all departments
         const apiDepartments = await departmentService.getAllDepartments();
         
-        // Step 2: Get all unique department IDs
         const departmentIds = apiDepartments
           .map(dept => dept.departmentId)
           .filter(id => id !== undefined);
         
-        // Step 3: Fetch doctors for all departments in parallel (batch)
         const doctorPromises = departmentIds.map(id => 
           departmentService.getDoctorsByDepartmentId(id).catch(error => {
             console.error(`Error fetching doctors for department ${id}:`, error);
@@ -57,11 +54,11 @@ export default function DepartmentCards() {
           if (transformedDept.departmentId) {
             const doctors = doctorMap.get(transformedDept.departmentId) || [];
             
-            // Extract profile images from doctors (limit to 3)
+            // Extract avatar images from doctors (limit to 3)
             const doctorImages = (doctors as DoctorSimple[])
-              .filter(doctor => doctor.profileImage && doctor.profileImage.trim() !== '') 
+              .filter(doctor => doctor.avatar && doctor.avatar.trim() !== '') 
               .slice(0, 3)
-              .map(doctor => doctor.profileImage!);
+              .map(doctor => doctor.avatar!);
             
             // Set team images
             if (doctorImages.length === 0) {
@@ -90,7 +87,7 @@ export default function DepartmentCards() {
       }
     };
 
-    fetchDepartmentsOptimized();
+    fetchDepartmentsAndDoctors();
   }, []);
   // Function to handle navigation to department detail page
   const handleViewDetail = (department: Department) => {

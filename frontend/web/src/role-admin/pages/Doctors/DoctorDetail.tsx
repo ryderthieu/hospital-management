@@ -79,7 +79,7 @@ export default function DoctorDetail() {
       const reader = new FileReader();
       reader.onload = (e) => {
         setDoctorData((prev) =>
-          prev ? { ...prev, profileImage: e.target?.result as string } : prev
+          prev ? { ...prev, avatar: e.target?.result as string } : prev
         );
       };
       reader.readAsDataURL(file);

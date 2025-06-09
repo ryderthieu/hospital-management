@@ -11,6 +11,8 @@ export type RootStackParamList = {
     selectedDate: string
     selectedTime: string
     hasInsurance: boolean
+    scheduleId: number
+    patientId: number
   }
   BookingConfirmation: {
     doctor: Doctor
@@ -117,8 +119,8 @@ export interface DateOption {
   id: string // ISO date string
   day: string
   date: string
+  scheduleIds: number[];
   disabled?: boolean
-  // Các trường bổ sung
   isToday?: boolean
   isTomorrow?: boolean
   isWeekend?: boolean

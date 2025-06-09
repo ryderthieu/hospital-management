@@ -18,7 +18,7 @@ const DoctorCard: React.FC<DoctorCardProps> = ({
     <div className="flex items-center justify-center gap-4 w-full md:w-auto">
       <div className="">
         <img
-          src={doctor.profileImage || "/images/user/owner.jpg"}
+          src={doctor.avatar || "/images/user/owner.jpg"}
           alt={doctor.fullName}
           className="w-20 h-20 rounded-lg object-cover"
           onError={(e) => {

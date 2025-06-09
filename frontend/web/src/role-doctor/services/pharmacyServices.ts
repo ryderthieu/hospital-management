@@ -6,20 +6,27 @@ export const pharmacyService = {
 
   // Lấy thông tin toa thuốc theo appointmentId (appointment hiện tại)
   async getCurrentPrescriptionByAppointmentId(appointmentId: number): Promise<Prescription> {
-    const response = await api.get(`/pharmacy/prescription/${appointmentId}`)
+    const response = await api.get(`/pharmacy/prescriptions/appointment/${appointmentId}`)
     return response.data
   },
 
-  // Kê toa thuốc theo appointmentId (appointment hiện tại)
-  async postPrescriptionByAppointmentId(appointmentId: number, prescription: Prescription): Promise<void> {
-    await api.post(`/pharmacy/prescription/${appointmentId}`, {prescription})
+  // Thêm toa thuốc (appointment hiện tại)
+  async createPrescriptionByAppointmentId(): Promise<Prescription> {
+    const response = await api.post(`/pharmacy/prescription`)
+    return response.data
   },
 
-  // Thêm sinh hiệu
+  //Sửa toa thuốc theo prescriptionId
+  async updatePrescriptionByAppointmentId(prescriptionId: number): Promise<any> {
+    const response = await api.put(`/pharmacy/prescription/${prescriptionId}`)
+    return response.data
+  },
 
-  // Thêm chỉ định xét nghiệm
+  //Xóa toa thuốc theo prescriptionId
+  async deletePrescriptionByAppointmentId(prescriptionId: number): Promise<any> {
+    const response = await api.delete(`/pharmacy/prescription/${prescriptionId}`)
+    return response.data
+  },
 
-  // Lấy lịch sử khám (appointmnet trước)
-
-  // Lấy lịch sử xét nghiệm (appointmnet trước)
+  
 }

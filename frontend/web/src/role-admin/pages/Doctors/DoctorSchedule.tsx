@@ -85,7 +85,7 @@ interface DoctorData {
   country: string;
   city: string;
   postalCode: string;
-  profileImage: string;
+  avatar: string;
 }
 
 const DoctorSchedule = () => {
@@ -125,7 +125,7 @@ const DoctorSchedule = () => {
     country: "Việt Nam",
     city: "Thành phố Hồ Chí Minh",
     postalCode: "70000",
-    profileImage: "/images/user/doctor-avatar.jpg",
+    avatar: "/images/user/doctor-avatar.jpg",
   });
 
   // Load mock schedule data

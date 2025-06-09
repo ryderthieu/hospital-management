@@ -37,6 +37,15 @@ public class Patient {
     @Column(name = "full_name")
     private String fullName;
 
+    @Column(name = "phone")
+    private String phone;
+
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "avatar", length = 200)
+    private String avatar;
+
     private LocalDate birthday;
 
     @Enumerated(EnumType.STRING)
@@ -65,4 +74,10 @@ public class Patient {
 
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<EmergencyContact> emergencyContacts = new ArrayList<>();
+    @PrePersist
+    public void prePersist() {
+        if (this.avatar == null || this.avatar.trim().isEmpty()) {
+            this.avatar = "https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg";
+        }
+    }
 }
