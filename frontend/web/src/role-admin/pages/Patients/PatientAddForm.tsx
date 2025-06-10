@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { CreatePatientRequest } from "../../types/patient";
 import { patientService } from "../../services/patientService";
 import { parse, format } from "date-fns";
+import ReturnButton from "../../components/ui/button/ReturnButton";
 
 export default function PatientAddForm() {
   const navigate = useNavigate();
@@ -62,23 +63,21 @@ export default function PatientAddForm() {
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg border border-gray-200">
+    <div className="">
       <div className="flex items-center mb-6">
         <Link
           to="/admin/patients"
           className="text-base-600 hover:text-base-700 flex items-center"
         >
-          <ArrowLeft className="mr-2" size={20} />
-          <span className="text-xl font-medium text-base-600">
+          <ReturnButton />
+          <span className="text-xl font-semibold">
             Thêm bệnh nhân
           </span>
         </Link>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-        <h2 className="text-xl font-bold text-red-600 mb-6">
-          Thông tin cơ bản
-        </h2>
+       
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
@@ -91,7 +90,7 @@ export default function PatientAddForm() {
                 value={formData.fullName}
                 onChange={handleChange}
                 placeholder="VD: Nguyễn Văn A..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500/20 focus:border-base-500"
                 required
               />
             </div>
@@ -105,7 +104,7 @@ export default function PatientAddForm() {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="VD: email@example.com"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500/20 focus:border-base-500"
                 required
               />
             </div>
@@ -119,7 +118,7 @@ export default function PatientAddForm() {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Nhập mật khẩu"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500/20 focus:border-base-500"
                 required
               />
             </div>
@@ -133,7 +132,7 @@ export default function PatientAddForm() {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="VD: 0917165628"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500/20 focus:border-base-500"
                 required
               />
             </div>
@@ -147,7 +146,7 @@ export default function PatientAddForm() {
                 value={formData.identityNumber}
                 onChange={handleChange}
                 placeholder="VD: 0123456789"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500/20 focus:border-base-500"
                 required
               />
             </div>
@@ -159,7 +158,7 @@ export default function PatientAddForm() {
                 value={formData.insuranceNumber}
                 onChange={handleChange}
                 placeholder="VD: ytaucsonns"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500/20 focus:border-base-500"
               />
             </div>
             <div className="space-y-2">
@@ -173,7 +172,7 @@ export default function PatientAddForm() {
                   value={formData.birthday}
                   onChange={handleChange}
                   placeholder="DD/MM/YYYY"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500/20 focus:border-base-500"
                   required
                 />
                 <Calendar
@@ -211,7 +210,7 @@ export default function PatientAddForm() {
                 value={formData.address}
                 onChange={handleChange}
                 placeholder="Nhập địa chỉ"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500/20 focus:border-base-500"
               />
             </div>
             <div className="space-y-2">
@@ -235,7 +234,7 @@ export default function PatientAddForm() {
                 value={formData.allergies}
                 onChange={handleChange}
                 placeholder="Nhập dị ứng (nếu có)"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500/20 focus:border-base-500"
               />
             </div>
             <div className="space-y-2">
@@ -248,7 +247,7 @@ export default function PatientAddForm() {
                 value={formData.height ?? ""}
                 onChange={handleChange}
                 min={0}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500/20 focus:border-base-500"
               />
             </div>
             <div className="space-y-2">
@@ -261,7 +260,7 @@ export default function PatientAddForm() {
                 value={formData.weight ?? ""}
                 onChange={handleChange}
                 min={0}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500/20 focus:border-base-500"
               />
             </div>
             <div className="space-y-2">
@@ -287,7 +286,7 @@ export default function PatientAddForm() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-4 mt-8">
+          <div className="flex gap-4 mt-8 justify-end">
             <button
               type="submit"
               className="px-4 py-2 bg-base-600 text-white font-medium rounded-md hover:bg-base-700 focus:outline-none focus:ring-2 focus:ring-base-500 focus:ring-offset-2"

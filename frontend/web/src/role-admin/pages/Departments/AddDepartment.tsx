@@ -104,9 +104,6 @@ const AddDepartment: React.FC = () => {
             Thêm khoa mới
           </h2>
         </div>
-        <p className="text-gray-600 dark:text-gray-400">
-          Điền thông tin để thêm khoa phòng mới vào hệ thống
-        </p>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg border p-6">
@@ -115,7 +112,7 @@ const AddDepartment: React.FC = () => {
           <div>
             <label
               htmlFor="departmentName"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block font-medium text-base-700 dark:text-gray-300 mb-2"
             >
               Tên khoa <span className="text-red-500">*</span>
             </label>
@@ -141,7 +138,7 @@ const AddDepartment: React.FC = () => {
           <div>
             <label
               htmlFor="description"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block font-medium text-base-700 dark:text-gray-300 mb-2"
             >
               Mô tả khoa <span className="text-red-500">*</span>
             </label>
@@ -167,7 +164,7 @@ const AddDepartment: React.FC = () => {
           <div>
             <label
               htmlFor="location"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block font-medium text-base-700 dark:text-gray-300 mb-2"
             >
               Vị trí <span className="text-red-500">*</span>
             </label>
@@ -193,7 +190,7 @@ const AddDepartment: React.FC = () => {
           <div>
             <label
               htmlFor="head"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block font-medium text-base-700 dark:text-gray-300 mb-2"
             >
               Trưởng khoa
             </label>

@@ -41,6 +41,7 @@ import {
   OutpatientClinics,
   MedicalCalendar,
   ClinicDetail,
+  AddClinic,
 } from "./pages/MedicalExamination";
 import Authorization from "./pages/Authorization/Authorization";
 
@@ -57,6 +58,7 @@ const AdminApp: React.FC = () => {
           <Route path="calendar" element={<MedicalCalendar />} />
           <Route path="outpatient-clinics" element={<OutpatientClinics />} />
           <Route path="outpatient-clinics/:id" element={<ClinicDetail />} />
+          <Route path="outpatient-clinics/add" element={<AddClinic />} />
 
           {/* Patients Pages */}
           <Route path="patients" element={<Patient />} />

@@ -3,6 +3,7 @@ import type {
   ServiceDto,
   Appointment,
   ServiceOrder,
+  AppointmentUpdateRequest,
 } from "../types/appointment";
 import { api } from "../../services/api";
 
@@ -92,9 +93,12 @@ export const appointmentService = {
   // Update appointment
   async updateAppointment(
     appointmentId: number,
-    appointmentData: Partial<Omit<Appointment, "appointmentId" | "createdAt">>
-  ): Promise<Appointment> {
-    const response = await api.put<Appointment>(
+    appointmentData: Omit<
+      AppointmentUpdateRequest,
+      "appointmentId" | "createdAt"
+    >
+  ): Promise<AppointmentUpdateRequest> {
+    const response = await api.put<AppointmentUpdateRequest>(
       `/appointments/${appointmentId}`,
       appointmentData
     );

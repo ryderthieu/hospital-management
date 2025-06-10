@@ -115,7 +115,7 @@ export default function DepartmentCards() {
         {/* Search bar và số lượng */}
         <div className="flex flex-col gap-2 mb-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Danh sách khoa</h3>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Danh sách khoa/phòng ban</h3>
             <span className="ml-5 text-sm bg-base-600/20 text-base-600 py-1 px-4 rounded-full font-bold">{totalItems} khoa</span>
           </div>
           <div className="relative w-full sm:max-w-xs">

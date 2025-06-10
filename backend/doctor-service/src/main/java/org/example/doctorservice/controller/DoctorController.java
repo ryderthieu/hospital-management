@@ -78,6 +78,15 @@ public class DoctorController {
         return ResponseEntity.ok(doctorService.getDoctorByUserId(userId));
     }
 
+//    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PostMapping("/{doctorId}/create-user")
+    public ResponseEntity<DoctorDto> createUserForDoctor(@PathVariable Integer doctorId, 
+                                                        @RequestParam(required = false) String phone,
+                                                        @RequestParam(required = false) String email,
+                                                        @RequestParam(required = false) String password) {
+        return ResponseEntity.ok(doctorService.createUserForDoctor(doctorId, phone, email, password));
+    }
+
     @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
     @PostMapping(value = "/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DoctorDto> uploadAvatar(
