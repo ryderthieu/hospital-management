@@ -141,7 +141,7 @@ const Dashboard: React.FC = () => {
         {/* Header */}
         <div style={{ marginBottom: "32px" }}>
           <Title level={2} style={{ margin: 0, color: "#111827" }}>
-            Chào mừng trở lại, Dr. Nguyễn Thiên Tài
+            Chào mừng trở lại, Dr. Trần Nhật Trường
           </Title>
           <Text style={{ color: "#6b7280", fontSize: "16px" }}>Đây là tổng quan về hoạt động hôm nay của bạn</Text>
         </div>
@@ -389,7 +389,7 @@ const Dashboard: React.FC = () => {
             >
               <div style={{ marginBottom: "20px" }}>
                 <Text style={{ color: "#6b7280", fontSize: "14px" }}>Phòng khám</Text>
-                <div style={{ fontWeight: 600, fontSize: "16px", color: "#111827" }}>Dị Ứng - Miễn Dịch Lâm Sàng</div>
+                <div style={{ fontWeight: 600, fontSize: "16px", color: "#111827" }}>Phòng khám nội</div>
               </div>
 
               <Divider style={{ margin: "16px 0" }} />

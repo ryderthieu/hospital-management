@@ -51,3 +51,11 @@ export const getServiceOrdersByAppointmentId = async (
   const response = await api.get(`/appointments/services/appointments/${appointmentId}/orders`)
   return response.data
 }
+
+// Lấy tất cả đơn dịch vụ theo roomId
+export const getServiceOrdersByRoomId = async (
+   roomId: number
+): Promise<ServiceOrder[]> => {
+  const response = await api.get(`/appointments/services/rooms/${roomId}/orders`)
+  return response.data
+}

@@ -247,23 +247,38 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({
           "[BookAppointmentScreen] Phản hồi bác sĩ tương tự:",
           JSON.stringify(response.data, null, 2)
         );
-        const allDoctors = response.data.map((dto) => ({
-          id: dto.doctorId.toString(),
-          name:
-            [dto.academicDegree, dto.fullName]
-              .filter(Boolean)
-              .join(" ")
-              .trim() || "Bác sĩ chưa có tên",
-          specialty: dto.specialization || doctor.specialty,
-          departmentId: dto.departmentId.toString(),
-          image: { uri: "https://via.placeholder.com/80" },
-          price: doctor.price || "150.000 VND",
-          room: null,
-          rating: 0,
-          experience: null,
-          isOnline: null,
-          joinDate: null,
-        }));
+        const allDoctors = response.data.map((dto) => {
+          const academicPart = dto.academicDegree ? `${dto.academicDegree}` : '';
+          const namePart = dto.fullName || '';
+          const fullName = [academicPart, namePart]
+            .filter(Boolean)
+            .join(' ')
+            .trim() || 'Bác sĩ chưa có tên';
+
+          // Format consultationFee as VND currency
+          const formattedPrice = dto.consultationFee
+            ? new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND',
+              }).format(dto.consultationFee)
+            : '150.000 VND';
+
+          return {
+            id: dto.doctorId.toString(),
+            name: fullName,
+            specialty: dto.specialization || doctor.specialty || 'Đa khoa',
+            departmentId: dto.departmentId?.toString(),
+            image: dto.avatar ? { uri: dto.avatar.trim() } : null, // Map avatar to image field
+            price: formattedPrice,
+            consultationFee: Number(dto.consultationFee) || 0,
+            room: null,
+            rating: 0,
+            experience: null,
+            isOnline: false,
+            joinDate: null,
+            status: 'active',
+          };
+        });
 
         const filteredDoctors = allDoctors.filter((d) => d.id !== doctor.id);
         const shuffledDoctors = filteredDoctors.sort(() => Math.random() - 0.5);
@@ -465,7 +480,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({
         <Header
           title="Chọn thời gian khám"
           showBack={true}
-          onPress={() => navigation.goBack()}
+          onBackPress={() => navigation.goBack()}
         />
         <View style={styles.loadingContainer}>
           {!fontsLoaded ? (
@@ -972,16 +987,10 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   similarDoctorsContainer: {
-    backgroundColor: colors.white,
-    marginHorizontal: 16,
     marginBottom: 16,
-    padding: 20,
-    borderRadius: 16,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    paddingRight: 20,
+    paddingLeft: 20,
+    paddingBottom: 20,
   },
   similarDoctorsTitle: {
     fontSize: 16,

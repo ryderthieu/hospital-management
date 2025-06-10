@@ -7,6 +7,9 @@ import { SearchOutlined, DeleteOutlined, PlusOutlined, EyeOutlined } from "@ant-
 import { useMedicalOrderModal } from "../../hooks/useServiceOrder"
 import type { Services } from "../../types/services"
 import type { ServiceOrder } from "../../types/serviceOrder"
+import { examinationRoomService } from "../../services/examinationRoomServices"
+import type { ExaminationRoom } from "../../types/examinationRoom"
+import { appointmentService } from "../../services/appointmentServices"
 
 const { Text } = Typography
 
@@ -27,6 +30,9 @@ export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
   const [searchInput, setSearchInput] = useState("")
   const [filteredServices, setFilteredServices] = useState<Services[]>([])
   const [showSearchResults, setShowSearchResults] = useState(false)
+  const [examinationRooms, setExaminationRooms] = useState<ExaminationRoom[]>([])
+  const [roomsLoading, setRoomsLoading] = useState(false)
+  const [appointmentData, setAppointmentData] = useState<any>(null)
 
   // Search services when input changes
   useEffect(() => {
@@ -43,6 +49,43 @@ export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
 
     return () => clearTimeout(timeoutId)
   }, [searchInput, searchServices])
+
+  useEffect(() => {
+    const fetchTestRooms = async () => {
+      setRoomsLoading(true)
+      try {
+        const allRooms = await examinationRoomService.getAllExaminationRooms()
+        const testRooms = allRooms.filter((room) => room.type === "TEST")
+        setExaminationRooms(testRooms)
+      } catch (error) {
+        console.error("Error fetching examination rooms:", error)
+        message.error("Không thể tải danh sách phòng xét nghiệm")
+      } finally {
+        setRoomsLoading(false)
+      }
+    }
+
+    if (isOpen) {
+      fetchTestRooms()
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    const fetchAppointmentData = async () => {
+      if (appointmentId) {
+        try {
+          const data = await appointmentService.getAppointmentById(appointmentId)
+          setAppointmentData(data)
+        } catch (error) {
+          console.error("Error fetching appointment:", error)
+        }
+      }
+    }
+
+    if (isOpen && appointmentId) {
+      fetchAppointmentData()
+    }
+  }, [isOpen, appointmentId])
 
   const addIndication = (service: Services) => {
     const newIndication: MedicalOrderItem = {
@@ -120,16 +163,12 @@ export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
           value={roomId}
           onChange={(value) => updateField(index, "roomId", value)}
           style={{ width: "100%" }}
-          options={[
-            { value: 1, label: "CT-Scan [01]" },
-            { value: 2, label: "CT-Scan [02]" },
-            { value: 3, label: "MRI [01]" },
-            { value: 4, label: "MRI [02]" },
-            { value: 5, label: "X-Ray [01]" },
-            { value: 6, label: "X-Ray [02]" },
-            { value: 7, label: "Blood Test [01]" },
-            { value: 8, label: "Blood Test [02]" },
-          ]}
+          loading={roomsLoading}
+          placeholder="Chọn phòng xét nghiệm"
+          options={examinationRooms.map((room) => ({
+            value: room.roomId,
+            label: `${room.roomName} - ${room.building} T${room.floor}`,
+          }))}
         />
       ),
     },
@@ -157,9 +196,9 @@ export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
       <div className="mb-6">
         <div className="flex items-center mb-4">
           <div className="flex-1">
-            <Text strong>Bệnh nhân: Trần Nhật Trường</Text>
+            <Text strong>Bệnh nhân: {appointmentData?.patientInfo?.fullName || "Đang tải..."}</Text>
             <div>
-              <Text type="secondary">Mã bệnh nhân: BN22521584</Text>
+              <Text type="secondary">Mã bệnh nhân: {appointmentData?.patientInfo?.patientId || "N/A"}</Text>
             </div>
           </div>
           <div className="text-right">

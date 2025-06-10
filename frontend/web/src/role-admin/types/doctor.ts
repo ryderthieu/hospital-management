@@ -1,3 +1,19 @@
+// Schedule for admin (lịch làm việc bác sĩ, dùng cho admin quản lý)
+export interface AdminDoctorSchedule {
+  scheduleId: number;
+  doctorId: number;
+  doctorName?: string; // optional, for display
+  workDate: string; // YYYY-MM-DD
+  startTime: string; // HH:mm:ss
+  endTime: string; // HH:mm:ss
+  shift: Shift;
+  roomId: number;
+  roomName?: string; // optional, for display
+  building?: string;
+  floor?: number;
+  note?: string;
+  createdAt: string;
+}
 export interface Doctor {
   doctorId: number;
   userId: number;
@@ -71,14 +87,17 @@ export interface ExaminationRoom {
   building: string;
   floor: number;
   note: string;
+  createdAt?: string;
 }
 
 export interface ExaminationRoomDto {
+  roomId?: number;
   departmentId: number;
   type: RoomType;
   building: string;
   floor: number;
   note: string;
+  createdAt?: string;
 }
 export interface Schedule {
   scheduleId: number;

@@ -1,3 +1,4 @@
+import type { ImageSourcePropType } from "react-native";
 
 export interface PageResponse<T> {
   content: T[];
@@ -7,6 +8,7 @@ export interface PageResponse<T> {
   totalPages: number;
   last: boolean;
 }
+
 export type RootStackParamList = {
   MainTabs: undefined;
   Home: undefined;
@@ -14,13 +16,14 @@ export type RootStackParamList = {
   AppointmentDetail: { appointment: Appointment };
   CompletedAppointmentDetail: { appointment: Appointment };
 };
+
 export interface Appointment {
   id: string;
   date: string;
   time: string;
   doctorName: string;
   specialty: string;
-  imageUrl: string;
+  image: { uri: string } | null; // Thay đổi từ imageUrl: string
   status: "upcoming" | "completed";
   department?: string;
   room?: string;
@@ -35,18 +38,13 @@ export interface Appointment {
   diagnosis?: string[];
   doctorNotes?: string[];
   testResults?: { name: string; fileUrl: string }[];
-  codes?: {
-    appointmentCode?: string;
-    transactionCode?: string;
-    patientCode?: string;
-  };
 }
 
 export interface Doctor {
   id: string;
   name: string;
   specialty: string;
-  imageUrl: string;
+  image?: ImageSourcePropType | null; // Thay imageUrl
   rating: number;
   experience: string;
   availability: string[];
@@ -68,6 +66,7 @@ export interface AppointmentResponseDto {
     type: string;
     departmentId: number;
     createdAt: string;
+    avatar?: string; // Thêm trường avatar
   };
   schedule: {
     scheduleId: number;

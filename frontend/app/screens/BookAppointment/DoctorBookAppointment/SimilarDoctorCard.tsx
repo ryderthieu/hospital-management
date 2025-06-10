@@ -28,7 +28,11 @@ export const SimilarDoctorCard: React.FC<SimilarDoctorCardProps> = memo(({ docto
   const CardContent = (
     <View style={styles.similarDoctorCard}>
       <View style={styles.imageContainer}>
-        <Image source={doctor.image} style={styles.similarDoctorImage} resizeMode="cover" />
+        <Image
+          source={doctor.image || { uri: "/placeholder.svg?height=64&width=64" }}
+          style={styles.similarDoctorImage}
+          resizeMode="cover"
+        />
       </View>
 
       <View style={styles.doctorInfo}>
@@ -84,11 +88,11 @@ SimilarDoctorCard.displayName = "SimilarDoctorCard"
 
 const styles = StyleSheet.create({
   similarDoctorCard: {
-    width: 180, // Fixed width for horizontal scrolling instead of '48%'
+    width: 180,
     backgroundColor: colors.white,
     borderRadius: 16,
     padding: 16,
-    marginRight: 12, // Right margin for horizontal spacing
+    marginRight: 12,
     borderWidth: 1,
     borderColor: colors.border,
     elevation: 2,
@@ -100,7 +104,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     position: "relative",
-    minHeight: 220, // Ensure consistent height for horizontal layout
+    minHeight: 220,
   },
   imageContainer: {
     alignItems: "center",
@@ -113,17 +117,6 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     backgroundColor: colors.base100,
   },
-  statusIndicator: {
-    position: "absolute",
-    bottom: 2,
-    right: "35%",
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: "#4CAF50",
-    borderWidth: 2,
-    borderColor: colors.white,
-  },
   doctorInfo: {
     flex: 1,
     gap: 6,
@@ -132,7 +125,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text,
     textAlign: "center",
-    minHeight: 36, // Ensure consistent height
+    minHeight: 36,
   },
   specialtyContainer: {
     flexDirection: "row",
@@ -144,12 +137,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     textAlign: "center",
-  },
-  ratingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
   },
   roomContainer: {
     flexDirection: "row",

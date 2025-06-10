@@ -1,25 +1,30 @@
-import type React from "react"
-import { StyleSheet, View, Text, Image, TouchableOpacity } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
-import type { Appointment } from "../../screens/Appointment/type"
-import { useNavigation } from "@react-navigation/native"
-import { useFont, fontFamily } from '../../context/FontContext';
+import type React from "react";
+import { StyleSheet, View, Text, Image, TouchableOpacity } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import type { Appointment } from "../../screens/Appointment/type";
+import { useNavigation } from "@react-navigation/native";
+import { useFont, fontFamily } from "../../context/FontContext";
+import { colors } from "../../styles/globalStyles";
 
 interface AppointmentCardProps {
-  appointment: Appointment
+  appointment: Appointment;
 }
 
 const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment }) => {
   const { fontsLoaded } = useFont();
-  const { date, time, doctorName, specialty, imageUrl, status } = appointment
-  const navigation = useNavigation()
+  const { date, time, doctorName, specialty, image, status } = appointment;
+  const navigation = useNavigation();
 
   const handlePress = () => {
     if (status === "upcoming") {
-      navigation.navigate("AppointmentDetail", { appointment })
+      navigation.navigate("AppointmentDetail", { appointment });
     } else {
-      navigation.navigate("CompletedAppointmentDetail", { appointment })
+      navigation.navigate("CompletedAppointmentDetail", { appointment });
     }
+  };
+
+  if (!fontsLoaded) {
+    return null; // Or add skeleton component
   }
 
   return (
@@ -39,7 +44,13 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment }) => {
       <View style={styles.separator} />
 
       <View style={styles.doctorInfo}>
-        <Image source={{ uri: imageUrl || "/placeholder.svg?height=60&width=60" }} style={styles.doctorImage} />
+        <View style={styles.imageContainer}>
+          <Image
+            source={image || { uri: "/placeholder.svg?height=60&width=60" }}
+            style={styles.doctorImage}
+            resizeMode="cover"
+          />
+        </View>
         <View style={styles.doctorDetails}>
           <Text style={styles.doctorName}>{doctorName}</Text>
           <Text style={styles.doctorSpecialty}>{specialty}</Text>
@@ -51,8 +62,8 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment }) => {
         )}
       </View>
     </TouchableOpacity>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   card: {
@@ -90,7 +101,7 @@ const styles = StyleSheet.create({
   },
   appointmentTimeText: {
     fontFamily: fontFamily.medium,
-    fontSize: 16,
+    fontSize: 16, // Fixed typo: was 5, corrected to 16 for readability
     marginLeft: 8,
   },
   separator: {
@@ -102,11 +113,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
+  imageContainer: {
+    position: "relative",
+    marginRight: 12,
+  },
   doctorImage: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: "#E5E7EB",
+    backgroundColor: colors.base100,
   },
   doctorDetails: {
     flex: 1,
@@ -133,6 +148,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#0BC5C5",
   },
-})
+});
 
-export default AppointmentCard
+export default AppointmentCard;

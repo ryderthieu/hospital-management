@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -11,16 +11,17 @@ import {
   StatusBar,
   ImageSourcePropType,
   Alert,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useFont, fontFamily } from '../../context/FontContext';
-import Header from '../../components/Header';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { HomeStackParamList } from '../../navigation/types';
-import { useNavigation } from '@react-navigation/native';
-import API from '../../services/api';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFont, fontFamily } from "../../context/FontContext";
+import Header from "../../components/Header";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { HomeStackParamList } from "../../navigation/types";
+import { useNavigation } from "@react-navigation/native";
+import API from "../../services/api";
 
-type HomeScreenNavigationProp = StackNavigationProp<HomeStackParamList, 'Home'>;
+type HomeScreenNavigationProp = StackNavigationProp<HomeStackParamList, "Home">;
 
 interface Doctor {
   id: number;
@@ -61,6 +62,7 @@ interface DoctorDto {
   fullName: string | null;
   specialization: string | null;
   academicDegree: string | null;
+  avatar?: string | null;
 }
 
 interface PageResponse<T> {
@@ -92,6 +94,7 @@ interface DepartmentDto {
   foundedYear: number | null;
   examinationRoomDtos?: any[] | null;
 }
+
 export default function HomeScreen() {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const { fontsLoaded } = useFont();
@@ -102,133 +105,219 @@ export default function HomeScreen() {
   const news: NewsItem[] = [
     {
       id: 1,
-      title: 'Simple steps to duy trì sức khỏe tim mạch cho mọi lứa tuổi',
-      date: '2025-06-12',
-      content: 'Duy trì sức khỏe tim mạch bao gồm tập thể dục đều đặn, chế độ ăn uống cân bằng và kiểm tra định kỳ...',
-      image: require('../../assets/images/logo/Logo.png'),
+      title: "Simple steps to duy trì sức khỏe tim mạch cho mọi lứa tuổi",
+      date: "2025-06-12",
+      content:
+        "Duy trì sức khỏe tim mạch bao gồm tập thể dục đều đặn, chế độ ăn uống cân bằng và kiểm tra định kỳ...",
+      image: require("../../assets/images/logo/Logo.png"),
     },
     {
       id: 2,
-      title: 'Siêu thực phẩm cần bổ sung vào chế độ ăn hàng ngày của gia đình bạn',
-      date: '2025-06-11',
-      content: 'Các siêu thực phẩm như quả mọng, hạt và rau xanh có thể tăng cường sức khỏe gia đình bạn...',
-      image: require('../../assets/images/logo/Logo.png'),
+      title:
+        "Siêu thực phẩm cần bổ sung vào chế độ ăn hàng ngày của gia đình bạn",
+      date: "2025-06-11",
+      content:
+        "Các siêu thực phẩm như quả mọng, hạt và rau xanh có thể tăng cường sức khỏe gia đình bạn...",
+      image: require("../../assets/images/logo/Logo.png"),
     },
     {
       id: 3,
-      title: 'Simple steps to duy trì sức khỏe tim mạch cho mọi lứa tuổi',
-      date: '2025-06-12',
-      content: 'Duy trì sức khỏe tim mạch bao gồm tập thể dục đều đặn, chế độ ăn uống cân bằng và kiểm tra định kỳ...',
-      image: require('../../assets/images/logo/Logo.png'),
+      title: "Simple steps to duy trì sức khỏe tim mạch cho mọi lứa tuổi",
+      date: "2025-06-12",
+      content:
+        "Duy trì sức khỏe tim mạch bao gồm tập thể dục đều đặn, chế độ ăn uống cân bằng và kiểm tra định kỳ...",
+      image: require("../../assets/images/logo/Logo.png"),
     },
     {
       id: 4,
-      title: 'Siêu thực phẩm cần bổ sung vào chế độ ăn hàng ngày của gia đình bạn',
-      date: '2025-06-11',
-      content: 'Các siêu thực phẩm như quả mọng, hạt và rau xanh có thể tăng cường sức khỏe gia đình bạn...',
-      image: require('../../assets/images/logo/Logo.png'),
+      title:
+        "Siêu thực phẩm cần bổ sung vào chế độ ăn hàng ngày của gia đình bạn",
+      date: "2025-06-11",
+      content:
+        "Các siêu thực phẩm như quả mọng, hạt và rau xanh có thể tăng cường sức khỏe gia đình bạn...",
+      image: require("../../assets/images/logo/Logo.png"),
     },
   ];
 
   useEffect(() => {
-    // fetchRecentDoctors(); // Comment tạm vì lỗi /appointments chưa xác nhận sửa
-    fetchSpecialties();
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const token = await AsyncStorage.getItem("token");
+        console.log("[HomeScreen] Token:", token || "No token found");
+
+        if (!token) {
+          console.warn("[HomeScreen] No token found, API calls may fail");
+          // Optionally navigate to login
+          // navigation.navigate("Login");
+        }
+
+        await Promise.all([fetchRecentDoctors(), fetchSpecialties()]);
+      } catch (error: any) {
+        console.error("[HomeScreen] Error in fetchData:", {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+        });
+        Alert.alert(
+          "Lỗi",
+          "Không thể tải dữ liệu. Vui lòng kiểm tra kết nối và thử lại.",
+          [{ text: "OK" }]
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const fetchRecentDoctors = async () => {
-    setIsLoading(true);
     try {
-      const appointmentsResponse = await API.get<AppointmentDto[]>('/appointments');
-      console.log('Debug - Appointments response:', appointmentsResponse.data);
+      console.log("[FetchRecentDoctors] Fetching appointments from /appointments");
+      const appointmentsResponse = await API.get<PageResponse<AppointmentDto>>(
+        "/appointments",
+        {
+          params: { page: "0", size: "10" },
+        }
+      );
+      console.log(
+        "[FetchRecentDoctors] Appointments response:",
+        JSON.stringify(appointmentsResponse.data, null, 2)
+      );
+
+      if (!appointmentsResponse.data.content.length) {
+        console.log("[FetchRecentDoctors] No appointments found");
+        setRecentDoctors([]);
+        return;
+      }
 
       const doctorIds = Array.from(
-        new Set(appointmentsResponse.data.map((appt) => appt.doctorId)),
+        new Set(appointmentsResponse.data.content.map((appt) => appt.doctorId))
       ).slice(0, 3);
 
-      const doctorsPromises = doctorIds.map((doctorId) =>
-        API.get<DoctorDto>(`/doctors/${doctorId}`),
+      console.log("[FetchRecentDoctors] Doctor IDs:", doctorIds);
+
+      const doctorsPromises = await Promise.allSettled(
+        doctorIds.map((doctorId) => API.get<DoctorDto>(`/doctors/${doctorId}`))
       );
-      const doctorsResponses = await Promise.all(doctorsPromises);
 
-      const doctors: Doctor[] = doctorsResponses.map((response) => {
-        const doctor = response.data;
-        const academicPart = doctor.academicDegree ? `${doctor.academicDegree}.` : '';
-        const namePart = doctor.fullName || '';
-        const fullName = [academicPart, namePart]
-          .filter((part) => part !== '')
-          .join(' ')
-          .trim() || 'Bác sĩ chưa có tên';
-        return {
-          id: doctor.doctorId,
-          name: fullName,
-          specialty: doctor.specialization || 'Đa khoa',
-          avatar: 'https://via.placeholder.com/70',
-        };
-      });
+      const doctors: Doctor[] = [];
+      for (const [index, result] of doctorsPromises.entries()) {
+        if (result.status === "fulfilled") {
+          const doctor = result.value.data;
+          const academicPart = doctor.academicDegree
+            ? `${doctor.academicDegree}.`
+            : "";
+          const namePart = doctor.fullName || "";
+          const fullName =
+            [academicPart, namePart]
+              .filter((part) => part !== "")
+              .join(" ")
+              .trim() || "Bác sĩ chưa có tên";
+          doctors.push({
+            id: doctor.doctorId,
+            name: fullName,
+            specialty: doctor.specialization || "Đa khoa",
+            avatar: doctor.avatar?.trim() || "https://via.placeholder.com/70",
+          });
+        } else {
+          console.error(
+            `[FetchRecentDoctors] Failed to fetch doctor ID ${doctorIds[index]}:`,
+            result.reason
+          );
+        }
+      }
 
+      console.log("[FetchRecentDoctors] Processed doctors:", doctors);
       setRecentDoctors(doctors);
     } catch (error: any) {
-      console.error('Fetch doctors error:', error.message, error.response?.data);
-      Alert.alert(
-        'Lỗi',
-        error.response?.data?.message || 'Không thể tải danh sách bác sĩ gần đây. Vui lòng thử lại.',
-      );
+      console.error("[FetchRecentDoctors] Error:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
       setRecentDoctors([]);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const fetchSpecialties = async () => {
-    setIsLoading(true);
     try {
-      const departmentsResponse = await API.get<DepartmentDto[]>('/doctors/departments');
-      console.log('Debug - Departments response:', departmentsResponse.data);
-      departmentsResponse.data.forEach((dept) =>
-        console.log(`Department ID: ${dept.departmentId}, Name: ${dept.departmentName}`),
+      console.log("[FetchSpecialties] Fetching departments from /doctors/departments");
+      const response = await API.get<
+        PageResponse<DepartmentDto> | DepartmentDto[]
+      >("/doctors/departments", {
+        params: { page: 0, size: 5 },
+      });
+      console.log(
+        "[FetchSpecialties] Departments response:",
+        JSON.stringify(response.data, null, 2)
       );
 
-      const doctorCountPromises = departmentsResponse.data
-        .slice(0, 5) // Giới hạn 5 chuyên khoa
-        .map((dept) =>
-          API.get<DoctorDto[]>(`/doctors/departments/${dept.departmentId}/doctors`)
-            .then((res) => ({ departmentId: dept.departmentId, count: res.data.length }))
-            .catch((error) => {
-              console.warn(`No doctors for department ${dept.departmentId}:`, error.message);
-              return { departmentId: dept.departmentId, count: 0 };
-            }),
-        );
+      const departments = Array.isArray(response.data)
+        ? response.data.slice(0, 5)
+        : response.data.content.slice(0, 5);
+
+      if (!departments.length) {
+        console.log("[FetchSpecialties] No departments found");
+        setSpecialties([]);
+        return;
+      }
+
+      console.log(
+        "[FetchSpecialties] Departments:",
+        departments.map((d) => ({
+          id: d.departmentId,
+          name: d.departmentName,
+        }))
+      );
+
+      const doctorCountPromises = departments.map((dept) =>
+        API.get<DoctorDto[]>(`/doctors/departments/${dept.departmentId}/doctors`)
+          .then((res) => ({
+            departmentId: dept.departmentId,
+            count: res.data.length,
+          }))
+          .catch((error) => {
+            console.warn(
+              `[FetchSpecialties] No doctors for department ${dept.departmentId}:`,
+              error.message
+            );
+            return { departmentId: dept.departmentId, count: 0 };
+          })
+      );
 
       const doctorCounts = await Promise.all(doctorCountPromises);
-      const doctorCountMap = new Map(doctorCounts.map((item) => [item.departmentId, item.count]));
+      const doctorCountMap = new Map(
+        doctorCounts.map((item) => [item.departmentId, item.count])
+      );
 
-      const specialtiesData: Specialty[] = departmentsResponse.data
-        .slice(0, 5) // Giới hạn 5 chuyên khoa
-        .map((dept) => {
-          let icon: ImageSourcePropType = { uri: 'https://via.placeholder.com/50' };
-          try {
-            icon = require('../../assets/images/logo/Logo.png');
-          } catch (e) {
-            console.warn(`Default icon not found, using placeholder URI`);
-          }
-          return {
-            id: dept.departmentId,
-            name: dept.departmentName || 'Chưa có tên',
-            doctorCount: doctorCountMap.get(dept.departmentId) || 0,
-            icon,
-          };
-        });
+      const specialtiesData: Specialty[] = departments.map((dept) => {
+        let icon: ImageSourcePropType = {
+          uri: "https://via.placeholder.com/50",
+        };
+        try {
+          icon = require("../../assets/images/logo/Logo.png");
+        } catch (e) {
+          console.warn(`[FetchSpecialties] Default icon not found for department ${dept.departmentId}`);
+        }
+        return {
+          id: dept.departmentId,
+          name: dept.departmentName || "Chưa có tên",
+          doctorCount: doctorCountMap.get(dept.departmentId) || 0,
+          icon,
+        };
+      });
 
+      console.log("[FetchSpecialties] Processed specialties:", specialtiesData);
       setSpecialties(specialtiesData);
     } catch (error: any) {
-      console.error('Fetch specialties error:', error.message, error.response?.data);
-      Alert.alert(
-        'Lỗi',
-        error.response?.data?.message || 'Không thể tải danh sách chuyên khoa. Vui lòng thử lại.',
-      );
+      console.error("[FetchSpecialties] Error:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
       setSpecialties([]);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -249,7 +338,7 @@ export default function HomeScreen() {
         showBack={false}
         showAction={true}
         actionType="notification"
-        onActionPress={() => navigation.navigate('Notifications')}
+        onActionPress={() => navigation.navigate("Notifications")}
       />
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -269,7 +358,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           style={styles.quickAppointment}
-          onPress={() => navigation.navigate('BookAppointment')}
+          onPress={() => navigation.navigate("BookAppointment")}
         >
           <View style={styles.quickAppointmentContent}>
             <View style={styles.doctorIconContainer}>
@@ -291,7 +380,16 @@ export default function HomeScreen() {
           >
             {recentDoctors.length > 0 ? (
               recentDoctors.map((doctor) => (
-                <TouchableOpacity key={doctor.id} style={styles.doctorCard}>
+                <TouchableOpacity
+                  key={doctor.id}
+                  style={styles.doctorCard}
+                  onPress={() =>
+                    navigation.navigate("BookAppointment", {
+                      screen: "DoctorDetail",
+                      params: { doctorId: doctor.id },
+                    })
+                  }
+                >
                   <Image
                     source={{ uri: doctor.avatar }}
                     style={styles.doctorAvatar}
@@ -303,7 +401,9 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               ))
             ) : (
-              <Text style={styles.placeholderText}>Chưa có bác sĩ nào gần đây</Text>
+              <Text style={styles.placeholderText}>
+                Chưa có bác sĩ nào gần đây
+              </Text>
             )}
           </ScrollView>
         </View>
@@ -311,7 +411,9 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitleInHeader}>Các chuyên khoa</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('BookAppointment')}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("BookAppointment")}
+            >
               <Text style={styles.seeAllText}>Tất cả</Text>
             </TouchableOpacity>
           </View>
@@ -326,21 +428,33 @@ export default function HomeScreen() {
                   key={specialty.id}
                   style={styles.specialtyCard}
                   onPress={() =>
-                    navigation.navigate('BookAppointment', {
-                      screen: 'DoctorList',
-                      params: { departmentId: specialty.id, departmentName: specialty.name },
+                    navigation.navigate("BookAppointment", {
+                      screen: "DoctorList",
+                      params: {
+                        departmentId: specialty.id,
+                        departmentName: specialty.name,
+                      },
                     })
                   }
                 >
                   <Image source={specialty.icon} style={styles.specialtyIcon} />
                   <Text style={styles.specialtyName}>{specialty.name}</Text>
-                  <Text style={[styles.doctorCount, specialty.doctorCount === 0 && styles.placeholderText]}>
-                    {specialty.doctorCount > 0 ? `${specialty.doctorCount} bác sĩ` : 'Không có bác sĩ'}
+                  <Text
+                    style={[
+                      styles.doctorCount,
+                      specialty.doctorCount === 0 && styles.placeholderText,
+                    ]}
+                  >
+                    {specialty.doctorCount > 0
+                      ? `${specialty.doctorCount} bác sĩ`
+                      : "Không có bác sĩ"}
                   </Text>
                 </TouchableOpacity>
               ))
             ) : (
-              <Text style={styles.placeholderText}>Chưa có chuyên khoa nào</Text>
+              <Text style={styles.placeholderText}>
+                Chưa có chuyên khoa nào
+              </Text>
             )}
           </ScrollView>
         </View>
@@ -348,7 +462,7 @@ export default function HomeScreen() {
         <View style={[styles.section, styles.newsSection]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitleInHeader}>Tin tức</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('News')}>
+            <TouchableOpacity onPress={() => navigation.navigate("News")}>
               <Text style={styles.seeAllText}>Tất cả</Text>
             </TouchableOpacity>
           </View>
@@ -356,7 +470,9 @@ export default function HomeScreen() {
             <TouchableOpacity
               key={item.id}
               style={styles.newsItem}
-              onPress={() => navigation.navigate('NewsDetail', { newsItem: item })}
+              onPress={() =>
+                navigation.navigate("NewsDetail", { newsItem: item })
+              }
             >
               <Image source={item.image} style={styles.newsImage} />
               <View style={styles.newsContent}>
@@ -378,12 +494,12 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   welcomeContainer: {
     marginTop: 30,
@@ -393,7 +509,7 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontFamily: fontFamily.regular,
     fontSize: 14,
-    color: '#00B5B8',
+    color: "#00B5B8",
     marginBottom: 5,
   },
   questionText: {
@@ -402,9 +518,9 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F2F2F7',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F2F2F7",
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 8,
@@ -414,45 +530,45 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 10,
     fontSize: 16,
-    color: '#000',
+    color: "#000",
   },
   quickAppointment: {
-    backgroundColor: '#B2EBF2',
+    backgroundColor: "#B2EBF2",
     marginHorizontal: 20,
     borderRadius: 12,
     padding: 15,
     marginBottom: 20,
   },
   quickAppointmentContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   doctorIconContainer: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 15,
   },
   quickAppointmentTitle: {
     fontFamily: fontFamily.bold,
     fontSize: 16,
-    color: '#00838F',
+    color: "#00838F",
   },
   quickAppointmentSubtitle: {
     fontFamily: fontFamily.regular,
     fontSize: 14,
-    color: '#00838F',
+    color: "#00838F",
   },
   section: {
     marginBottom: 20,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     marginBottom: 15,
   },
@@ -469,7 +585,7 @@ const styles = StyleSheet.create({
   seeAllText: {
     fontFamily: fontFamily.regular,
     fontSize: 14,
-    color: '#00B5B8',
+    color: "#00B5B8",
   },
   recentDoctorsContainer: {
     paddingLeft: 20,
@@ -477,31 +593,31 @@ const styles = StyleSheet.create({
   },
   doctorCard: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
     borderRadius: 8,
     padding: 10,
     width: 150,
     height: 160,
     marginRight: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   doctorAvatar: {
     width: 70,
     height: 70,
     borderRadius: 35,
-    marginBottom: 8,
+    backgroundColor: "#E0F7FA",
   },
   doctorName: {
     fontFamily: fontFamily.bold,
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 4,
   },
   doctorSpecialty: {
     fontFamily: fontFamily.regular,
     fontSize: 12,
-    color: '#00B5B8',
-    textAlign: 'center',
+    color: "#00B5B8",
+    textAlign: "center",
   },
   specialtiesContainer: {
     paddingLeft: 20,
@@ -511,9 +627,9 @@ const styles = StyleSheet.create({
     width: 160,
     height: 160,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderColor: "#E0E0E0",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 10,
     paddingVertical: 15,
     borderRadius: 12,
@@ -529,25 +645,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 5,
     numberOfLines: 1,
-    ellipsizeMode: 'tail',
-    textAlign: 'center',
+    ellipsizeMode: "tail",
+    textAlign: "center",
   },
   doctorCount: {
     fontFamily: fontFamily.regular,
     fontSize: 12,
-    color: '#757575',
+    color: "#757575",
   },
   placeholderText: {
     fontFamily: fontFamily.regular,
     fontSize: 12,
-    color: '#9CA3AF',
-    fontStyle: 'italic',
+    color: "#9CA3AF",
+    fontStyle: "italic",
   },
   newsSection: {
     paddingBottom: 10,
   },
   newsItem: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginHorizontal: 20,
     marginBottom: 15,
   },
@@ -559,7 +675,7 @@ const styles = StyleSheet.create({
   newsContent: {
     flex: 1,
     marginLeft: 15,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   newsTitle: {
     fontFamily: fontFamily.bold,
@@ -569,7 +685,7 @@ const styles = StyleSheet.create({
   newsDate: {
     fontFamily: fontFamily.regular,
     fontSize: 12,
-    color: '#8E8E93',
+    color: "#8E8E93",
   },
   bottomPadding: {
     height: 80,

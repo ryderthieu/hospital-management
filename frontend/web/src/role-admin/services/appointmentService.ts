@@ -4,6 +4,8 @@ import type {
   Appointment,
   ServiceOrder,
   AppointmentUpdateRequest,
+  AppointmentRequest,
+  AppointmentResponse,
 } from "../types/appointment";
 import { api } from "../../services/api";
 
@@ -81,9 +83,9 @@ export const appointmentService = {
 
   // Create appointment
   async createAppointment(
-    appointmentData: Omit<Appointment, "appointmentId" | "createdAt">
-  ): Promise<Appointment> {
-    const response = await api.post<Appointment>(
+    appointmentData: Omit<AppointmentRequest, "appointmentId" | "createdAt">
+  ): Promise<AppointmentRequest> {
+    const response = await api.post<AppointmentRequest>(
       "/appointments",
       appointmentData
     );
@@ -108,6 +110,23 @@ export const appointmentService = {
   // Delete appointment
   async deleteAppointment(appointmentId: number): Promise<string> {
     const response = await api.delete<string>(`/appointments/${appointmentId}`);
+    return response.data;
+  },
+
+  // Get all appointments (PageResponse)
+  async getAllAppointments(
+    pageNo: number = 0,
+    pageSize: number = 10
+  ): Promise<{
+    content: AppointmentResponse[];
+    totalPages: number;
+    totalElements: number;
+    pageNo: number;
+    pageSize: number;
+  }> {
+    const response = await api.get(
+      `/appointments?pageNo=${pageNo}&pageSize=${pageSize}`
+    );
     return response.data;
   },
 };

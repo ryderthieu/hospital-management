@@ -3,6 +3,7 @@ import {
   Patient,
   PatientDto,
   EmergencyContact,
+  EmergencyContactDto,
   CreatePatientRequest,
   RoomDetail,
   RoomDetailDto,
@@ -58,6 +59,38 @@ export const patientService = {
   async getEmergencyContacts(patientId: number): Promise<EmergencyContact[]> {
     const response = await api.get<EmergencyContact[]>(
       `/patients/${patientId}/contacts`
+    );
+    return response.data;
+  },
+
+  // Get emergency contact by contactId
+  async getEmergencyContactById(contactId: number): Promise<EmergencyContact> {
+    const response = await api.get<EmergencyContact>(
+      `/patients/contacts/${contactId}`
+    );
+    return response.data;
+  },
+
+  // Update emergency contact
+  async updateEmergencyContact(
+    contactId: number,
+    patientId: number,
+    contactData: EmergencyContactDto
+  ): Promise<EmergencyContactDto> {
+    const response = await api.put<EmergencyContactDto>(
+      `/patients/${patientId}/contacts/${contactId}`,
+      contactData
+    );
+    return response.data;
+  },
+
+  // Delete emergency contact
+  async deleteEmergencyContact(
+    contactId: number,
+    patientId: number
+  ): Promise<string> {
+    const response = await api.delete<string>(
+      `/patients/${patientId}/contacts/${contactId}`
     );
     return response.data;
   },
