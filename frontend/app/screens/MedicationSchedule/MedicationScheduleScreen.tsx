@@ -146,7 +146,13 @@ const MedicationScheduleScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header title="Đơn thuốc" />
+            <Header
+              title="Đơn thuốc"
+              showBack={false}
+              showAction={true}
+              actionType="notification"
+              onActionPress={() => navigation.navigate("Notifications")}
+            />
       <FlatList
         data={prescriptions}
         keyExtractor={(item) => item.prescriptionId.toString()}
@@ -178,7 +184,6 @@ const MedicationScheduleScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background || '#F8F9FA',
   },
   centerContainer: {
     flex: 1,
