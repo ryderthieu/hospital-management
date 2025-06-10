@@ -9,7 +9,7 @@ export interface Appointment {
   symptoms: string
   number: number
   schedule: Schedule
-  appointmentStatus: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED"
+  appointmentStatus: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED" | "PENDING_EXAMINATION" | "PENDING_TEST_RESULT"
   createdAt: string
   appointmentNotes?: AppointmentNote | null
   slotEnd?: string // Format: "HH:mm:ss"

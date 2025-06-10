@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { message } from "antd"
 import { patientService, type UpdatePatientRequest } from "../services/patientServices"
 import { pharmacyService } from "../services/pharmacyServices"
-import { appointmentService } from "../services/appointmentServices"
 import { appointmentNoteService } from "../services/appointmentNoteServices"
 import { getServiceOrdersByAppointmentId } from "../services/serviceOrderServices"
 import type { PatientDetail } from "../types/patient"
@@ -41,7 +40,6 @@ interface UsePatientDetailReturn {
   fetchPrescription: (appointmentId: number) => Promise<void>
   fetchServiceOrders: (appointmentId: number) => Promise<void>
   fetchAppointmentNotes: (appointmentId: number) => Promise<void>
-  updateAppointmentStatus: (appointmentId: number, status: string) => Promise<void>
   createAppointmentNote: (appointmentId: number, note: CreateAppointmentNoteRequest) => Promise<void>
   updateAppointmentNote: (noteId: number, note: CreateAppointmentNoteRequest) => Promise<void>
   deleteAppointmentNote: (noteId: number) => Promise<void>
@@ -154,20 +152,6 @@ export const usePatientDetail = (initialAppointmentId?: number): UsePatientDetai
     }
   }, [])
 
-  // Update appointment status
-  const updateAppointmentStatus = useCallback(
-    async (appointmentId: number, status: string) => {
-      try {
-        await appointmentService.updateAppointmentStatus(appointmentId, status)
-        message.success("Cập nhật trạng thái thành công")
-        await fetchPatientDetail(appointmentId)
-      } catch (error) {
-        console.error("Error updating appointment status:", error)
-        message.error("Không thể cập nhật trạng thái")
-      }
-    },
-    [fetchPatientDetail],
-  )
 
   // Create appointment note
   const createAppointmentNote = useCallback(
@@ -482,7 +466,6 @@ export const usePatientDetail = (initialAppointmentId?: number): UsePatientDetai
     fetchPrescription,
     fetchServiceOrders,
     fetchAppointmentNotes,
-    updateAppointmentStatus,
     createAppointmentNote,
     updateAppointmentNote,
     deleteAppointmentNote,

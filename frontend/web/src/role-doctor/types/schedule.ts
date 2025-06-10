@@ -1,5 +1,5 @@
 export interface Schedule {
-  id: string
+  scheduleId: string
   title: "Khám bệnh"
   shift: string
   startTime: string // Format: "HH:mm:ss" from backend

@@ -29,17 +29,18 @@ import {
   CloseOutlined,
   MedicineBoxOutlined,
 } from "@ant-design/icons";
-import { PatientStatusSection } from "../../components/examination-doctor/PatientStatusSection";
 import { PrescriptionModal } from "../../components/examination-doctor/PrescriptionModal";
 import { ServiceOrderModal } from "../../components/examination-doctor/ServiceOrderModal";
 import { PrescriptionHistoryModal } from "../../components/examination-doctor/PrescriptionHistoryModal";
 import { TestResultDetailModal } from "../../components/examination-doctor/TestResultDetailModal";
 import { usePatientDetail } from "../../hooks/usePatientDetail";
 import { usePrescriptionHistory } from "../../hooks/usePrescriptionHistory";
-import { usePrescriptionModal } from "../../hooks/usePrescription";
 import { NoteType } from "../../types/appointmentNote";
 import type { Prescription } from "../../types/prescription";
 import type { ServiceOrder } from "../../types/serviceOrder";
+import { pharmacyService } from "../../services/pharmacyServices";
+import { appointmentService } from "../../services/appointmentServices";
+import { stringToDate, dateToString } from "../../services/dateHelperServices";
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
@@ -66,15 +67,11 @@ const PatientDetail: React.FC = () => {
     serviceOrders,
     appointmentNotes,
     loading,
-    prescriptionLoading,
     serviceOrdersLoading,
     notesLoading,
     saving,
-    updateAppointmentStatus,
     createAppointmentNote,
     deleteAppointmentNote,
-    updatePatientInfo,
-    updateVitalSigns,
     refreshAll,
     fetchPrescription,
   } = usePatientDetail(appointmentId);
@@ -91,6 +88,9 @@ const PatientDetail: React.FC = () => {
     await refreshAll(appointmentId);
   };
 
+  const [examinationComletedLoading, setExaminationComletedLoading] = useState(false)
+  const [pendingTestStatusLoading,setPendingTestStatusLoading] = useState(false)
+  
   // Set form values when patient detail is loaded
   useEffect(() => {
     if (patientDetail) {
@@ -99,85 +99,134 @@ const PatientDetail: React.FC = () => {
         clinic: patientDetail.schedule?.roomNote || "",
         doctor: patientDetail.doctorInfo?.fullName || "",
         doctorCode: patientDetail.doctorInfo?.doctorId || "",
-        appointmentTime: `${(patientDetail.slotStart || "").slice(0, 5)} - ${(patientDetail.slotEnd || "").slice(0, 5)}`,
+        appointmentTime: `${(patientDetail.slotStart || "").slice(0, 5)} - ${(
+          patientDetail.slotEnd || ""
+        ).slice(0, 5)}`,
         appointmentDate: patientDetail.schedule?.workDate || "",
         symptoms: patientDetail?.symptoms || "",
         diagnosis: prescription?.diagnosis || "",
         doctorNotes: prescription?.note || "",
-        hasFollowUp: prescription?.isFollowUp || false,
-        followUpDate: prescription?.followUpDate || "",
+        isFollowUp: prescription?.isFollowUp || false,
+        followUpDate: stringToDate(prescription?.followUpDate) || "",
         // Vital signs
         systolicBloodPressure: prescription?.systolicBloodPressure || undefined,
-        diastolicBloodPressure:
-          prescription?.diastolicBloodPressure || undefined,
+        diastolicBloodPressure: prescription?.diastolicBloodPressure || undefined,
         heartRate: prescription?.heartRate || undefined,
         bloodSugar: prescription?.bloodSugar || undefined,
-        temperature: undefined,
-        weight: patientDetail.patientInfo?.weight || undefined,
       };
       form.setFieldsValue(formValues);
     }
   }, [patientDetail, prescription, form]);
 
+  // Chuyển trạng thái appoimnet sang hoàn thành khi nhấn "Hoàn thành khám"
   const handleCompleteExamination = async () => {
-    if (!appointmentId) {
-      message.error("Không tìm thấy thông tin cuộc hẹn");
-      return;
-    }
+ if (!appointmentId) {
+   message.error("Không tìm thấy thông tin cuộc hẹn");
+   return;
+ }
+ 
+ setExaminationComletedLoading(true); // Bắt đầu loading
+ 
+ try {
+   const values = await form.validateFields();
+    
+   // Validate vital signs
+   const requiredVitalSigns = [
+     "systolicBloodPressure",
+     "diastolicBloodPressure",
+     "heartRate",
+     "bloodSugar",
+     "diagnosis",
+     "doctorNotes",
+   ];
+   const missingVitalSigns = requiredVitalSigns.filter(
+     (field) => !values[field]
+   );
+    
+   if (missingVitalSigns.length > 0) {
+     message.error(
+       "Không thể hoàn thành khám khi chưa nhập đủ các thông tin đánh dấu *"
+     );
+     return;
+   }
+    
+   // Chỗ này đang update data lại 1 lần nữa sau khi thêm đơn thuốc (đơn thuốc sẽ tự động thay đổi dù đã được thêm trước đó)
+   const updateData = {
+     diagnosis: values.diagnosis || "",
+     doctorNotes: values.doctorNotes || "",
+     isFollowUp: values.isFollowUp || false,
+     followUpDate: values.followUpDate ? dateToString(values.followUpDate) : null, 
+     systolicBloodPressure: values.systolicBloodPressure,
+     diastolicBloodPressure: values.diastolicBloodPressure,
+     heartRate: values.heartRate,
+     bloodSugar: values.bloodSugar,
+   };
+    
+   // Cập nhật đơn thuốc
+   await pharmacyService.updatePrescription(
+     prescription?.prescriptionId,
+     updateData
+   );
 
-    try {
-      const values = await form.validateFields();
+   const updateAppointmentData = {
+      appointmentId: patientDetail?.appointmentId,
+      doctorId: patientDetail?.doctorId,
+      patientId: patientDetail?.patientInfo?.patientId,
+      scheduleId: patientDetail?.schedule.scheduleId,
+      symptoms: patientDetail?.symptoms,
+      number: patientDetail?.number,
+      slotStart: patientDetail?.slotStart,
+      slotEnd: patientDetail?.slotEnd,
+      appointmentStatus: "COMPLETED"
+   }
+   
+   // Cập nhật trạng thái
+   await appointmentService.updateAppointmentById(appointmentId, updateAppointmentData);
+   
+   message.success("Đã chuyển trạng thái hồ sơ sang: Đã hoàn thành");
+   
+ } catch (error) {
+   console.error("Không thể hoàn tất khám:", error);
+   message.error("Có lỗi xảy ra khi hoàn tất khám");
+ } finally {
+   setExaminationComletedLoading(false); 
+ }
+};
 
-      // Validate vital signs
-      const requiredVitalSigns = [
-        "systolicBloodPressure",
-        "diastolicBloodPressure",
-        "heartRate",
-        "bloodSugar",
-      ];
-      const missingVitalSigns = requiredVitalSigns.filter(
-        (field) => !values[field]
-      );
-
-      if (missingVitalSigns.length > 0) {
-        message.error("Vui lòng nhập đầy đủ thông tin sinh hiệu");
-        return;
-      }
-
-      // Validate required fields
-      if (!values.diagnosis?.trim()) {
-        message.error("Vui lòng nhập chẩn đoán");
-        return;
-      }
-
-      if (!values.doctorNotes?.trim()) {
-        message.error("Vui lòng nhập lời dặn của bác sĩ");
-        return;
-      }
-
-      // Prepare update data
-      const updateData = {
-        name: values.name || "",
-        symptoms: values.symptoms || "",
-        diagnosis: values.diagnosis || "",
-        doctorNotes: values.doctorNotes || "",
-        isFollowUp: values.isFollowUp || false,
-        followUpDate: values.followUpDate || "Không hẹn tái khám",
-        systolicBloodPressure: values.systolicBloodPressure,
-        diastolicBloodPressure: values.diastolicBloodPressure,
-        heartRate: values.heartRate,
-        bloodSugar: values.bloodSugar,
-      };
-
-      // Update patient info and vital signs
-      await updatePatientInfo(appointmentId, updateData);
-
-      // Update appointment status to COMPLETED
-      await updateAppointmentStatus(appointmentId, "COMPLETED");
-    } catch (error) {
-      console.error("Save failed:", error);
-    }
-  };
+  // Chuyển trạng thái appoimnet sang hoàn thành khi nhấn "Đang chờ kết quả xét nghiệm"
+  const ChangeToPendingTestStatus = async () => {
+ if (!appointmentId) {
+   message.error("Không tìm thấy thông tin cuộc hẹn");
+   return;
+ }
+ 
+ setPendingTestStatusLoading(true); 
+ 
+ try {
+   const updateAppointmentData = {
+      appointmentId: patientDetail?.appointmentId,
+      doctorId: patientDetail?.doctorId,
+      patientId: patientDetail?.patientInfo?.patientId,
+      scheduleId: patientDetail?.schedule.scheduleId,
+      symptoms: patientDetail?.symptoms,
+      number: patientDetail?.number,
+      slotStart: patientDetail?.slotStart,
+      slotEnd: patientDetail?.slotEnd,
+      appointmentStatus: "PENDING_TEST_RESULT"
+   }
+   
+   // Cập nhật trạng thái
+   await appointmentService.updateAppointmentById(appointmentId, updateAppointmentData);
+   
+   message.success("Đã chuyển trạng thái hồ sơ sang: Chờ kết quả xét nghiệm");
+   
+ } catch (error) {
+   console.error("Không thể chuyển đổi trạng thái hồ sơ:", error);
+   message.error("Có lỗi xảy ra khi chuyển đổi trạng thái hồ sơ");
+ } finally {
+    setPendingTestStatusLoading(false); 
+ }
+};
 
   // Tính trạng thái xét nghiệm dựa trên serviceOrders
   const getTestingStatus = () => {
@@ -201,6 +250,10 @@ const PatientDetail: React.FC = () => {
     switch (patientDetail.appointmentStatus) {
       case "PENDING":
         return "Đang chờ";
+      case "PENDING_EXAMINATION":
+        return "Đang chờ khám";
+      case "PENDING_TEST_RESULT":
+        return "Đang chờ kết quả xét nghiệm";
       case "CONFIRMED":
         return "Đang khám";
       case "COMPLETED":
@@ -208,7 +261,7 @@ const PatientDetail: React.FC = () => {
       case "CANCELLED":
         return "Đã hủy";
       default:
-        return "Đang chờ";
+        return "Không xác định";
     }
   };
 
@@ -328,22 +381,13 @@ const PatientDetail: React.FC = () => {
                   className="w-24 h-24 rounded-full mb-3"
                 />
                 <p className="text-gray-600">
-                  BN{patientDetail.patientInfo?.patientId || "N/A"}
+                  Mã bệnh nhân:{patientDetail.patientInfo?.patientId || "N/A"}
                 </p>
                 <p className="text-gray-600">
                   {patientDetail.patientInfo?.gender === "MALE" ? "Nam" : "Nữ"},{" "}
                   {patientAge} tuổi
                 </p>
               </div>
-
-              {/* Current status */}
-              <PatientStatusSection
-                roomNumber={patientDetail.schedule?.roomNote || "N/A"}
-                initialTestingStatus={getTestingStatus()}
-                initialAppointmentStatus={getAppointmentStatus()}
-                onTestingStatusChange={handleTestingStatusChange}
-                onAppointmentStatusChange={handleAppointmentStatusChange}
-              />
             </div>
 
             {/* Contact info */}
@@ -466,7 +510,7 @@ const PatientDetail: React.FC = () => {
                     className="bg-white rounded-lg border border-gray-200 p-4 mb-3"
                   >
                     <div className="flex items-center mb-2">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                      <div className="w-8 h-8 bg-base-100 rounded-full flex items-center justify-center mr-3">
                         <MedicineBoxOutlined
                           style={{ fontSize: 16 }}
                           className="text-blue-600"
@@ -483,9 +527,12 @@ const PatientDetail: React.FC = () => {
                           Số loại thuốc:{" "}
                           {prescriptionItem.prescriptionDetails?.length || 0}
                         </p>
+                         <p className="text-xs text-gray-500">
+                      Chẩn đoán: {prescriptionItem.diagnosis || "Không có"}
+                    </p>
                       </div>
                       <button
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-base-600 hover:text-blue-800"
                         onClick={() =>
                           handleViewPrescriptionHistory(prescriptionItem)
                         }
@@ -493,9 +540,7 @@ const PatientDetail: React.FC = () => {
                         <EyeOutlined style={{ fontSize: 16 }} />
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500">
-                      Chẩn đoán: {prescriptionItem.diagnosis || "Không có"}
-                    </p>
+                   
                     {prescriptionItem.isFollowUp && (
                       <p className="text-xs text-blue-500">
                         Hẹn tái khám:{" "}
@@ -516,36 +561,37 @@ const PatientDetail: React.FC = () => {
               <Form form={form} layout="vertical">
                 <Row gutter={24}>
                   <Col span={12}>
-                    <Form.Item
-                      label="Tên bệnh nhân"
-                      name="name"
-                    >
-                      <Input disabled style={{color: 'black'}} />
+                    <Form.Item label="Tên bệnh nhân" name="name">
+                      <Input disabled style={{ color: "black" }} />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
                     <Form.Item label="Phòng khám" name="clinic">
-                      <Input prefix={<EnvironmentOutlined />} disabled style={{color: 'black'}} />
+                      <Input
+                        prefix={<EnvironmentOutlined />}
+                        disabled
+                        style={{ color: "black" }}
+                      />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
                     <Form.Item label="Bác sĩ phụ trách" name="doctor">
-                      <Input disabled style={{color: 'black'}} />
+                      <Input disabled style={{ color: "black" }} />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
                     <Form.Item label="Mã bác sĩ" name="doctorCode">
-                      <Input disabled style={{color: 'black'}} />
+                      <Input disabled style={{ color: "black" }} />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
                     <Form.Item label="Giờ đặt khám" name="appointmentTime">
-                      <Input disabled style={{color: 'black'}} />
+                      <Input disabled style={{ color: "black" }} />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
                     <Form.Item label="Ngày khám" name="appointmentDate">
-                      <Input disabled style={{color: 'black'}} />
+                      <Input disabled style={{ color: "black" }} />
                     </Form.Item>
                   </Col>
 
@@ -658,7 +704,7 @@ const PatientDetail: React.FC = () => {
               </Form>
 
               <div className="flex flex-wrap justify-end gap-4">
-                <Button type="default" size="large" loading={saving}>
+                <Button type="default" size="large" loading={pendingTestStatusLoading} onClick={ChangeToPendingTestStatus}>
                   Chờ bệnh nhân xét nghiệm
                 </Button>
                 <Button onClick={() => setIsPrescriptionModalOpen(true)}>
@@ -673,10 +719,10 @@ const PatientDetail: React.FC = () => {
                 <Button
                   type="primary"
                   size="large"
+                  loading={examinationComletedLoading}
                   onClick={handleCompleteExamination}
-                  loading={saving}
                 >
-                  Hoàn thành khám
+                  Hoàn tất khám
                 </Button>
               </div>
 
@@ -753,8 +799,8 @@ const PatientDetail: React.FC = () => {
                               <p className="text-sm text-gray-500 mt-1">
                                 Trạng thái:{" "}
                                 {order.orderStatus === "COMPLETED"
-                                  ? "Đã hoàn thành"
-                                  : "Đã đặt"}
+                                  ? "Đã có kết quả"
+                                  : "Đang chờ"}
                               </p>
                             </div>
                             <button

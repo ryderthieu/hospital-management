@@ -6,7 +6,7 @@ export interface Prescription {
   appointmentId: number;
   followUpDate?: string; // ISO format (yyyy-mm-dd)
   isFollowUp: boolean;
-  followUp: boolean; //fix tạm cho api
+  // followUp: boolean; //fix tạm cho api
   diagnosis: string;
   systolicBloodPressure: number;
   diastolicBloodPressure: number;
