@@ -65,3 +65,15 @@ export interface EmergencyContactDto {
   contactPhone: string;
   relationship: "FAMILY" | "FRIEND" | "OTHERS";
 }
+
+export interface RoomDetail {
+  detailId: number;
+  roomId: number;
+  patientId: number;
+  createdAt: string;
+}
+
+export interface RoomDetailDto {
+  roomId: number;
+  patientId: number;
+}

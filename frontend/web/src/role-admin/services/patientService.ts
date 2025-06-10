@@ -3,8 +3,9 @@ import {
   Patient,
   PatientDto,
   EmergencyContact,
-  EmergencyContactDto,
   CreatePatientRequest,
+  RoomDetail,
+  RoomDetailDto,
 } from "../types/patient";
 
 export const patientService = {
@@ -56,6 +57,31 @@ export const patientService = {
   async getEmergencyContacts(patientId: number): Promise<EmergencyContact[]> {
     const response = await api.get<EmergencyContact[]>(
       `/patients/${patientId}/contacts`
+    );
+    return response.data;
+  },
+
+  // Get all room details
+  async getAllRoomDetails(): Promise<RoomDetail[]> {
+    const response = await api.get<RoomDetail[]>(`/patients/room-details`);
+    return response.data;
+  },
+
+  // Get room details by detailId
+  async getRoomDetailById(detailId: number): Promise<RoomDetail> {
+    const response = await api.get<RoomDetail>(
+      `/patients/room-details/${detailId}`
+    );
+    return response.data;
+  },
+
+  // Create a new room detail
+  async createRoomDetail(
+    roomDetailData: Partial<RoomDetailDto>
+  ): Promise<RoomDetailDto> {
+    const response = await api.post<RoomDetailDto>(
+      `/patients/room-details`,
+      roomDetailData
     );
     return response.data;
   },
