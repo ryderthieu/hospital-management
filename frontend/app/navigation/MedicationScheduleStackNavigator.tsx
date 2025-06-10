@@ -25,7 +25,7 @@ const MedicationScheduleStackNavigator: React.FC = () => {
         component={PrescriptionManagementScreen}
       />
       <Stack.Screen
-        name="PrescriptionDetails"
+        name="PrescriptionDetail"
         component={PrescriptionDetailsScreen}
       />
       <Stack.Screen
