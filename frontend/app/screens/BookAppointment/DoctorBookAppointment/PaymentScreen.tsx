@@ -42,7 +42,10 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
   const [webViewUrl, setWebViewUrl] = useState("")
   const [billId, setBillId] = useState<number | null>(null)
 
-  const totalAmount = 150000
+  // Calculate total amount from doctor's consultation fee with fallback
+  const totalAmount = doctor.consultationFee && typeof doctor.consultationFee === 'number' 
+    ? doctor.consultationFee 
+    : 150000
   const insuranceDiscount = hasInsurance ? 30000 : 0
   const finalAmount = totalAmount - insuranceDiscount
 
@@ -176,19 +179,19 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
       transactionId,
       selectedSymptoms: selectedSymptoms || [],
       hasInsurance: hasInsurance || false
-    });
+    })
   }
 
   const handleWebViewNavigationStateChange = (navState: any) => {
-    console.log('WebView URL:', navState.url);
+    console.log('WebView URL:', navState.url)
     
     // Kiểm tra URL chứa thông tin thanh toán thành công
     if (navState.url.includes('success') && !navState.loading) {
       // Thêm một chút delay trước khi đóng WebView
       setTimeout(() => {
-        setShowWebView(false);
-        handlePaymentSuccess(`TXN_SUCCESS_${Date.now()}`);
-      }, 100);
+        setShowWebView(false)
+        handlePaymentSuccess(`TXN_SUCCESS_${Date.now()}`)
+      }, 100)
     }
   }
 
@@ -204,33 +207,33 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
           source={{ uri: webViewUrl }}
           onNavigationStateChange={handleWebViewNavigationStateChange}
           onError={(syntheticEvent) => {
-            const { nativeEvent } = syntheticEvent;
-            console.warn('WebView error: ', nativeEvent);
+            const { nativeEvent } = syntheticEvent
+            console.warn('WebView error: ', nativeEvent)
           }}
           onHttpError={(syntheticEvent) => {
-            const { nativeEvent } = syntheticEvent;
-            console.warn('WebView HTTP error: ', nativeEvent);
+            const { nativeEvent } = syntheticEvent
+            console.warn('WebView HTTP error: ', nativeEvent)
           }}
           injectedJavaScript={`
             (function() {
               window.addEventListener('message', function(e) {
-                window.ReactNativeWebView.postMessage(e.data);
-              });
-              true;
-            })();
+                window.ReactNativeWebView.postMessage(e.data)
+              })
+              true
+            })()
           `}
           onMessage={(event) => {
-            console.log('WebView message received:', event.nativeEvent.data);
+            console.log('WebView message received:', event.nativeEvent.data)
             try {
-              const data = JSON.parse(event.nativeEvent.data);
+              const data = JSON.parse(event.nativeEvent.data)
               if (data.status === 'PAID' || data.code === '00') {
-                setShowWebView(false);
+                setShowWebView(false)
                 setTimeout(() => {
-                  handlePaymentSuccess(data.orderCode || `TXN_SUCCESS_${Date.now()}`);
-                }, 300);
+                  handlePaymentSuccess(data.orderCode || `TXN_SUCCESS_${Date.now()}`)
+                }, 300)
               }
             } catch (error) {
-              console.log('Error parsing WebView message:', error);
+              console.log('Error parsing WebView message:', error)
             }
           }}
           style={{ flex: 1 }}
@@ -250,7 +253,11 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
       >
         {/* Doctor Information */}
         <View style={styles.doctorSection}>
-          <Image source={doctor.image} style={styles.doctorImage} />
+          <Image 
+            source={doctor.image || { uri: "/placeholder.svg?height=60&width=60" }} 
+            style={styles.doctorImage} 
+            resizeMode="cover"
+          />
           <View style={styles.doctorInfo}>
             <Text style={[styles.doctorName, { fontFamily: fontFamily.bold }]}>{doctor.name}</Text>
             <Text style={[styles.doctorSpecialty, { fontFamily: fontFamily.regular }]}>{doctor.specialty}</Text>
@@ -264,24 +271,25 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
           <View style={styles.summaryItem}>
             <Text style={[styles.summaryLabel, { fontFamily: fontFamily.regular }]}>Tổng tiền</Text>
             <Text style={[styles.summaryValue, { fontFamily: fontFamily.medium }]}>
-              {totalAmount.toLocaleString()} VND
+              {totalAmount.toLocaleString('vi-VN')} VND
             </Text>
           </View>
 
           <View style={styles.summaryItem}>
             <Text style={[styles.summaryLabel, { fontFamily: fontFamily.regular }]}>BHYT</Text>
             <Text style={[styles.summaryValue, { fontFamily: fontFamily.medium }]}>
-              {insuranceDiscount.toLocaleString()} VND
+              {insuranceDiscount.toLocaleString('vi-VN')} VND
             </Text>
           </View>
 
           <View style={[styles.summaryItem, styles.totalItem]}>
             <Text style={[styles.totalLabel, { fontFamily: fontFamily.bold }]}>Thanh toán</Text>
-            <Text style={[styles.totalValue, { fontFamily: fontFamily.bold }]}>{finalAmount.toLocaleString()} VND</Text>
+            <Text style={[styles.totalValue, { fontFamily: fontFamily.bold }]}>
+              {finalAmount.toLocaleString('vi-VN')} VND
+            </Text>
           </View>
         </View>
 
-        
         {/* Terms and Conditions */}
         <TouchableOpacity style={styles.termsContainer} onPress={handleTermsToggle} activeOpacity={0.7}>
           <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
@@ -337,7 +345,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    marginRight: 16,
+    backgroundColor: colors.base100,
   },
   doctorInfo: {
     flex: 1,

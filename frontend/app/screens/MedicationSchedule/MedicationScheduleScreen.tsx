@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   Image,
   FlatList,
+  ActivityIndicator,
 } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
@@ -21,6 +22,8 @@ import { colors } from "../../styles/globalStyles"
 import API from "../../services/api"
 import type { MedicationScheduleStackParamList } from "../../navigation/types"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { LinearGradient } from "expo-linear-gradient"
+import { Ionicons } from "@expo/vector-icons"
 
 type NavigationProp = NativeStackNavigationProp<MedicationScheduleStackParamList>
 
@@ -110,7 +113,8 @@ const MedicationScheduleScreen: React.FC = () => {
       <SafeAreaView style={styles.container}>
         <Header title="Đơn thuốc" />
         <View style={styles.centerContainer}>
-          <Text>Đang tải...</Text>
+          <ActivityIndicator size="large" color={colors.primary || '#007AFF'} />
+          <Text style={styles.loadingText}>Đang tải đơn thuốc...</Text>
         </View>
       </SafeAreaView>
     )
@@ -121,6 +125,7 @@ const MedicationScheduleScreen: React.FC = () => {
       <SafeAreaView style={styles.container}>
         <Header title="Đơn thuốc" />
         <View style={styles.centerContainer}>
+          <Ionicons name="warning-outline" size={48} color="#FF3B30" />
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity 
             style={styles.retryButton}
@@ -138,6 +143,7 @@ const MedicationScheduleScreen: React.FC = () => {
       <SafeAreaView style={styles.container}>
         <Header title="Đơn thuốc" />
         <View style={styles.centerContainer}>
+          <Ionicons name="document-text-outline" size={48} color="#8E8E93" />
           <Text style={styles.emptyText}>Bạn chưa có đơn thuốc nào</Text>
         </View>
       </SafeAreaView>
@@ -146,34 +152,54 @@ const MedicationScheduleScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-            <Header
-              title="Đơn thuốc"
-              showBack={false}
-              showAction={true}
-              actionType="notification"
-              onActionPress={() => navigation.navigate("Notifications")}
-            />
+      <Header
+        title="Đơn thuốc"
+        showBack={false}
+        showAction={true}
+        actionType="notification"
+        onActionPress={() => navigation.navigate("Notifications")}
+      />
       <FlatList
         data={prescriptions}
         keyExtractor={(item) => item.prescriptionId.toString()}
+        contentContainerStyle={styles.listContainer}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.prescriptionCard}
             onPress={() => navigation.navigate('PrescriptionDetail', { prescriptionId: item.prescriptionId.toString() })}
+            activeOpacity={0.8}
           >
-            <View style={styles.prescriptionHeader}>
-              <Text style={styles.prescriptionTitle}>Đơn thuốc #{item.prescriptionId}</Text>
-              <Text style={styles.prescriptionDate}>
-                {new Date(item.createdAt).toLocaleDateString('vi-VN')}
-              </Text>
-            </View>
-            <Text style={styles.prescriptionDiagnosis}>Chẩn đoán: {item.diagnosis}</Text>
-            <Text style={styles.prescriptionNote} numberOfLines={2}>
-              Ghi chú: {item.note || 'Không có'}
-            </Text>
-            <Text style={styles.prescriptionStatus}>
-              Tái khám: {item.followUp ? `Ngày ${new Date(item.followUpDate).toLocaleDateString('vi-VN')}` : 'Không'}
-            </Text>
+            <LinearGradient
+              colors={['#FFFFFF', '#F8FAFC']}
+              style={styles.cardGradient}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.prescriptionHeader}>
+                  <View style={styles.titleContainer}>
+                    <Ionicons name="medkit-outline" size={24} color={colors.primary || '#007AFF'} />
+                    <Text style={styles.prescriptionTitle}>Đơn thuốc #{item.prescriptionId}</Text>
+                  </View>
+                  <Text style={styles.prescriptionDate}>
+                    {new Date(item.createdAt).toLocaleDateString('vi-VN')}
+                  </Text>
+                </View>
+                <View style={styles.divider} />
+                <Text style={styles.prescriptionDiagnosis}>Chẩn đoán: {item.diagnosis}</Text>
+                <Text style={styles.prescriptionNote} numberOfLines={2}>
+                  Ghi chú: {item.note || 'Không có'}
+                </Text>
+                <View style={styles.statusContainer}>
+                  <Ionicons
+                    name={item.followUp ? "calendar-outline" : "close-circle-outline"}
+                    size={16}
+                    color={item.followUp ? '#10B981' : '#FF3B30'}
+                  />
+                  <Text style={styles.prescriptionStatus}>
+                    Tái khám: {item.followUp ? `Ngày ${new Date(item.followUpDate).toLocaleDateString('vi-VN')}` : 'Không'}
+                  </Text>
+                </View>
+              </View>
+            </LinearGradient>
           </TouchableOpacity>
         )}
       />
@@ -184,27 +210,47 @@ const MedicationScheduleScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F1F5F9',
+  },
+  listContainer: {
+    paddingVertical: 16,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 24,
   },
-  errorText: {
-    color: '#FF3B30',
-    fontSize: 16,
-    marginBottom: 16,
-    fontFamily: fontFamily.regular,
-  },
-  emptyText: {
+  loadingText: {
+    marginTop: 16,
     fontSize: 16,
     color: colors.text || '#000000',
     fontFamily: fontFamily.regular,
   },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 16,
+    marginTop: 12,
+    marginBottom: 24,
+    fontFamily: fontFamily.regular,
+    textAlign: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#8E8E93',
+    fontFamily: fontFamily.regular,
+    marginTop: 12,
+    textAlign: 'center',
+  },
   retryButton: {
-    padding: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
     backgroundColor: colors.primary || '#007AFF',
-    borderRadius: 8,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   retryButtonText: {
     color: '#FFFFFF',
@@ -212,48 +258,68 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.medium,
   },
   prescriptionCard: {
-    backgroundColor: '#FFFFFF',
-    margin: 16,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderRadius: 16,
+    overflow: 'hidden',
+    transform: [{ scale: 1 }],
+  },
+  cardGradient: {
     padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  cardContent: {
+    flex: 1,
   },
   prescriptionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   prescriptionTitle: {
-    fontSize: 18,
-    fontFamily: fontFamily.medium,
+    fontSize: 20,
+    fontFamily: fontFamily.bold,
     color: colors.text || '#000000',
   },
   prescriptionDate: {
     fontSize: 14,
     fontFamily: fontFamily.regular,
-    color: '#8E8E93',
+    color: '#6B7280',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 12,
   },
   prescriptionDiagnosis: {
     fontSize: 16,
     fontFamily: fontFamily.medium,
     color: colors.text || '#000000',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   prescriptionNote: {
     fontSize: 14,
     fontFamily: fontFamily.regular,
-    color: colors.text || '#000000',
-    marginBottom: 4,
+    color: '#4B5563',
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   prescriptionStatus: {
     fontSize: 14,
     fontFamily: fontFamily.regular,
-    color: '#8E8E93',
+    color: '#6B7280',
   },
 })
 
