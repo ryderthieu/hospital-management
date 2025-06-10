@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import WeCareLoading from "../../common/WeCareLoading"
-import { ChevronLeft, ChevronRight, Clock, BriefcaseMedical, Calendar } from "lucide-react"
+import { ChevronLeft, ChevronRight, Clock, BriefcaseMedical } from "lucide-react"
 import { Modal, Select, Tabs, Button, Card, Progress, Badge, Tooltip, Empty, Descriptions } from "antd"
 import { useSchedule } from "../../../hooks/useSchedule"
 import {

@@ -300,11 +300,11 @@ export default function InpatientTable() {
                           `/admin/inpatients-rooms/edit/${inpatient.detailId}`
                         )
                       }
-                      className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
+                      className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 transition-colors"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
+                        className="h-4 w-4 text-yellow-500"
                         viewBox="0 0 20 20"
                         fill="currentColor"
                       >
@@ -361,8 +361,8 @@ export default function InpatientTable() {
       {/* Modal hiển thị thông tin bệnh nhân */}
       {showViewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="bg-white rounded-lg p-8 w-full max-w-md shadow-lg text-center">
-            <h2 className="text-lg font-semibold mb-4 text-sky-700">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-lg text-center">
+            <h2 className="text-2xl font-semibold mb-4 text-teal-600">
               Thông tin bệnh nhân
             </h2>
             {viewPatient?.error ? (

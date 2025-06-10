@@ -6,10 +6,10 @@ import Header from "../components/common/Header"
 
 const { Content } = Layout
 
-const TestDoctorLayout: React.FC = () => {
+const ServiceDoctorLayout: React.FC = () => {
   return (
     <Layout className="h-screen">
-      <Sidebar role="test" />
+      <Sidebar role="service" />
       <Layout>
         <Header />
         <Content className="p-4 h-screen overflow-y-auto bg-gray-50">
@@ -20,4 +20,4 @@ const TestDoctorLayout: React.FC = () => {
   )
 }
 
-export default TestDoctorLayout
+export default ServiceDoctorLayout

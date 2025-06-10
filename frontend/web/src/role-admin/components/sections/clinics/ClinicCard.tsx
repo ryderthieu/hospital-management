@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ExaminationRoom, ExaminationRoomDto } from "../../../types/doctor";
 import { doctorService } from "../../../services/doctorService";
+import { DeleteConfirmationModal } from "../../ui/modal/DeleteConfirmationModal";
 
 const ClinicCard: React.FC<{
   clinic: ExaminationRoom;
@@ -8,7 +9,6 @@ const ClinicCard: React.FC<{
 }> = ({ clinic, onUpdated }) => {
   const [open, setOpen] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [roomDetail, setRoomDetail] = useState<ExaminationRoom | null>(null);
   const [loading, setLoading] = useState(false);
   const [editData, setEditData] = useState<Partial<ExaminationRoomDto>>({
@@ -19,8 +19,7 @@ const ClinicCard: React.FC<{
     floor: clinic.floor,
   });
   const [editLoading, setEditLoading] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isModalOpen, setModalOpen] = useState(false);
 
   const handleView = async () => {
     setLoading(true);
@@ -51,18 +50,12 @@ const ClinicCard: React.FC<{
   };
 
   const handleDelete = async () => {
-    setDeleteLoading(true);
-    setDeleteError(null);
     try {
       await doctorService.deleteExaminationRoom(clinic.roomId);
-      setShowDeleteModal(false);
+      setModalOpen(false);
       if (onUpdated) onUpdated();
-    } catch (error: any) {
-      setDeleteError(
-        error?.response?.data?.message || "Xóa phòng khám thất bại!"
-      );
-    } finally {
-      setDeleteLoading(false);
+    } catch (error) {
+      // Xử lý lỗi nếu cần
     }
   };
 
@@ -158,7 +151,7 @@ const ClinicCard: React.FC<{
               Sửa
             </button>
             <button
-              onClick={() => setShowDeleteModal(true)}
+              onClick={() => setModalOpen(true)}
               className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
             >
               <svg
@@ -181,7 +174,7 @@ const ClinicCard: React.FC<{
       {/* Modal xem chi tiết phòng khám */}
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="bg-white rounded-lg p-8 w-full max-w-md shadow-lg text-center relative">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-lg text-center relative">
             <button
               onClick={() => setOpen(false)}
               className="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-xl"
@@ -244,7 +237,7 @@ const ClinicCard: React.FC<{
       {/* Modal sửa phòng khám */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="bg-white rounded-lg p-8 w-full max-w-md shadow-lg text-center relative">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-lg text-center relative">
             <button
               onClick={() => setShowEditModal(false)}
               className="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-xl"
@@ -356,42 +349,13 @@ const ClinicCard: React.FC<{
       )}
 
       {/* Modal xác nhận xóa */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="bg-white rounded-lg p-8 w-full max-w-sm shadow-lg text-center relative">
-            <button
-              onClick={() => setShowDeleteModal(false)}
-              className="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-xl"
-              aria-label="Đóng"
-            >
-              &times;
-            </button>
-            <h2 className="text-lg font-semibold mb-4 text-red-700">
-              Xác nhận xóa phòng khám
-            </h2>
-            <p className="mb-6">Bạn có chắc chắn muốn xóa phòng khám này?</p>
-            {deleteError && (
-              <div className="text-red-600 mb-2">{deleteError}</div>
-            )}
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
-                disabled={deleteLoading}
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleteLoading}
-                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
-              >
-                {deleteLoading ? "Đang xóa..." : "Xóa"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfirmationModal
+        isOpen={isModalOpen}
+        onClose={() => setModalOpen(false)}
+        onConfirm={handleDelete}
+        title="Xác nhận xóa"
+        message="Bạn có chắc chắn muốn xóa phòng khám này? Thao tác này sẽ không thể hoàn tác."
+      />
     </div>
   );
 };
