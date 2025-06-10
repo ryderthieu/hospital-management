@@ -29,8 +29,8 @@ type PaymentScreenProps = {
   route: RouteProp<RootStackParamList, "Payment">
 }
 
-const API_BASE_URL = "http://192.168.120.172:8080"
-// const API_BASE_URL = "http://192.168.1.47:8080"
+// const API_BASE_URL = "http://192.168.120.172:8080"
+const API_BASE_URL = "http://192.168.1.47:8080"
 
 export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route }) => {
   const { fontsLoaded } = useFont()
