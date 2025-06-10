@@ -37,12 +37,6 @@ const Sidebar: React.FC<SidebarProps> = ({ role }) => {
       link: `${basePath}/schedule`,
     },
     {
-      key: `${basePath}/appointment`,
-      icon: <ClockCircleOutlined />,
-      label: "Lịch hẹn",
-      link: `${basePath}/appointment`,
-    },
-    {
       key: `${basePath}/patients`,
       icon: <TeamOutlined />,
       label: "Bệnh nhân",

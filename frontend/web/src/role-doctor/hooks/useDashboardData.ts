@@ -25,7 +25,7 @@ export const useDashboardData = () => {
     setRecentPatients([
       {
         id: 1,
-        name: "Trần Nhật Trường",
+        name: "Lê Thiện Nhi",
         code: "BN22521396",
         avatar:
           "https://scontent.fsgn22-1.fna.fbcdn.net/v/t39.30808-6/480404053_1006984517940842_142074701260698715_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=a5f93a&_nc_ohc=r8rFep9IuVYQ7kNvwFjfPpD&_nc_oc=AdkP83gkVNhfVbpKu0-ljcL3QabSF50PJuixSDMIpPOm3ESya0fA9UYxmWi_SYmCoG8iGbQARjWtLuDjIB85epDh&_nc_zt=23&_nc_ht=scontent.fsgn22-1.fna&_nc_gid=2dC9L86bhn3ZNTzRC62APA&oh=00_AfElIn5o44i9rmvFVSmKCtw9BOAVH0AMFy9txWtVa1elOg&oe=6817C0E8",
