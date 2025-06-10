@@ -172,7 +172,7 @@ const AddClinic: React.FC = () => {
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="bg-white rounded-lg p-8 w-full max-w-sm shadow-lg text-center">
-            <h2 className="text-lg font-semibold mb-4 text-green-600">
+            <h2 className="text-xl font-semibold mb-4 text-base-600">
               Thêm phòng khám thành công!
             </h2>
             <p className="mb-6">Bạn sẽ được chuyển về danh sách phòng khám.</p>
