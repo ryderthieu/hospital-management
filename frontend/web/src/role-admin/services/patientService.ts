@@ -11,14 +11,37 @@ import {
 } from "../types/patient";
 
 export const patientService = {
+  // Get all patients (alias for getPatients for backward compatibility)
   async getAllPatients(): Promise<Patient[]> {
-    const response = await api.get<Patient[]>("/patients");
-    return response.data;
+    try {
+      const response = await api.get<Patient[]>('/patients');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching patients:', error);
+      throw new Error('Không thể tải danh sách bệnh nhân');
+    }
   },
 
-  async getPatientById(patientId: number): Promise<Patient> {
-    const response = await api.get<Patient>(`/patients/${patientId}`);
-    return response.data;
+  // Get all patients
+  async getPatients(): Promise<{ data: Patient[] }> {
+    try {
+      const response = await api.get<Patient[]>('/patients');
+      return { data: response.data };
+    } catch (error) {
+      console.error('Error fetching patients:', error);
+      throw new Error('Không thể tải danh sách bệnh nhân');
+    }
+  },
+
+  // Get patient by ID
+  async getPatientById(patientId: number): Promise<{ data: Patient }> {
+    try {
+      const response = await api.get<Patient>(`/patients/${patientId}`);
+      return { data: response.data };
+    } catch (error) {
+      console.error(`Error fetching patient ${patientId}:`, error);
+      throw new Error('Không thể tải thông tin bệnh nhân');
+    }
   },
 
   async createPatient(patientData: any): Promise<CreatePatientRequest> {
@@ -29,30 +52,40 @@ export const patientService = {
     return response.data;
   },
 
-  async updatePatient(
-    patientId: number,
-    patientData: PatientDto
-  ): Promise<PatientDto> {
-    const response = await api.put<PatientDto>(
-      `/patients/${patientId}`,
-      patientData
-    );
-    return response.data;
-  },
-
-  async deletePatient(patientId: number): Promise<string> {
-    const response = await api.delete<string>(`/patients/${patientId}`);
-    return response.data;
-  },
-
+  // Search patient
   async searchPatient(params: {
     identityNumber?: string;
     insuranceNumber?: string;
     fullName?: string;
   }): Promise<Patient | null> {
-    const query = new URLSearchParams(params).toString();
-    const response = await api.get<Patient | null>(`/patients/search?${query}`);
-    return response.data;
+    try {
+      const response = await api.get<Patient[]>('/patients/search', { params });
+      return response.data[0] || null;
+    } catch (error) {
+      console.error('Error searching patient:', error);
+      throw new Error('Không thể tìm kiếm bệnh nhân');
+    }
+  },
+
+  // Update patient
+  async updatePatient(patientId: number, data: Partial<Patient>): Promise<Patient> {
+    try {
+      const response = await api.put<Patient>(`/patients/${patientId}`, data);
+      return response.data;
+    } catch (error) {
+      console.error(`Error updating patient ${patientId}:`, error);
+      throw new Error('Không thể cập nhật thông tin bệnh nhân');
+    }
+  },
+
+  // Delete patient
+  async deletePatient(patientId: number): Promise<void> {
+    try {
+      await api.delete(`/patients/${patientId}`);
+    } catch (error) {
+      console.error(`Error deleting patient ${patientId}:`, error);
+      throw new Error('Không thể xóa bệnh nhân');
+    }
   },
 
   // Emergency Contacts

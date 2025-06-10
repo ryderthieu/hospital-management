@@ -95,7 +95,15 @@ export default function ViewMedicine() {
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-start gap-4">
               <div className="h-20 w-20 bg-gray-100 rounded-lg flex items-center justify-center">
-                <Pill className="h-10 w-10 text-gray-400" />
+                {medicine.avatar ? (
+                  <img
+                    src={medicine.avatar}
+                    alt={medicine.medicineName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Pill className="h-10 w-10 text-gray-400" />
+                )}
               </div>
               <div className="flex-1">
                 <h3 className="text-xl font-bold text-gray-800 dark:text-white/90 mb-2">

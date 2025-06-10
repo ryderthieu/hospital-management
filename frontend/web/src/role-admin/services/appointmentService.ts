@@ -129,4 +129,19 @@ export const appointmentService = {
     );
     return response.data;
   },
+
+  // Get schedules by date
+  async getSchedulesByDate(date: string) {
+    const response = await api.get(`/schedules/date/${date}`);
+    return response.data;
+  },
+
+  // Get schedule by id
+  async getScheduleById(id: number) {
+    const response = await api.get(`/schedules/${id}`);
+    return response.data;
+  },
+
+  // Get all patients
+
 };

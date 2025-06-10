@@ -270,13 +270,21 @@ export default function MedicineTable() {
                 <TableCell className="py-3">
                   <div className="flex items-center gap-3">
                     <div className="h-[50px] w-[50px] overflow-hidden rounded-md bg-gray-100 flex items-center justify-center">
+                      {medicine.avatar ? (
+                        <img
+                          src={medicine.avatar}
+                          alt={medicine.medicineName}
+                          className="w-full h-full object-cover"
+                        />
+                      ) :
                       <svg
                         className="h-6 w-6 text-gray-400"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
                         <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                      </svg>}
+                      
                     </div>
                     <div>
                       <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">

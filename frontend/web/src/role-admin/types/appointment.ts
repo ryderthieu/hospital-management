@@ -131,31 +131,32 @@ export interface AppointmentNoteDto {
   noteText: string;
 }
 
-export interface AppointmentResponse {
-  appointmentId: number;
+export interface Schedule {
+  id: number;
   doctorId: number;
-  schedule: ScheduleDto;
-  symptoms: string;
-  number: number;
-  slotStart: string;
-  slotEnd: string;
-  appointmentStatus: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
-  createdAt: string;
-  patientInfo: PatientDto;
-  doctorInfo: DoctorDto;
-  appointmentNotes: AppointmentNoteDto[];
-}
-
-export interface ScheduleDto {
-  scheduleId: number;
-  doctorId: number;
-  workDate: string;
+  doctorName: string;
+  departmentId: number;
+  departmentName: string;
+  date: string;
   startTime: string;
   endTime: string;
-  shift: string;
-  roomId: number;
-  createdAt: string;
-  location: string;
+  maxPatients: number;
+  currentPatients: number;
+  status: "AVAILABLE" | "FULL" | "CANCELLED";
+}
+
+export interface ScheduleDto extends Schedule {
+  date: string;
+}
+
+export interface Patient {
+  id: number;
+  fullName: string;
+  phoneNumber: string;
+  insuranceId?: string;
+  age: number;
+  gender: "MALE" | "FEMALE" | "OTHER";
+  address: string;
 }
 
 export interface PatientDto {
@@ -212,4 +213,25 @@ export interface AppointmentRequest {
   symptoms: string;
   doctorId: number;
   patientId: number;
+}
+
+export interface AppointmentResponse {
+  appointmentId: number;
+  schedule: ScheduleDto;
+  orderNumber: string;
+  appointmentStatus: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED";
+  slotStart: string;
+  slotEnd: string;
+  symptoms: string;
+  doctorId: number;
+  patientInfo: {
+    patientId: number;
+    fullName: string;
+    phoneNumber: string;
+    insuranceId?: string;
+    age: number;
+    gender: "MALE" | "FEMALE" | "OTHER";
+  };
+  createdAt: string;
+  updatedAt: string;
 }

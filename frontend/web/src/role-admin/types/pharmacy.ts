@@ -11,6 +11,7 @@ export interface Medicine {
   sideEffects: string;
   price: number;
   quantity: number;
+  avatar: string;
 }
 
 export interface MedicineRequest {

@@ -3,15 +3,18 @@ import FullCalendar from "@fullcalendar/react";
 import viLocale from "@fullcalendar/core/locales/vi";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { DateSelectArg, EventClickArg } from "@fullcalendar/core";
+import { DateSelectArg, EventClickArg, DateInput } from "@fullcalendar/core";
 import { Modal } from "../../components/ui/modal/index.tsx";
 import { useModal } from "../../hooks/useModal.ts";
 import PageMeta from "../../components/common/PageMeta.tsx";
 import DatePicker from "../../components/sections/appointments/DatePicker.tsx";
 import TimePicker from "../../components/sections/appointments/TimePicker.tsx";
+import type { Hook } from "flatpickr/dist/types/options";
 import {
-  CalendarEvent,
-  EVENT_STATUS_MAP,
+  Schedule,
+  Patient,
+  AppointmentResponse,
+  ScheduleDto,
   AppointmentRequest,
 } from "../../types/appointment";
 import {
@@ -20,18 +23,12 @@ import {
   mockDataService,
 } from "../../services/mockDataService.ts";
 import { appointmentService } from "../../services/appointmentService";
-import { AppointmentResponse } from "../../types/appointment";
-
-// Function to format time to Vietnamese style
-const formatTimeToVietnamese = (time: string): string => {
-  if (!time) return "";
-
-  const [hours, minutes] = time.split(":");
-  const hourNum = parseInt(hours, 10);
-  const minuteNum = parseInt(minutes, 10);
-
-  return `${hourNum}:${minuteNum.toString().padStart(2, "0")}`;
-};
+import { scheduleService } from "../../services/scheduleService";
+import { patientService } from "../../services/patientService";
+import { CalendarEvent, EventStatus } from "../../../types/calendar";
+import { formatTimeToVietnamese } from "../../utils/dateUtils";
+import { Patient as AppointmentPatient } from "../../types/appointment";
+import { Patient as PatientType } from "../../types/patient";
 
 // Function to create datetime string for FullCalendar
 const createAppointmentDateTime = (
@@ -54,9 +51,27 @@ const createAppointmentDateTime = (
   };
 };
 
+interface AppointmentFormData extends AppointmentRequest {
+  slotStart: string;
+  slotEnd: string;
+  scheduleId: number;
+  symptoms: string;
+  doctorId: number;
+  patientId: number;
+}
+
+// Add type for DOM element with style
+interface StyledElement extends Element {
+  style: CSSStyleDeclaration;
+}
+
+interface DatePickerProps extends React.ComponentProps<typeof DatePicker> {
+  disabled?: boolean;
+}
+
 const MedicalCalendar: React.FC = () => {
   // State cho form tạo lịch khám mới
-  const [appointmentForm, setAppointmentForm] = useState<AppointmentRequest>({
+  const [appointmentForm, setAppointmentForm] = useState<AppointmentFormData>({
     slotStart: "",
     slotEnd: "",
     scheduleId: 0,
@@ -80,7 +95,7 @@ const MedicalCalendar: React.FC = () => {
   const [symptoms, setSymptoms] = useState("");
 
   // Thông tin lịch khám
-  const [eventDate, setEventDate] = useState("");
+  const [eventDate, setEventDate] = useState<string>("");
   const [eventTime, setEventTime] = useState("");
   const [doctorName, setDoctorName] = useState("");
   const [doctorId, setDoctorId] = useState("");
@@ -113,6 +128,16 @@ const MedicalCalendar: React.FC = () => {
     type: "success" | "error";
     message: string;
   } | null>(null);
+
+  // States for schedule selection
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
+  const [isLoadingSchedules, setIsLoadingSchedules] = useState(false);
+
+  // States for patient selection
+  const [patients, setPatients] = useState<AppointmentPatient[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<AppointmentPatient | null>(null);
+  const [isLoadingPatients, setIsLoadingPatients] = useState(false);
 
   // Load danh sách khoa khi component mount
   useEffect(() => {
@@ -157,46 +182,60 @@ const MedicalCalendar: React.FC = () => {
     // Add a small delay to allow the calendar to render fully
     const timer = setTimeout(() => {
       // Force equal heights for all rows in the calendar
-      const calendarRows = document.querySelectorAll(
+      const calendarRows = document.querySelectorAll<HTMLTableRowElement>(
         ".fc-scrollgrid-sync-table tbody tr"
       );
       if (calendarRows && calendarRows.length) {
         calendarRows.forEach((row) => {
-          (row as HTMLElement).style.height = "120px";
+          if (row instanceof HTMLTableRowElement) {
+            row.style.height = "120px";
+          }
         });
 
         // Special fix for the problematic second row
-        const secondRow = document.querySelector(
+        const secondRow = document.querySelector<HTMLTableRowElement>(
           ".fc-scrollgrid-sync-table tbody tr:nth-child(2)"
         );
-        if (secondRow) {
-          (secondRow as HTMLElement).style.height = "120px";
-          (secondRow as HTMLElement).style.minHeight = "120px";
-
-          // Also fix all cells in the second row
-          const cells = secondRow.querySelectorAll("td");
-          cells.forEach((cell) => {
-            (cell as HTMLElement).style.height = "120px";
-            (cell as HTMLElement).style.minHeight = "120px";
-          });
+        if (secondRow instanceof HTMLTableRowElement) {
+          secondRow.style.height = "120px";
         }
       }
-    }, 300);
+    }, 100);
 
     return () => clearTimeout(timer);
-  }, [events]); // Re-apply when events change which might affect layout
+  }, [events]);
 
-  // Handler khi chọn ngày
+  // Handle date selection
   const handleDateSelect = (selectInfo: DateSelectArg) => {
     resetModalFields();
     setEventDate(selectInfo.startStr);
     openModal();
   };
 
-  // Handler khi click vào sự kiện
+  // Handle event click
   const handleEventClick = (clickInfo: EventClickArg) => {
     const event = clickInfo.event;
-    setSelectedEvent(event as unknown as CalendarEvent);
+    const calendarEvent: CalendarEvent = {
+      id: event.id,
+      title: event.title,
+      start: event.start?.toISOString() || "",
+      end: event.end?.toISOString() || "",
+      extendedProps: {
+        calendar: event.extendedProps.calendar as EventStatus,
+        patientName: event.title,
+        patientId: event.extendedProps.patientId,
+        insuranceId: event.extendedProps.insuranceId,
+        phoneNumber: event.extendedProps.phoneNumber,
+        patientAge: event.extendedProps.patientAge,
+        symptoms: event.extendedProps.symptoms,
+        eventTime: event.extendedProps.eventTime,
+        doctorName: event.extendedProps.doctorName,
+        department: event.extendedProps.department,
+        departmentId: event.extendedProps.departmentId,
+        doctorId: event.extendedProps.doctorId,
+      },
+    };
+    setSelectedEvent(calendarEvent);
 
     // Đọc thông tin cơ bản
     setPatientName(event.title);
@@ -233,7 +272,7 @@ const MedicalCalendar: React.FC = () => {
     openModal();
   };
 
-  // Handler khi click vào ngày (hiển thị danh sách ca khám)
+  // Handle date click
   const handleDateClick = (dateStr: string) => {
     const dateEvents = events.filter((event) => {
       const eventDate = new Date(event.start).toISOString().split("T")[0];
@@ -245,8 +284,10 @@ const MedicalCalendar: React.FC = () => {
     openDayModal();
   };
 
-  // Handler khi click vào từng ca khám trong danh sách
+  // Handle appointment click
   const handleAppointmentClick = (appointment: CalendarEvent) => {
+    setSelectedEvent(appointment);
+
     // Điền dữ liệu appointment vào form
     setPatientName(appointment.extendedProps.patientName || appointment.title);
     setPatientId(appointment.extendedProps.patientId || "");
@@ -261,8 +302,6 @@ const MedicalCalendar: React.FC = () => {
     setDepartment(appointment.extendedProps.department || "");
     setDepartmentId(appointment.extendedProps.departmentId || "");
     setEventLevel(appointment.extendedProps.calendar || "");
-
-    setSelectedEvent(appointment);
 
     // Đóng modal danh sách và mở modal cập nhật lịch khám
     closeDayModal();
@@ -287,13 +326,17 @@ const MedicalCalendar: React.FC = () => {
     setDoctorId("");
     setDoctorName("");
 
+    // Reset schedules
+    setSchedules([]);
+    setSelectedSchedule(null);
+
     // Xóa lỗi (nếu có)
     if (errors.departmentId) {
       setErrors((prev) => ({ ...prev, departmentId: "" }));
     }
   };
 
-  // Handler khi thay đổi bác sĩ
+  // Handle doctor change
   const handleDoctorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedDocId = e.target.value;
     setDoctorId(selectedDocId);
@@ -302,132 +345,316 @@ const MedicalCalendar: React.FC = () => {
     const selectedDoc = filteredDoctors.find((doc) => doc.id === selectedDocId);
     setDoctorName(selectedDoc?.name || "");
 
+    // Reset schedules
+    setSchedules([]);
+    setSelectedSchedule(null);
+
+    // Load schedules if date is selected
+    if (selectedDate) {
+      loadSchedulesByDoctorAndDate(selectedDocId, selectedDate);
+    }
+
     // Xóa lỗi (nếu có)
     if (errors.doctorId) {
       setErrors((prev) => ({ ...prev, doctorId: "" }));
     }
   };
 
-  // Validate form chỉ với các trường cần thiết
+  // Load schedules for selected doctor and date
+  const loadSchedulesByDoctorAndDate = async (doctorId: string, date: string) => {
+    if (!doctorId || !date) return;
+    setIsLoadingSchedules(true);
+    try {
+      const response = await scheduleService.getSchedulesByDoctorId(parseInt(doctorId));
+      // Filter schedules for selected date
+      const filteredSchedules = response.filter(schedule => schedule.workDate === date);
+      
+      // Convert to Schedule type
+      const mappedSchedules: Schedule[] = filteredSchedules.map(schedule => ({
+        id: schedule.scheduleId,
+        doctorId: schedule.doctorId,
+        doctorName: doctorName, // Use selected doctor name
+        departmentId: parseInt(departmentId), // Convert to number
+        departmentName: department, // Use selected department name
+        date: schedule.workDate,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        maxPatients: 20, // Default value or get from API
+        currentPatients: 0, // Default value or get from API
+        status: "AVAILABLE"
+      }));
+      
+      setSchedules(mappedSchedules);
+    } catch (error) {
+      console.error("Error loading schedules:", error);
+      setNotification({
+        type: "error",
+        message: "Không thể tải danh sách lịch trống",
+      });
+    } finally {
+      setIsLoadingSchedules(false);
+    }
+  };
+
+  // Update loadSchedulesByDate to use new function
+  const loadSchedulesByDate = async (date: string) => {
+    if (!doctorId) {
+      setNotification({
+        type: "error",
+        message: "Vui lòng chọn bác sĩ trước",
+      });
+      return;
+    }
+    await loadSchedulesByDoctorAndDate(doctorId, date);
+  };
+
+  // Load schedule details
+  const loadScheduleDetails = async (scheduleId: number) => {
+    try {
+      const response = await appointmentService.getScheduleById(scheduleId);
+      const schedule = response.data as Schedule;
+      setSelectedSchedule(schedule);
+      // Auto-fill doctor info from schedule
+      setAppointmentForm(prev => ({
+        ...prev,
+        doctorId: schedule.doctorId
+      }));
+    } catch (error) {
+      console.error("Error loading schedule details:", error);
+      setNotification({
+        type: "error",
+        message: "Không thể tải thông tin lịch khám",
+      });
+    }
+  };
+
+  // Load patients list
+  const loadPatients = async () => {
+    setIsLoadingPatients(true);
+    try {
+      const response = await patientService.getPatients();
+      // Convert PatientType to AppointmentPatient
+      const convertedPatients: AppointmentPatient[] = response.data.map(patient => ({
+        id: patient.patientId,
+        fullName: patient.fullName,
+        phoneNumber: patient.phoneNumber || "",
+        age: patient.age || 0,
+        gender: patient.gender,
+        insuranceId: patient.insuranceNumber
+      }));
+      setPatients(convertedPatients);
+    } catch (error) {
+      console.error("Error loading patients:", error);
+      setNotification({
+        type: "error",
+        message: "Không thể tải danh sách bệnh nhân",
+      });
+    } finally {
+      setIsLoadingPatients(false);
+    }
+  };
+
+  // Load patient details
+  const loadPatientDetails = async (patientId: number) => {
+    try {
+      const response = await patientService.getPatientById(patientId);
+      // Convert PatientType to AppointmentPatient
+      const convertedPatient: AppointmentPatient = {
+        id: response.data.patientId,
+        fullName: response.data.fullName,
+        phoneNumber: response.data.phoneNumber || "",
+        age: response.data.age || 0,
+        gender: response.data.gender,
+        insuranceId: response.data.insuranceNumber
+      };
+      setSelectedPatient(convertedPatient);
+    } catch (error) {
+      console.error("Error loading patient details:", error);
+      setNotification({
+        type: "error",
+        message: "Không thể tải thông tin bệnh nhân",
+      });
+    }
+  };
+
+  // Format time range
+  const formatTimeRange = (start: string, end: string): string => {
+    const startTime = start ? formatTimeToVietnamese(start) : "";
+    const endTime = end ? formatTimeToVietnamese(end) : "";
+    return startTime && endTime ? `${startTime} - ${endTime}` : "";
+  };
+
+  // Load patients when component mounts
+  useEffect(() => {
+    loadPatients();
+  }, []);
+
+  // Reset form helper
+  const resetModalFields = () => {
+    setEventDate("");
+    setSchedules([]);
+    setSelectedSchedule(null);
+    setSelectedPatient(null);
+    setAppointmentForm({
+      slotStart: "",
+      slotEnd: "",
+      scheduleId: 0,
+      symptoms: "",
+      doctorId: 0,
+      patientId: 0,
+    });
+    setErrors({});
+  };
+
+  // Handle close modal
+  const handleCloseModal = () => {
+    closeModal();
+    resetModalFields();
+  };
+
+  // Validate form
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
+    if (!appointmentForm.scheduleId) newErrors.scheduleId = "Chọn lịch trống";
+    if (!appointmentForm.patientId) newErrors.patientId = "Chọn bệnh nhân";
     if (!appointmentForm.slotStart) newErrors.slotStart = "Chọn giờ bắt đầu";
     if (!appointmentForm.slotEnd) newErrors.slotEnd = "Chọn giờ kết thúc";
-    if (!appointmentForm.scheduleId) newErrors.scheduleId = "Nhập mã lịch khám";
     if (!appointmentForm.symptoms) newErrors.symptoms = "Nhập triệu chứng";
-    if (!appointmentForm.doctorId) newErrors.doctorId = "Chọn bác sĩ";
-    if (!appointmentForm.patientId) newErrors.patientId = "Nhập mã bệnh nhân";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Hàm tạo lịch khám mới
+  // Handle create appointment
   const handleCreateAppointment = async () => {
     if (!validateForm()) return;
     setIsSubmitting(true);
     try {
-      await appointmentService.createAppointment(appointmentForm);
+      const response = await appointmentService.createAppointment(appointmentForm);
+      const appointmentResponse = response as unknown as AppointmentResponse;
       closeModal();
-      setAppointmentForm({
-        slotStart: "",
-        slotEnd: "",
-        scheduleId: 0,
-        symptoms: "",
-        doctorId: 0,
-        patientId: 0,
-      });
+      resetModalFields();
       setNotification({
         type: "success",
-        message: "Tạo lịch khám thành công!",
+        message: `Tạo lịch khám thành công! Số thứ tự: ${appointmentResponse.orderNumber}`,
       });
       setTimeout(() => setNotification(null), 5000);
-      // Reload lại danh sách lịch khám từ API
+      // Reload appointments
       fetchAppointments();
     } catch (error) {
-      setNotification({ type: "error", message: "Tạo lịch khám thất bại!" });
+      setNotification({ 
+        type: "error", 
+        message: "Tạo lịch khám thất bại!" 
+      });
       setTimeout(() => setNotification(null), 5000);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Handle đóng modal
-  const handleCloseModal = () => {
-    closeModal();
-    resetModalFields();
+  // Handle date change for flatpickr
+  const handleDateChange: Hook = (dates) => {
+    if (!dates.length) return;
+    const dateStr = dates[0].toISOString().split("T")[0];
+    setSelectedDate(dateStr);
+    loadSchedulesByDate(dateStr);
   };
 
-  // Làm trống các trường thông tin
-  const resetModalFields = () => {
-    // Reset thông tin bệnh nhân
-    setPatientName("");
-    setPatientId("");
-    setInsuranceId("");
-    setPhoneNumber("");
-    setPatientAge(0);
-    setSymptoms("");
-
-    // Reset thông tin lịch khám
-    setEventDate("");
-    setEventTime("");
-    setDoctorName("");
-    setDoctorId("");
-    setDepartment("");
-    setDepartmentId("");
-
-    // Reset trạng thái
-    setEventLevel("");
-    setSelectedEvent(null);
-    setErrors({});
-  };
-
-  // Lấy danh sách lịch khám từ API khi mount và khi thêm mới thành công
+  // Fetch appointments
   const fetchAppointments = async () => {
     try {
       const res = await appointmentService.getAllAppointments(0, 200);
-      const apiEvents = res.content
-        .map((item) => {
-          let date = "";
-          if (item.schedule && item.schedule.date) {
-            date = item.schedule.date;
-          } else if (item.createdAt) {
-            date = item.createdAt.split("T")[0];
-          }
+      const apiEvents = (res.content || [])
+        .map((item): CalendarEvent | null => {
+          const schedule = item.schedule as ScheduleDto;
+          const date = schedule?.date || item.createdAt?.split("T")[0] || "";
           if (!date) return null;
-          const start = `${date}T${item.slotStart}`;
-          const end = `${date}T${item.slotEnd}`;
+
+          const start = `${date}T${item.slotStart || ""}`;
+          const end = `${date}T${item.slotEnd || ""}`;
+          
           return {
-            id: item.appointmentId,
-            title:
-              item.patientInfo?.fullName || `Lịch khám #${item.appointmentId}`,
+            id: item.appointmentId.toString(),
+            title: item.patientInfo?.fullName || `Lịch khám #${item.appointmentId}`,
             start,
             end,
             extendedProps: {
-              calendar:
-                item.appointmentStatus === "COMPLETED"
-                  ? "success"
-                  : item.appointmentStatus === "CANCELLED"
-                  ? "danger"
-                  : item.appointmentStatus === "CONFIRMED"
-                  ? "warning"
-                  : "waiting",
-              patientId: item.patientInfo?.patientId || "",
-              symptoms: item.symptoms,
-              doctorId: item.doctorId,
-              // Thêm các trường khác nếu cần
+              calendar: item.appointmentStatus as EventStatus,
+              patientName: item.patientInfo?.fullName || "",
+              patientId: item.patientInfo?.patientId?.toString() || "",
+              insuranceId: item.patientInfo?.insuranceId || "",
+              phoneNumber: item.patientInfo?.phoneNumber || "",
+              patientAge: item.patientInfo?.age || 0,
+              symptoms: item.symptoms || "",
+              eventTime: item.slotStart || "",
+              doctorName: schedule?.doctorName || "",
+              department: schedule?.departmentName || "",
+              departmentId: schedule?.departmentId?.toString() || "",
+              doctorId: item.doctorId?.toString() || "",
             },
           };
         })
-        .filter(Boolean);
-      setEvents(apiEvents as CalendarEvent[]);
+        .filter((event): event is CalendarEvent => event !== null);
+      setEvents(apiEvents);
     } catch (error) {
       console.error("Không thể tải lịch khám từ API:", error);
+      setEvents([]); // Set empty array on error
     }
   };
 
+  // Load appointments when component mounts
   useEffect(() => {
     fetchAppointments();
   }, []);
+
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+
+  // Fix the dayCellDidMount error
+  const handleDayCellDidMount = (arg: { el: Element }) => {
+    const addButtonElements = arg.el.querySelectorAll(
+      ".fc-daygrid-day-bottom"
+    );
+    addButtonElements.forEach((element) => {
+      if (element instanceof HTMLElement) {
+        element.style.display = "none";
+      }
+    });
+  };
+
+  // Render event content with safe type checking
+  const renderEventContent = (eventInfo: {
+    event: {
+      title: string;
+      start: Date | null;
+      extendedProps: { calendar: string; eventTime?: string };
+    };
+    timeText: string;
+  }) => {
+    const { event } = eventInfo;
+    const time = event.extendedProps.eventTime || eventInfo.timeText;
+    return (
+      <div className="flex flex-col gap-1 p-1">
+        <div className="flex items-center gap-2">
+          <div
+            className={`size-2 rounded-full ${
+              event.extendedProps.calendar === "success"
+                ? "bg-green-500"
+                : event.extendedProps.calendar === "danger"
+                ? "bg-red-500"
+                : event.extendedProps.calendar === "warning"
+                ? "bg-yellow-500"
+                : "bg-gray-500"
+            }`}
+          />
+          <span className="text-sm font-medium">{event.title}</span>
+        </div>
+        {time && (
+          <div className="text-xs text-gray-500">
+            <span>{formatTimeToVietnamese(time)}</span>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -486,15 +713,7 @@ const MedicalCalendar: React.FC = () => {
             }}
             eventClick={handleEventClick}
             eventContent={renderEventContent}
-            dayCellDidMount={(arg) => {
-              // Remove "+ thêm" buttons from day cells
-              const addButtonElements = arg.el.querySelectorAll(
-                ".fc-daygrid-day-bottom"
-              );
-              addButtonElements.forEach((element) => {
-                element.style.display = "none";
-              });
-            }}
+            dayCellDidMount={handleDayCellDidMount}
             slotLabelFormat={{
               hour: "2-digit",
               minute: "2-digit",
@@ -592,174 +811,321 @@ const MedicalCalendar: React.FC = () => {
         <Modal
           isOpen={isOpen}
           onClose={handleCloseModal}
-          className="max-w-[500px] lg:p-8 mt-[30vh] mb-8"
+          className="max-w-[700px] lg:p-8 mt-[10vh] mb-8"
         >
-          <div className="flex flex-col px-2 overflow-y-auto custom-scrollbar">
-            <h5 className="mb-4 font-semibold text-gray-800 modal-title text-theme-xl dark:text-white/90 lg:text-2xl">
-              Thêm lịch khám
-            </h5>
+          <div className="flex flex-col px-4">
+            <div className="flex justify-between items-center mb-6">
+              <h5 className="font-semibold text-gray-800 text-theme-xl dark:text-white/90 lg:text-2xl">
+                Thêm lịch khám mới
+              </h5>
+              <button
+                onClick={handleCloseModal}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 handleCreateAppointment();
               }}
-              className="space-y-4"
+              className="space-y-6"
             >
-              <div className="grid grid-cols-2 gap-4">
-                {/* Giờ bắt đầu */}
+              {/* Chọn ngày và schedule */}
+              <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                <h6 className="font-medium text-gray-700 mb-3">Chọn lịch trống</h6>
+                
+                <div className="grid grid-cols-3 gap-4">
+                  {/* Chọn khoa */}
+                  <div>
+                    <label className="block mb-1.5 text-sm font-medium text-gray-700">
+                      Khoa <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={departmentId}
+                      onChange={handleDepartmentChange}
+                      className="w-full h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm"
+                    >
+                      <option value="">Chọn khoa</option>
+                      {departmentList.map((dept) => (
+                        <option key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Chọn bác sĩ */}
+                  <div>
+                    <label className="block mb-1.5 text-sm font-medium text-gray-700">
+                      Bác sĩ <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={doctorId}
+                      onChange={handleDoctorChange}
+                      className="w-full h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm"
+                      disabled={!departmentId || isLoadingDoctors}
+                    >
+                      <option value="">
+                        {isLoadingDoctors
+                          ? "Đang tải..."
+                          : departmentId
+                          ? "Chọn bác sĩ"
+                          : "Vui lòng chọn khoa trước"}
+                      </option>
+                      {filteredDoctors.map((doctor) => (
+                        <option key={doctor.id} value={doctor.id}>
+                          {doctor.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Ngày khám */}
+                  <div>
+                    <label className="block mb-1.5 text-sm font-medium text-gray-700">
+                      Ngày khám <span className="text-red-500">*</span>
+                    </label>
+                    <DatePicker
+                      id="appointment-date"
+                      onChange={handleDateChange}
+                      value={selectedDate || ""}
+                      error={errors.date}
+                      disabled={!doctorId}
+                    />
+                  </div>
+                </div>
+
+                {/* Schedule selection */}
                 <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-400">
-                    Giờ bắt đầu <span className="text-red-500">*</span>
+                  <label className="block mb-1.5 text-sm font-medium text-gray-700">
+                    Lịch trống <span className="text-red-500">*</span>
                   </label>
-                  <TimePicker
-                    id="slot-start"
-                    placeholder="Chọn giờ bắt đầu"
-                    value={appointmentForm.slotStart}
-                    onChange={(_, val) =>
+                  <select
+                    value={selectedSchedule?.id?.toString() || ""}
+                    onChange={(e) => {
+                      const scheduleId = parseInt(e.target.value);
+                      const schedule = schedules.find((s) => s.id === scheduleId);
+                      setSelectedSchedule(schedule || null);
+                    }}
+                    className="w-full h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm"
+                    disabled={!selectedDate || isLoadingSchedules || !doctorId}
+                  >
+                    <option value="">
+                      {isLoadingSchedules
+                        ? "Đang tải..."
+                        : !doctorId
+                        ? "Vui lòng chọn bác sĩ trước"
+                        : !selectedDate
+                        ? "Vui lòng chọn ngày trước"
+                        : "Chọn lịch trống"}
+                    </option>
+                    {schedules.map((schedule) => (
+                      <option key={schedule.id} value={schedule.id.toString()}>
+                        {`${formatTimeRange(schedule.startTime, schedule.endTime)}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Thông tin bác sĩ và khoa */}
+                {selectedSchedule && (
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-600">Bác sĩ:</span>{" "}
+                        <span className="text-gray-800">{selectedSchedule.doctorName}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Khoa:</span>{" "}
+                        <span className="text-gray-800">{selectedSchedule.departmentName}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Thời gian:</span>{" "}
+                        <span className="text-gray-800">{formatTimeRange(selectedSchedule.startTime, selectedSchedule.endTime)}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Số bệnh nhân:</span>{" "}
+                        <span className="text-gray-800">{selectedSchedule.currentPatients}/{selectedSchedule.maxPatients}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Chọn bệnh nhân */}
+              <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                <h6 className="font-medium text-gray-700 mb-3">Thông tin bệnh nhân</h6>
+                
+                <div>
+                  <label className="block mb-1.5 text-sm font-medium text-gray-700">
+                    Chọn bệnh nhân <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={appointmentForm.patientId || ""}
+                    onChange={(e) => {
+                      const patientId = Number(e.target.value);
                       setAppointmentForm((prev) => ({
                         ...prev,
-                        slotStart: val,
+                        patientId,
+                      }));
+                      // Load patient details if needed
+                      if (patientId) {
+                        loadPatientDetails(patientId);
+                      }
+                    }}
+                    className="w-full h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm"
+                    disabled={!selectedSchedule || isLoadingPatients}
+                  >
+                    <option value="">
+                      {isLoadingPatients
+                        ? "Đang tải..."
+                        : selectedSchedule
+                        ? "Chọn bệnh nhân"
+                        : "Vui lòng chọn lịch trước"}
+                    </option>
+                    {patients?.map((patient) => (
+                      <option key={patient.id} value={patient.id}>
+                        {patient.fullName} - {patient.phoneNumber}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.patientId && (
+                    <p className="text-red-500 text-xs mt-1">{errors.patientId}</p>
+                  )}
+                </div>
+
+                {/* Hiển thị thông tin bệnh nhân đã chọn */}
+                {selectedPatient && (
+                  <div className="mt-2 p-3 bg-green-50 rounded-lg">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-600">Mã BN:</span>{" "}
+                        <span className="text-gray-800">{selectedPatient.id}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">BHYT:</span>{" "}
+                        <span className="text-gray-800">{selectedPatient.insuranceId || "Không có"}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Tuổi:</span>{" "}
+                        <span className="text-gray-800">{selectedPatient.age}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Giới tính:</span>{" "}
+                        <span className="text-gray-800">{selectedPatient.gender}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Khung giờ */}
+                <div>
+                  <label className="block mb-1.5 text-sm font-medium text-gray-700">
+                    Khung giờ <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <TimePicker
+                      id="slot-start"
+                      placeholder="Bắt đầu"
+                      value={appointmentForm.slotStart}
+                      onChange={(_, val) =>
+                        setAppointmentForm((prev) => ({
+                          ...prev,
+                          slotStart: val,
+                        }))
+                      }
+                      error={errors.slotStart}
+                    />
+                    <TimePicker
+                      id="slot-end"
+                      placeholder="Kết thúc"
+                      value={appointmentForm.slotEnd}
+                      onChange={(_, val) =>
+                        setAppointmentForm((prev) => ({ ...prev, slotEnd: val }))
+                      }
+                      error={errors.slotEnd}
+                    />
+                  </div>
+                  {(errors.slotStart || errors.slotEnd) && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.slotStart || errors.slotEnd}
+                    </p>
+                  )}
+                </div>
+
+                {/* Triệu chứng */}
+                <div>
+                  <label className="block mb-1.5 text-sm font-medium text-gray-700">
+                    Triệu chứng <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    placeholder="Mô tả triệu chứng của bệnh nhân"
+                    value={appointmentForm.symptoms}
+                    onChange={(e) =>
+                      setAppointmentForm((prev) => ({
+                        ...prev,
+                        symptoms: e.target.value,
                       }))
                     }
-                    error={errors.slotStart}
+                    className="w-full h-24 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm resize-none"
                   />
-                  {errors.slotStart && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.slotStart}
-                    </p>
-                  )}
-                </div>
-                {/* Giờ kết thúc */}
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-400">
-                    Giờ kết thúc <span className="text-red-500">*</span>
-                  </label>
-                  <TimePicker
-                    id="slot-end"
-                    placeholder="Chọn giờ kết thúc"
-                    value={appointmentForm.slotEnd}
-                    onChange={(_, val) =>
-                      setAppointmentForm((prev) => ({ ...prev, slotEnd: val }))
-                    }
-                    error={errors.slotEnd}
-                  />
-                  {errors.slotEnd && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.slotEnd}
-                    </p>
+                  {errors.symptoms && (
+                    <p className="text-red-500 text-xs mt-1">{errors.symptoms}</p>
                   )}
                 </div>
               </div>
-              {/* Mã lịch khám */}
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-400">
-                  Mã lịch khám <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="schedule-id"
-                  type="number"
-                  placeholder="Nhập mã lịch khám"
-                  value={appointmentForm.scheduleId || ""}
-                  onChange={(e) =>
-                    setAppointmentForm((prev) => ({
-                      ...prev,
-                      scheduleId: Number(e.target.value),
-                    }))
-                  }
-                  className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-base-300 focus:outline-hidden focus:ring-3 focus:ring-base-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
-                  required
-                />
-                {errors.scheduleId && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.scheduleId}
-                  </p>
-                )}
-              </div>
-              {/* Triệu chứng */}
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-400">
-                  Triệu chứng <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  id="symptoms"
-                  placeholder="Mô tả triệu chứng bệnh"
-                  value={appointmentForm.symptoms}
-                  onChange={(e) =>
-                    setAppointmentForm((prev) => ({
-                      ...prev,
-                      symptoms: e.target.value,
-                    }))
-                  }
-                  className="dark:bg-dark-900 h-20 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-base-300 focus:outline-hidden focus:ring-3 focus:ring-base-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-base-800"
-                  required
-                ></textarea>
-                {errors.symptoms && (
-                  <p className="text-red-500 text-xs mt-1">{errors.symptoms}</p>
-                )}
-              </div>
-              {/* Bác sĩ */}
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-400">
-                  Mã bác sĩ <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="doctor-id"
-                  type="number"
-                  placeholder="Nhập mã bác sĩ"
-                  value={appointmentForm.doctorId || ""}
-                  onChange={(e) =>
-                    setAppointmentForm((prev) => ({
-                      ...prev,
-                      doctorId: Number(e.target.value),
-                    }))
-                  }
-                  className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-base-300 focus:outline-hidden focus:ring-3 focus:ring-base-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
-                  required
-                />
-                {errors.doctorId && (
-                  <p className="text-red-500 text-xs mt-1">{errors.doctorId}</p>
-                )}
-              </div>
-              {/* Bệnh nhân */}
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-400">
-                  Mã bệnh nhân <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="patient-id"
-                  type="number"
-                  placeholder="Nhập mã bệnh nhân"
-                  value={appointmentForm.patientId || ""}
-                  onChange={(e) =>
-                    setAppointmentForm((prev) => ({
-                      ...prev,
-                      patientId: Number(e.target.value),
-                    }))
-                  }
-                  className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-base-300 focus:outline-hidden focus:ring-3 focus:ring-base-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
-                  required
-                />
-                {errors.patientId && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.patientId}
-                  </p>
-                )}
-              </div>
-              {/* Nút submit */}
-              <div className="flex items-center gap-3 mt-6 modal-footer sm:justify-end">
+
+              {/* Nút điều khiển */}
+              <div className="flex justify-end gap-3 pt-2">
                 <button
-                  onClick={handleCloseModal}
                   type="button"
-                  className="flex w-full justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] sm:w-auto"
+                  onClick={handleCloseModal}
+                  className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="btn btn-success btn-update-event flex w-full justify-center rounded-lg bg-base-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-base-600 disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
+                  disabled={isSubmitting || !selectedSchedule || !selectedPatient}
+                  className="px-6 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? "Đang xử lý..." : "Thêm"}
+                  {isSubmitting ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                      Đang xử lý...
+                    </span>
+                  ) : (
+                    "Thêm lịch khám"
+                  )}
                 </button>
               </div>
             </form>
@@ -889,31 +1255,6 @@ const MedicalCalendar: React.FC = () => {
         </Modal>
       </div>
     </>
-  );
-};
-
-const renderEventContent = (eventInfo: {
-  event: {
-    title: string;
-    start: Date | null;
-    extendedProps: { calendar: string; eventTime?: string };
-  };
-  timeText: string;
-}) => {
-  const colorClass = `fc-event-${eventInfo.event.extendedProps.calendar.toLowerCase()}`;
-
-  // Use eventTime from extendedProps if available, otherwise use timeText
-  const displayTime =
-    eventInfo.event.extendedProps.eventTime || eventInfo.timeText;
-
-  return (
-    <div
-      className={`event-fc-color flex fc-event-main ${colorClass} p-1 rounded-sm bg-white`}
-    >
-      <div className="fc-daygrid-event-dot"></div>
-      <div className="fc-event-time">{displayTime}</div>
-      <div className="fc-event-title">{eventInfo.event.title}</div>
-    </div>
   );
 };
 
