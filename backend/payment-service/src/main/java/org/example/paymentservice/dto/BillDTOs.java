@@ -40,7 +40,6 @@ public class BillDTOs {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class NewBillDetailRequest {
-        @NotNull(message = "Mã thuốc hoặc dịch vụ không được để trống")
         private Long itemId;
 
         @NotBlank(message = "Tên thuốc hoặc dịch vụ không được để trống")

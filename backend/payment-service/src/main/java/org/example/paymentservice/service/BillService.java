@@ -120,6 +120,12 @@ public class BillService {
 
         List<BillDetailResponse> detailResponses = new ArrayList<>();
         for (NewBillDetailRequest detailRequest : request) {
+            // Validate itemId for non-CONSULTATION types
+            if (detailRequest.getItemType() != BillDetail.ItemType.CONSULTATION && detailRequest.getItemId() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                    "Mã thuốc hoặc dịch vụ không được để trống cho loại " + detailRequest.getItemType());
+            }
+
             BillDetail billDetail = new BillDetail();
             billDetail.setBill(bill);
             billDetail.setItemType(detailRequest.getItemType());
