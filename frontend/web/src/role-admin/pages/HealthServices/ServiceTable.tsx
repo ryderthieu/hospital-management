@@ -6,7 +6,6 @@ import {
   TableRow,
 } from "../../components/ui/table";
 import { format } from "date-fns";
-import Badge from "../../components/ui/badge/Badge";
 import Pagination from "../../components/common/Pagination";
 import { useState, useEffect } from "react";
 import SearchInput from "../../components/common/SearchInput";
@@ -22,6 +21,8 @@ export default function ServiceTable() {
   const [loading, setLoading] = useState(true);
   const [serviceToDelete, setServiceToDelete] = useState<number | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [searchId, setSearchId] = useState<string>("");
+  const [searchResult, setSearchResult] = useState<Service | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,6 +31,20 @@ export default function ServiceTable() {
       setLoading(false);
     });
   }, []);
+
+  const handleSearch = async () => {
+    if (!searchId.trim()) {
+      setSearchResult(null);
+      return;
+    }
+    try {
+      const service = await appointmentService.getServiceById(Number(searchId));
+      setSearchResult(service);
+    } catch (error) {
+      setSearchResult(null);
+      alert("Không tìm thấy dịch vụ với mã này!");
+    }
+  };
 
   // Xem chi tiết dịch vụ
   const handleView = (serviceId: number) => {
@@ -85,8 +100,18 @@ export default function ServiceTable() {
         </div>
 
         <div className="flex items-center gap-3">
-          <SearchInput placeholder="Tìm kiếm..." />
-          <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
+          <SearchInput
+            placeholder="Tìm kiếm theo mã dịch vụ..."
+            value={searchId}
+            onChange={(e) => setSearchId(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSearch();
+            }}
+          />
+          <button
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
+            onClick={handleSearch}
+          >
             <svg
               className="stroke-current fill-white dark:fill-gray-800"
               width="20"
@@ -122,7 +147,7 @@ export default function ServiceTable() {
                 strokeWidth="1.5"
               />
             </svg>
-            Lọc
+            Tìm
           </button>
         </div>
       </div>
@@ -172,35 +197,35 @@ export default function ServiceTable() {
 
           {/* Table Body */}
           <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {paginatedData.map((service) => (
-              <TableRow key={service.serviceId}>
+            {searchResult ? (
+              <TableRow key={searchResult.serviceId}>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  DV{service.serviceId.toString().padStart(4, "0")}
+                  DV{searchResult.serviceId.toString().padStart(4, "0")}
                 </TableCell>
                 <TableCell className="py-3">
                   <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                    {service.serviceName}
+                    {searchResult.serviceName}
                   </p>
                 </TableCell>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {service.price.toLocaleString("vi-VN")} ₫
+                  {searchResult.price.toLocaleString("vi-VN")} ₫
                 </TableCell>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {format(new Date(service.createdAt), "dd-MM-yyyy") || ""}
+                  {format(new Date(searchResult.createdAt), "dd-MM-yyyy") || ""}
                 </TableCell>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {service.serviceType === "TEST"
+                  {searchResult.serviceType === "TEST"
                     ? "Xét nghiệm"
-                    : service.serviceType === "IMAGING"
+                    : searchResult.serviceType === "IMAGING"
                     ? "Chẩn đoán hình ảnh"
-                    : service.serviceType === "CONSULTATION"
+                    : searchResult.serviceType === "CONSULTATION"
                     ? "Tư vấn"
                     : "Khác"}
                 </TableCell>
                 <TableCell className="py-3 text-theme-md">
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleView(service.serviceId)}
+                      onClick={() => handleView(searchResult.serviceId)}
                       className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
                     >
                       <svg
@@ -216,9 +241,10 @@ export default function ServiceTable() {
                           clipRule="evenodd"
                         />
                       </svg>
+                      Xem
                     </button>
                     <button
-                      onClick={() => handleEdit(service.serviceId)}
+                      onClick={() => handleEdit(searchResult.serviceId)}
                       className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors dark:bg-slate-900/30 dark:text-slate-400 dark:hover:bg-slate-900/50"
                     >
                       <svg
@@ -229,9 +255,10 @@ export default function ServiceTable() {
                       >
                         <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                       </svg>
+                      Sửa
                     </button>
                     <button
-                      onClick={() => handleDelete(service.serviceId)}
+                      onClick={() => handleDelete(searchResult.serviceId)}
                       className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
                     >
                       <svg
@@ -246,11 +273,95 @@ export default function ServiceTable() {
                           clipRule="evenodd"
                         />
                       </svg>
+                      Xóa
                     </button>
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              paginatedData.map((service) => (
+                <TableRow key={service.serviceId}>
+                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    DV{service.serviceId.toString().padStart(4, "0")}
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                      {service.serviceName}
+                    </p>
+                  </TableCell>
+                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    {service.price.toLocaleString("vi-VN")} ₫
+                  </TableCell>
+                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    {format(new Date(service.createdAt), "dd-MM-yyyy") || ""}
+                  </TableCell>
+                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    {service.serviceType === "TEST"
+                      ? "Xét nghiệm"
+                      : service.serviceType === "IMAGING"
+                      ? "Chẩn đoán hình ảnh"
+                      : service.serviceType === "CONSULTATION"
+                      ? "Tư vấn"
+                      : "Khác"}
+                  </TableCell>
+                  <TableCell className="py-3 text-theme-md">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleView(service.serviceId)}
+                        className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path
+                            fillRule="evenodd"
+                            d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Xem
+                      </button>
+                      <button
+                        onClick={() => handleEdit(service.serviceId)}
+                        className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors dark:bg-slate-900/30 dark:text-slate-400 dark:hover:bg-slate-900/50"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
+                        Sửa
+                      </button>
+                      <button
+                        onClick={() => handleDelete(service.serviceId)}
+                        className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Xóa
+                      </button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
         <div>

@@ -1,84 +1,111 @@
 import { Modal } from "../../ui/modal";
 import { useModal } from "../../../hooks/useModal";
 import { useState } from "react";
-import Input from "../../form/input/InputField";
 import InfoField from "../../form/InfoField";
+import type {
+  PrescriptionResponse,
+  PrescriptionDetailResponse,
+} from "../../../types/pharmacy";
 
 interface MedicalRecordProps {
-  date: string;
-  recordNumber: string;
-  reason: string;
-  diagnosis: string;
-  treatment: string;
-  prescription: string;
-  vitalSign: string;
+  prescription: PrescriptionResponse;
 }
 
-const MedicalRecord: React.FC<MedicalRecordProps> = ({
-  date,
-  recordNumber,
-  reason,
-  diagnosis,
-  treatment,
-  prescription,
-  vitalSign
-}) => {
+const MedicalRecord: React.FC<MedicalRecordProps> = ({ prescription }) => {
   const { isOpen, openModal, closeModal } = useModal();
-  const [formData, setFormData] = useState({
-    reason,
+
+  // Lấy thông tin tổng hợp từ prescription
+  const {
+    prescriptionId,
+    createdAt,
+    note,
     diagnosis,
-    treatment,
-    prescription,
-    vitalSign
-  });
+    prescriptionDetails,
+    systolicBloodPressure,
+    diastolicBloodPressure,
+    heartRate,
+    bloodSugar,
+  } = prescription;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  // Tổng hợp đơn thuốc dạng bảng
+  const renderPrescriptionTable = () => (
+    <table className="w-full text-sm bg-gray-50">
+      <thead>
+        <tr className="bg-white border-b border-gray-200">
+          <th className="p-2 text-left">Tên thuốc</th>
+          <th className="p-2 text-left">Giá (₫)</th>
+          <th className="p-2 text-left">Liều dùng</th>
+          <th className="p-2 text-left">Hướng dẫn</th>
+          <th className="p-2 text-left">Số lượng</th>
+          <th className="p-2 text-left">Thành tiền (₫)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {prescriptionDetails.map((detail: PrescriptionDetailResponse) => (
+          <tr key={detail.detailId} className="border-b border-gray-200">
+            <td className="p-2">{detail.medicine?.medicineName || ""}</td>
+            <td className="p-2">
+              {detail.medicine?.price?.toLocaleString() || ""}
+            </td>
+            <td className="p-2">{detail.dosage}</td>
+            <td className="p-2">
+              {detail.frequency} - {detail.duration}
+            </td>
+            <td className="p-2">{detail.quantity}</td>
+            <td className="p-2">
+              {detail.medicine?.price && detail.quantity
+                ? (detail.medicine.price * detail.quantity).toLocaleString()
+                : ""}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
 
-  const handleUpdate = () => {
-    console.log("Updated record:", formData);
-    closeModal();
-  };
-  
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row gap-4 p-4 justify-between bg-gray-50/50 rounded-lg border-gray-200 border-1">
         {/* Thông tin bệnh án */}
-        <div className="">
-          <h3 className=" text-gray-600 font-semibold">
-            Bệnh án #{recordNumber}
+        <div>
+          <h3 className="text-gray-600 font-semibold">
+            Bệnh án #{prescriptionId}
           </h3>
-          <span className="text-gray-400 text-sm font-semibold">{date}</span>
+          <span className="text-gray-400 text-sm font-semibold">
+            {createdAt ? new Date(createdAt).toLocaleDateString("vi-VN") : ""}
+          </span>
         </div>
 
         {/* Chi tiết bệnh án */}
         <div className="md:w-[55%]">
           <p className="text-gray-600 truncate">
-            <span className="font-medium text-gray-800">Lý do khám: </span>
-            {reason}
+            <span className="font-medium text-gray-800">Lưu ý: </span>
+            {note}
           </p>
           <p className="text-gray-600 truncate">
             <span className="font-medium text-gray-800">Chẩn đoán: </span>
             {diagnosis}
           </p>
           <p className="text-gray-600 truncate">
-            <span className="font-medium text-gray-800">Điều trị: </span>
-            {treatment}
+            <span className="font-medium text-gray-800">Sinh hiệu: </span>
+            Huyết áp: {systolicBloodPressure}/{diastolicBloodPressure} mmHg,
+            Nhịp tim: {heartRate} bpm, Đường huyết: {bloodSugar}
           </p>
           <p className="text-gray-600 truncate">
             <span className="font-medium text-gray-800">Đơn thuốc: </span>
-            {prescription}
-          </p>
-          <p className="hidden text-gray-600 truncate">
-            <span className="font-medium text-gray-800">Sinh hiệu: </span>
-            {vitalSign}
+            {prescriptionDetails
+              .map(
+                (d) =>
+                  `${d.medicine?.medicineName || ""} - ${d.dosage} - ${
+                    d.frequency
+                  } - ${d.duration} (${d.quantity})`
+              )
+              .join("; ")}
           </p>
         </div>
 
         {/* Các nút hành động */}
-        <div className="flex  gap-2">
+        <div className="flex gap-2">
           <button
             className="flex size-12 justify-center items-center gap-1 px-3 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
             onClick={openModal}
@@ -97,53 +124,28 @@ const MedicalRecord: React.FC<MedicalRecordProps> = ({
               />
             </svg>
           </button>
-          <button className="flex size-12 justify-center items-center gap-1 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </button>
         </div>
-        
       </div>
 
-      {/* Modal khi nhan vao button xem */}
+      {/* Modal khi nhấn vào button xem */}
       <Modal
         isOpen={isOpen}
         onClose={closeModal}
         className="max-w-[900px] min-w-[300px] p-6 lg:p-10 mt-80 mb-10"
       >
-        <div className="space-y-6  mb-10">
+        <div className="space-y-6 mb-10">
           <h3 className="text-xl font-semibold text-gray-800">
-            Bệnh án #{recordNumber}
+            Bệnh án #{prescriptionId}
           </h3>
 
+          <InfoField label="Lý do khám" value={note} />
+          <InfoField label="Chẩn đoán" value={diagnosis} />
           <InfoField
-            label="Nguyên nhân khám" 
-            value={formData.reason}
-          />
-        
-          <InfoField
-            label="Chẩn đoán" 
-            value={formData.diagnosis}
-          />
-
-          <InfoField
-            label="Phương án điều trị" 
-            value={formData.treatment}
-          />
-
-          <InfoField
-            label="Sinh hiệu" 
-            value={formData.vitalSign}
+            label="Sinh hiệu"
+            value={
+              `Huyết áp: ${systolicBloodPressure}/${diastolicBloodPressure} mmHg, ` +
+              `Nhịp tim: ${heartRate} bpm, Đường huyết: ${bloodSugar}`
+            }
           />
 
           <div className="grid grid-cols-6 space-y-2">
@@ -151,80 +153,7 @@ const MedicalRecord: React.FC<MedicalRecordProps> = ({
               Đơn thuốc
             </p>
             <div className="col-span-4 overflow-x-auto border bg-gray-50 border-gray-200 rounded-md">
-              <table className="w-full text-sm bg-gray-50">
-                <thead>
-                  <tr className="bg-white border-b border-gray-200">
-                    <th className="p-2 text-left">Tên thuốc</th>
-                    <th className="p-2 text-left">Giá (₫)</th>
-                    <th className="p-2 text-left">Liều dùng</th>
-                    <th className="p-2 text-left">Hướng dẫn</th>
-                    <th className="p-2 text-left">Số lượng</th>
-                    <th className="p-2 text-left">Thành tiền (₫)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b border-gray-200">
-                    <td className="p-2">Paracetamol</td>
-                    <td className="p-2">1000</td>
-                    <td className="p-2">1 - S/T/C</td>
-                    <td className="p-2">Sau ăn</td>
-                    <td className="p-2">1</td>
-                    <td className="p-2">1000</td>
-                  </tr>
-                  <tr className="border-b border-gray-200">
-                    <td className="p-2">Amoxicillin</td>
-                    <td className="p-2">2300</td>
-                    <td className="p-2">2 - S/T/C</td>
-                    <td className="p-2">Sau ăn</td>
-                    <td className="p-2">2</td>
-                    <td className="p-2">4600</td>
-                  </tr>
-                  <tr>
-                    <td className="p-2">Ibuprofen</td>
-                    <td className="p-2">5000</td>
-                    <td className="p-2">3 - S/T/C</td>
-                    <td className="p-2">Trước ăn</td>
-                    <td className="p-2">3</td>
-                    <td className="p-2">15000</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div>
-            <p className="text-sm font-semibold text-gray-500 mb-2">
-              Đính kèm:
-            </p>
-            <div className="grid grid-cols-4 gap-2">
-              <div className="border border-gray-200 rounded-md">
-                <img
-                  src="https://placehold.co/300x300"
-                  alt="Attachment 1"
-                  className="w-full h-auto"
-                />
-              </div>
-              <div className="border border-gray-200 rounded-md">
-                <img
-                  src="https://placehold.co/300x300"
-                  alt="Attachment 2"
-                  className="w-full h-auto"
-                />
-              </div>
-              <div className="border border-gray-200 rounded-md">
-                <img
-                  src="https://placehold.co/300x300"
-                  alt="Attachment 3"
-                  className="w-full h-auto"
-                />
-              </div>
-              <div className="border border-gray-200 rounded-md">
-                <img
-                  src="https://placehold.co/300x300"
-                  alt="Attachment 4"
-                  className="w-full h-auto"
-                />
-              </div>
+              {renderPrescriptionTable()}
             </div>
           </div>
         </div>

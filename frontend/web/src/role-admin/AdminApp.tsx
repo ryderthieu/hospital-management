@@ -35,11 +35,13 @@ import {
   InpatientRoom,
   AddPatientRoom,
   EditPatientRoom,
+  AddRoom,
 } from "./pages/Inpatient";
 import {
   OutpatientClinics,
   MedicalCalendar,
   ClinicDetail,
+  AddClinic,
 } from "./pages/MedicalExamination";
 import Authorization from "./pages/Authorization/Authorization";
 
@@ -56,6 +58,7 @@ const AdminApp: React.FC = () => {
           <Route path="calendar" element={<MedicalCalendar />} />
           <Route path="outpatient-clinics" element={<OutpatientClinics />} />
           <Route path="outpatient-clinics/:id" element={<ClinicDetail />} />
+          <Route path="outpatient-clinics/add" element={<AddClinic />} />
 
           {/* Patients Pages */}
           <Route path="patients" element={<Patient />} />
@@ -92,6 +95,9 @@ const AdminApp: React.FC = () => {
             path="inpatients-rooms/room-details"
             element={<RoomDetail />}
           />
+          <Route path="inpatients-rooms/add-room" element={<AddRoom />} />
+
+          {/* Medical Examination Pages */}
 
           {/* Department Page */}
           <Route path="departments" element={<Department />} />

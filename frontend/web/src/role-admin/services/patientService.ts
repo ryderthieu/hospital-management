@@ -6,6 +6,7 @@ import {
   CreatePatientRequest,
   RoomDetail,
   RoomDetailDto,
+  PatientRoom,
 } from "../types/patient";
 
 export const patientService = {
@@ -28,10 +29,10 @@ export const patientService = {
   },
 
   async updatePatient(
-    patientId: string,
-    patientData: Partial<PatientDto>
-  ): Promise<Patient> {
-    const response = await api.put<Patient>(
+    patientId: number,
+    patientData: PatientDto
+  ): Promise<PatientDto> {
+    const response = await api.put<PatientDto>(
       `/patients/${patientId}`,
       patientData
     );
@@ -102,6 +103,51 @@ export const patientService = {
   async deleteRoomDetail(detailId: number): Promise<string> {
     const response = await api.delete<string>(
       `/patients/room-details/${detailId}`
+    );
+    return response.data;
+  },
+
+  // Get all room details
+  async getAllPatientRooms(): Promise<PatientRoom[]> {
+    const response = await api.get<PatientRoom[]>(`/patients/patient-rooms`);
+    return response.data;
+  },
+
+  // Get patient room by roomId
+  async getPatientRoomById(roomId: number): Promise<PatientRoom> {
+    const response = await api.get<PatientRoom>(
+      `/patients/patient-rooms/${roomId}`
+    );
+    return response.data;
+  },
+
+  // Create a new patient room
+  async createPatientRoom(
+    patientRoomData: Partial<PatientRoom>
+  ): Promise<PatientRoom> {
+    const response = await api.post<PatientRoom>(
+      `/patients/patient-rooms`,
+      patientRoomData
+    );
+    return response.data;
+  },
+
+  //Update patient room
+  async updatePatientRoom(
+    roomId: number,
+    patientRoomData: Partial<PatientRoom>
+  ): Promise<PatientRoom> {
+    const response = await api.put<PatientRoom>(
+      `/patients/patient-rooms/${roomId}`,
+      patientRoomData
+    );
+    return response.data;
+  },
+
+  // Delete a patient room
+  async deletePatientRoom(roomId: number): Promise<string> {
+    const response = await api.delete<string>(
+      `/patients/patient-rooms/${roomId}`
     );
     return response.data;
   },

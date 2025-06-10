@@ -110,8 +110,8 @@ export const appointmentService = {
     return response.data
   },
 
-  async updateAppointmentStatus(appointmentId: number, status: string): Promise<Appointment> {
-    const response = await api.patch(`/appointments/${appointmentId}/status`, { status })
+   async updateAppointmentById(appointmentId: number, updateData: Partial<Appointment>): Promise<Appointment> {
+    const response = await api.put(`/appointments/${appointmentId}`, updateData)
     return response.data
   },
 

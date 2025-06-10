@@ -13,7 +13,7 @@ import {
   Image,
   FlatList,
 } from "react-native"
-import { useNavigation } from "@react-navigation/native"
+import { useNavigation, useRoute } from "@react-navigation/native"
 import { fontFamily } from "../../context/FontContext"
 import Header from "../../components/Header"
 import { DateCard } from "../../components/MedicationSchedule/DateCard"
@@ -21,14 +21,13 @@ import Checkbox from "../../components/MedicationSchedule/Checkbox"
 import MedicationConfirmModal from "../../components/MedicationSchedule/MedicationConfirmModal"
 import type { DateOption, TimeSlot, Medication } from "./type"
 import { colors } from "../../styles/globalStyles"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import * as Notifications from 'expo-notifications'
+import API from "../../services/api"
 
 const getCurrentTime = () => {
   const now = new Date()
-  return now.toLocaleTimeString('vi-VN', { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    hour12: false 
-  })
+  return now.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", hour12: false })
 }
 
 const getCurrentDate = () => {
@@ -37,56 +36,48 @@ const getCurrentDate = () => {
     day: now.getDate(),
     month: now.getMonth() + 1,
     year: now.getFullYear(),
-    dayOfWeek: now.toLocaleDateString('vi-VN', { weekday: 'short' })
+    dayOfWeek: now.toLocaleDateString("vi-VN", { weekday: "short" }),
   }
 }
 
 const generateDateOptions = (): DateOption[] => {
   const today = new Date()
   const dates: DateOption[] = []
-  
   for (let i = 0; i < 7; i++) {
     const date = new Date(today)
     date.setDate(today.getDate() + i)
-    
-    const dayNames = ['CN', 'Th 2', 'Th 3', 'Th 4', 'Th 5', 'Th 6', 'Th 7']
-    const dayName = i === 0 ? 'Hôm nay' : dayNames[date.getDay()]
-    
+    const dayNames = ["CN", "Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7"]
+    const dayName = i === 0 ? "Hôm nay" : dayNames[date.getDay()]
     dates.push({
       id: i + 1,
       day: dayName,
       date: date.getDate(),
       disabled: false,
-      fullDate: date.toISOString().split('T')[0]  
+      fullDate: date.toISOString().split("T")[0],
     })
   }
-  
   return dates
 }
 
 const isTimeReached = (medicationTime: string): boolean => {
   const now = new Date()
-  const [hours, minutes] = medicationTime.split(':').map(Number)
+  const [hours, minutes] = medicationTime.split(":").map(Number)
   const medicationDateTime = new Date()
   medicationDateTime.setHours(hours, minutes, 0, 0)
-  
   return now >= medicationDateTime
 }
 
 const getTimeUntilMedication = (medicationTime: string): string => {
   const now = new Date()
-  const [hours, minutes] = medicationTime.split(':').map(Number)
+  const [hours, minutes] = medicationTime.split(":").map(Number)
   const medicationDateTime = new Date()
   medicationDateTime.setHours(hours, minutes, 0, 0)
-  
   if (medicationDateTime <= now) {
     return "Đã đến giờ"
   }
-  
   const timeDiff = medicationDateTime.getTime() - now.getTime()
   const hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60))
   const minutesDiff = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60))
-  
   if (hoursDiff > 0) {
     return `Còn ${hoursDiff}h ${minutesDiff}m`
   } else {
@@ -94,69 +85,35 @@ const getTimeUntilMedication = (medicationTime: string): string => {
   }
 }
 
-const initialTimeSlots: TimeSlot[] = [
-  {
-    id: "1",
-    period: "Buổi sáng",
-    icon: "morning",
-    medications: [
-      {
-        id: "1",
-        name: "Ambroxol HCl (Medovent 30mg)",
-        dosage: "Dùng 1 viên",
-        time: "07:30",
-        instructions: "",
-        status: "pending",
-      },
-      {
-        id: "2",
-        name: "Vitamin C 500mg",
-        dosage: "Dùng 1 viên",
-        time: "08:00",
-        instructions: "Uống sau ăn",
-        status: "pending",
-      },
-    ],
-  },
-  {
-    id: "2",
-    period: "Buổi trưa",
-    icon: "noon",
-    medications: [
-      {
-        id: "3",
-        name: "Ambroxol HCl (Medovent 30mg)",
-        dosage: "Dùng 1 viên",
-        time: "12:30",
-        instructions: "",
-        status: "pending",
-      },
-    ],
-  },
-  {
-    id: "3",
-    period: "Buổi tối",
-    icon: "evening",
-    medications: [
-      {
-        id: "4",
-        name: "Ambroxol HCl (Medovent 30mg)",
-        dosage: "Dùng 1 viên",
-        time: "19:30",
-        instructions: "",
-        status: "pending",
-      },
-      {
-        id: "5",
-        name: "Calcium 600mg",
-        dosage: "Dùng 1 viên",
-        time: "20:00",
-        instructions: "Uống trước khi đi ngủ",
-        status: "pending",
-      },
-    ],
-  },
-]
+interface BackendPrescriptionDetail {
+  detailId: number;
+  prescriptionId: number;
+  medicine: {
+    medicineId: number;
+    medicineName: string;
+    unit: string;
+  };
+  dosage: string;
+  frequency: string;
+  duration: string;
+  prescriptionNotes: string | null;
+  quantity: number;
+  createdAt: string;
+}
+
+const mapBackendToFrontendMedication = (
+  backendDetails: BackendPrescriptionDetail[],
+  reminders: { [key: string]: string[] }
+): Medication[] => {
+  return backendDetails.map(detail => ({
+    id: detail.detailId.toString(),
+    name: detail.medicine.medicineName,
+    dosage: detail.dosage,
+    time: reminders[detail.detailId.toString()]?.[0] || "08:00", // Mặc định nếu chưa có nhắc nhở
+    instructions: detail.prescriptionNotes || "",
+    status: "pending",
+  }))
+}
 
 interface MedicationScheduleScreenProps {
   onManagePrescriptions?: () => void
@@ -169,77 +126,130 @@ const MedicationScheduleScreen: React.FC<MedicationScheduleScreenProps> = ({
   customDateOptions,
   customTimeSlots,
 }) => {
+  const navigation = useNavigation()
+  const route = useRoute()
+  const { prescriptionId } = route.params as { prescriptionId?: string }
   const [selectedDateId, setSelectedDateId] = useState(1)
-  const [medications, setMedications] = useState<TimeSlot[]>(customTimeSlots || initialTimeSlots)
+  const [medications, setMedications] = useState<TimeSlot[]>(customTimeSlots || [])
   const [modalVisible, setModalVisible] = useState(false)
   const [selectedMedication, setSelectedMedication] = useState<{
     medication: Medication
     timeSlotId: string
   } | null>(null)
-  
   const [currentTime, setCurrentTime] = useState(getCurrentTime())
   const [dateOptions, setDateOptions] = useState<DateOption[]>(customDateOptions || generateDateOptions())
   const [medicationReminders, setMedicationReminders] = useState<string[]>([])
+  const [reminderTimes, setReminderTimes] = useState<{ [key: string]: string[] }>({})
 
-  const navigation = useNavigation()
+  const fetchMedications = async () => {
+    if (!prescriptionId) return
+    try {
+      const response = await API.get(`/pharmacy/prescriptions/detail/${prescriptionId}`)
+      const backendDetails: BackendPrescriptionDetail[] = response.data
+      const storedReminders = await AsyncStorage.getItem(`reminders_${prescriptionId}`)
+      const reminders = storedReminders ? JSON.parse(storedReminders) : {}
+      setReminderTimes(reminders)
+      const mappedMedications = mapBackendToFrontendMedication(backendDetails, reminders)
+      // Phân loại thuốc theo thời gian trong ngày
+      const timeSlots: TimeSlot[] = [
+        {
+          id: "1",
+          period: "Buổi sáng",
+          icon: "morning",
+          medications: mappedMedications.filter(med => med.time.includes("07") || med.time.includes("08")),
+        },
+        {
+          id: "2",
+          period: "Buổi trưa",
+          icon: "noon",
+          medications: mappedMedications.filter(med => med.time.includes("12") || med.time.includes("13")),
+        },
+        {
+          id: "3",
+          period: "Buổi tối",
+          icon: "evening",
+          medications: mappedMedications.filter(med => med.time.includes("19") || med.time.includes("20")),
+        },
+      ]
+      setMedications(timeSlots)
+    } catch (error) {
+      console.error("Lỗi khi lấy chi tiết đơn thuốc:", error)
+    }
+  }
+
+  useEffect(() => {
+    fetchMedications()
+  }, [prescriptionId])
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(getCurrentTime())
     }, 1000)
-
     return () => clearInterval(timer)
   }, [])
 
-  useEffect(() => {
-    const checkReminders = () => {
-      const now = new Date()
-      const reminders: string[] = []
-      
-      medications.forEach(timeSlot => {
-        timeSlot.medications.forEach(medication => {
-          if (medication.status === 'pending') {
-            const [hours, minutes] = medication.time.split(':').map(Number)
-            const medicationTime = new Date()
-            medicationTime.setHours(hours, minutes, 0, 0)
-            
-            const reminderTime = new Date(medicationTime.getTime() - 15 * 60 * 1000)
-            
-            if (now >= reminderTime && now <= medicationTime) {
-              reminders.push(`${medication.name} - ${medication.time}`)
-            }
+useEffect(() => {
+  const checkReminders = () => {
+    const now = new Date();
+    const reminders: string[] = [];
+    
+    // Hàm async bên trong để xử lý await
+    const scheduleReminder = async (medication: Medication, name: string, dosage: string, id: string) => {
+      try {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: 'Nhắc nhở uống thuốc',
+            body: `Đã đến giờ uống ${name} - ${dosage}`,
+            data: { medicationId: id },
+          },
+          trigger: { seconds: 1 }, // Gửi ngay lập tức (hoặc điều chỉnh thời gian nếu cần)
+        });
+      } catch (error) {
+        console.error('Lỗi khi lên lịch thông báo:', error);
+      }
+    };
+
+    medications.forEach(timeSlot => {
+      timeSlot.medications.forEach(medication => {
+        if (medication.status === 'pending') {
+          const [hours, minutes] = medication.time.split(':').map(Number);
+          const medicationTime = new Date();
+          medicationTime.setHours(hours, minutes, 0, 0);
+          const reminderTime = new Date(medicationTime.getTime() - 15 * 60 * 1000);
+          if (now >= reminderTime && now <= medicationTime) {
+            reminders.push(`${medication.name} - ${medication.time}`);
+            // Gọi hàm async để lên lịch thông báo
+            scheduleReminder(medication, medication.name, medication.dosage, medication.id);
           }
-        })
-      })
-      
-      setMedicationReminders(reminders)
-    }
+        }
+      });
+    });
+    setMedicationReminders(reminders);
+  };
 
-    const reminderTimer = setInterval(checkReminders, 60000) 
-    checkReminders()
-
-    return () => clearInterval(reminderTimer)
-  }, [medications])
+  const reminderTimer = setInterval(checkReminders, 60000);
+  checkReminders();
+  return () => clearInterval(reminderTimer);
+}, [medications]);
 
   useEffect(() => {
     const updateMedicationStatus = () => {
-      setMedications(prevMedications => 
+      setMedications(prevMedications =>
         prevMedications.map(timeSlot => ({
           ...timeSlot,
           medications: timeSlot.medications.map(medication => {
-            if (medication.status === 'pending' && isTimeReached(medication.time)) {
+            if (medication.status === "pending" && isTimeReached(medication.time)) {
               const now = new Date()
-              const [hours, minutes] = medication.time.split(':').map(Number)
+              const [hours, minutes] = medication.time.split(":").map(Number)
               const medicationTime = new Date()
               medicationTime.setHours(hours, minutes, 0, 0)
               const hoursPassed = (now.getTime() - medicationTime.getTime()) / (1000 * 60 * 60)
-              
-              if (hoursPassed > 2) { 
-                return { ...medication, status: 'overdue' as any }
+              if (hoursPassed > 2) {
+                return { ...medication, status: "overdue" as any }
               }
             }
             return medication
-          })
+          }),
         }))
       )
     }
@@ -255,56 +265,44 @@ const MedicationScheduleScreen: React.FC<MedicationScheduleScreenProps> = ({
 
   const handleConfirmMedication = () => {
     if (!selectedMedication) return
-
-    setMedications((prevSlots) =>
-      prevSlots.map((slot) => {
+    setMedications(prevSlots =>
+      prevSlots.map(slot => {
         if (slot.id === selectedMedication.timeSlotId) {
           return {
             ...slot,
-            medications: slot.medications.map((med) => {
+            medications: slot.medications.map(med => {
               if (med.id === selectedMedication.medication.id) {
-                return { 
-                  ...med, 
-                  status: "taken",
-                  takenAt: getCurrentTime()
-                }
+                return { ...med, status: "taken", takenAt: getCurrentTime() }
               }
               return med
             }),
           }
         }
         return slot
-      }),
+      })
     )
-
     setModalVisible(false)
     setSelectedMedication(null)
   }
 
   const handleCancelMedication = () => {
     if (!selectedMedication) return
-
-    setMedications((prevSlots) =>
-      prevSlots.map((slot) => {
+    setMedications(prevSlots =>
+      prevSlots.map(slot => {
         if (slot.id === selectedMedication.timeSlotId) {
           return {
             ...slot,
-            medications: slot.medications.map((med) => {
+            medications: slot.medications.map(med => {
               if (med.id === selectedMedication.medication.id) {
-                return { 
-                  ...med, 
-                  status: "canceled",
-                  canceledAt: getCurrentTime()
-                }
+                return { ...med, status: "canceled", canceledAt: getCurrentTime() }
               }
               return med
             }),
           }
         }
         return slot
-      }),
+      })
     )
-
     setModalVisible(false)
     setSelectedMedication(null)
   }
@@ -345,7 +343,7 @@ const MedicationScheduleScreen: React.FC<MedicationScheduleScreenProps> = ({
   }
 
   const renderMedicationStatus = (medication: Medication) => {
-    if (medication.status === 'pending' && isTimeReached(medication.time)) {
+    if (medication.status === "pending" && isTimeReached(medication.time)) {
       return (
         <View style={styles.overdueIndicator}>
           <Text style={styles.overdueText}>Quá giờ</Text>
@@ -358,7 +356,6 @@ const MedicationScheduleScreen: React.FC<MedicationScheduleScreenProps> = ({
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-
       <Header
         title="Đơn thuốc"
         showBack={false}
@@ -366,13 +363,9 @@ const MedicationScheduleScreen: React.FC<MedicationScheduleScreenProps> = ({
         actionType="notification"
         onActionPress={() => navigation.navigate("Notifications")}
       />
-
-      {/* Medication Reminders */}
       {medicationReminders.length > 0 && (
         <View style={styles.reminderContainer}>
-          <Text style={[styles.reminderTitle, { fontFamily: fontFamily.medium }]}>
-            Nhắc nhở uống thuốc
-          </Text>
+          <Text style={[styles.reminderTitle, { fontFamily: fontFamily.medium }]}>Nhắc nhở uống thuốc</Text>
           {medicationReminders.map((reminder, index) => (
             <Text key={index} style={[styles.reminderText, { fontFamily: fontFamily.regular }]}>
               {reminder}
@@ -380,8 +373,6 @@ const MedicationScheduleScreen: React.FC<MedicationScheduleScreenProps> = ({
           ))}
         </View>
       )}
-
-      {/* Date Selector */}
       <View style={styles.dateSelector}>
         <FlatList
           data={dateOptions}
@@ -389,22 +380,12 @@ const MedicationScheduleScreen: React.FC<MedicationScheduleScreenProps> = ({
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.dateList}
           renderItem={({ item }) => (
-            <DateCard 
-              date={item} 
-              isSelected={item.id === selectedDateId} 
-              onPress={() => setSelectedDateId(item.id)} 
-            />
+            <DateCard date={item} isSelected={item.id === selectedDateId} onPress={() => setSelectedDateId(item.id)} />
           )}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={item => item.id.toString()}
         />
       </View>
-
-      {/* Medication Schedule Title */}
-      <Text style={[styles.scheduleTitle, { fontFamily: fontFamily.medium }]}>
-        Lịch uống thuốc hôm nay
-      </Text>
-
-      {/* Medication List */}
+      <Text style={[styles.scheduleTitle, { fontFamily: fontFamily.medium }]}>Lịch uống thuốc hôm nay</Text>
       <ScrollView style={styles.medicationList}>
         <View style={styles.medicationContainer}>
           {medications.map((timeSlot, index) => (
@@ -412,17 +393,14 @@ const MedicationScheduleScreen: React.FC<MedicationScheduleScreenProps> = ({
               <View style={styles.timeSlotSection}>
                 <View style={styles.timeSlotHeader}>
                   {renderIcon(timeSlot.icon)}
-                  <Text style={[styles.timeSlotTitle, { fontFamily: fontFamily.medium }]}>
-                    {timeSlot.period}
-                  </Text>
+                  <Text style={[styles.timeSlotTitle, { fontFamily: fontFamily.medium }]}>{timeSlot.period}</Text>
                 </View>
-
-                {timeSlot.medications.map((medication) => (
+                {timeSlot.medications.map(medication => (
                   <TouchableOpacity
                     key={medication.id}
                     style={[
                       styles.medicationItem,
-                      medication.status === 'pending' && isTimeReached(medication.time) && styles.overdueMedicationItem
+                      medication.status === "pending" && isTimeReached(medication.time) && styles.overdueMedicationItem,
                     ]}
                     onPress={() => handleMedicationPress(timeSlot.id, medication)}
                     activeOpacity={0.7}
@@ -450,9 +428,7 @@ const MedicationScheduleScreen: React.FC<MedicationScheduleScreenProps> = ({
                           medication.status === "canceled" && styles.canceledMedicationTimeText,
                         ]}
                       >
-                        <Text style={[styles.timeHighlight, { fontFamily: fontFamily.medium }]}>
-                          {medication.time}
-                        </Text>{" "}
+                        <Text style={[styles.timeHighlight, { fontFamily: fontFamily.medium }]}>{medication.time}</Text>{" "}
                         - {medication.dosage}
                       </Text>
                       {medication.instructions && (
@@ -460,14 +436,12 @@ const MedicationScheduleScreen: React.FC<MedicationScheduleScreenProps> = ({
                           {medication.instructions}
                         </Text>
                       )}
-                      {/* Real-time countdown */}
-                      {medication.status === 'pending' && (
+                      {medication.status === "pending" && (
                         <Text style={[styles.timeCountdown, { fontFamily: fontFamily.regular }]}>
                           {getTimeUntilMedication(medication.time)}
                         </Text>
                       )}
-                      {/* Show when taken */}
-                      {medication.status === 'taken' && (medication as any).takenAt && (
+                      {medication.status === "taken" && (medication as any).takenAt && (
                         <Text style={[styles.takenTime, { fontFamily: fontFamily.regular }]}>
                           Đã uống lúc {(medication as any).takenAt}
                         </Text>
@@ -476,24 +450,14 @@ const MedicationScheduleScreen: React.FC<MedicationScheduleScreenProps> = ({
                   </TouchableOpacity>
                 ))}
               </View>
-
               {index < medications.length - 1 && <View style={styles.dottedDivider} />}
             </View>
           ))}
         </View>
       </ScrollView>
-
-      {/* Manage Prescriptions Button */}
-      <TouchableOpacity 
-        style={styles.manageButton} 
-        onPress={() => navigation.navigate("PrescriptionManagement")}
-      >
-        <Text style={[styles.manageButtonText, { fontFamily: fontFamily.medium }]}>
-          Quản lý đơn thuốc
-        </Text>
+      <TouchableOpacity style={styles.manageButton} onPress={() => navigation.navigate("PrescriptionManagement")}>
+        <Text style={[styles.manageButtonText, { fontFamily: fontFamily.medium }]}>Quản lý đơn thuốc</Text>
       </TouchableOpacity>
-
-      {/* Medication Confirmation Modal */}
       <MedicationConfirmModal
         visible={modalVisible}
         medication={selectedMedication?.medication || null}
@@ -553,7 +517,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   dateList: {
-    
     paddingHorizontal: 16,
   },
   scheduleTitle: {

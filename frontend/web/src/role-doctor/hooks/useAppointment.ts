@@ -147,19 +147,6 @@ export const useAppointments = (initialFilters?: AppointmentFilters) => {
     updateFilters({ date: dayjs().format("YYYY-MM-DD") })
   }, [updateFilters])
 
-  const updateAppointmentStatus = useCallback(
-    async (appointmentId: number, status: string) => {
-      try {
-        await appointmentService.updateAppointmentStatus(appointmentId, status)
-        message.success("Cập nhật trạng thái thành công")
-        fetchAppointments()
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Không thể cập nhật trạng thái"
-        message.error(errorMessage)
-      }
-    },
-    [fetchAppointments],
-  )
 
   const updateAppointmentNotes = useCallback(
     async (appointmentId: number, notes: string) => {
@@ -190,7 +177,7 @@ export const useAppointments = (initialFilters?: AppointmentFilters) => {
     updatePagination,
     clearDateFilter,
     setTodayFilter,
-    updateAppointmentStatus,
+
     updateAppointmentNotes,
     refreshAppointments,
   }

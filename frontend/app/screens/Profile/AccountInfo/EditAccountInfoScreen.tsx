@@ -344,8 +344,6 @@ const EditAccountInfoScreen: React.FC = () => {
       return;
     }
 
-    console.log("Form state before adding:", formState);
-
     const {
       emergencyContactPhone,
       emergencyContactName,
@@ -353,17 +351,14 @@ const EditAccountInfoScreen: React.FC = () => {
     } = formState;
 
     if (!emergencyContactPhone || emergencyContactPhone.trim() === "") {
-      console.log("Phone is invalid:", emergencyContactPhone);
       Alert.alert("Lỗi", "Vui lòng điền số điện thoại.");
       return;
     }
     if (!emergencyContactName || emergencyContactName.trim() === "") {
-      console.log("Name is invalid:", emergencyContactName);
       Alert.alert("Lỗi", "Vui lòng điền họ tên.");
       return;
     }
     if (!emergencyContactRelationship) {
-      console.log("Relationship is invalid:", emergencyContactRelationship);
       Alert.alert("Lỗi", "Vui lòng chọn mối quan hệ.");
       return;
     }
@@ -382,14 +377,28 @@ const EditAccountInfoScreen: React.FC = () => {
       );
       console.log("API response:", response.data);
 
+      // Ánh xạ dữ liệu từ response
       const updatedContact: PatientData["emergencyContactDtos"][number] = {
         contactId: response.data.contactId,
-        phone: response.data.contactPhone || emergencyContactPhone,
-        name: response.data.contactName || emergencyContactName,
-        relationship:
-          response.data.relationship || emergencyContactRelationship,
+        phone: response.data.contactPhone, // Ánh xạ contactPhone → phone
+        name: response.data.contactName, // Ánh xạ contactName → name
+        relationship: response.data.relationship,
       };
-      setEmergencyContacts((prev) => [...prev, updatedContact]);
+
+      // Cập nhật danh sách liên hệ khẩn cấp
+      const updatedEmergencyContacts = [...emergencyContacts, updatedContact];
+      setEmergencyContacts(updatedEmergencyContacts);
+
+      // Cập nhật patient trong AsyncStorage và AuthContext
+      const updatedPatient = {
+        ...patient,
+        emergencyContactDtos: updatedEmergencyContacts,
+      };
+      await AsyncStorage.setItem("patient", JSON.stringify(updatedPatient));
+      setPatient(updatedPatient);
+
+      console.log("Updated patient:", updatedPatient); // Log để kiểm tra
+
       Alert.alert("Thành công", "Thêm liên hệ khẩn cấp thành công");
       updateField("emergencyContactPhone", "");
       updateField("emergencyContactName", "");

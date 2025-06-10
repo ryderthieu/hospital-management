@@ -184,7 +184,7 @@ export const PrescriptionModal: React.FC<ModalProps> = ({
 
   const handleSave = async () => {
     try {
-      const formValues = await form.validateFields()
+    
 
       if (!medications || medications.length === 0) {
         message.warning("Chưa có thuốc nào trong toa thuốc")
@@ -201,11 +201,11 @@ export const PrescriptionModal: React.FC<ModalProps> = ({
         diastolicBloodPressure: formParent?.getFieldValue('diastolicBloodPressure') || 80,
         heartRate: formParent?.getFieldValue('heartRate') || 75,
         bloodSugar: formParent?.getFieldValue('bloodSugar') || 100,
-        prescriptionDetails: medications
-        // isFollowUp: false,  tạm thời bỏ qua
+        prescriptionDetails: medications,
+        isFollowUp: formParent?.getFieldValue('isFollowUp'),
+        followUpDate: formParent?.getFieldValue('followUpDate') || "",
       }
 
-      console.log("dữ liệu save:", prescriptionData )
 
       const savedPrescription = await savePrescription(prescriptionData)
 
@@ -223,47 +223,7 @@ export const PrescriptionModal: React.FC<ModalProps> = ({
     }
   }
 
-  const handleUpdate = async () => {
-    try {
-      const formValues = await form.validateFields()
-
-      if (!medications || medications.length === 0) {
-        message.warning("Chưa có thuốc nào trong toa thuốc")
-        return
-      }
-
-      // Prepare prescription data with vital signs from patientDetail
-      const prescriptionData = {
-        appointmentId: appointmentId || undefined,
-        patientId: patientDetail?.patientInfo.patientId,
-        note: formParent?.getFieldValue('doctorNotes') || "",
-        diagnosis: formParent?.getFieldValue('diagnosis') || "",
-        systolicBloodPressure: formParent?.getFieldValue('systolicBloodPressure') || 120,
-        diastolicBloodPressure: formParent?.getFieldValue('diastolicBloodPressure') || 80,
-        heartRate: formParent?.getFieldValue('heartRate') || 75,
-        bloodSugar: formParent?.getFieldValue('bloodSugar') || 100,
-        prescriptionDetails: medications
-        // isFollowUp: false,  tạm thời bỏ qua
-      }
-
-      console.log("dữ liệu cập nhật:", prescriptionData )
-
-      const updatedPrescription = await updatePrescription(prescriptionData)
-
-      if (updatedPrescription) {
-        // Call parent callback to refresh data
-        if (onPrescriptionSaved) {
-          onPrescriptionSaved()
-        }
-        
-        // Close modal
-        handleClose()
-      }
-    } catch (error) {
-      console.error("Form validation failed:", error)
-    }
-  }
-
+  
   const handleClose = () => {
     resetPrescriptionLoadState()
     form.resetFields()
