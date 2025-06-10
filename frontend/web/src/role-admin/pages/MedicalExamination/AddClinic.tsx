@@ -9,7 +9,7 @@ const AddClinic: React.FC = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<Omit<ExaminationRoomDto, "roomId">>({
     departmentId: 0,
-    type: "examination",
+    type: "EXAMINATION",
     note: "",
     building: "",
     floor: 1,

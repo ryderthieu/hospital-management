@@ -112,4 +112,24 @@ export const doctorService = {
     );
     return response.data;
   },
+
+  // Update examination room
+  async updateExaminationRoom(
+    roomId: number,
+    roomData: Partial<ExaminationRoomDto>
+  ): Promise<ExaminationRoom> {
+    const response = await api.put<ExaminationRoom>(
+      `/doctors/examination-rooms/${roomId}`,
+      roomData
+    );
+    return response.data;
+  },
+
+  // Delete examination room
+  async deleteExaminationRoom(roomId: number): Promise<string> {
+    const response = await api.delete<string>(
+      `/doctors/examination-rooms/${roomId}`
+    );
+    return response.data;
+  },
 };
