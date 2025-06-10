@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL: string = process.env.API_URL || 'http://192.168.120.172:8080';
@@ -8,6 +8,7 @@ const API: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000,
 });
 
 API.interceptors.request.use(
@@ -22,6 +23,21 @@ API.interceptors.request.use(
     return config;
   },
   (error: any) => {
+    return Promise.reject(error);
+  }
+);
+
+API.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    if (error.code === 'ECONNABORTED') {
+      return Promise.reject(new Error('Kết nối mạng bị gián đoạn. Vui lòng kiểm tra kết nối.'));
+    }
+    if (error.response?.status === 401) {
+      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('patient');
+    }
     return Promise.reject(error);
   }
 );
