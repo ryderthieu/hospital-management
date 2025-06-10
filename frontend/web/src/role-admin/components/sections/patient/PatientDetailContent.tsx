@@ -1,4 +1,5 @@
 import MedicalRecord from "./MedicalRecord";
+import AddMedicalRecordModal from "./AddMedicalRecordModal";
 import {
   Table,
   TableBody,
@@ -11,62 +12,100 @@ import Badge from "../../ui/badge/Badge";
 import { useState, useEffect } from "react";
 import { patientService } from "../../../services/patientService";
 import { Patient, EmergencyContact } from "../../../types/patient";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { appointmentService } from "../../../services/appointmentService";
 import { Appointment } from "../../../types/appointment";
 import { AppointmentModal, DeleteAppointmentModal } from "./AppointmentModal";
 import { Bill } from "../../../types/payment";
 import { paymentService } from "../../../services/paymentService";
 import { BillModal, DeleteBillModal } from "./BillModal";
+import { PrescriptionResponse } from "../../../types/pharmacy";
+import { medicineService } from "../../../services/pharmacyService";
 
 export function MedicalRecordsContent() {
+  const { patientId } = useParams();
+  const navigate = useNavigate();
+  const [prescriptions, setPrescriptions] = useState<PrescriptionResponse[]>(
+    []
+  );
+  const [loading, setLoading] = useState(true);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!patientId) return;
+    const fetchPrescriptions = async () => {
+      try {
+        setLoading(true);
+        const data = await medicineService.getPrescriptionsByPatientId(
+          Number(patientId)
+        );
+        const mappedData = data.map((prescription: any) => ({
+          ...prescription,
+          prescriptionDetails:
+            prescription.prescriptionDetails?.map((detail: any) => ({
+              ...detail,
+              prescriptionId:
+                detail.prescriptionId ?? prescription.prescriptionId,
+            })) ?? [],
+        }));
+        setPrescriptions(mappedData);
+      } catch (error) {
+        setPrescriptions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPrescriptions();
+  }, [patientId]);
+
+  // Hàm xử lý khi submit modal
+  const handleAddMedicalRecord = async (data: any) => {
+    try {
+      await medicineService.createPrescription(data);
+      setIsAddModalOpen(false);
+      // Reload list
+      if (patientId) {
+        const newData = await medicineService.getPrescriptionsByPatientId(
+          Number(patientId)
+        );
+        setPrescriptions(newData);
+      }
+    } catch (error) {
+      alert("Thêm bệnh án thất bại!");
+    }
+  };
+
   return (
     <div className=" font-outfit bg-white py-6 px-4 rounded-lg border border-gray-200">
       <div className="flex justify-between mb-4 ml-1">
         <h2 className="text-xl font-semibold">Bệnh án</h2>
-        <button className="flex items-center justify-center bg-base-700 py-2.5 px-5 rounded-lg text-white text-sm hover:bg-base-700/70">
+        <button
+          className="flex items-center justify-center bg-base-700 py-2.5 px-5 rounded-lg text-white text-sm hover:bg-base-700/70"
+          onClick={() => setIsAddModalOpen(true)}
+        >
           Thêm bệnh án
           <span className="ml-2 text-lg">+</span>
         </button>
       </div>
       <div className="grid grid-cols-1 gap-4">
-        <MedicalRecord
-          date="15/04/2023"
-          recordNumber="12345"
-          reason="nhói tim vùng ngực trái, khó thở, tim đập nhanh sau khi tham dự buổi lễ và tiếp xúc trực quan với biểu tượng cờ Đảng. Các triệu chứng kéo dài khoảng 15-20 phút, có tiền sử tương tự trong tháng trước."
-          diagnosis="quá yêu nước"
-          treatment="uống thuốc kê đơn, theo dõi thêm trong 7 ngày"
-          prescription="ngắm quốc kỳ mỗi sáng, viên năng lượng yêu nước"
-          vitalSign="Huyết áp: 120/80 mmHg, Nhịp tim: 80 bpm, Respiratory Rate: 16 bpm, Nhiệt độ cơ thể: 36.5 °C, Chỉ số SPO2: 98%"
-        />
-        <MedicalRecord
-          date="15/04/2023"
-          recordNumber="12345"
-          reason="nhói tim, khó thở sau khi thấy cờ Đảng"
-          diagnosis="quá yêu nước"
-          treatment="uống thuốc kê đơn, theo dõi thêm trong 7 ngày"
-          prescription="ngắm quốc kỳ mỗi sáng, viên năng lượng yêu nước"
-          vitalSign="Huyết áp: 120/80 mmHg, Nhịp tim: 80 bpm, Respiratory Rate: 16 bpm, Nhiệt độ cơ thể: 36.5 °C, Chỉ số SPO2: 98%"
-        />
-        <MedicalRecord
-          date="15/04/2023"
-          recordNumber="12345"
-          reason="nhói tim, khó thở sau khi thấy cờ Đảng"
-          diagnosis="quá yêu nước"
-          treatment="uống thuốc kê đơn, theo dõi thêm trong 7 ngày"
-          prescription="ngắm quốc kỳ mỗi sáng, viên năng lượng yêu nước"
-          vitalSign="Blood Pressure: 120/80 mmHg, Pulse Rate: 80 bpm, Respiratory Rate: 16 bpm, Temperature: 36.5 °C, Oxygen Saturation: 98%"
-        />
-        <MedicalRecord
-          date="15/04/2023"
-          recordNumber="12345"
-          reason="nhói tim, khó thở sau khi thấy cờ Đảng"
-          diagnosis="quá yêu nước"
-          treatment="uống thuốc kê đơn, theo dõi thêm trong 7 ngày"
-          prescription="ngắm quốc kỳ mỗi sáng, viên năng lượng yêu nước"
-          vitalSign="Blood Pressure: 120/80 mmHg, Pulse Rate: 80 bpm, Respiratory Rate: 16 bpm, Temperature: 36.5 °C, Oxygen Saturation: 98%"
-        />
+        {loading ? (
+          <div className="text-center py-8">Đang tải bệnh án...</div>
+        ) : prescriptions.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            Không có bệnh án nào.
+          </div>
+        ) : (
+          prescriptions.map((pres) => (
+            <MedicalRecord key={pres.prescriptionId} prescription={pres} />
+          ))
+        )}
       </div>
+      <AddMedicalRecordModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSubmit={handleAddMedicalRecord}
+        patientId={Number(patientId)}
+      />
     </div>
   );
 }
