@@ -135,13 +135,26 @@ const AccountInfoScreen: React.FC = () => {
             patient.emergencyContactDtos.map((contact, index) => (
               <View key={contact.contactId || index}>
                 <View style={styles.infoRow}>
-                  <InfoItem label="Số điện thoại" value={contact.phone} />
+                  <InfoItem
+                    label="Số điện thoại"
+                    value={
+                      contact.phone || contact.contactPhone || "Chưa cập nhật"
+                    }
+                  />
                 </View>
                 <View style={styles.infoRow}>
-                  <InfoItem label="Họ tên" value={contact.name} />
+                  <InfoItem
+                    label="Họ tên"
+                    value={
+                      contact.name || contact.contactName || "Chưa cập nhật"
+                    }
+                  />
                 </View>
                 <View style={styles.infoRow}>
-                  <InfoItem label="Mối quan hệ" value={contact.relationship} />
+                  <InfoItem
+                    label="Mối quan hệ"
+                    value={contact.relationship || "Chưa cập nhật"}
+                  />
                 </View>
                 {index < patient.emergencyContactDtos.length - 1 && (
                   <View style={styles.separator} />

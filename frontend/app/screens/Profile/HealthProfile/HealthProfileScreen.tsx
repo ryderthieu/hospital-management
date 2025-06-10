@@ -5,16 +5,37 @@ import { useNavigation } from "@react-navigation/native"
 import type { StackNavigationProp } from "@react-navigation/stack"
 import { fontFamily } from "../../../context/FontContext"
 import Header from "../../../components/Header"
-import { mockHealthProfile } from "../Data"
 import type { RootStackParamList } from "../type"
 import { LinearGradient } from "expo-linear-gradient"
+import { useAuth } from "../../../context/AuthContext"
+import { useEffect } from "react"
+import API from "../../../services/api"
 
 const HealthProfileScreen: React.FC = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, "HealthProfile">>()
+  const { patient, setPatient, user } = useAuth()
+
+  // Fetch health profile when component mounts if patient data is not available
+  useEffect(() => {
+    const fetchHealthProfile = async () => {
+      if (!user?.userId || patient) {
+        return
+      }
+      try {
+        const response = await API.get(`/patients/users/${user.userId}`)
+        const fetchedPatient = response.data
+        setPatient(fetchedPatient)
+      } catch (error: any) {
+        console.error("Error fetching health profile:", error)
+      }
+    }
+
+    fetchHealthProfile()
+  }, [user, patient, setPatient])
 
   // Calculate BMI
-  const height = mockHealthProfile.height ? mockHealthProfile.height / 100 : 0 // convert cm to m
-  const weight = mockHealthProfile.weight || 0
+  const height = patient?.height ? patient.height / 100 : 0 // convert cm to m
+  const weight = patient?.weight || 0
   const bmi = height > 0 ? Number.parseFloat((weight / (height * height)).toFixed(1)) : 0
 
   // Determine BMI status and position on scale
@@ -87,26 +108,26 @@ const HealthProfileScreen: React.FC = () => {
         {/* Height and Weight Cards */}
         <View style={styles.metricsContainer}>
           <View style={[styles.metricCard, { backgroundColor: "#FBE7D2" }]}>
-            <Text style={styles.metricLabel}>Height</Text>
+            <Text style={styles.metricLabel}>Chiều cao</Text>
             <View style={styles.metricValueContainer}>
               <View style={styles.metricScale}>
                 {[...Array(9)].map((_, i) => (
                   <View key={i} style={[styles.metricTick, i === 4 && { backgroundColor: "#E57373" }]} />
                 ))}
               </View>
-              <Text style={styles.metricValue}>{mockHealthProfile.height} cm</Text>
+              <Text style={styles.metricValue}>{patient?.height || 0} cm</Text>
             </View>
           </View>
 
           <View style={[styles.metricCard, { backgroundColor: "#E0F7FA" }]}>
-            <Text style={styles.metricLabel}>Weight</Text>
+            <Text style={styles.metricLabel}>Cân nặng</Text>
             <View style={styles.metricValueContainer}>
               <View style={styles.metricScale}>
                 {[...Array(9)].map((_, i) => (
                   <View key={i} style={[styles.metricTick, i === 4 && { backgroundColor: "#E57373" }]} />
                 ))}
               </View>
-              <Text style={styles.metricValue}>{mockHealthProfile.weight} kg</Text>
+              <Text style={styles.metricValue}>{patient?.weight || 0} kg</Text>
             </View>
           </View>
         </View>
@@ -115,25 +136,22 @@ const HealthProfileScreen: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Dị ứng</Text>
           <View style={styles.allergiesContainer}>
-            {mockHealthProfile.allergies &&
-              mockHealthProfile.allergies.map((allergy, index) => (
-                <View key={index} style={styles.allergyTag}>
-                  <Text style={styles.allergyText}>{allergy}</Text>
-                </View>
-              ))}
+            {patient?.allergies?.split(",").filter(allergy => allergy.trim()).map((allergy, index) => (
+              <View key={index} style={styles.allergyTag}>
+                <Text style={styles.allergyText}>{allergy.trim()}</Text>
+              </View>
+            ))}
           </View>
         </View>
 
-        {/* Chronic Conditions Section */}
-        {mockHealthProfile.chronicConditions && mockHealthProfile.chronicConditions.length > 0 && (
+        {/* Blood Type Section */}
+        {patient?.bloodType && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Bệnh mãn tính</Text>
+            <Text style={styles.sectionTitle}>Nhóm máu</Text>
             <View style={styles.allergiesContainer}>
-              {mockHealthProfile.chronicConditions.map((condition, index) => (
-                <View key={index} style={[styles.allergyTag, { backgroundColor: "#FFF0E0" }]}>
-                  <Text style={[styles.allergyText, { color: "#F57C00" }]}>{condition}</Text>
-                </View>
-              ))}
+              <View style={styles.allergyTag}>
+                <Text style={styles.allergyText}>{patient.bloodType}</Text>
+              </View>
             </View>
           </View>
         )}
