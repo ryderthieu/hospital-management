@@ -197,3 +197,11 @@ const getAccountTypeLabel = (role: string): string => {
   }
   return types[role] || role
 }
+
+const getDoctorTypeLabel = (role: string): string => {
+  const types: Record<string, string> = {
+    EXAMINATION: "Bác sĩ khám bệnh",
+    SERVICE: "Bác sĩ khám bệnh",
+  }
+  return types[role] || role
+}

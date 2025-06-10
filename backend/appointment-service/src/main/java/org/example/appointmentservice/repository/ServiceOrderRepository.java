@@ -12,4 +12,6 @@ public interface ServiceOrderRepository extends JpaRepository<ServiceOrder, Inte
     Optional<ServiceOrder> findByOrderIdAndService_ServiceId(Integer orderId, Integer serviceId);
     
     List<ServiceOrder> findByAppointment_AppointmentId(Integer appointmentId);
+
+    List<ServiceOrder> findByRoomId(Integer roomId);
 }

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Modal } from "../../ui/modal";
+import { DeleteConfirmationModal } from "../../ui/modal/DeleteConfirmationModal";
 import { format } from "date-fns";
 import type { PatientRoom } from "../../../types/patient";
 import { patientService } from "../../../services/patientService";
@@ -15,7 +16,7 @@ const InpatientRoomCard: React.FC<InpatientRoomCardProps> = ({
   onDeleted,
 }) => {
   const [open, setOpen] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isModalOpen, setModalOpen] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState<Partial<PatientRoom>>({
     roomName: room.roomName,
@@ -28,7 +29,7 @@ const InpatientRoomCard: React.FC<InpatientRoomCardProps> = ({
   const handleDelete = async () => {
     try {
       await patientService.deletePatientRoom(room.roomId);
-      setShowDeleteModal(false);
+      setModalOpen(false);
       setSuccessModal("Xóa phòng thành công!");
       if (onDeleted) onDeleted();
     } catch (error: any) {
@@ -146,11 +147,11 @@ const InpatientRoomCard: React.FC<InpatientRoomCardProps> = ({
             </button>
             <button
               onClick={() => setShowEditModal(true)}
-              className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
+              className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 transition-colors"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
+                className="h-4 w-4 text-yellow-500"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -159,7 +160,7 @@ const InpatientRoomCard: React.FC<InpatientRoomCardProps> = ({
               Sửa
             </button>
             <button
-              onClick={() => setShowDeleteModal(true)}
+              onClick={() => setModalOpen(true)}
               className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
             >
               <svg
@@ -186,7 +187,9 @@ const InpatientRoomCard: React.FC<InpatientRoomCardProps> = ({
         onClose={() => setOpen(false)}
         className="max-w-md p-6"
       >
-        <h2 className="text-lg font-semibold mb-4">Chi tiết phòng bệnh</h2>
+        <h2 className="text-2xl text-teal-600 font-semibold mb-4">
+          Chi tiết phòng bệnh
+        </h2>
         <div className="space-y-3">
           <div>
             <span className="font-medium">Tên phòng: </span>
@@ -220,32 +223,13 @@ const InpatientRoomCard: React.FC<InpatientRoomCardProps> = ({
       </Modal>
 
       {/* Modal xác nhận xóa */}
-      <Modal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        className="max-w-sm p-6"
-      >
-        <h2 className="text-lg font-semibold mb-4 text-red-600">
-          Xác nhận xóa phòng
-        </h2>
-        <p>
-          Bạn có chắc chắn muốn xóa phòng <b>{room.roomName}</b> không?
-        </p>
-        <div className="flex justify-end gap-2 mt-6">
-          <button
-            onClick={() => setShowDeleteModal(false)}
-            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-          >
-            Hủy
-          </button>
-          <button
-            onClick={handleDelete}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-          >
-            Xóa
-          </button>
-        </div>
-      </Modal>
+      <DeleteConfirmationModal
+        isOpen={isModalOpen}
+        onClose={() => setModalOpen(false)}
+        onConfirm={handleDelete}
+        title="Xác nhận xóa phòng"
+        message={`Bạn có chắc chắn muốn xóa phòng ${room.roomName} không? Thao tác này sẽ không thể hoàn tác.`}
+      />
 
       {/* Modal chỉnh sửa phòng */}
       <Modal
@@ -253,7 +237,9 @@ const InpatientRoomCard: React.FC<InpatientRoomCardProps> = ({
         onClose={() => setShowEditModal(false)}
         className="max-w-md p-6"
       >
-        <h2 className="text-lg font-semibold mb-4">Chỉnh sửa phòng bệnh</h2>
+        <h2 className="text-2xl text-teal-600 font-semibold mb-4">
+          Chỉnh sửa phòng bệnh
+        </h2>
         <form onSubmit={handleEditSubmit} className="space-y-4">
           <div>
             <label className="block font-medium mb-1">Tên phòng</label>
@@ -302,7 +288,7 @@ const InpatientRoomCard: React.FC<InpatientRoomCardProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
             >
               Lưu
             </button>

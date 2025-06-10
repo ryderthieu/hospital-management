@@ -22,8 +22,8 @@ export default function PatientDetailLayout() {
         return <AppointmentsContent />;
       case "invoices":
         return <InvoicesContent />;
-      case "payments":
-        return <PaymentsContent />;
+      // case "payments":
+      //   return <PaymentsContent />;
       case "patient-info":
         return <PatientInfoContent />;
       case "health-info":

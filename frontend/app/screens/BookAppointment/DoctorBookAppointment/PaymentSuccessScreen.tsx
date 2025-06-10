@@ -142,11 +142,11 @@ export const PaymentSuccessScreen: React.FC<PaymentSuccessScreenProps> = ({ navi
 
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
-          <TouchableOpacity style={styles.detailsButton} onPress={handleViewDetails} activeOpacity={0.8}>
+          {/* <TouchableOpacity style={styles.detailsButton} onPress={handleViewDetails} activeOpacity={0.8}>
             <Text style={[styles.detailsButtonText, { fontFamily: fontFamily.bold }]}>
               Xem chi tiết Phiếu khám bệnh
-            </Text>
-          </TouchableOpacity>
+            </Text>r
+          </TouchableOpacity> */}
 
           <TouchableOpacity style={styles.homeButton} onPress={handleBackToHome} activeOpacity={0.7}>
             <Text style={[styles.homeButtonText, { fontFamily: fontFamily.medium }]}>Về trang chủ</Text>

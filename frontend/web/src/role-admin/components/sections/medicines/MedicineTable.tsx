@@ -1,121 +1,137 @@
-"use client"
+"use client";
 
-import { useEffect, useRef, useState } from "react"
-import { useNavigate } from "react-router"
-import { medicineService } from "../../../services/pharmacyService"
-import type { Medicine } from "../../../types/pharmacy"
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../components/ui/table"
-import Badge from "../../../components/ui/badge/Badge"
-import Pagination from "../../../components/common/Pagination"
-import SearchInput from "../../../components/common/SearchInput"
-import { DeleteConfirmationModal } from "../../../components/ui/modal/DeleteConfirmationModal"
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router";
+import { medicineService } from "../../../services/pharmacyService";
+import type { Medicine } from "../../../types/pharmacy";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "../../../components/ui/table";
+import Badge from "../../../components/ui/badge/Badge";
+import Pagination from "../../../components/common/Pagination";
+import SearchInput from "../../../components/common/SearchInput";
+import { DeleteConfirmationModal } from "../../../components/ui/modal/DeleteConfirmationModal";
 
-const PAGE_SIZE = 10
+const PAGE_SIZE = 10;
 
 export default function MedicineTable() {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [medicines, setMedicines] = useState<Medicine[]>([])
-  const [loading, setLoading] = useState(true)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("")
-  const [isModalOpen, setModalOpen] = useState(false)
-  const [medicineToDelete, setMedicineToDelete] = useState<number | null>(null)
-  const navigate = useNavigate()
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [medicineToDelete, setMedicineToDelete] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   // Load medicines from API
   useEffect(() => {
-    loadMedicines()
-  }, [])
+    loadMedicines();
+  }, []);
 
   const loadMedicines = async () => {
     try {
-      setLoading(true)
-      const data = await medicineService.getAllMedicines()
-      setMedicines(data)
+      setLoading(true);
+      const data = await medicineService.getAllMedicines();
+      setMedicines(data);
     } catch (error) {
-      console.error("Error loading medicines:", error)
-      setMedicines([])
+      console.error("Error loading medicines:", error);
+      setMedicines([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Search medicines
   const handleSearch = async () => {
     try {
-      setLoading(true)
-      const data = await medicineService.searchMedicine(searchTerm || undefined, selectedCategory || undefined)
-      setMedicines(data)
-      setCurrentPage(1)
+      setLoading(true);
+      const data = await medicineService.searchMedicine(
+        searchTerm || undefined,
+        selectedCategory || undefined
+      );
+      setMedicines(data);
+      setCurrentPage(1);
     } catch (error) {
-      console.error("Error searching medicines:", error)
+      console.error("Error searching medicines:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Handle view medicine details
   const handleView = (medicineId: number) => {
-    navigate(`/admin/medicines/${medicineId}`)
-  }
+    navigate(`/admin/medicines/${medicineId}`);
+  };
 
   // Handle edit medicine
   const handleEdit = (medicineId: number) => {
-    navigate(`/admin/medicines/edit/${medicineId}`)
-  }
+    navigate(`/admin/medicines/edit/${medicineId}`);
+  };
 
   // Handle delete medicine
   const handleDelete = (medicineId: number) => {
-    setMedicineToDelete(medicineId)
-    setModalOpen(true)
-  }
+    setMedicineToDelete(medicineId);
+    setModalOpen(true);
+  };
 
   const handleConfirmDelete = async () => {
-    if (medicineToDelete === null) return
+    if (medicineToDelete === null) return;
 
     try {
-      await medicineService.deleteMedicine(medicineToDelete)
-      setMedicines((prev) => prev.filter((medicine) => medicine.medicineId !== medicineToDelete))
+      await medicineService.deleteMedicine(medicineToDelete);
+      setMedicines((prev) =>
+        prev.filter((medicine) => medicine.medicineId !== medicineToDelete)
+      );
     } catch (error) {
-      console.error("Error deleting medicine:", error)
+      console.error("Error deleting medicine:", error);
     } finally {
-      setModalOpen(false)
-      setMedicineToDelete(null)
+      setModalOpen(false);
+      setMedicineToDelete(null);
     }
-  }
+  };
 
   // Get status based on quantity
   const getStatus = (quantity: number): "Có sẵn" | "Hết" => {
-    return quantity > 0 ? "Có sẵn" : "Hết"
-  }
+    return quantity > 0 ? "Có sẵn" : "Hết";
+  };
 
   // Format price
   const formatPrice = (price: number): string => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
-    }).format(price)
-  }
+    }).format(price);
+  };
 
   // Pagination
-  const totalItems = medicines.length
-  const totalPages = Math.ceil(totalItems / PAGE_SIZE)
-  const paginatedData = medicines.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+  const totalItems = medicines.length;
+  const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+  const paginatedData = medicines.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-lg">Đang tải...</div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex justify-start items-center pt-5">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">Danh sách thuốc</h2>
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+            Danh sách thuốc
+          </h2>
           <span className="ml-5 text-sm bg-base-600/20 text-base-600 py-1 px-4 rounded-full font-bold">
             {totalItems} loại thuốc
           </span>
@@ -129,7 +145,7 @@ export default function MedicineTable() {
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={(e) => {
               if (e.key === "Enter") {
-                handleSearch()
+                handleSearch();
               }
             }}
           />
@@ -254,7 +270,11 @@ export default function MedicineTable() {
                 <TableCell className="py-3">
                   <div className="flex items-center gap-3">
                     <div className="h-[50px] w-[50px] overflow-hidden rounded-md bg-gray-100 flex items-center justify-center">
-                      <svg className="h-6 w-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                      <svg
+                        className="h-6 w-6 text-gray-400"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
                         <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
@@ -267,7 +287,9 @@ export default function MedicineTable() {
                           </span>
                         )}
                       </p>
-                      <span className="text-gray-500 text-theme-xs dark:text-gray-400">{medicine.manufactor}</span>
+                      <span className="text-gray-500 text-theme-xs dark:text-gray-400">
+                        {medicine.manufactor}
+                      </span>
                     </div>
                   </div>
                 </TableCell>
@@ -278,14 +300,23 @@ export default function MedicineTable() {
                   {medicine.category}
                 </TableCell>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  <Badge size="sm" color={getStatus(medicine.quantity) === "Có sẵn" ? "success" : "error"}>
+                  <Badge
+                    size="sm"
+                    color={
+                      getStatus(medicine.quantity) === "Có sẵn"
+                        ? "success"
+                        : "error"
+                    }
+                  >
                     {getStatus(medicine.quantity)}
                   </Badge>
                 </TableCell>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                   {medicine.quantity}
                 </TableCell>
-                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">{medicine.unit}</TableCell>
+                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                  {medicine.unit}
+                </TableCell>
                 <TableCell className="py-3 text-theme-md">
                   <div className="flex gap-2">
                     <button
@@ -309,11 +340,11 @@ export default function MedicineTable() {
                     </button>
                     <button
                       onClick={() => handleEdit(medicine.medicineId)}
-                      className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
+                      className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 transition-colors"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
+                        className="h-4 w-4 text-yellow-500"
                         viewBox="0 0 20 20"
                         fill="currentColor"
                       >
@@ -367,5 +398,5 @@ export default function MedicineTable() {
         message="Bạn có chắc chắn muốn xóa thuốc này? Thao tác này sẽ không thể hoàn tác."
       />
     </div>
-  )
+  );
 }

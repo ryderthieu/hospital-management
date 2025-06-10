@@ -22,7 +22,7 @@ interface DoctorDto {
   fullName: string | null;
   specialization: string | null;
   academicDegree: string | null;
-  departmentId?: number; // Thêm departmentId từ API
+  departmentId?: number;
 }
 
 export const DoctorListScreen: React.FC<DoctorListScreenProps> = ({ navigation, route }) => {
@@ -43,117 +43,121 @@ export const DoctorListScreen: React.FC<DoctorListScreenProps> = ({ navigation, 
     }
   }, [departmentId]);
 
-  const fetchDoctors = async () => {
-    setIsLoading(true);
-    try {
-      const response = await API.get<DoctorDto[]>(`/doctors/departments/${departmentId}/doctors`);
-      console.log('Debug - Doctors response:', response.data);
+  // DoctorListScreen.tsx
+const fetchDoctors = async () => {
+  setIsLoading(true);
+  try {
+    const response = await API.get<DoctorDto[]>(`/doctors/departments/${departmentId}/doctors`);
+    console.log('Debug - Doctors response:', response.data);
 
-      const mappedDoctors: Doctor[] = response.data.map((dto) => {
-        const academicPart = dto.academicDegree ? `${dto.academicDegree}.` : '';
-        const namePart = dto.fullName || '';
-        const fullName = [academicPart, namePart]
-          .filter((part) => part !== '')
-          .join(' ')
-          .trim() || 'Bác sĩ chưa có tên';
-        return {
-          id: dto.doctorId.toString(),
-          name: fullName,
-          specialty: dto.specialization || 'Đa khoa',
-          departmentId: dto.departmentId, // Ánh xạ departmentId
-          image: { uri: 'https://via.placeholder.com/80' },
-          price: '200,000 VNĐ',
-          room: null,
-          rating: 0,
-          experience: null,
-          isOnline: false,
-          joinDate: null,
-        };
-      });
+    const mappedDoctors: Doctor[] = response.data.map((dto) => {
+      const academicPart = dto.academicDegree ? `${dto.academicDegree}.` : '';
+      const namePart = dto.fullName || '';
+      const fullName = [academicPart, namePart]
+        .filter((part) => part !== '')
+        .join(' ')
+        .trim() || 'Bác sĩ chưa có tên';
 
-      console.log('Mapped doctors:', mappedDoctors);
-      setDoctors(mappedDoctors);
-    } catch (error: any) {
-      console.error('Fetch doctors error:', error.message, error.response?.data);
-      Alert.alert(
-        'Lỗi',
-        error.response?.data?.message || 'Không thể tải danh sách bác sĩ. Vui lòng thử lại.',
-      );
-      setDoctors([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      // Format consultationFee thành tiền tệ VNĐ
+      const formattedPrice = dto.consultationFee
+        ? new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND',
+          }).format(dto.consultationFee)
+        : 'Liên hệ';
 
-  const filteredDoctors = useMemo(() => {
-    let filtered = [...doctors];
+      return {
+        id: dto.doctorId.toString(),
+        name: fullName,
+        specialty: dto.specialization || 'Đa khoa',
+        departmentId: dto.departmentId,
+        image: dto.avatar ? { uri: dto.avatar } : null, // Ánh xạ avatar
+        price: formattedPrice, // Giá đã format
+        consultationFee: Number(dto.consultationFee) || 0, // Giá trị số
+        room: null,
+        rating: 0,
+        experience: null,
+        isOnline: false,
+        joinDate: null,
+        status: 'active',
+      };
+    });
 
-    if (selectedFilters.priceRange) {
-      filtered = filtered.filter((doctor) => {
-        const price = parseInt(doctor.price.replace(/[^\d]/g, ''));
-        return price >= selectedFilters.priceRange!.min && price <= selectedFilters.priceRange!.max;
-      });
-    }
+    console.log('Mapped doctors:', mappedDoctors);
+    setDoctors(mappedDoctors);
+  } catch (error: any) {
+    console.error('Fetch doctors error:', error.message, error.response?.data);
+    Alert.alert(
+      'Lỗi',
+      error.response?.data?.message || 'Không thể tải danh sách bác sĩ. Vui lòng thử lại.',
+    );
+    setDoctors([]);
+  } finally {
+    setIsLoading(false);
+  }
+};
+ const filteredDoctors = useMemo(() => {
+  let filtered = [...doctors];
 
-    if (selectedFilters.rating) {
-      filtered = filtered.filter((doctor) => (doctor.rating || 0) >= selectedFilters.rating!);
-    }
+  if (selectedFilters.priceRange) {
+    filtered = filtered.filter((doctor) => {
+      return doctor.consultationFee >= selectedFilters.priceRange!.min && 
+             doctor.consultationFee <= selectedFilters.priceRange!.max;
+    });
+  }
 
-    if (selectedFilters.experience) {
-      filtered = filtered.filter((doctor) => {
-        if (!doctor.experience) return false;
-        const experienceYears = parseInt(doctor.experience.replace(/[^\d]/g, ''));
-        switch (selectedFilters.experience) {
-          case '1-3':
-            return experienceYears >= 1 && experienceYears <= 3;
-          case '4-7':
-            return experienceYears >= 4 && experienceYears <= 7;
-          case '8-15':
-            return experienceYears >= 8 && experienceYears <= 15;
-          case '15+':
-            return experienceYears > 15;
-          default:
-            return true;
-        }
-      });
-    }
+  if (selectedFilters.rating) {
+    filtered = filtered.filter((doctor) => (doctor.rating || 0) >= selectedFilters.rating!);
+  }
 
-    if (selectedFilters.isOnline) {
-      filtered = filtered.filter((doctor) => doctor.isOnline);
-    }
+  if (selectedFilters.experience) {
+    filtered = filtered.filter((doctor) => {
+      if (!doctor.experience) return false;
+      const experienceYears = parseInt(doctor.experience.replace(/[^\d]/g, '')) || 0;
+      switch (selectedFilters.experience) {
+        case '1-3':
+          return experienceYears >= 1 && experienceYears <= 3;
+        case '4-7':
+          return experienceYears >= 4 && experienceYears <= 7;
+        case '8-15':
+          return experienceYears >= 8 && experienceYears <= 15;
+        case '15+':
+          return experienceYears > 15;
+        default:
+          return true;
+      }
+    });
+  }
 
-    if (selectedFilters.availability) {
-      filtered = filtered;
-    }
+  if (selectedFilters.isOnline) {
+    filtered = filtered.filter((doctor) => doctor.isOnline);
+  }
 
-    return filtered;
-  }, [doctors, selectedFilters]);
+  if (selectedFilters.availability) {
+    filtered = filtered; // Cần logic xử lý availability nếu có
+  }
 
-  const sortedDoctors = useMemo(() => {
-    const sorted = [...filteredDoctors];
+  return filtered;
+}, [doctors, selectedFilters]);
 
-    switch (selectedSort) {
-      case 'newest':
-      case 'oldest':
-        return sorted;
-      case 'popular':
-        return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-      case 'price_low_high':
-        return sorted.sort((a, b) => {
-          const priceA = parseInt(a.price.replace(/[^\d]/g, ''));
-          const priceB = parseInt(b.price.replace(/[^\d]/g, ''));
-          return priceA - priceB;
-        });
-      case 'price_high_low':
-        return sorted.sort((a, b) => {
-          const priceA = parseInt(a.price.replace(/[^\d]/g, ''));
-          const priceB = parseInt(b.price.replace(/[^\d]/g, ''));
-          return priceB - priceA;
-        });
-      default:
-        return sorted;
-    }
-  }, [filteredDoctors, selectedSort]);
+const sortedDoctors = useMemo(() => {
+  const sorted = [...filteredDoctors];
+
+  switch (selectedSort) {
+    case 'newest':
+      return sorted.sort((a, b) => (b.joinDate || '').localeCompare(a.joinDate || ''));
+    case 'oldest':
+      return sorted.sort((a, b) => (a.joinDate || '').localeCompare(b.joinDate || ''));
+    case 'popular':
+      return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    case 'price_low_high':
+      return sorted.sort((a, b) => a.consultationFee - b.consultationFee);
+    case 'price_high_low':
+      return sorted.sort((a, b) => b.consultationFee - a.consultationFee);
+    default:
+      return sorted;
+  }
+}, [filteredDoctors, selectedSort]);
 
   const handleDoctorPress = (doctor: Doctor) => {
     console.log('Navigating with doctor:', doctor);

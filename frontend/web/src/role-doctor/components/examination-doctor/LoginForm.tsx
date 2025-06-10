@@ -1,16 +1,11 @@
 import { useState } from "react";
-import {
-  Form,
-  Input,
-  Button,
-  Typography,
-  Alert,
-  ConfigProvider,
-} from "antd";
+import { Form, Input, Button, Typography, Alert, ConfigProvider } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useAuth } from "../../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import PageMeta from "../../../role-admin/components/common/PageMeta";
+import { api } from "../../../services/api";
+import axios from "axios";
 
 const { Title } = Typography;
 
@@ -33,7 +28,10 @@ const LoginForm = () => {
               navigate("/admin");
               break;
             case "DOCTOR":
-              navigate("/doctor/examination");
+              const response = await api.get(`/doctors/users/${user.userId}`);
+              const type = response.data.type;
+              if (type === "EXAMINATION") navigate("/doctor/examination");
+              else if (type === "SERVICE") navigate("/doctor/service");
               break;
             case "RECEPTIONIST":
               navigate("/receptionist/");
@@ -53,7 +51,6 @@ const LoginForm = () => {
   };
 
   return (
-
     <ConfigProvider
       theme={{
         token: {
@@ -61,7 +58,7 @@ const LoginForm = () => {
         },
       }}
     >
-          <PageMeta
+      <PageMeta
         title="SignIn Dashboard | Admin Dashboard"
         description="This is SignIn Tables Dashboard"
       />
@@ -69,7 +66,9 @@ const LoginForm = () => {
         <div className="h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 to-cyan-50">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
             <div className="text-center mb-8">
-              <Title level={2} className="text-gray-800 mb-2">Đăng nhập</Title>
+              <Title level={2} className="text-gray-800 mb-2">
+                Đăng nhập
+              </Title>
             </div>
 
             {(error || loginError) && (
@@ -91,7 +90,11 @@ const LoginForm = () => {
             >
               <Form.Item
                 name="phone"
-                label={<span className="text-gray-700 font-medium">Số điện thoại</span>}
+                label={
+                  <span className="text-gray-700 font-medium">
+                    Số điện thoại
+                  </span>
+                }
                 rules={[
                   { required: true, message: "Vui lòng nhập số điện thoại!" },
                   {
@@ -110,7 +113,9 @@ const LoginForm = () => {
 
               <Form.Item
                 name="password"
-                label={<span className="text-gray-700 font-medium">Mật khẩu</span>}
+                label={
+                  <span className="text-gray-700 font-medium">Mật khẩu</span>
+                }
                 rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
               >
                 <Input.Password

@@ -1,7 +1,6 @@
 "use client";
 
-import type React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, FC } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -11,6 +10,8 @@ import {
   ScrollView,
   StatusBar,
   Platform,
+  Alert,
+  Modal,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { fontFamily } from "../../../context/FontContext";
@@ -19,8 +20,20 @@ import { colors } from "../../../styles/globalStyles";
 import type { PrescriptionDetail, MedicationDetail } from "../type";
 import API from "../../../services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Notifications from "expo-notifications";
+import * as Notifications from 'expo-notifications';
+import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from "@react-native-community/datetimepicker";
+
+// Cấu hình thông báo
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 // Định nghĩa kiểu dữ liệu từ backend
 interface BackendPrescriptionDetail {
@@ -103,28 +116,92 @@ const PrescriptionDetailsScreen: React.FC = () => {
     fetchPrescriptionDetails();
   }, [prescriptionId]);
 
-  const scheduleNotification = async (
-    medication: MedicationDetail,
-    time: string
-  ) => {
-    const [hours, minutes] = time.split(":").map(Number);
-    const now = new Date();
-    const notificationTime = new Date(now);
-    notificationTime.setHours(hours, minutes, 0, 0);
-    if (notificationTime < now) {
-      notificationTime.setDate(notificationTime.getDate() + 1);
+  const scheduleNotification = async (medication: MedicationDetail, time: string) => {
+    try {
+      const [hours, minutes] = time.split(":").map(Number);
+      const notificationId = `${medication.id}_${time}`;
+
+      // Kiểm tra quyền thông báo
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        const { status: newStatus } = await Notifications.requestPermissionsAsync();
+        if (newStatus !== 'granted') {
+          Alert.alert('Cần quyền thông báo', 'Vui lòng cấp quyền thông báo để nhận nhắc nhở uống thuốc.');
+          return;
+        }
+      }
+
+      // Hủy thông báo cũ nếu có
+      await Notifications.cancelScheduledNotificationAsync(notificationId);
+
+      // Tính toán thời gian trigger
+      const now = new Date();
+      const triggerDate = new Date();
+      triggerDate.setHours(hours, minutes, 0, 0);
+
+      // Nếu thời gian đã qua trong ngày hôm nay, đặt cho ngày mai
+      if (triggerDate.getTime() <= now.getTime()) {
+        triggerDate.setDate(triggerDate.getDate() + 1);
+      }
+
+      // Log thông tin để debug
+      console.log('=== THÔNG TIN ĐẶT LỊCH ===');
+      console.log('Thuốc:', medication.name);
+      console.log('Thời gian hiện tại:', now.toLocaleTimeString('vi-VN'));
+      console.log('Thời gian đặt lịch:', triggerDate.toLocaleTimeString('vi-VN'));
+      console.log('Ngày đặt lịch:', triggerDate.toLocaleDateString('vi-VN'));
+      console.log('ID thông báo:', notificationId);
+      console.log('========================');
+
+      // Tính toán thời gian chờ (ms)
+      const delay = triggerDate.getTime() - now.getTime();
+
+      // Đặt lịch thông báo với setTimeout
+      setTimeout(async () => {
+        try {
+          await Notifications.scheduleNotificationAsync({
+            identifier: notificationId,
+            content: {
+              title: '💊 Nhắc nhở uống thuốc',
+              body: `Đã đến giờ uống ${medication.name}\n📋 Liều lượng: ${medication.timeOfUse}`,
+              data: { medicationId: medication.id, time, name: medication.name, timeOfUse: medication.timeOfUse },
+            },
+            trigger: null,
+          });
+          console.log(`✅ Đã gửi thông báo cho ${medication.name} lúc ${time}`);
+        } catch (error) {
+          console.error('Lỗi khi gửi thông báo:', error);
+        }
+      }, delay);
+
+      // Lưu thông tin về thời gian đặt lịch
+      await AsyncStorage.setItem(
+        `notification_${notificationId}`,
+        JSON.stringify({
+          medicationId: medication.id,
+          time,
+          nextTrigger: triggerDate.getTime(),
+        })
+      );
+
+      console.log(`✅ Đã đặt lịch thành công cho ${medication.name} lúc ${time}`);
+
+    } catch (error) {
+      console.error('Lỗi khi đặt thông báo:', error);
+      Alert.alert('Lỗi', 'Không thể đặt lịch thông báo. Vui lòng thử lại.');
     }
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Nhắc nhở uống thuốc",
-        body: `Đã đến giờ uống ${medication.name} - ${medication.dosage}`,
-        data: { medicationId: medication.id },
-      },
-      trigger: {
-        date: notificationTime,
-      },
-    });
   };
+
+  // Thêm listener cho thông báo khi app đang chạy
+  useEffect(() => {
+    const subscription = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Nhận thông báo:', notification);
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   const handleSetReminder = async (medicationId: string) => {
     setSelectedMedicationId(medicationId);
@@ -133,40 +210,102 @@ const PrescriptionDetailsScreen: React.FC = () => {
 
   const handleTimeChange = async (event: any, selectedTime?: Date) => {
     setShowTimePicker(Platform.OS === "android" ? false : showTimePicker);
+    
+    if (event.type === 'dismissed') {
+      setSelectedMedicationId(null);
+      return;
+    }
+
     if (selectedTime && selectedMedicationId) {
-      const timeString = selectedTime.toLocaleTimeString("vi-VN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
+      try {
+        // Lấy giờ và phút từ thời gian được chọn
+        const hours = selectedTime.getHours();
+        const minutes = selectedTime.getMinutes();
+        
+        // Format thời gian theo định dạng HH:mm
+        const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+        // Kiểm tra xem thời gian này đã được đặt chưa
+        const existingTimes = reminderTimes[selectedMedicationId] || [];
+        if (existingTimes.includes(timeString)) {
+          console.log('Thời gian này đã được đặt');
+          return;
+        }
+
+        const newReminders = {
+          ...reminderTimes,
+          [selectedMedicationId]: [
+            ...(reminderTimes[selectedMedicationId] || []),
+            timeString,
+          ].sort(), // Sắp xếp thời gian tăng dần
+        };
+
+        const medication = prescriptionDetail?.medications.find(
+          (med) => med.id === selectedMedicationId
+        );
+
+        if (medication) {
+          await scheduleNotification(medication, timeString);
+          await AsyncStorage.setItem(
+            `reminders_${prescriptionId}`,
+            JSON.stringify(newReminders)
+          );
+          setReminderTimes(newReminders);
+          setPrescriptionDetail((prev) => ({
+            ...prev!,
+            medications: prev!.medications.map((med) =>
+              med.id === selectedMedicationId
+                ? { ...med, isScheduled: true, hasReminder: true }
+                : med
+            ),
+          }));
+        }
+      } catch (error) {
+        console.error('Lỗi khi thiết lập thông báo:', error);
+      }
+    }
+    setSelectedMedicationId(null);
+  };
+
+  // Cập nhật hàm removeReminder để sử dụng notifee
+  const removeReminder = async (medicationId: string, time: string) => {
+    try {
+      const notificationId = `${medicationId}_${time}`;
+      await Notifications.cancelScheduledNotificationAsync(notificationId);
+      
       const newReminders = {
         ...reminderTimes,
-        [selectedMedicationId]: [
-          ...(reminderTimes[selectedMedicationId] || []),
-          timeString,
-        ],
+        [medicationId]: (reminderTimes[medicationId] || []).filter(t => t !== time)
       };
-      setReminderTimes(newReminders);
+
+      if (newReminders[medicationId].length === 0) {
+        delete newReminders[medicationId];
+      }
+
       await AsyncStorage.setItem(
         `reminders_${prescriptionId}`,
         JSON.stringify(newReminders)
       );
-      const medication = prescriptionDetail?.medications.find(
-        (med) => med.id === selectedMedicationId
-      );
-      if (medication) {
-        scheduleNotification(medication, timeString);
-        setPrescriptionDetail((prev) => ({
-          ...prev!,
-          medications: prev!.medications.map((med) =>
-            med.id === selectedMedicationId
-              ? { ...med, isScheduled: true, hasReminder: true }
-              : med
-          ),
-        }));
-      }
+      
+      setReminderTimes(newReminders);
+      setPrescriptionDetail((prev) => ({
+        ...prev!,
+        medications: prev!.medications.map((med) =>
+          med.id === medicationId
+            ? { 
+                ...med, 
+                isScheduled: Boolean(newReminders[medicationId]?.length),
+                hasReminder: Boolean(newReminders[medicationId]?.length)
+              }
+            : med
+        ),
+      }));
+
+      console.log(`✅ Đã xóa thông báo cho thuốc ID ${medicationId} lúc ${time}`);
+    } catch (error) {
+      console.error('❌ Lỗi khi xóa thông báo:', error);
+      throw error;
     }
-    setSelectedMedicationId(null);
   };
 
   const unscheduledMedications =

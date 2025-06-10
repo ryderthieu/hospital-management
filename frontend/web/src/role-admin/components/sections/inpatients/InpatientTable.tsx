@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate } from "react-router";
 import { RoomDetail } from "../../../types/patient";
 import { patientService } from "../../../services/patientService";
 import {
@@ -27,6 +27,8 @@ export default function InpatientTable() {
   const [inpatientToDelete, setInpatientToDelete] = useState<number | null>(
     null
   );
+  const [viewPatient, setViewPatient] = useState<any | null>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -69,8 +71,21 @@ export default function InpatientTable() {
     }
   };
 
-  const handleView = (inpatientId: number) => {
-    navigate(`/admin/inpatients/${inpatientId}`);
+  // Thay thế handleView để dùng modal thay vì alert
+  const handleView = async (inpatientId: number, patientId: number) => {
+    try {
+      const patient = await patientService.getPatientById(patientId);
+      const inpatientDetail = inpatients.find(
+        (i) => i.detailId === inpatientId
+      );
+      setViewPatient({ ...patient, inpatientDetail });
+      setShowViewModal(true);
+    } catch (error) {
+      setViewPatient({
+        error: "Không thể lấy thông tin bệnh nhân!",
+      });
+      setShowViewModal(true);
+    }
   };
 
   const handleEdit = async (
@@ -209,25 +224,25 @@ export default function InpatientTable() {
             <TableRow>
               <TableCell
                 isHeader
-                className="py-3 pr-6 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                className="py-3 pr-9 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
                 Mã nội trú
               </TableCell>
               <TableCell
                 isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                className="py-3 pr-9 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
                 Mã phòng
               </TableCell>
               <TableCell
                 isHeader
-                className="py-3 pr-6 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                className="py-3 pr-7 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
                 Mã bệnh nhân
               </TableCell>
               <TableCell
                 isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                className="py-3 pr-13 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
                 Ngày tạo
               </TableCell>
@@ -246,7 +261,7 @@ export default function InpatientTable() {
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                   MT{inpatient.detailId.toString().padStart(4, "0")}
                 </TableCell>
-                <TableCell className="py-3 font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                   P{inpatient.roomId.toString().padStart(4, "0")}
                 </TableCell>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
@@ -260,7 +275,7 @@ export default function InpatientTable() {
                   <div className="flex gap-2">
                     <button
                       onClick={() =>
-                        navigate(`/admin/inpatients/${inpatient.detailId}`)
+                        handleView(inpatient.detailId, inpatient.patientId)
                       }
                       className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
                     >
@@ -285,11 +300,11 @@ export default function InpatientTable() {
                           `/admin/inpatients-rooms/edit/${inpatient.detailId}`
                         )
                       }
-                      className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
+                      className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 transition-colors"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
+                        className="h-4 w-4 text-yellow-500"
                         viewBox="0 0 20 20"
                         fill="currentColor"
                       >
@@ -342,6 +357,77 @@ export default function InpatientTable() {
         title="Xác nhận xóa"
         message="Bạn có chắc chắn muốn xóa bệnh nhân nội trú này? Thao tác này sẽ không thể hoàn tác."
       />
+
+      {/* Modal hiển thị thông tin bệnh nhân */}
+      {showViewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-lg text-center">
+            <h2 className="text-2xl font-semibold mb-4 text-teal-600">
+              Thông tin bệnh nhân
+            </h2>
+            {viewPatient?.error ? (
+              <div className="text-red-600">{viewPatient.error}</div>
+            ) : viewPatient ? (
+              <div className="text-left space-y-2">
+                <div className="my-1">
+                  <span className="font-medium mr-1">Họ tên:</span>{" "}
+                  {viewPatient.fullName}
+                </div>
+                <div className="my-1">
+                  <span className="font-medium mr-1">Email:</span>{" "}
+                  {viewPatient.email}
+                </div>
+                <div className="my-1">
+                  <span className="font-medium mr-1">SĐT:</span>{" "}
+                  {viewPatient.phone}
+                </div>
+                <div className="my-1">
+                  <span className="font-medium mr-1">Ngày sinh:</span>{" "}
+                  {viewPatient.birthday
+                    ? format(new Date(viewPatient.birthday), "dd-MM-yyyy")
+                    : ""}
+                </div>
+                {/* Thông tin phòng nội trú */}
+                {viewPatient.inpatientDetail && (
+                  <>
+                    <div className="my-1">
+                      <span className="font-medium mr-1">Mã nội trú:</span> MT
+                      {String(viewPatient.inpatientDetail.detailId).padStart(
+                        4,
+                        "0"
+                      )}
+                    </div>
+                    <div className="my-1">
+                      <span className="font-medium mr-1">Mã phòng:</span> P
+                      {String(viewPatient.inpatientDetail.roomId).padStart(
+                        4,
+                        "0"
+                      )}
+                    </div>
+                    <div className="my-1">
+                      <span className="font-medium mr-1">Ngày tạo:</span>{" "}
+                      {viewPatient.inpatientDetail.createdAt
+                        ? format(
+                            new Date(viewPatient.inpatientDetail.createdAt),
+                            "dd-MM-yyyy"
+                          )
+                        : ""}
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div>Đang tải...</div>
+            )}
+            <button
+              onClick={() => setShowViewModal(false)}
+              className="mt-6 px-4 py-2 bg-base-600 text-white rounded hover:bg-base-700"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

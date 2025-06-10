@@ -94,25 +94,25 @@ export type Specialty = {
     }
 )
 
-// Doctor interface với các trường bổ sung
+// types.ts
 export interface Doctor {
-  id: string
-  name: string
-  specialty: string
-  room?: string
-  price: string
-  image: ImageSourcePropType
-  // Các trường bổ sung
-  rating?: number
-  reviewCount?: number // Thêm số lượng đánh giá
-  experience?: string
-  education?: string
-  languages?: string[]
-  availableSlots?: TimeSlot[]
-  bio?: string
-  joinDate?: string // Thêm ngày tham gia cho sort functionality
-  isOnline?: boolean // Thêm trạng thái online
-  status?: "active" | "busy" | "offline" // Thêm status chi tiết hơn
+  id: string;
+  name: string;
+  specialty: string;
+  room?: string;
+  price: string; // Định dạng tiền tệ (VD: "200,000 VNĐ")
+  image: ImageSourcePropType | null; // Cho phép null nếu không có avatar
+  consultationFee: number; // Giá trị số để lọc/sắp xếp
+  rating?: number;
+  reviewCount?: number;
+  experience?: string;
+  education?: string;
+  languages?: string[];
+  availableSlots?: TimeSlot[];
+  bio?: string;
+  joinDate?: string;
+  isOnline?: boolean;
+  status?: "active" | "busy" | "offline";
 }
 
 // Date option interface - Updated để match với DateCard component

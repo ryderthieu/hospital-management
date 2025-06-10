@@ -12,350 +12,146 @@ import {
   TouchableOpacity,
   Image,
   FlatList,
+  ActivityIndicator,
 } from "react-native"
-import { useNavigation, useRoute } from "@react-navigation/native"
+import { useNavigation } from "@react-navigation/native"
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { fontFamily } from "../../context/FontContext"
 import Header from "../../components/Header"
-import { DateCard } from "../../components/MedicationSchedule/DateCard"
-import Checkbox from "../../components/MedicationSchedule/Checkbox"
-import MedicationConfirmModal from "../../components/MedicationSchedule/MedicationConfirmModal"
-import type { DateOption, TimeSlot, Medication } from "./type"
 import { colors } from "../../styles/globalStyles"
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import * as Notifications from 'expo-notifications'
 import API from "../../services/api"
+import type { MedicationScheduleStackParamList } from "../../navigation/types"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { LinearGradient } from "expo-linear-gradient"
+import { Ionicons } from "@expo/vector-icons"
 
-const getCurrentTime = () => {
-  const now = new Date()
-  return now.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", hour12: false })
-}
+type NavigationProp = NativeStackNavigationProp<MedicationScheduleStackParamList>
 
-const getCurrentDate = () => {
-  const now = new Date()
-  return {
-    day: now.getDate(),
-    month: now.getMonth() + 1,
-    year: now.getFullYear(),
-    dayOfWeek: now.toLocaleDateString("vi-VN", { weekday: "short" }),
-  }
-}
-
-const generateDateOptions = (): DateOption[] => {
-  const today = new Date()
-  const dates: DateOption[] = []
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(today)
-    date.setDate(today.getDate() + i)
-    const dayNames = ["CN", "Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7"]
-    const dayName = i === 0 ? "Hôm nay" : dayNames[date.getDay()]
-    dates.push({
-      id: i + 1,
-      day: dayName,
-      date: date.getDate(),
-      disabled: false,
-      fullDate: date.toISOString().split("T")[0],
-    })
-  }
-  return dates
-}
-
-const isTimeReached = (medicationTime: string): boolean => {
-  const now = new Date()
-  const [hours, minutes] = medicationTime.split(":").map(Number)
-  const medicationDateTime = new Date()
-  medicationDateTime.setHours(hours, minutes, 0, 0)
-  return now >= medicationDateTime
-}
-
-const getTimeUntilMedication = (medicationTime: string): string => {
-  const now = new Date()
-  const [hours, minutes] = medicationTime.split(":").map(Number)
-  const medicationDateTime = new Date()
-  medicationDateTime.setHours(hours, minutes, 0, 0)
-  if (medicationDateTime <= now) {
-    return "Đã đến giờ"
-  }
-  const timeDiff = medicationDateTime.getTime() - now.getTime()
-  const hoursDiff = Math.floor(timeDiff / (1000 * 60 * 60))
-  const minutesDiff = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60))
-  if (hoursDiff > 0) {
-    return `Còn ${hoursDiff}h ${minutesDiff}m`
-  } else {
-    return `Còn ${minutesDiff}m`
-  }
-}
-
-interface BackendPrescriptionDetail {
-  detailId: number;
+interface Prescription {
   prescriptionId: number;
-  medicine: {
+  appointmentId: number;
+  patientId: number;
+  diagnosis: string;
+  note: string;
+  createdAt: string;
+  bloodSugar: number;
+  heartRate: number;
+  systolicBloodPressure: number;
+  diastolicBloodPressure: number;
+  followUp: boolean;
+  followUpDate: string;
+  prescriptionDetails: Array<{
     medicineId: number;
     medicineName: string;
-    unit: string;
-  };
-  dosage: string;
-  frequency: string;
-  duration: string;
-  prescriptionNotes: string | null;
-  quantity: number;
-  createdAt: string;
+    quantity: number;
+    dosage: string;
+    frequency: string;
+    duration: string;
+  }>;
 }
 
-const mapBackendToFrontendMedication = (
-  backendDetails: BackendPrescriptionDetail[],
-  reminders: { [key: string]: string[] }
-): Medication[] => {
-  return backendDetails.map(detail => ({
-    id: detail.detailId.toString(),
-    name: detail.medicine.medicineName,
-    dosage: detail.dosage,
-    time: reminders[detail.detailId.toString()]?.[0] || "08:00", // Mặc định nếu chưa có nhắc nhở
-    instructions: detail.prescriptionNotes || "",
-    status: "pending",
-  }))
+interface Patient {
+  patientId: number;
+  fullName: string;
 }
 
-interface MedicationScheduleScreenProps {
-  onManagePrescriptions?: () => void
-  customDateOptions?: DateOption[]
-  customTimeSlots?: TimeSlot[]
-}
+const MedicationScheduleScreen: React.FC = () => {
+  const navigation = useNavigation<NavigationProp>()
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [patient, setPatient] = useState<Patient | null>(null)
 
-const MedicationScheduleScreen: React.FC<MedicationScheduleScreenProps> = ({
-  onManagePrescriptions,
-  customDateOptions,
-  customTimeSlots,
-}) => {
-  const navigation = useNavigation()
-  const route = useRoute()
-  const { prescriptionId } = route.params as { prescriptionId?: string }
-  const [selectedDateId, setSelectedDateId] = useState(1)
-  const [medications, setMedications] = useState<TimeSlot[]>(customTimeSlots || [])
-  const [modalVisible, setModalVisible] = useState(false)
-  const [selectedMedication, setSelectedMedication] = useState<{
-    medication: Medication
-    timeSlotId: string
-  } | null>(null)
-  const [currentTime, setCurrentTime] = useState(getCurrentTime())
-  const [dateOptions, setDateOptions] = useState<DateOption[]>(customDateOptions || generateDateOptions())
-  const [medicationReminders, setMedicationReminders] = useState<string[]>([])
-  const [reminderTimes, setReminderTimes] = useState<{ [key: string]: string[] }>({})
-
-  const fetchMedications = async () => {
-    if (!prescriptionId) return
+  const getPatientInfo = async () => {
     try {
-      const response = await API.get(`/pharmacy/prescriptions/detail/${prescriptionId}`)
-      const backendDetails: BackendPrescriptionDetail[] = response.data
-      const storedReminders = await AsyncStorage.getItem(`reminders_${prescriptionId}`)
-      const reminders = storedReminders ? JSON.parse(storedReminders) : {}
-      setReminderTimes(reminders)
-      const mappedMedications = mapBackendToFrontendMedication(backendDetails, reminders)
-      // Phân loại thuốc theo thời gian trong ngày
-      const timeSlots: TimeSlot[] = [
-        {
-          id: "1",
-          period: "Buổi sáng",
-          icon: "morning",
-          medications: mappedMedications.filter(med => med.time.includes("07") || med.time.includes("08")),
-        },
-        {
-          id: "2",
-          period: "Buổi trưa",
-          icon: "noon",
-          medications: mappedMedications.filter(med => med.time.includes("12") || med.time.includes("13")),
-        },
-        {
-          id: "3",
-          period: "Buổi tối",
-          icon: "evening",
-          medications: mappedMedications.filter(med => med.time.includes("19") || med.time.includes("20")),
-        },
-      ]
-      setMedications(timeSlots)
-    } catch (error) {
-      console.error("Lỗi khi lấy chi tiết đơn thuốc:", error)
-    }
-  }
-
-  useEffect(() => {
-    fetchMedications()
-  }, [prescriptionId])
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(getCurrentTime())
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [])
-
-useEffect(() => {
-  const checkReminders = () => {
-    const now = new Date();
-    const reminders: string[] = [];
-    
-    // Hàm async bên trong để xử lý await
-    const scheduleReminder = async (medication: Medication, name: string, dosage: string, id: string) => {
-      try {
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: 'Nhắc nhở uống thuốc',
-            body: `Đã đến giờ uống ${name} - ${dosage}`,
-            data: { medicationId: id },
-          },
-          trigger: { seconds: 1 }, // Gửi ngay lập tức (hoặc điều chỉnh thời gian nếu cần)
-        });
-      } catch (error) {
-        console.error('Lỗi khi lên lịch thông báo:', error);
+      const patientJson = await AsyncStorage.getItem('patient')
+      if (patientJson) {
+        const patientData = JSON.parse(patientJson)
+        setPatient(patientData)
+        return patientData
       }
-    };
+      return null
+    } catch (err) {
+      console.error('Lỗi khi lấy thông tin bệnh nhân:', err)
+      return null
+    }
+  }
 
-    medications.forEach(timeSlot => {
-      timeSlot.medications.forEach(medication => {
-        if (medication.status === 'pending') {
-          const [hours, minutes] = medication.time.split(':').map(Number);
-          const medicationTime = new Date();
-          medicationTime.setHours(hours, minutes, 0, 0);
-          const reminderTime = new Date(medicationTime.getTime() - 15 * 60 * 1000);
-          if (now >= reminderTime && now <= medicationTime) {
-            reminders.push(`${medication.name} - ${medication.time}`);
-            // Gọi hàm async để lên lịch thông báo
-            scheduleReminder(medication, medication.name, medication.dosage, medication.id);
-          }
-        }
-      });
-    });
-    setMedicationReminders(reminders);
-  };
-
-  const reminderTimer = setInterval(checkReminders, 60000);
-  checkReminders();
-  return () => clearInterval(reminderTimer);
-}, [medications]);
+  const fetchPrescriptions = async () => {
+    try {
+      setLoading(true)
+      console.log('Đang lấy thông tin bệnh nhân...')
+      const patientData = await getPatientInfo()
+      if (!patientData?.patientId) {
+        throw new Error('Không tìm thấy thông tin bệnh nhân')
+      }
+      
+      console.log('Đang gọi API lấy danh sách đơn thuốc...')
+      const response = await API.get(`/pharmacy/prescriptions/patient/${patientData.patientId}`)
+      console.log('Kết quả API:', response.data)
+      setPrescriptions(response.data)
+      setError("")
+    } catch (err: any) {
+      console.error('Chi tiết lỗi:', {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+        config: err.config
+      })
+      setError(err.message || "Không thể tải danh sách đơn thuốc")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const updateMedicationStatus = () => {
-      setMedications(prevMedications =>
-        prevMedications.map(timeSlot => ({
-          ...timeSlot,
-          medications: timeSlot.medications.map(medication => {
-            if (medication.status === "pending" && isTimeReached(medication.time)) {
-              const now = new Date()
-              const [hours, minutes] = medication.time.split(":").map(Number)
-              const medicationTime = new Date()
-              medicationTime.setHours(hours, minutes, 0, 0)
-              const hoursPassed = (now.getTime() - medicationTime.getTime()) / (1000 * 60 * 60)
-              if (hoursPassed > 2) {
-                return { ...medication, status: "overdue" as any }
-              }
-            }
-            return medication
-          }),
-        }))
-      )
-    }
-
-    const statusTimer = setInterval(updateMedicationStatus, 60000)
-    return () => clearInterval(statusTimer)
+    fetchPrescriptions()
   }, [])
 
-  const handleMedicationPress = (timeSlotId: string, medication: Medication) => {
-    setSelectedMedication({ medication, timeSlotId })
-    setModalVisible(true)
-  }
-
-  const handleConfirmMedication = () => {
-    if (!selectedMedication) return
-    setMedications(prevSlots =>
-      prevSlots.map(slot => {
-        if (slot.id === selectedMedication.timeSlotId) {
-          return {
-            ...slot,
-            medications: slot.medications.map(med => {
-              if (med.id === selectedMedication.medication.id) {
-                return { ...med, status: "taken", takenAt: getCurrentTime() }
-              }
-              return med
-            }),
-          }
-        }
-        return slot
-      })
-    )
-    setModalVisible(false)
-    setSelectedMedication(null)
-  }
-
-  const handleCancelMedication = () => {
-    if (!selectedMedication) return
-    setMedications(prevSlots =>
-      prevSlots.map(slot => {
-        if (slot.id === selectedMedication.timeSlotId) {
-          return {
-            ...slot,
-            medications: slot.medications.map(med => {
-              if (med.id === selectedMedication.medication.id) {
-                return { ...med, status: "canceled", canceledAt: getCurrentTime() }
-              }
-              return med
-            }),
-          }
-        }
-        return slot
-      })
-    )
-    setModalVisible(false)
-    setSelectedMedication(null)
-  }
-
-  const handleAdjustMedication = () => {
-    setModalVisible(false)
-    setSelectedMedication(null)
-  }
-
-  const handleCloseModal = () => {
-    setModalVisible(false)
-    setSelectedMedication(null)
-  }
-
-  const renderIcon = (icon: "morning" | "noon" | "evening") => {
-    switch (icon) {
-      case "morning":
-        return (
-          <View style={styles.iconContainer}>
-            <Image source={require("../../assets/images/ThoiGian/sun.png")} style={styles.weatherIcon} />
-          </View>
-        )
-      case "noon":
-        return (
-          <View style={styles.iconContainer}>
-            <Image source={require("../../assets/images/ThoiGian/Afternoon.png")} style={styles.weatherIcon} />
-          </View>
-        )
-      case "evening":
-        return (
-          <View style={styles.iconContainer}>
-            <Image source={require("../../assets/images/ThoiGian/moon.png")} style={styles.weatherIcon} />
-          </View>
-        )
-      default:
-        return null
-    }
-  }
-
-  const renderMedicationStatus = (medication: Medication) => {
-    if (medication.status === "pending" && isTimeReached(medication.time)) {
-      return (
-        <View style={styles.overdueIndicator}>
-          <Text style={styles.overdueText}>Quá giờ</Text>
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Header title="Đơn thuốc" />
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={colors.primary || '#007AFF'} />
+          <Text style={styles.loadingText}>Đang tải đơn thuốc...</Text>
         </View>
-      )
-    }
-    return null
+      </SafeAreaView>
+    )
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Header title="Đơn thuốc" />
+        <View style={styles.centerContainer}>
+          <Ionicons name="warning-outline" size={48} color="#FF3B30" />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={fetchPrescriptions}
+          >
+            <Text style={styles.retryButtonText}>Thử lại</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    )
+  }
+
+  if (prescriptions.length === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Header title="Đơn thuốc" />
+        <View style={styles.centerContainer}>
+          <Ionicons name="document-text-outline" size={48} color="#8E8E93" />
+          <Text style={styles.emptyText}>Bạn chưa có đơn thuốc nào</Text>
+        </View>
+      </SafeAreaView>
+    )
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
       <Header
         title="Đơn thuốc"
         showBack={false}
@@ -363,108 +159,49 @@ useEffect(() => {
         actionType="notification"
         onActionPress={() => navigation.navigate("Notifications")}
       />
-      {medicationReminders.length > 0 && (
-        <View style={styles.reminderContainer}>
-          <Text style={[styles.reminderTitle, { fontFamily: fontFamily.medium }]}>Nhắc nhở uống thuốc</Text>
-          {medicationReminders.map((reminder, index) => (
-            <Text key={index} style={[styles.reminderText, { fontFamily: fontFamily.regular }]}>
-              {reminder}
-            </Text>
-          ))}
-        </View>
-      )}
-      <View style={styles.dateSelector}>
-        <FlatList
-          data={dateOptions}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.dateList}
-          renderItem={({ item }) => (
-            <DateCard date={item} isSelected={item.id === selectedDateId} onPress={() => setSelectedDateId(item.id)} />
-          )}
-          keyExtractor={item => item.id.toString()}
-        />
-      </View>
-      <Text style={[styles.scheduleTitle, { fontFamily: fontFamily.medium }]}>Lịch uống thuốc hôm nay</Text>
-      <ScrollView style={styles.medicationList}>
-        <View style={styles.medicationContainer}>
-          {medications.map((timeSlot, index) => (
-            <View key={timeSlot.id}>
-              <View style={styles.timeSlotSection}>
-                <View style={styles.timeSlotHeader}>
-                  {renderIcon(timeSlot.icon)}
-                  <Text style={[styles.timeSlotTitle, { fontFamily: fontFamily.medium }]}>{timeSlot.period}</Text>
+      <FlatList
+        data={prescriptions}
+        keyExtractor={(item) => item.prescriptionId.toString()}
+        contentContainerStyle={styles.listContainer}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.prescriptionCard}
+            onPress={() => navigation.navigate('PrescriptionDetail', { prescriptionId: item.prescriptionId.toString() })}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#FFFFFF', '#F8FAFC']}
+              style={styles.cardGradient}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.prescriptionHeader}>
+                  <View style={styles.titleContainer}>
+                    <Ionicons name="medkit-outline" size={24} color={colors.primary || '#007AFF'} />
+                    <Text style={styles.prescriptionTitle}>Đơn thuốc #{item.prescriptionId}</Text>
+                  </View>
+                  <Text style={styles.prescriptionDate}>
+                    {new Date(item.createdAt).toLocaleDateString('vi-VN')}
+                  </Text>
                 </View>
-                {timeSlot.medications.map(medication => (
-                  <TouchableOpacity
-                    key={medication.id}
-                    style={[
-                      styles.medicationItem,
-                      medication.status === "pending" && isTimeReached(medication.time) && styles.overdueMedicationItem,
-                    ]}
-                    onPress={() => handleMedicationPress(timeSlot.id, medication)}
-                    activeOpacity={0.7}
-                  >
-                    <Checkbox status={medication.status || "pending"} />
-                    <View style={styles.medicationDetails}>
-                      <View style={styles.medicationHeader}>
-                        <Text
-                          style={[
-                            styles.medicationName,
-                            { fontFamily: fontFamily.regular },
-                            medication.status === "taken" && styles.takenMedicationText,
-                            medication.status === "canceled" && styles.canceledMedicationText,
-                          ]}
-                        >
-                          {medication.name}
-                        </Text>
-                        {renderMedicationStatus(medication)}
-                      </View>
-                      <Text
-                        style={[
-                          styles.medicationTime,
-                          { fontFamily: fontFamily.regular },
-                          medication.status === "taken" && styles.takenMedicationTimeText,
-                          medication.status === "canceled" && styles.canceledMedicationTimeText,
-                        ]}
-                      >
-                        <Text style={[styles.timeHighlight, { fontFamily: fontFamily.medium }]}>{medication.time}</Text>{" "}
-                        - {medication.dosage}
-                      </Text>
-                      {medication.instructions && (
-                        <Text style={[styles.medicationInstructions, { fontFamily: fontFamily.regular }]}>
-                          {medication.instructions}
-                        </Text>
-                      )}
-                      {medication.status === "pending" && (
-                        <Text style={[styles.timeCountdown, { fontFamily: fontFamily.regular }]}>
-                          {getTimeUntilMedication(medication.time)}
-                        </Text>
-                      )}
-                      {medication.status === "taken" && (medication as any).takenAt && (
-                        <Text style={[styles.takenTime, { fontFamily: fontFamily.regular }]}>
-                          Đã uống lúc {(medication as any).takenAt}
-                        </Text>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                ))}
+                <View style={styles.divider} />
+                <Text style={styles.prescriptionDiagnosis}>Chẩn đoán: {item.diagnosis}</Text>
+                <Text style={styles.prescriptionNote} numberOfLines={2}>
+                  Ghi chú: {item.note || 'Không có'}
+                </Text>
+                <View style={styles.statusContainer}>
+                  <Ionicons
+                    name={item.followUp ? "calendar-outline" : "close-circle-outline"}
+                    size={16}
+                    color={item.followUp ? '#10B981' : '#FF3B30'}
+                  />
+                  <Text style={styles.prescriptionStatus}>
+                    Tái khám: {item.followUp ? `Ngày ${new Date(item.followUpDate).toLocaleDateString('vi-VN')}` : 'Không'}
+                  </Text>
+                </View>
               </View>
-              {index < medications.length - 1 && <View style={styles.dottedDivider} />}
-            </View>
-          ))}
-        </View>
-      </ScrollView>
-      <TouchableOpacity style={styles.manageButton} onPress={() => navigation.navigate("PrescriptionManagement")}>
-        <Text style={[styles.manageButtonText, { fontFamily: fontFamily.medium }]}>Quản lý đơn thuốc</Text>
-      </TouchableOpacity>
-      <MedicationConfirmModal
-        visible={modalVisible}
-        medication={selectedMedication?.medication || null}
-        onClose={handleCloseModal}
-        onConfirm={handleConfirmMedication}
-        onCancel={handleCancelMedication}
-        onAdjust={handleAdjustMedication}
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
       />
     </SafeAreaView>
   )
@@ -473,200 +210,116 @@ useEffect(() => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F9FA",
+    backgroundColor: '#F1F5F9',
   },
-  clockContainer: {
-    backgroundColor: "#fff",
+  listContainer: {
     paddingVertical: 16,
-    paddingHorizontal: 20,
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
   },
-  currentTime: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: colors.base500,
-    marginBottom: 4,
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
   },
-  currentDate: {
-    fontSize: 14,
-    color: "#666",
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: colors.text || '#000000',
+    fontFamily: fontFamily.regular,
   },
-  reminderContainer: {
-    backgroundColor: "#FFF3CD",
-    marginHorizontal: 16,
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 16,
     marginTop: 12,
-    padding: 12,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: "#FFC107",
+    marginBottom: 24,
+    fontFamily: fontFamily.regular,
+    textAlign: 'center',
   },
-  reminderTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#856404",
-    marginBottom: 4,
-  },
-  reminderText: {
-    fontSize: 12,
-    color: "#856404",
-  },
-  dateSelector: {
-    paddingVertical: 16,
-    backgroundColor: "#fff",
-  },
-  dateList: {
-    paddingHorizontal: 16,
-  },
-  scheduleTitle: {
+  emptyText: {
     fontSize: 16,
-    fontWeight: "600",
-    marginHorizontal: 16,
-    marginTop: 20,
-    paddingBottom: 8,
-    marginBottom: 12,
-    color: "#333",
+    color: '#8E8E93',
+    fontFamily: fontFamily.regular,
+    marginTop: 12,
+    textAlign: 'center',
   },
-  medicationList: {
-    padding: 2,
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  medicationContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  timeSlotSection: {
-    paddingVertical: 8,
-  },
-  timeSlotHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  iconContainer: {
-    marginRight: 12,
-  },
-  weatherIcon: {
-    width: 28,
-    height: 28,
-  },
-  timeSlotTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-  },
-  medicationItem: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    borderRadius: 8,
-  },
-  overdueMedicationItem: {
-    backgroundColor: "#FEF2F2",
-    borderLeftWidth: 3,
-    borderLeftColor: "#EF4444",
-  },
-  medicationDetails: {
-    marginLeft: 16,
-    flex: 1,
-  },
-  medicationHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  medicationName: {
-    fontSize: 15,
-    color: "#333",
-    marginBottom: 6,
-    fontWeight: "500",
-    flex: 1,
-  },
-  medicationTime: {
-    fontSize: 13,
-    color: "#666",
-    marginBottom: 4,
-  },
-  medicationInstructions: {
-    fontSize: 12,
-    color: "#888",
-    fontStyle: "italic",
-    marginBottom: 4,
-  },
-  timeCountdown: {
-    fontSize: 12,
-    color: colors.base500,
-    fontWeight: "500",
-  },
-  takenTime: {
-    fontSize: 12,
-    color: "#10B981",
-    fontWeight: "500",
-  },
-  timeHighlight: {
-    fontWeight: "600",
-    color: colors.base500,
-  },
-  overdueIndicator: {
-    backgroundColor: "#EF4444",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  overdueText: {
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "600",
-  },
-  takenMedicationText: {
-    color: colors.base500,
-    textDecorationLine: "line-through",
-  },
-  takenMedicationTimeText: {
-    color: colors.base500,
-  },
-  canceledMedicationText: {
-    color: "#FF5252",
-    textDecorationLine: "line-through",
-  },
-  canceledMedicationTimeText: {
-    color: "#FF5252",
-  },
-  dottedDivider: {
-    height: 1,
-    marginVertical: 20,
-    marginHorizontal: 8,
-    borderStyle: "dashed",
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-  },
-  manageButton: {
-    backgroundColor: colors.base500,
+  retryButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: colors.primary || '#007AFF',
     borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    margin: 16,
-    shadowColor: colors.base500,
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 4,
   },
-  manageButtonText: {
-    color: "#fff",
+  retryButtonText: {
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: fontFamily.medium,
+  },
+  prescriptionCard: {
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderRadius: 16,
+    overflow: 'hidden',
+    transform: [{ scale: 1 }],
+  },
+  cardGradient: {
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  cardContent: {
+    flex: 1,
+  },
+  prescriptionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  prescriptionTitle: {
+    fontSize: 20,
+    fontFamily: fontFamily.bold,
+    color: colors.text || '#000000',
+  },
+  prescriptionDate: {
+    fontSize: 14,
+    fontFamily: fontFamily.regular,
+    color: '#6B7280',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 12,
+  },
+  prescriptionDiagnosis: {
+    fontSize: 16,
+    fontFamily: fontFamily.medium,
+    color: colors.text || '#000000',
+    marginBottom: 8,
+  },
+  prescriptionNote: {
+    fontSize: 14,
+    fontFamily: fontFamily.regular,
+    color: '#4B5563',
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  prescriptionStatus: {
+    fontSize: 14,
+    fontFamily: fontFamily.regular,
+    color: '#6B7280',
   },
 })
 

@@ -139,6 +139,7 @@ export type MedicationScheduleStackParamList = {
   MedicationScheduleHome: undefined;
   PrescriptionManagement: { prescriptionId: string };
   PrescriptionDetail: { prescriptionId: string };
+  MedicationReminder: undefined;
 };
 
 export type ProfileStackParamList = {

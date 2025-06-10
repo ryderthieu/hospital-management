@@ -1129,8 +1129,6 @@ span.flatpickr-weekday,
   height: 120px !important;
 }
 
-/* Enhanced Calendar Event Styling for Better Display */
-
 /* Event content styling - similar to reference image */
 .custom-calendar .fc-daygrid-event.event-fc-color {
   font-weight: 500;
@@ -1451,4 +1449,7 @@ span.flatpickr-weekday,
 /* Also remove border radius from any other event elements */
 .custom-calendar .fc-daygrid-event {
   border-radius: 0 !important;
+}
+.custom-disabled-select .ant-select-selector {
+  color: black !important;
 }

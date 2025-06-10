@@ -99,4 +99,12 @@ public class ServiceOrderServiceImpl implements ServiceOrderService {
                 .map(ServiceOrderDto::new)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<ServiceOrderDto> getOrdersByRoomId(Integer roomId) {
+        return serviceOrderRepository.findByRoomId(roomId)
+                .stream()
+                .map(ServiceOrderDto::new)
+                .collect(Collectors.toList());
+    }
 }

@@ -10,17 +10,20 @@ import {
   LogoutOutlined,
 } from "@ant-design/icons"
 
+
 const { Sider } = Layout
 
 interface SidebarProps {
-  role: "examination" | "test"
+  role: "examination" | "service"
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ role }) => {
   const location = useLocation()
   const basePath = `/doctor/${role}`
 
-  const menuItems = [
+  const menuItems = 
+  role === "examination" ?
+  [
     {
       key: `${basePath}`,
       icon: <BarChartOutlined />,
@@ -32,12 +35,6 @@ const Sidebar: React.FC<SidebarProps> = ({ role }) => {
       icon: <CalendarOutlined />,
       label: "Lịch làm việc",
       link: `${basePath}/schedule`,
-    },
-    {
-      key: `${basePath}/appointment`,
-      icon: <ClockCircleOutlined />,
-      label: "Lịch hẹn",
-      link: `${basePath}/appointment`,
     },
     {
       key: `${basePath}/patients`,
@@ -57,6 +54,38 @@ const Sidebar: React.FC<SidebarProps> = ({ role }) => {
       label: "Đăng xuất",
       link: "/",
     },
+  ] : [
+     {
+      key: `${basePath}`,
+      icon: <BarChartOutlined />,
+      label: "Dashboard",
+      link: `${basePath}`,
+    },
+    {
+      key: `${basePath}/schedule`,
+      icon: <CalendarOutlined />,
+      label: "Lịch làm việc",
+      link: `${basePath}/schedule`,
+    },
+    {
+      key: `${basePath}/patients`,
+      icon: <TeamOutlined />,
+      label: "Bệnh nhân",
+      link: `${basePath}/patients`,
+    },
+    {
+      key: `${basePath}/account`,
+      icon: <UserOutlined />,
+      label: "Tài khoản",
+      link: `${basePath}/account`,
+    },
+    {
+      key: "logout",
+      icon: <LogoutOutlined />,
+      label: "Đăng xuất",
+      link: "/",
+    },
+
   ]
 
   return (
