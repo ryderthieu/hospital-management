@@ -141,7 +141,7 @@ export default function ViewService() {
                   {service.serviceName}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-2">
-                  Mã dịch vụ: S{service.serviceId.toString().padStart(4, "0")}
+                  Mã dịch vụ: DV{service.serviceId.toString().padStart(4, "0")}
                 </p>
               </div>
             </div>
@@ -191,7 +191,7 @@ export default function ViewService() {
                     Mã dịch vụ
                   </span>
                   <p className="font-medium">
-                    S{service.serviceId.toString().padStart(4, "0")}
+                    DV{service.serviceId.toString().padStart(4, "0")}
                   </p>
                 </div>
                 <div>

@@ -4,6 +4,7 @@ import {
   PatientDto,
   EmergencyContact,
   EmergencyContactDto,
+  CreatePatientRequest,
 } from "../types/patient";
 
 export const patientService = {
@@ -17,8 +18,11 @@ export const patientService = {
     return response.data;
   },
 
-  async createPatient(patientData: PatientDto): Promise<Patient> {
-    const response = await api.post<Patient>("/patients", patientData);
+  async createPatient(patientData: any): Promise<CreatePatientRequest> {
+    const response = await api.post<CreatePatientRequest>(
+      "/patients/add-patient",
+      patientData
+    );
     return response.data;
   },
 

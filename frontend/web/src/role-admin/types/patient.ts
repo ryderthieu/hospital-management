@@ -4,6 +4,9 @@ export interface Patient {
   insuranceNumber: string;
   fullName: string;
   birthday: string;
+  phone: string;
+  email: string;
+  avatar: string;
   gender: "MALE" | "FEMALE" | "OTHER";
   address: string;
   allergies: string;
@@ -15,10 +18,14 @@ export interface Patient {
 }
 
 export interface PatientDto {
+  userId: number;
   identityNumber: string;
   insuranceNumber: string;
   fullName: string;
   birthday: string;
+  phone: string;
+  email: string;
+  avatar: string;
   gender: "MALE" | "FEMALE" | "OTHER";
   address: string;
   allergies: string;
@@ -27,6 +34,23 @@ export interface PatientDto {
   bloodType: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
 }
 
+export interface CreatePatientRequest {
+  email: string;
+  phone: string;
+  password: string;
+  identityNumber: string;
+  insuranceNumber: string;
+  fullName: string;
+  birthday: string;
+  avatar?: string;
+  gender?: "MALE" | "FEMALE" | "OTHER";
+  address?: string;
+  allergies?: string;
+  height?: number;
+  weight?: number;
+  bloodType?: string;
+  emergencyContactDtos?: EmergencyContactDto[];
+}
 export interface EmergencyContact {
   contactId: number;
   contactName: string;
