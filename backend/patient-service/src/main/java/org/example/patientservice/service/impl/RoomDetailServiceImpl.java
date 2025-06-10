@@ -63,6 +63,25 @@ public class RoomDetailServiceImpl implements RoomDetailService {
     }
 
     @Override
+    public RoomDetailDto updateRoomDetail(Integer detailId, RoomDetailDto roomDetailDto) {
+        RoomDetail roomDetail = roomDetailRepository.findById(detailId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết phòng với ID: " + detailId));
+
+        Patient patient = patientRepository.findById(roomDetailDto.getPatientId())
+                .orElseThrow(() -> new RuntimeException("Patient not found"));
+
+        PatientRoom room = patientRoomRepository.findById(roomDetailDto.getRoomId())
+                .orElseThrow(() -> new RuntimeException("Room not found"));
+
+        roomDetail.setPatient(patient);
+        roomDetail.setRoom(room);
+
+        RoomDetail updatedRoomDetail = roomDetailRepository.save(roomDetail);
+        return new RoomDetailDto(updatedRoomDetail);
+    }
+
+
+    @Override
     public List<RoomDetailDto> getRoomDetailsByRoomId(Integer roomId) {
         return roomDetailRepository
                 .findByRoom_RoomId(roomId)

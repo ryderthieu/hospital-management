@@ -24,6 +24,12 @@ public class RoomDetailController {
         return ResponseEntity.ok(roomDetailService.createRoomDetail(roomDetailDto));
     }
 
+    @PutMapping("/{detailId}")
+    public ResponseEntity<RoomDetailDto> updateRoomDetail(@PathVariable Integer detailId,
+                                                          @RequestBody @Valid RoomDetailDto roomDetailDto) {
+        return ResponseEntity.ok(roomDetailService.updateRoomDetail(detailId, roomDetailDto));
+    }
+
 //    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN', 'DOCTOR')")
     @GetMapping
     public ResponseEntity<List<RoomDetailDto>> getAllRoomDetails() {

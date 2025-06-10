@@ -85,4 +85,24 @@ export const patientService = {
     );
     return response.data;
   },
+
+  // Update an existing room detail
+  async updateRoomDetail(
+    detailId: number,
+    roomDetailData: Partial<RoomDetailDto>
+  ): Promise<RoomDetail> {
+    const response = await api.put<RoomDetail>(
+      `/patients/room-details/${detailId}`,
+      roomDetailData
+    );
+    return response.data;
+  },
+
+  // Delete a room detail
+  async deleteRoomDetail(detailId: number): Promise<string> {
+    const response = await api.delete<string>(
+      `/patients/room-details/${detailId}`
+    );
+    return response.data;
+  },
 };

@@ -13,6 +13,8 @@ public interface RoomDetailService {
 
     RoomDetailDto createRoomDetail(RoomDetailDto roomDetailDto);
 
+    RoomDetailDto updateRoomDetail(Integer detailId, RoomDetailDto roomDetailDto);
+
     List<RoomDetailDto> getRoomDetailsByRoomId(Integer roomId);
 
     void deleteRoomDetail(Integer detailId);

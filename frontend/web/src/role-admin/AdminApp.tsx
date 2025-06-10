@@ -34,6 +34,7 @@ import {
   Inpatients,
   InpatientRoom,
   AddPatientRoom,
+  EditPatientRoom,
 } from "./pages/Inpatient";
 import {
   OutpatientClinics,
@@ -82,6 +83,10 @@ const AdminApp: React.FC = () => {
           {/* Inpatients Page */}
           <Route path="inpatients-rooms" element={<InpatientRoom />} />
           <Route path="inpatients-rooms/add" element={<AddPatientRoom />} />
+          <Route
+            path="inpatients-rooms/edit/:detailId"
+            element={<EditPatientRoom />}
+          />
           <Route path="inpatients" element={<Inpatients />} />
           <Route
             path="inpatients-rooms/room-details"
