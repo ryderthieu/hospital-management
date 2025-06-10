@@ -402,7 +402,7 @@ const AddDoctor: React.FC = () => {
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center space-x-3">
                 <div>
-                  <h2 className="text-lg font-medium text-gray-900">
+                  <h2 className="text-lg font-semibold text-base-900">
                     Thông tin tài khoản
                   </h2>
                   <p className="text-sm text-gray-500">
@@ -416,7 +416,7 @@ const AddDoctor: React.FC = () => {
               <div className="grid grid-cols-1 lg:grid-cols-5 space-x-10">
                 {/* Avatar Section */}
                 <div className="flex flex-col items-center">
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                  <label className="block font-medium text-base-700 mb-3">
                     Ảnh đại diện
                   </label>
                   <div className="flex flex-col items-center space-y-1">
@@ -492,7 +492,7 @@ const AddDoctor: React.FC = () => {
                 <div className="lg:col-span-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block font-medium text-base-700 mb-2">
                         Số điện thoại <span className="text-red-500">*</span>
                       </label>                      <input
                         type="tel"
@@ -515,7 +515,7 @@ const AddDoctor: React.FC = () => {
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block font-medium text-base-700 mb-2">
                         Email
                       </label>                      <input
                         type="email"
@@ -537,7 +537,7 @@ const AddDoctor: React.FC = () => {
                       )}
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block font-medium text-base-700 mb-2">
                         Mật khẩu <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -561,7 +561,7 @@ const AddDoctor: React.FC = () => {
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center space-x-3">
                 <div>
-                  <h2 className="text-lg font-medium text-gray-900">
+                  <h2 className="text-lg font-semibold text-base-900">
                     Thông tin cá nhân
                   </h2>
                   <p className="text-sm text-gray-500">
@@ -574,7 +574,7 @@ const AddDoctor: React.FC = () => {
             <div className="px-6 py-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block font-medium text-base-700 mb-2">
                     Họ và tên <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -589,7 +589,7 @@ const AddDoctor: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block font-medium text-base-700 mb-2">
                     Số CMND/CCCD <span className="text-red-500">*</span>
                   </label>                  <input
                     type="text"
@@ -608,7 +608,7 @@ const AddDoctor: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block font-medium text-base-700 mb-2">
                     Ngày sinh <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -622,7 +622,7 @@ const AddDoctor: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block font-medium text-base-700 mb-2">
                     Giới tính <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -641,7 +641,7 @@ const AddDoctor: React.FC = () => {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block font-medium text-base-700 mb-2">
                     Địa chỉ
                   </label>
                   <textarea
@@ -662,7 +662,7 @@ const AddDoctor: React.FC = () => {
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center space-x-3">
                 <div>
-                  <h2 className="text-lg font-medium text-gray-900">
+                  <h2 className="text-lg font-semibold text-base-900">
                     Thông tin khoa
                   </h2>
                   <p className="text-sm text-gray-500">
@@ -674,7 +674,7 @@ const AddDoctor: React.FC = () => {
 
             <div className="px-6 py-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block font-medium text-base-700 mb-2">
                   Khoa <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -704,7 +704,7 @@ const AddDoctor: React.FC = () => {
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center space-x-3">
                 <div>
-                  <h2 className="text-lg font-medium text-gray-900">
+                  <h2 className="text-lg font-semibold text-base-900">
                     Thông tin chuyên môn
                   </h2>
                   <p className="text-sm text-gray-500">
@@ -717,7 +717,7 @@ const AddDoctor: React.FC = () => {
             <div className="px-6 py-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block font-medium text-base-700 mb-2">
                     Học hàm học vị <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -741,7 +741,7 @@ const AddDoctor: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block font-medium text-base-700 mb-2">
                     Chuyên môn <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -756,7 +756,7 @@ const AddDoctor: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block font-medium text-base-700 mb-2">
                     Loại bác sĩ <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -775,7 +775,7 @@ const AddDoctor: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block font-medium text-base-700 mb-2">
                     Phí khám (VNĐ)
                   </label>
                   <input

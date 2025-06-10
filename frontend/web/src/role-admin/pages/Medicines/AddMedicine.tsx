@@ -61,7 +61,7 @@ export default function AddMedicine() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tên thuốc *</label>
+              <label className="block font-medium text-base-700 dark:text-gray-300 mb-2">Tên thuốc <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 name="medicineName"
@@ -74,7 +74,7 @@ export default function AddMedicine() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nhà sản xuất</label>
+              <label className="block font-medium text-base-700 dark:text-gray-300 mb-2">Nhà sản xuất</label>
               <input
                 type="text"
                 name="manufactor"
@@ -86,7 +86,7 @@ export default function AddMedicine() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Danh mục *</label>
+              <label className="block font-medium text-base-700 dark:text-gray-300 mb-2">Danh mục <span className="text-red-500">*</span></label>
               <select
                 name="category"
                 value={formData.category}
@@ -104,7 +104,7 @@ export default function AddMedicine() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Đơn vị *</label>
+              <label className="block font-medium text-base-700 dark:text-gray-300 mb-2">Đơn vị <span className="text-red-500">*</span></label>
               <select
                 name="unit"
                 value={formData.unit}
@@ -122,7 +122,7 @@ export default function AddMedicine() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Giá (VND) *</label>
+              <label className="block font-medium text-base-700 dark:text-gray-300 mb-2">Giá (VND) <span className="text-red-500">*</span></label>
               <input
                 type="number"
                 name="price"
@@ -136,7 +136,7 @@ export default function AddMedicine() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Số lượng *</label>
+              <label className="block font-medium text-base-700 dark:text-gray-300 mb-2">Số lượng <span className="text-red-500">*</span></label>
               <input
                 type="number"
                 name="quantity"
@@ -150,7 +150,7 @@ export default function AddMedicine() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block font-medium text-base-700 dark:text-gray-300 mb-2">
                 Tỷ lệ bảo hiểm (0-1)
               </label>
               <input
@@ -168,7 +168,7 @@ export default function AddMedicine() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mô tả</label>
+            <label className="block font-medium text-base-700 dark:text-gray-300 mb-2">Mô tả</label>
             <textarea
               name="description"
               value={formData.description}
@@ -180,7 +180,7 @@ export default function AddMedicine() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cách sử dụng *</label>
+            <label className="block font-medium text-base-700 dark:text-gray-300 mb-2">Cách sử dụng <span className="text-red-500"><span className="text-red-500">*</span></span></label>
             <textarea
               name="usage"
               value={formData.usage}
@@ -193,7 +193,7 @@ export default function AddMedicine() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tác dụng phụ</label>
+            <label className="block font-medium text-base-700 dark:text-gray-300 mb-2">Tác dụng phụ</label>
             <textarea
               name="sideEffects"
               value={formData.sideEffects}
@@ -215,7 +215,7 @@ export default function AddMedicine() {
             <button
               type="button"
               onClick={() => navigate("/admin/medicines")}
-              className="flex items-center gap-2 px-6 py-2 bg-gray-500/50 text-white rounded-lg hover:bg-gray-500/70"
+              className="flex items-center gap-2 px-6 py-2 bg-gray-400/50 rounded-lg hover:bg-gray-500/40"
             >
               
               Hủy
