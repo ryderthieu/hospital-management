@@ -177,6 +177,29 @@ public class PrescriptionService {
             prescription.setNote(request.getNote());
         }
 
+        // Cập nhật chi tiết đơn thuốc nếu có
+        if (request.getPrescriptionDetails() != null && !request.getPrescriptionDetails().isEmpty()) {
+            // Xóa tất cả chi tiết cũ
+            prescription.getPrescriptionDetails().clear();
+            
+            // Thêm chi tiết mới
+            for (PrescriptionDTOs.PrescriptionDetailRequest detailRequest : request.getPrescriptionDetails()) {
+                PrescriptionDetail detail = new PrescriptionDetail();
+                detail.setPrescription(prescription);
+
+                Medicine medicine = medicineRepository.findById(detailRequest.getMedicineId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy thuốc với ID: " + detailRequest.getMedicineId()));
+
+                detail.setMedicine(medicine);
+                detail.setDosage(detailRequest.getDosage());
+                detail.setFrequency(detailRequest.getFrequency());
+                detail.setDuration(detailRequest.getDuration());
+                detail.setPrescriptionNotes(detailRequest.getPrescriptionNotes());
+                detail.setQuantity(detailRequest.getQuantity());
+                prescription.getPrescriptionDetails().add(detail);
+            }
+        }
+
         prescriptionRepository.save(prescription);
         return mapToPrescriptionResponse(prescription);
     }

@@ -72,6 +72,8 @@ public class PrescriptionDTOs {
         private Integer bloodSugar;
 
         private String note;
+
+        private List<PrescriptionDetailRequest> prescriptionDetails;
     }
 
     @Data
