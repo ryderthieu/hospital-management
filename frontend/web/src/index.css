@@ -1176,3 +1176,7 @@ span.flatpickr-weekday,
 .fc .fc-daygrid-body table tbody tr:nth-child(2) td {
   height: 120px !important;
 }
+
+.custom-disabled-select .ant-select-selector {
+  color: black !important;
+}
