@@ -3,52 +3,58 @@ import { useNavigate } from "react-router-dom";
 import { patientService } from "../../services/patientService";
 import PageMeta from "../../components/common/PageMeta";
 
-export default function AddPatientRoom() {
+const AddRoom: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<{
-    roomId: number | "";
-    patientId: number | "";
+    roomName: string;
+    maxCapacity: number | "";
+    note?: string;
   }>({
-    roomId: "",
-    patientId: "",
+    roomName: "",
+    maxCapacity: "",
+    note: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setLoading(true);
-      await patientService.createRoomDetail({
-        roomId: Number(formData.roomId),
-        patientId: Number(formData.patientId),
+      await patientService.createPatientRoom({
+        roomName: formData.roomName,
+        maxCapacity: Number(formData.maxCapacity),
+        note: formData.note,
       });
-      navigate("/admin/inpatients");
+      navigate("/admin/inpatients-rooms");
     } catch (error) {
-      console.error("Error adding inpatient room:", error);
-      alert("Có lỗi xảy ra khi thêm nội trú");
+      console.error("Error adding room:", error);
+      alert("Có lỗi xảy ra khi thêm phòng");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value === "" ? "" : Number(value),
+      [name]:
+        name === "maxCapacity" ? (value === "" ? "" : Number(value)) : value,
     }));
   };
 
   return (
     <div>
       <PageMeta
-        title="Thêm bệnh nhân nội trú | Admin Dashboard"
-        description="Thêm bệnh nhân nội trú vào hệ thống"
+        title="Thêm phòng bệnh | Admin Dashboard"
+        description="Thêm phòng bệnh vào hệ thống"
       />
 
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">
-          Thêm bệnh nhân nội trú
+          Thêm phòng bệnh
         </h2>
       </div>
 
@@ -57,35 +63,48 @@ export default function AddPatientRoom() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Mã phòng <span className="text-red-500">*</span>
+                Tên phòng <span className="text-red-500">*</span>
               </label>
               <input
-                type="number"
-                name="roomId"
-                value={formData.roomId}
+                type="text"
+                name="roomName"
+                value={formData.roomName}
                 onChange={handleChange}
                 required
-                min={1}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
-                placeholder="Nhập mã phòng"
+                placeholder="Nhập tên phòng"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Mã bệnh nhân <span className="text-red-500">*</span>
+                Sức chứa tối đa <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
-                name="patientId"
-                value={formData.patientId}
+                name="maxCapacity"
+                value={formData.maxCapacity}
                 onChange={handleChange}
                 required
                 min={1}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
-                placeholder="Nhập mã bệnh nhân"
+                placeholder="Nhập sức chứa tối đa"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Ghi chú
+            </label>
+            <textarea
+              name="note"
+              value={formData.note}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+              placeholder="Nhập ghi chú (nếu có)"
+              rows={3}
+            />
           </div>
 
           <div className="flex gap-4 justify-end">
@@ -94,11 +113,11 @@ export default function AddPatientRoom() {
               disabled={loading}
               className="flex items-center gap-2 px-6 py-2 bg-base-600 text-white rounded-lg hover:bg-base-700 disabled:opacity-50"
             >
-              {loading ? "Đang thêm..." : "Thêm nội trú"}
+              {loading ? "Đang thêm..." : "Thêm phòng"}
             </button>
             <button
               type="button"
-              onClick={() => navigate("/admin/inpatients")}
+              onClick={() => navigate("/admin/patient-rooms")}
               className="flex items-center gap-2 px-6 py-2 bg-gray-500/70 text-white rounded-lg hover:bg-gray-600/70"
             >
               Hủy
@@ -108,4 +127,6 @@ export default function AddPatientRoom() {
       </div>
     </div>
   );
-}
+};
+
+export default AddRoom;

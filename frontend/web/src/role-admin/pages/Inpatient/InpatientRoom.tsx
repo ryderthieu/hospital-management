@@ -56,7 +56,7 @@ const InpatientRooms: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-800">
             Danh sách phòng bệnh nội trú
           </h3>
-          <Link to="/admin/patients/patient-rooms/add">
+          <Link to="/admin/inpatients-rooms/add-room">
             <AddButton />
           </Link>
         </div>

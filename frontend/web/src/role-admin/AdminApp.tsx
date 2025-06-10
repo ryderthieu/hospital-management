@@ -35,6 +35,7 @@ import {
   InpatientRoom,
   AddPatientRoom,
   EditPatientRoom,
+  AddRoom,
 } from "./pages/Inpatient";
 import {
   OutpatientClinics,
@@ -92,6 +93,9 @@ const AdminApp: React.FC = () => {
             path="inpatients-rooms/room-details"
             element={<RoomDetail />}
           />
+          <Route path="inpatients-rooms/add-room" element={<AddRoom />} />
+
+          {/* Medical Examination Pages */}
 
           {/* Department Page */}
           <Route path="departments" element={<Department />} />
