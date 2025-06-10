@@ -1,4 +1,4 @@
-export type BillStatus = "PAID" | "UNPAID";
+export type BillStatus = 'PAID' | 'UNPAID' | 'CANCELLED';
 export type BillDetailItemType = "CONSULTATION" | "MEDICINE" | "SERVICE";
 export type PaymentMethod = "CASH" | "ONLINE BANKING" | "CARD";
 export type TransactionStatus = "SUCCESS" | "FAILED" | "PENDING";
@@ -11,6 +11,7 @@ export interface Bill {
   amount: number;
   status: BillStatus;
   createdAt: string;
+  billDetails?: BillDetail[];
 }
 
 export interface BillDto {
@@ -25,10 +26,12 @@ export interface BillDetail {
   detailId: number;
   billId: number;
   itemType: BillDetailItemType;
+  itemId: number;
+  itemName: string;
   quantity: number;
-  insuranceDiscount: number;
   unitPrice: number;
   totalPrice: number;
+  insuranceDiscount: number;
   createdAt: string;
 }
 
@@ -43,7 +46,7 @@ export interface BillDetailDto {
 export interface Transaction {
   transactionId: number;
   billId: number;
-  amout: number;
+  amount: number;
   paymentMethod: PaymentMethod;
   transactionDate: string;
   status: TransactionStatus;
