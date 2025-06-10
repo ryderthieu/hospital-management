@@ -9,9 +9,12 @@ import {
   StatusBar,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  Animated,
+  Easing,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { SearchStackParamList } from "../../../navigation/types";
 import { globalStyles, colors } from "../../../styles/globalStyles";
@@ -28,12 +31,82 @@ type Message = {
   isUser: boolean;
   timestamp: Date;
   suggestions?: string[];
+  predictions?: Array<{ disease: string; probability: string; isHighest: boolean }>;
+  foundSymptoms?: string[];
+  previousSymptoms?: string;
+};
+
+const API_URL = "http://192.168.1.47:5000"; // Thay đổi URL này theo địa chỉ server của bạn
+
+type APIResponse = {
+  top_3_predictions: Array<{
+    disease: string;
+    probability: string;
+  }>;
+  message: string;
+  found_symptoms: string[];
+};
+
+const formatPredictionsText = (predictions: Array<{disease: string; probability: string}>) => {
+  return predictions.map((p, index) => ({
+    disease: p.disease,
+    probability: p.probability,
+    isHighest: index === 0
+  }));
+};
+
+const callDiseaseAPI = async (text: string): Promise<APIResponse> => {
+  try {
+    const response = await fetch(`${API_URL}/disease-predict`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Có lỗi xảy ra khi gọi API');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+const highlightDiseaseInText = (text: string, predictions: Array<{disease: string; probability: string; isHighest: boolean}>) => {
+  if (!predictions || predictions.length === 0) return text;
+
+  // Tạo regex pattern từ tất cả tên bệnh, escape các ký tự đặc biệt
+  const diseaseNames = predictions.map(p => p.disease.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const pattern = new RegExp(`(${diseaseNames.join('|')})`, 'gi');
+
+  const parts = text.split(pattern);
+  return parts.map((part, index) => {
+    const prediction = predictions.find(p => p.disease.toLowerCase() === part.toLowerCase());
+    if (prediction) {
+      return (
+        <Text key={index} style={[
+          styles.highlightedText,
+          prediction.isHighest && styles.highestDiseaseText
+        ]}>
+          {part}
+        </Text>
+      );
+    }
+    return part;
+  });
 };
 
 export const DiseaseSearchScreen: React.FC<DiseaseSearchScreenProps> = ({
   navigation,
 }) => {
   const { fontsLoaded } = useFont();
+  const [lastSymptoms, setLastSymptoms] = useState<string>("");
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -51,6 +124,7 @@ export const DiseaseSearchScreen: React.FC<DiseaseSearchScreenProps> = ({
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const typingAnimation = useRef(new Animated.Value(0)).current;
 
   const scrollToBottom = () => {
     if (flatListRef.current && messages.length > 0) {
@@ -62,39 +136,123 @@ export const DiseaseSearchScreen: React.FC<DiseaseSearchScreenProps> = ({
     scrollToBottom();
   }, [messages]);
 
-  const simulateAIResponse = (userMessage: string): Message => {
-    // Simple AI response simulation
-    let responseText = "";
-    let suggestions: string[] = [];
-
-    if (userMessage.toLowerCase().includes("đau đầu")) {
-      responseText = "Bạn bị đau đầu. Có thể do căng thẳng, thiếu ngủ hoặc các nguyên nhân khác. Bạn có các triệu chứng kèm theo nào không?";
-      suggestions = ["Có buồn nôn", "Không có triệu chứng khác", "Có chóng mặt", "Đau từ mấy ngày"];
-    } else if (userMessage.toLowerCase().includes("sốt")) {
-      responseText = "Bạn bị sốt bao nhiều độ? Có các triệu chứng kèm theo như ho, đau họng không?";
-      suggestions = ["Sốt 38-39 độ", "Có ho khô", "Có đau họng", "Không đo được"];
-    } else if (userMessage.toLowerCase().includes("ho")) {
-      responseText = "Bạn ho đã bao lâu? Ho có đờm hay ho khô?";
-      suggestions = ["Ho khô", "Ho có đờm", "Ho từ 2-3 ngày", "Ho kéo dài"];
-    } else if (userMessage.toLowerCase().includes("đau bụng")) {
-      responseText = "Đau bụng ở vị trí nào? Đau liên tục hay từng cơn?";
-      suggestions = ["Đau bụng trên", "Đau bụng dưới", "Đau từng cơn", "Đau liên tục"];
+  useEffect(() => {
+    if (isTyping) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(typingAnimation, {
+            toValue: 1,
+            duration: 1000,
+            easing: Easing.linear,
+            useNativeDriver: true,
+          }),
+          Animated.timing(typingAnimation, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
     } else {
-      responseText = "Tôi hiểu rồi. Bạn có thể mô tả thêm chi tiết về triệu chứng này không? Ví dụ: thời gian xuất hiện, mức độ nghiêm trọng...";
-      suggestions = ["Triệu chứng nhẹ", "Triệu chứng nặng", "Mới xuất hiện", "Đã lâu rồi"];
+      typingAnimation.setValue(0);
     }
+  }, [isTyping]);
 
-    return {
-      id: Date.now().toString(),
-      text: responseText,
-      isUser: false,
-      timestamp: new Date(),
-      suggestions
-    };
+  const renderPredictionCard = (prediction: { disease: string; probability: string; isHighest: boolean }) => (
+    <View style={[
+      styles.predictionCard,
+      prediction.isHighest && styles.highestPredictionCard
+    ]}>
+      <MaterialCommunityIcons
+        name={prediction.isHighest ? "medical-bag" : "doctor"}
+        size={24}
+        color={prediction.isHighest ? colors.primary : colors.base600}
+      />
+      <View style={styles.predictionContent}>
+        <Text style={[
+          styles.predictionDisease,
+          prediction.isHighest && styles.highestPredictionDisease
+        ]}>
+          {prediction.disease}
+        </Text>
+        <Text style={styles.predictionProbability}>
+          Xác suất: {prediction.probability}
+        </Text>
+      </View>
+    </View>
+  );
+
+  const getAIResponse = async (userMessage: string): Promise<Message> => {
+    try {
+      const apiResponse = await callDiseaseAPI(userMessage);
+      const predictions = formatPredictionsText(apiResponse.top_3_predictions);
+      
+      const responseText = apiResponse.message;
+      
+      let suggestions: string[] = [];
+      if (apiResponse.found_symptoms && apiResponse.found_symptoms.length > 0) {
+        suggestions = [
+          "Có triệu chứng khác",
+          "Triệu chứng nặng hơn",
+          "Kéo dài bao lâu",
+          "Đặt lịch khám"
+        ];
+      }
+
+      return {
+        id: Date.now().toString(),
+        text: responseText,
+        predictions: predictions,
+        foundSymptoms: apiResponse.found_symptoms,
+        isUser: false,
+        timestamp: new Date(),
+        suggestions
+      };
+    } catch (error) {
+      return {
+        id: Date.now().toString(),
+        text: "Xin lỗi, có lỗi xảy ra khi xử lý yêu cầu của bạn. Vui lòng thử lại sau.",
+        isUser: false,
+        timestamp: new Date(),
+        suggestions: ["Thử lại", "Mô tả triệu chứng khác"]
+      };
+    }
+  };
+
+  const handleSuggestionAction = (suggestion: string) => {
+    switch (suggestion) {
+      case "Có triệu chứng khác":
+        const aiMessage: Message = {
+          id: Date.now().toString(),
+          text: "Vui lòng cho tôi biết thêm các triệu chứng khác của bạn.",
+          isUser: false,
+          timestamp: new Date(),
+          previousSymptoms: lastSymptoms,
+          suggestions: ["Có triệu chứng khác", "Đặt lịch khám"]
+        };
+        setMessages(prev => [...prev, aiMessage]);
+        setInputText("Ngoài ra tôi còn ");
+        break;
+
+      case "Đặt lịch khám":
+        navigation.getParent()?.navigate('BookAppointment');
+        break;
+
+      default:
+        setInputText(suggestion);
+        setTimeout(() => sendMessage(), 100);
+        break;
+    }
   };
 
   const sendMessage = () => {
     if (inputText.trim() === "") return;
+
+    let finalText = inputText.trim();
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage && !lastMessage.isUser && lastMessage.previousSymptoms) {
+      finalText = `${lastMessage.previousSymptoms}, ${finalText}`;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -107,17 +265,26 @@ export const DiseaseSearchScreen: React.FC<DiseaseSearchScreenProps> = ({
     setInputText("");
     setIsTyping(true);
 
-    // Simulate AI thinking time
-    setTimeout(() => {
-      const aiResponse = simulateAIResponse(inputText.trim());
-      setMessages(prev => [...prev, aiResponse]);
-      setIsTyping(false);
-    }, 1500);
+    setLastSymptoms(finalText);
+
+    getAIResponse(finalText)
+      .then(aiResponse => {
+        const suggestions = [
+          "Có triệu chứng khác",
+          "Đặt lịch khám"
+        ];
+        setMessages(prev => [...prev, { ...aiResponse, suggestions }]);
+      })
+      .catch(error => {
+        Alert.alert("Lỗi", "Không thể kết nối với server. Vui lòng thử lại sau.");
+      })
+      .finally(() => {
+        setIsTyping(false);
+      });
   };
 
   const sendSuggestion = (suggestion: string) => {
-    setInputText(suggestion);
-    setTimeout(() => sendMessage(), 100);
+    handleSuggestionAction(suggestion);
   };
 
   const renderMessage = ({ item }: { item: Message }) => (
@@ -133,8 +300,31 @@ export const DiseaseSearchScreen: React.FC<DiseaseSearchScreenProps> = ({
           styles.messageText,
           item.isUser ? styles.userText : styles.aiText
         ]}>
-          {item.text}
+          {item.isUser ? item.text : highlightDiseaseInText(item.text, item.predictions || [])}
         </Text>
+
+        {!item.isUser && item.predictions && (
+          <View style={styles.predictionsContainer}>
+            {item.predictions.map((prediction, index) => (
+              renderPredictionCard(prediction)
+            ))}
+          </View>
+        )}
+
+        {!item.isUser && item.foundSymptoms && (
+          <View style={styles.foundSymptomsContainer}>
+            <Text style={styles.foundSymptomsTitle}>Các triệu chứng đã tìm thấy:</Text>
+            <View style={styles.symptomsGrid}>
+              {item.foundSymptoms.map((symptom, index) => (
+                <View key={index} style={styles.symptomTag}>
+                  <MaterialCommunityIcons name="checkbox-marked-circle" size={16} color={colors.primary} />
+                  <Text style={styles.symptomText}>{symptom}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
         <Text style={[
           styles.timestamp,
           item.isUser ? styles.userTimestamp : styles.aiTimestamp
@@ -166,9 +356,26 @@ export const DiseaseSearchScreen: React.FC<DiseaseSearchScreenProps> = ({
     <View style={[styles.messageContainer, styles.aiMessage]}>
       <View style={[styles.messageBubble, styles.aiBubble]}>
         <View style={styles.typingIndicator}>
-          <View style={[styles.typingDot, { animationDelay: '0ms' }]} />
-          <View style={[styles.typingDot, { animationDelay: '150ms' }]} />
-          <View style={[styles.typingDot, { animationDelay: '300ms' }]} />
+          {[0, 1, 2].map((i) => (
+            <Animated.View
+              key={i}
+              style={[
+                styles.typingDot,
+                {
+                  opacity: typingAnimation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.3, 1],
+                  }),
+                  transform: [{
+                    translateY: typingAnimation.interpolate({
+                      inputRange: [0, 0.5, 1],
+                      outputRange: [0, -5, 0],
+                    }),
+                  }],
+                },
+              ]}
+            />
+          ))}
         </View>
       </View>
     </View>
@@ -209,7 +416,7 @@ export const DiseaseSearchScreen: React.FC<DiseaseSearchScreenProps> = ({
               value={inputText}
               onChangeText={setInputText}
               placeholder="Mô tả triệu chứng của bạn..."
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={colors.base400}
               multiline
               maxLength={500}
             />
@@ -224,7 +431,7 @@ export const DiseaseSearchScreen: React.FC<DiseaseSearchScreenProps> = ({
               <Ionicons 
                 name="send" 
                 size={20} 
-                color={inputText.trim() ? "#fff" : colors.textSecondary} 
+                color={inputText.trim() ? "#fff" : colors.base400} 
               />
             </TouchableOpacity>
           </View>
@@ -286,7 +493,7 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   aiText: {
-    color: colors.textPrimary,
+    color: colors.base800,
   },
   timestamp: {
     fontSize: 12,
@@ -298,7 +505,7 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   aiTimestamp: {
-    color: colors.textSecondary,
+    color: colors.base600,
   },
   suggestionsContainer: {
     flexDirection: "row",
@@ -322,16 +529,17 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.regular,
   },
   typingIndicator: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 8,
   },
   typingDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.textSecondary,
+    backgroundColor: colors.base400,
     marginHorizontal: 2,
-    // Note: Animation would need to be implemented with Animated API
   },
   inputContainer: {
     backgroundColor: "#fff",
@@ -353,7 +561,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     maxHeight: 100,
     fontFamily: fontFamily.regular,
-    color: colors.textPrimary,
+    color: colors.base800,
   },
   sendButton: {
     marginLeft: 8,
@@ -368,5 +576,85 @@ const styles = StyleSheet.create({
   },
   sendButtonInactive: {
     backgroundColor: "transparent",
+  },
+  predictionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.base50,
+    borderRadius: 12,
+    padding: 12,
+    marginVertical: 4,
+    borderWidth: 1,
+    borderColor: colors.base200,
+  },
+  highestPredictionCard: {
+    backgroundColor: colors.primaryLight,
+    borderColor: colors.primary,
+  },
+  predictionContent: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  predictionDisease: {
+    fontSize: 16,
+    fontFamily: fontFamily.medium,
+    color: colors.base800,
+    marginBottom: 4,
+  },
+  highestPredictionDisease: {
+    color: colors.primary,
+    fontFamily: fontFamily.bold,
+  },
+  predictionProbability: {
+    fontSize: 14,
+    fontFamily: fontFamily.regular,
+    color: colors.base600,
+  },
+  predictionsContainer: {
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  foundSymptomsContainer: {
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  foundSymptomsTitle: {
+    fontSize: 14,
+    fontFamily: fontFamily.medium,
+    color: colors.base700,
+    marginBottom: 8,
+  },
+  symptomsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -4,
+  },
+  symptomTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.base50,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    margin: 4,
+    borderWidth: 1,
+    borderColor: colors.base200,
+  },
+  symptomText: {
+    marginLeft: 4,
+    fontSize: 14,
+    fontFamily: fontFamily.regular,
+    color: colors.base700,
+  },
+  highlightedText: {
+    color: colors.primary,
+    fontFamily: fontFamily.medium,
+    fontSize: 16,
+  },
+  highestDiseaseText: {
+    color: colors.primary,
+    fontFamily: fontFamily.bold,
+    fontSize: 16,
+    textDecorationLine: 'underline',
   },
 });

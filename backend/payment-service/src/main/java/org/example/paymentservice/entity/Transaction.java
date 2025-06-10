@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Getter
 @Setter
@@ -17,6 +18,7 @@ public class Transaction {
     @Column(name = "transaction_id")
     private Long transactionId;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "bill_id", nullable = false)
     private Bill bill;

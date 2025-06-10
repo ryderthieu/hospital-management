@@ -504,23 +504,57 @@ export function InvoicesContent() {
   const [bills, setBills] = useState<Bill[]>([]);
   const { patientId } = useParams();
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
-  const [deleteBillModal, setDeleteBillModal] = useState<Bill | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const reloadBills = async () => {
     if (!patientId) return;
     try {
+      setLoading(true);
       const data = await paymentService.getBillsByPatientId(Number(patientId));
       setBills(data);
-    } catch (error) {
-      console.error("Failed to fetch bills:", error);
-      // Tạm thời set empty array để không làm gián đoạn UI
-      setBills([]);
+    } catch (error: any) {
+      setError(error.message || "Không thể tải danh sách hóa đơn");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     reloadBills();
   }, [patientId]);
+
+  const handlePayment = async (bill: Bill, method: 'online' | 'cash') => {
+    try {
+      if (method === 'online') {
+        const paymentUrl = await paymentService.createPayment(bill.billId);
+        window.open(paymentUrl, '_blank');
+        
+        const checkPaymentStatus = setInterval(async () => {
+          try {
+            const updatedBills = await paymentService.getBillsByPatientId(Number(patientId));
+            const currentBill = updatedBills.find(b => b.billId === bill.billId);
+            
+            if (currentBill?.status === "PAID") {
+              clearInterval(checkPaymentStatus);
+              setBills(updatedBills);
+            }
+          } catch (error) {
+            console.error('Lỗi kiểm tra trạng thái thanh toán:', error);
+          }
+        }, 2000);
+
+        setTimeout(() => {
+          clearInterval(checkPaymentStatus);
+        }, 5 * 60 * 1000);
+      } else {
+        await paymentService.processCashPayment(bill.billId);
+        reloadBills();
+      }
+    } catch (error: any) {
+      alert(error.message || 'Không thể thực hiện thanh toán');
+    }
+  };
 
   return (
     <div className="bg-white py-6 px-4 rounded-lg border border-gray-200">
@@ -566,107 +600,139 @@ export function InvoicesContent() {
 
             {/* Table Body */}
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {bills.map((bill) => (
-                <TableRow key={bill.billId}>
-                  <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
-                    HD{bill.billId.toString().padStart(4, "0")}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
-                    {format(new Date(bill.createdAt), "dd-MM-yyyy")}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
-                    <Badge
-                      size="sm"
-                      color={
-                        bill.status === "PAID"
-                          ? "success"
-                          : bill.status === "UNPAID"
-                          ? "error"
-                          : "cancel"
-                      }
-                    >
-                      {bill.status === "PAID"
-                        ? "Đã thanh toán"
-                        : bill.status === "UNPAID"
-                        ? "Chưa thanh toán"
-                        : "Đã hủy"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-green-600 font-semibold text-start text-theme-sm dark:text-green-400">
-                    {bill.totalCost.toLocaleString("vi-VN")} VNĐ
-                  </TableCell>
-                  <TableCell className="px-4 py-3 flex items-center text-gray-500 text-theme-md dark:text-gray-400">
-                    <div className="flex gap-2">
-                      <button
-                        className="flex size-10 justify-center items-center gap-1 px-3 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
-                        onClick={() => setSelectedBill(bill)}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                          <path
-                            fillRule="evenodd"
-                            d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                      <button
-                        className="flex size-10 justify-center items-center gap-1 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-                        onClick={() => setDeleteBillModal(bill)}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                    </div>
+              {loading ? (
+                <TableRow>
+                  <TableCell className="text-center py-4" colSpan={5}>
+                    Đang tải...
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : error ? (
+                <TableRow>
+                  <TableCell className="text-center text-red-500 py-4" colSpan={5}>
+                    {error}
+                  </TableCell>
+                </TableRow>
+              ) : bills.length === 0 ? (
+                <TableRow>
+                  <TableCell className="text-center text-gray-500 py-4" colSpan={5}>
+                    Không có hóa đơn nào
+                  </TableCell>
+                </TableRow>
+              ) : (
+                bills.map((bill) => (
+                  <TableRow key={bill.billId}>
+                    <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
+                      #{bill.billId.toString().padStart(4, '0')}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
+                      {format(new Date(bill.createdAt), "dd-MM-yyyy")}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
+                      <Badge
+                        size="sm"
+                        color={
+                          bill.status === "PAID"
+                            ? "success"
+                            : bill.status === "UNPAID"
+                            ? "error"
+                            : "cancel"
+                        }
+                      >
+                        {bill.status === "PAID"
+                          ? "Đã thanh toán"
+                          : bill.status === "UNPAID"
+                          ? "Chưa thanh toán"
+                          : "Đã hủy"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-700 text-start text-xs text-green-700 font-semibold">
+                      {bill.amount.toLocaleString("vi-VN")} VNĐ
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 text-theme-md dark:text-gray-400">
+                      <div className="flex gap-2">
+                        {bill.status === "UNPAID" ? (
+                          <>
+                            {/* Nút thanh toán online */}
+                            <button
+                              onClick={() => handlePayment(bill, 'online')}
+                              className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+                                <path
+                                  fillRule="evenodd"
+                                  d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                              Online
+                            </button>
+
+                            {/* Nút thanh toán tiền mặt */}
+                            <button
+                              onClick={() => handlePayment(bill, 'cash')}
+                              className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-md hover:bg-green-200 transition-colors"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                              Tiền mặt
+                            </button>
+                          </>
+                        ) : (
+                          /* Nút xem chi tiết cho hóa đơn đã thanh toán */
+                          <button
+                            onClick={() => setSelectedBill(bill)}
+                            className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-sky-200 transition-colors"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                              <path
+                                fillRule="evenodd"
+                                d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            Xem chi tiết
+                          </button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
       </div>
-      {/* BillModal hiển thị khi chọn */}
+
+      {/* Modal xem chi tiết */}
       {selectedBill && (
         <BillModal
           {...selectedBill}
           isOpen={true}
-          onClose={() => setSelectedBill(null)}
-        />
-      )}
-      {/* DeleteBillModal hiển thị khi chọn xóa */}
-      {deleteBillModal && (
-        <DeleteBillModal
-          isOpen={true}
-          onClose={() => setDeleteBillModal(null)}
-          billId={deleteBillModal.billId}
-          onDelete={async () => {
-            try {
-              await paymentService.deleteBill(deleteBillModal.billId);
-              setDeleteBillModal(null);
-              reloadBills();
-            } catch (error: any) {
-              alert(
-                "Xóa hóa đơn thất bại: " +
-                  (error?.response?.data?.message ||
-                    error.message ||
-                    "Lỗi không xác định")
-              );
-            }
+          onClose={() => {
+            setSelectedBill(null);
+            reloadBills();
           }}
         />
       )}

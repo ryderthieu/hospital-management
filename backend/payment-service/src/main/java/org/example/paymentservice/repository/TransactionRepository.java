@@ -13,4 +13,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByBillBillId(Long billId);
     List<Transaction> findByStatus(Transaction.TransactionStatus status);
     Optional<Transaction> findFirstByBillOrderByCreatedAtDesc(Bill bill);
+    List<Transaction> findAllByBillOrderByCreatedAtDesc(Bill bill);
 }

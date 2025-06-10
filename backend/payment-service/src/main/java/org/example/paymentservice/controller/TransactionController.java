@@ -17,6 +17,8 @@ import org.springframework.web.server.ResponseStatusException;
 import vn.payos.type.PaymentLinkData;
 import vn.payos.type.Webhook;
 import vn.payos.type.WebhookData;
+import org.example.paymentservice.dto.TransactionDTO;
+import java.util.stream.Collectors;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -138,8 +140,7 @@ public class TransactionController {
             Long billId = orderId;
             
             // Kiểm tra trạng thái thanh toán từ PayOS
-            PaymentLinkData paymentInfo = payOSService.getPaymentInfo(billId);
-            
+
             // Cập nhật trạng thái bill và transaction
             Bill bill = billRepository.findById(billId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hóa đơn"));
@@ -203,6 +204,31 @@ public class TransactionController {
             response.put("message", e.getMessage());
             response.put("status", "error");
             response.put("orderId", orderId);
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/bill/{billId}")
+    public ResponseEntity<ObjectNode> getTransactionsByBillId(@PathVariable Long billId) {
+        ObjectNode response = objectMapper.createObjectNode();
+        try {
+            Bill bill = billRepository.findById(billId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hóa đơn"));
+            
+            var transactions = transactionRepository.findByBillBillId(billId)
+                    .stream()
+                    .map(TransactionDTO::fromEntity)
+                    .collect(Collectors.toList());
+            
+            response.put("error", 0);
+            response.put("message", "success");
+            response.set("data", objectMapper.valueToTree(transactions));
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("error", -1);
+            response.put("message", e.getMessage());
+            response.putNull("data");
             return ResponseEntity.badRequest().body(response);
         }
     }
