@@ -222,7 +222,7 @@ def get_random_symptoms(n=5):
     all_symptoms = list(symptom_mapping.values())
     return random.sample(all_symptoms, min(n, len(all_symptoms)))
 
-@app.route('/predict-nlp-vn', methods=['POST'])
+@app.route('/disease-predict', methods=['POST'])
 def predict_disease_vn():
     try:
         data = request.json
