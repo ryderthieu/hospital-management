@@ -61,10 +61,10 @@ export interface CreateDoctorRequest {
 // Academic degree labels for display
 export const ACADEMIC_DEGREE_LABELS: Record<string, string> = {
   BS: "BS",
-  BS_CKI: "BS CKI",
-  BS_CKII: "BS CKII",
-  THS_BS: "ThS.BS",
-  TS_BS: "TS.BS",
-  PGS_TS_BS: "PGS.TS.BS",
-  GS_TS_BS: "GS.TS.BS",
+  "BS CKI": "BS CKI",
+  "BS CKII": "BS CKII",
+  "ThS.BS": "ThS.BS",
+  "TS.BS": "TS.BS",
+  "PGS.TS.BS": "PGS.TS.BS",
+  "GS.TS.BS": "GS.TS.BS"
 };

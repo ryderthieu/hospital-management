@@ -52,7 +52,8 @@ export const ACADEMIC_DEGREE_LABELS: Record<string, string> = {
   THS_BS: "ThS.BS",
   TS_BS: "TS.BS",
   PGS_TS_BS: "PGS.TS.BS",
-  GS_TS_BS: "GS.TS.BS",
+  GS_TS_BS: "GS.TS.BS"
+  
 };
 
 export type RoomType = "examination" | "test";

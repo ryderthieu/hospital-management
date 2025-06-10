@@ -2,8 +2,17 @@ import PageMeta from "../../components/common/PageMeta.tsx";
 import UserRoleTable from "./UserRoleTable.tsx";
 import RolePermissionTable from "./RolePermissionTable.tsx";
 import { useState, useEffect } from "react";
-import { Users, Shield, UserPlus, TrendingUp, TrendingDown } from "lucide-react";
-import { statisticsService, UserStatistics } from "../../services/authorizationService";
+import {
+  Users,
+  Shield,
+  UserPlus,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
+import {
+  statisticsService,
+  UserStatistics,
+} from "../../services/authorizationService";
 
 export default function Authorization() {
   const [activeTab, setActiveTab] = useState<"users" | "roles">("users");
@@ -17,7 +26,7 @@ export default function Authorization() {
         const stats = await statisticsService.getUserStatistics();
         setStatistics(stats);
       } catch (error) {
-        console.error('Error loading statistics:', error);
+        console.error("Error loading statistics:", error);
       } finally {
         setStatsLoading(false);
       }
@@ -44,7 +53,8 @@ export default function Authorization() {
               </p>
             </div>
           </div>
-        </div>        {/* Statistics Cards */}
+        </div>
+        {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
@@ -62,13 +72,30 @@ export default function Authorization() {
                       {statistics?.totalUsers || 0}
                     </h3>
                     <div className="flex items-center gap-1 mt-1">
-                      {statistics?.userGrowthPercent && statistics.userGrowthPercent > 0 ? (
+                      {statistics?.userGrowthPercent &&
+                      statistics.userGrowthPercent > 0 ? (
                         <TrendingUp size={14} className="text-green-600" />
-                      ) : statistics?.userGrowthPercent && statistics.userGrowthPercent < 0 ? (
+                      ) : statistics?.userGrowthPercent &&
+                        statistics.userGrowthPercent < 0 ? (
                         <TrendingDown size={14} className="text-red-600" />
                       ) : null}
-                      <p className={`text-sm ${statistics?.userGrowthPercent && statistics.userGrowthPercent > 0 ? 'text-green-600' : statistics?.userGrowthPercent && statistics.userGrowthPercent < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                        {statistics?.userGrowthPercent ? `${statistics.userGrowthPercent > 0 ? '+' : ''}${statistics.userGrowthPercent}%` : '0%'} so với tháng trước
+                      <p
+                        className={`text-sm ${
+                          statistics?.userGrowthPercent &&
+                          statistics.userGrowthPercent > 0
+                            ? "text-green-600"
+                            : statistics?.userGrowthPercent &&
+                              statistics.userGrowthPercent < 0
+                            ? "text-red-600"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {statistics?.userGrowthPercent
+                          ? `${statistics.userGrowthPercent > 0 ? "+" : ""}${
+                              statistics.userGrowthPercent
+                            }%`
+                          : "0%"}{" "}
+                        so với tháng trước
                       </p>
                     </div>
                   </>
@@ -96,13 +123,30 @@ export default function Authorization() {
                       {statistics?.todayLogins || 0}
                     </h3>
                     <div className="flex items-center gap-1 mt-1">
-                      {statistics?.loginGrowthPercent && statistics.loginGrowthPercent > 0 ? (
+                      {statistics?.loginGrowthPercent &&
+                      statistics.loginGrowthPercent > 0 ? (
                         <TrendingUp size={14} className="text-green-600" />
-                      ) : statistics?.loginGrowthPercent && statistics.loginGrowthPercent < 0 ? (
+                      ) : statistics?.loginGrowthPercent &&
+                        statistics.loginGrowthPercent < 0 ? (
                         <TrendingDown size={14} className="text-red-600" />
                       ) : null}
-                      <p className={`text-sm ${statistics?.loginGrowthPercent && statistics.loginGrowthPercent > 0 ? 'text-green-600' : statistics?.loginGrowthPercent && statistics.loginGrowthPercent < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                        {statistics?.loginGrowthPercent ? `${statistics.loginGrowthPercent > 0 ? '+' : ''}${statistics.loginGrowthPercent}%` : '0%'} so với hôm qua
+                      <p
+                        className={`text-sm ${
+                          statistics?.loginGrowthPercent &&
+                          statistics.loginGrowthPercent > 0
+                            ? "text-green-600"
+                            : statistics?.loginGrowthPercent &&
+                              statistics.loginGrowthPercent < 0
+                            ? "text-red-600"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {statistics?.loginGrowthPercent
+                          ? `${statistics.loginGrowthPercent > 0 ? "+" : ""}${
+                              statistics.loginGrowthPercent
+                            }%`
+                          : "0%"}{" "}
+                        so với hôm qua
                       </p>
                     </div>
                   </>

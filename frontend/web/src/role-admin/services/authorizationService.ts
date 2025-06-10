@@ -94,12 +94,24 @@ export interface Role {
 export interface Permission {
   id: string;
   name: string;
-  description: string;
   category: string;
-  status: "Hoạt động" | "Tạm khóa";
-  createdAt: string;
-  usedInRoles: number;
 }
+
+// Permission list data
+export const permissionsData: Permission[] = [
+  { id: "dashboard_view", name: "Xem dashboard", category: "Dashboard" },
+  { id: "patient_view", name: "Xem bệnh nhân", category: "Bệnh nhân" },
+  { id: "patient_create", name: "Tạo bệnh nhân", category: "Bệnh nhân" },
+  { id: "patient_edit", name: "Sửa bệnh nhân", category: "Bệnh nhân" },
+  { id: "doctor_view", name: "Xem bác sĩ", category: "Bác sĩ" },
+  { id: "doctor_create", name: "Tạo bác sĩ", category: "Bác sĩ" },
+  { id: "appointment_view", name: "Xem lịch hẹn", category: "Lịch hẹn" },
+  { id: "appointment_create", name: "Tạo lịch hẹn", category: "Lịch hẹn" },
+  { id: "medicine_view", name: "Xem thuốc", category: "Kho thuốc" },
+  { id: "medicine_manage", name: "Quản lý thuốc", category: "Kho thuốc" },
+  { id: "user_manage", name: "Quản lý người dùng", category: "Hệ thống" },
+  { id: "role_manage", name: "Quản lý vai trò", category: "Hệ thống" },
+];
 
 // Statistics interfaces
 export interface UserStatistics {
@@ -216,229 +228,139 @@ const mockUsers: User[] = [
   },
 ];
 
-const mockRoles: Role[] = [
-  {
-    id: "R001",
-    name: "Super Admin",
-    description: "Quyền cao nhất trong hệ thống, có thể thực hiện mọi thao tác",
-    permissions: [
-      "dashboard_view",
-      "patient_view",
-      "patient_create",
-      "patient_edit",
-      "patient_delete",
-      "doctor_view",
-      "doctor_create",
-      "doctor_edit",
-      "appointment_view",
-      "appointment_create",
-      "medicine_view",
-      "medicine_manage",
-      "finance_view",
-      "finance_manage",
-      "user_manage",
-      "role_manage",
-    ],
-    userCount: 1,
-    color: "error",
-    createdAt: "15/01/2025",
-    updatedAt: "30/04/2025",
-  },
-  {
-    id: "R002",
-    name: "Quản lý",
-    description: "Quản lý các hoạt động chính của bệnh viện",
-    permissions: [
-      "dashboard_view",
-      "patient_view",
-      "patient_create",
-      "patient_edit",
-      "doctor_view",
-      "appointment_view",
-      "appointment_create",
-      "finance_view",
-    ],
-    userCount: 3,
-    color: "warning",
-    createdAt: "15/01/2025",
-    updatedAt: "28/04/2025",
-  },
-  {
-    id: "R003",
-    name: "Bác sĩ",
-    description: "Quyền truy cập dành cho bác sĩ trong hệ thống",
-    permissions: [
-      "dashboard_view",
-      "patient_view",
-      "patient_edit",
-      "appointment_view",
-      "appointment_create",
-      "medicine_view",
-    ],
-    userCount: 15,
-    color: "success",
-    createdAt: "15/01/2025",
-    updatedAt: "29/04/2025",
-  },
-  {
-    id: "R004",
-    name: "Y tá",
-    description: "Quyền truy cập dành cho y tá",
-    permissions: [
-      "dashboard_view",
-      "patient_view",
-      "patient_edit",
-      "appointment_view",
-      "medicine_view",
-    ],
-    userCount: 25,
-    color: "info",
-    createdAt: "15/01/2025",
-    updatedAt: "27/04/2025",
-  },
-  {
-    id: "R005",
-    name: "Lễ tân",
-    description: "Quyền truy cập dành cho lễ tân tiếp nhận",
-    permissions: [
-      "dashboard_view",
-      "patient_view",
-      "patient_create",
-      "appointment_view",
-      "appointment_create",
-    ],
-    userCount: 8,
-    color: "warning",
-    createdAt: "15/01/2025",
-    updatedAt: "26/04/2025",
-  },
-  {
-    id: "R006",
-    name: "Dược sĩ",
-    description: "Quyền truy cập dành cho dược sĩ",
-    permissions: [
-      "dashboard_view",
-      "patient_view",
-      "medicine_view",
-      "medicine_manage",
-    ],
-    userCount: 6,
-    color: "light",
-    createdAt: "15/01/2025",
-    updatedAt: "25/04/2025",
-  },
-];
+// Hàm tạo mockRoles với userCount lấy từ dữ liệu thật (mockUsers)
+const getMockRolesWithUserCount = (): Role[] => {
+  const nameToRole: Record<string, string> = {
+    "Quản trị viên": "ADMIN",
+    "Bác sĩ": "DOCTOR",
+    "Lễ tân": "RECEPTIONIST",
+    "Bệnh nhân": "PATIENT",
+  };
+  const baseRoles: Omit<Role, "userCount">[] = [
+    {
+      id: "R001",
+      name: "Quản trị viên",
+      description: "Quyền cao nhất trong hệ thống, có thể thực hiện mọi thao tác",
+      permissions: [
+        "dashboard_view",
+        "patient_view",
+        "patient_create",
+        "patient_edit",
+        "patient_delete",
+        "doctor_view",
+        "doctor_create",
+        "doctor_edit",
+        "appointment_view",
+        "appointment_create",
+        "medicine_view",
+        "medicine_manage",
+        "finance_view",
+        "finance_manage",
+        "user_manage",
+        "role_manage",
+      ],
+      color: "error",
+      createdAt: "15/01/2025",
+      updatedAt: "30/04/2025",
+    },
+    {
+      id: "R002",
+      name: "Bác sĩ",
+      description: "Quyền truy cập dành cho bác sĩ trong hệ thống",
+      permissions: [
+        "dashboard_view",
+        "patient_view",
+        "patient_edit",
+        "appointment_view",
+        "appointment_create",
+        "medicine_view",
+      ],
+      color: "success",
+      createdAt: "15/01/2025",
+      updatedAt: "29/04/2025",
+    },
+    {
+      id: "R003",
+      name: "Lễ tân",
+      description: "Quyền truy cập dành cho lễ tân tiếp nhận",
+      permissions: [
+        "dashboard_view",
+        "patient_view",
+        "patient_create",
+        "appointment_view",
+        "appointment_create",
+      ],
+      color: "warning",
+      createdAt: "15/01/2025",
+      updatedAt: "26/04/2025",
+    },
+    {
+      id: "R004",
+      name: "Bệnh nhân",
+      description: "Quyền truy cập dành cho bệnh nhân",
+      permissions: [
+        "dashboard_view",
+        "patient_view",
+        "medicine_view",
+        "medicine_manage",
+      ],
+      color: "light",
+      createdAt: "15/01/2025",
+      updatedAt: "25/04/2025",
+    },
+  ];
+  return baseRoles.map((role) => {
+    const backendRole = nameToRole[role.name];
+    const userCount = mockUsers.filter((u) => u.role === backendRole).length;
+    return { ...role, userCount };
+  });
+};
 
-const mockPermissions: Permission[] = [
-  {
-    id: "P001",
-    name: "dashboard_view",
-    description: "Xem dashboard tổng quan",
-    category: "Dashboard",
-    status: "Hoạt động",
-    createdAt: "15/01/2025",
-    usedInRoles: 8,
-  },
-  {
-    id: "P002",
-    name: "patient_view",
-    description: "Xem thông tin bệnh nhân",
-    category: "Bệnh nhân",
-    status: "Hoạt động",
-    createdAt: "15/01/2025",
-    usedInRoles: 6,
-  },
-  {
-    id: "P003",
-    name: "patient_create",
-    description: "Tạo hồ sơ bệnh nhân mới",
-    category: "Bệnh nhân",
-    status: "Hoạt động",
-    createdAt: "15/01/2025",
-    usedInRoles: 4,
-  },
-  {
-    id: "P004",
-    name: "patient_edit",
-    description: "Chỉnh sửa thông tin bệnh nhân",
-    category: "Bệnh nhân",
-    status: "Hoạt động",
-    createdAt: "15/01/2025",
-    usedInRoles: 5,
-  },
-  {
-    id: "P005",
-    name: "patient_delete",
-    description: "Xóa hồ sơ bệnh nhân",
-    category: "Bệnh nhân",
-    status: "Tạm khóa",
-    createdAt: "15/01/2025",
-    usedInRoles: 2,
-  },
-  {
-    id: "P006",
-    name: "doctor_view",
-    description: "Xem thông tin bác sĩ",
-    category: "Bác sĩ",
-    status: "Hoạt động",
-    createdAt: "15/01/2025",
-    usedInRoles: 7,
-  },
-  {
-    id: "P007",
-    name: "doctor_create",
-    description: "Thêm bác sĩ mới",
-    category: "Bác sĩ",
-    status: "Hoạt động",
-    createdAt: "15/01/2025",
-    usedInRoles: 2,
-  },
-  {
-    id: "P008",
-    name: "appointment_view",
-    description: "Xem lịch hẹn khám",
-    category: "Lịch hẹn",
-    status: "Hoạt động",
-    createdAt: "15/01/2025",
-    usedInRoles: 6,
-  },
-  {
-    id: "P009",
-    name: "medicine_view",
-    description: "Xem thông tin thuốc",
-    category: "Kho thuốc",
-    status: "Hoạt động",
-    createdAt: "15/01/2025",
-    usedInRoles: 5,
-  },
-  {
-    id: "P010",
-    name: "finance_view",
-    description: "Xem báo cáo tài chính",
-    category: "Tài chính",
-    status: "Hoạt động",
-    createdAt: "15/01/2025",
-    usedInRoles: 3,
-  },
-  {
-    id: "P011",
-    name: "user_manage",
-    description: "Quản lý người dùng hệ thống",
-    category: "Hệ thống",
-    status: "Hoạt động",
-    createdAt: "15/01/2025",
-    usedInRoles: 2,
-  },
-  {
-    id: "P012",
-    name: "role_manage",
-    description: "Quản lý vai trò và quyền",
-    category: "Hệ thống",
-    status: "Hoạt động",
-    createdAt: "15/01/2025",
-    usedInRoles: 1,
-  },
-];
+let mockRoles: Role[] = getMockRolesWithUserCount();
+
+// Helper function to filter users
+const filterUsers = (users: User[], filters: {
+  search?: string;
+  role?: string;
+  department?: string;
+  status?: string;
+}): User[] => {
+  return users.filter(user => {
+    // Filter by search term
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      const searchableFields = [
+        user.user.name,
+        user.email,
+        user.phone,
+        user.department
+      ].filter(Boolean);
+      
+      if (!searchableFields.some(field => 
+        field?.toLowerCase().includes(searchLower)
+      )) {
+        return false;
+      }
+    }
+
+    // Filter by role
+    if (filters.role && user.role !== filters.role) {
+      return false;
+    }
+
+    // Filter by department
+    if (filters.department && user.department !== filters.department) {
+      return false;
+    }
+
+    // Filter by status
+    if (filters.status && user.status !== filters.status) {  
+      return false;
+    }
+
+    return true;
+  });
+};
 
 // User Service - connects to real backend
 export const userService = {
@@ -460,23 +382,17 @@ export const userService = {
     // Set development auth if needed
     setDevelopmentAuth();
 
-    try {
-      // Try to get real data from user-service first
+    try {      // Get all users from backend with a large page size
       const queryParams = new URLSearchParams();
-      if (params?.page)
-        queryParams.append("page", (params.page - 1).toString()); // Backend uses 0-based indexing
-      if (params?.limit) queryParams.append("size", params.limit.toString());
-      if (params?.search) queryParams.append("search", params.search);
+      queryParams.append("page", "0"); // Get first page
+      queryParams.append("size", "1000"); // Get a large number of records
       const apiUrl = `/users?${queryParams.toString()}`;
       console.log("🌐 [DEBUG] Calling users API:", apiUrl);
-      console.log(
-        "🌐 [DEBUG] Full URL will be:",
-        `http://localhost:8080/api${apiUrl}`
-      );
 
       const response = await api.get(apiUrl);
-      console.log("✅ [DEBUG] API Response received:", response);
-      console.log("✅ [DEBUG] Response data:", response.data);      // Transform backend data to match our User interface
+      console.log("✅ [DEBUG] API Response received:", response.data);
+
+      // Transform and filter users
       const transformedUsers = await Promise.all(
         (response.data.content || []).map(async (backendUser: BackendUser) => {
           // Map backend role to frontend role format
@@ -484,11 +400,13 @@ export const userService = {
           
           // Create display name from email if no other name fields
           let displayName = backendUser.email?.split("@")[0] || `User${backendUser.userId}`;
-          let userEmail = backendUser.email || `user${backendUser.userId}@wecare.vn`;
-          let userAvatar = "https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg";          let department = role === "ADMIN" ? "Quản trị hệ thống" :
+          let userEmail = backendUser.email || "";
+          let userAvatar = "https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg";
+          let department = role === "ADMIN" ? "Quản trị hệ thống" :
                           role === "DOCTOR" ? "Chưa phân khoa" :
-                          role === "RECEPTIONIST" ? "Tiếp nhận" :
-                          role === "PATIENT" ? "Bệnh nhân" : "Chưa phân công";// Fetch additional data from doctor/patient services if applicable
+                          role === "RECEPTIONIST" ? "Tiếp nhận" : 
+                          role === "PATIENT" ? "Bệnh nhân" : "Chưa phân công";
+
           try {
             if (role === "DOCTOR") {
               console.log(`🩺 [DEBUG] Fetching doctor data for userId: ${backendUser.userId}`);
@@ -498,7 +416,6 @@ export const userService = {
                 displayName = doctorData.fullName || displayName;
                 userEmail = doctorData.email || userEmail;
                 userAvatar = doctorData.avatar || userAvatar;
-                // Use the doctor's specialization as department
                 department = doctorData.specialization || "Chưa phân khoa";
                 console.log(`✅ [DEBUG] Doctor data fetched:`, doctorData);
               }
@@ -515,12 +432,12 @@ export const userService = {
               }
             }
           } catch (serviceError) {
-            console.warn(`⚠️ [DEBUG] Failed to fetch ${role.toLowerCase()} data for userId ${backendUser.userId}:`, serviceError);
+            console.warn(`⚠️ [DEBUG] Failed to fetch service data:`, serviceError);
             // Continue with default values if service call fails
           }
 
           return {
-            id: backendUser.userId?.toString() || `U${Math.random().toString(36).substr(2, 6)}`,
+            id: backendUser.userId?.toString() || "",
             userId: backendUser.userId,
             email: backendUser.email,
             phone: backendUser.phone || "N/A",
@@ -532,28 +449,39 @@ export const userService = {
               email: userEmail,
             },
             department: department,
-            status: "Hoạt động",
-            lastLogin: "Chưa có dữ liệu", // Backend doesn't have this field yet
-          } as User;
+            status: "Hoạt động", // Default status
+            lastLogin: "Chưa có dữ liệu",
+          };
         })
       );
 
-      console.log("Transformed users from API:", transformedUsers);
+      console.log("✅ [DEBUG] Users transformed:", transformedUsers);
+
+      // Apply client-side filtering
+      const filteredUsers = filterUsers(await Promise.all(transformedUsers), {
+        search: params?.search,
+        role: params?.role,
+        department: params?.department,
+        status: params?.status
+      });      // Calculate pagination for filtered results
+      const pageSize = params?.limit || 10; // Use requested page size or default to 10
+      const currentPage = params?.page || 1;
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      
+      // Get total before pagination
+      const totalFilteredUsers = filteredUsers.length;
+      
+      // Apply pagination to filtered results
+      const paginatedUsers = filteredUsers.slice(startIndex, Math.min(endIndex, totalFilteredUsers));
 
       return {
-        users: transformedUsers,
-        total:
-          response.data.totalElements ||
-          response.data.total ||
-          transformedUsers.length,
-        page: (response.data.number || 0) + 1, // Convert back to 1-based indexing
-        totalPages:
-          response.data.totalPages ||
-          Math.ceil(
-            (response.data.totalElements || transformedUsers.length) /
-              (params?.limit || 10)
-          ),
-      };    } catch (error) {
+        users: paginatedUsers,
+        total: totalFilteredUsers,
+        page: currentPage,
+        totalPages: Math.ceil(totalFilteredUsers / pageSize),
+      };
+    } catch (error) {
       console.error("Failed to load users from backend API:", error);
       throw new Error("Cannot load users from backend: " + error);
     }
@@ -595,7 +523,7 @@ export const userService = {
           }
         }
       } catch (serviceError) {
-        console.warn(`⚠️ [DEBUG] Failed to fetch ${role.toLowerCase()} data for getUserById userId ${backendUser.userId}:`, serviceError);
+        console.warn(`⚠️ [DEBUG] Failed to fetch service data for getUserById:`, serviceError);
         // Continue with default values if service call fails
       }
 
@@ -726,7 +654,7 @@ export const userService = {
           }
         }
       } catch (serviceError) {
-        console.warn(`⚠️ [DEBUG] Failed to fetch ${role.toLowerCase()} data for updated user:`, serviceError);
+        console.warn(`⚠️ [DEBUG] Failed to fetch service data for updated user:`, serviceError);
       }
 
       return {

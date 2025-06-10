@@ -727,10 +727,9 @@ const AddDoctor: React.FC = () => {
                       onChange={handleInputChange}
                       className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 appearance-none transition-colors outline-0"
                       required
-                    >
-                      {Object.entries(ACADEMIC_DEGREE_LABELS).map(
+                    >                      {Object.entries(ACADEMIC_DEGREE_LABELS).map(
                         ([key, label]) => (
-                          <option key={key} value={key}>
+                          <option key={key} value={label}>
                             {label}
                           </option>
                         )

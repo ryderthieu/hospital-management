@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -8,15 +9,12 @@ import {
 
 import Badge from "../../components/ui/badge/Badge";
 import Pagination from "../../components/common/Pagination";
-import { useState, useEffect, useCallback } from "react";
 import SearchInput from "../../components/common/SearchInput";
 import {
-  Shield,
   Settings,
   Trash,
   Edit,
   UserPlus,
-  Download,
   RefreshCw,
 } from "lucide-react";
 import {
@@ -36,7 +34,6 @@ export default function UserRoleTable() {
   const [statusFilter, setStatusFilter] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   // API state
@@ -47,6 +44,7 @@ export default function UserRoleTable() {
   const [totalPages, setTotalPages] = useState(0);
 
   // Form states
+  const [formLoading, setFormLoading] = useState(false);
   const [createFormData, setCreateFormData] = useState<CreateUserData>({
     phone: "",
     email: "",
@@ -60,22 +58,26 @@ export default function UserRoleTable() {
     role: "RECEPTIONIST",
   });
 
-  const [formLoading, setFormLoading] = useState(false);
-  // Note: Statistics are handled in Authorization.tsx parent component
   // Load users data
   const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await userService.getUsers({
+      // Chỉ gửi đúng tên trường filter mà backend cần (role, department)
+      const params: Record<string, any> = {
         page: currentPage,
         limit: PAGE_SIZE,
-        search: searchTerm || undefined,
-        role: roleFilter || undefined,
-        department: departmentFilter || undefined,
-        status: statusFilter || undefined,
-      });
+      };
+      if (searchTerm) params.search = searchTerm;
+      if (roleFilter) params.role = roleFilter;
+      if (departmentFilter) params.department = departmentFilter;
+      if (statusFilter) params.status = statusFilter;
+
+      // Ghi log để kiểm tra filter truyền đi FE
+      console.log("Filter params:", params);
+
+      const response = await userService.getUsers(params);
 
       setUsers(response.users);
       setTotalItems(response.total);
@@ -85,7 +87,8 @@ export default function UserRoleTable() {
       console.error("Error loading users:", err);
     } finally {
       setLoading(false);
-    }  }, [currentPage, searchTerm, roleFilter, departmentFilter, statusFilter]);
+    }
+  }, [currentPage, searchTerm, roleFilter, departmentFilter, statusFilter]);
   // Load statistics data
   // Note: Statistics are handled in Authorization.tsx parent component
 
@@ -120,7 +123,7 @@ export default function UserRoleTable() {
 
     try {
       setFormLoading(true);
-      
+
       // Validate required fields
       if (!createFormData.phone.trim()) {
         alert("Số điện thoại là bắt buộc!");
@@ -133,12 +136,12 @@ export default function UserRoleTable() {
 
       console.log("Creating user with data:", createFormData);
       await userService.createUser(createFormData);
-      
+
       // Success
       alert("Tạo người dùng thành công!");
       setShowCreateModal(false);
       await loadUsers(); // Reload data
-      
+
       // Reset form
       setCreateFormData({
         phone: "",
@@ -148,7 +151,10 @@ export default function UserRoleTable() {
       });
     } catch (error: unknown) {
       console.error("Error creating user:", error);
-      const errorMessage = error instanceof Error ? error.message : "Có lỗi xảy ra khi tạo người dùng";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Có lỗi xảy ra khi tạo người dùng";
       alert("Lỗi: " + errorMessage);
     } finally {
       setFormLoading(false);
@@ -161,28 +167,25 @@ export default function UserRoleTable() {
 
     try {
       setFormLoading(true);
-      
+
       console.log("Updating user with data:", updateFormData);
       await userService.updateUser(selectedUser.id, updateFormData);
-      
+
       // Success
       alert("Cập nhật người dùng thành công!");
       setShowEditModal(false);
       await loadUsers(); // Reload data
     } catch (error: unknown) {
       console.error("Error updating user:", error);
-      const errorMessage = error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật người dùng";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Có lỗi xảy ra khi cập nhật người dùng";
       alert("Lỗi: " + errorMessage);
     } finally {
       setFormLoading(false);
     }
   };
-
-  const handleViewPermissions = (user: User) => {
-    setSelectedUser(user);
-    setShowPermissionModal(true);
-  };
-
   const handleDeleteUser = async (user: User) => {
     if (confirm(`Bạn có chắc chắn muốn xóa người dùng ${user.user.name}?`)) {
       try {
@@ -196,15 +199,7 @@ export default function UserRoleTable() {
     }
   };
 
-  const handleExportUsers = async () => {
-    try {
-      // TODO: Implement export functionality
-      const allUsers = await userService.getUsers({ limit: 1000 });
-      console.log("Export users data:", allUsers.users);
-      alert("Tính năng xuất dữ liệu sẽ được triển khai sau!");    } catch (err) {
-      console.error("Error exporting users:", err);
-    }
-  };  const handleRefresh = () => {
+  const handleRefresh = () => {
     setCurrentPage(1);
     loadUsers();
     // Note: Statistics refresh is handled in Authorization.tsx parent component
@@ -221,7 +216,8 @@ export default function UserRoleTable() {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
-        hour12: false,      });
+        hour12: false,
+      });
     } catch {
       return dateString; // Fallback to original string if parsing fails
     }
@@ -284,6 +280,27 @@ export default function UserRoleTable() {
     }
   };
 
+  // Handlers to reset page and update filters
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+  const handleRoleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setRoleFilter(e.target.value);
+    setCurrentPage(1);
+  };
+  const handleDepartmentFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setDepartmentFilter(e.target.value);
+    setCurrentPage(1);
+  };
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setRoleFilter("");
+    setDepartmentFilter("");
+    setStatusFilter("");
+    setCurrentPage(1);
+  };
+
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
       {/* Header */}
@@ -294,8 +311,7 @@ export default function UserRoleTable() {
             Danh sách người dùng
           </h2>
           <span className="ml-5 text-sm bg-base-600/20 text-base-600 py-1 px-4 rounded-full font-bold">
-            {totalItems} {" "}
-            người dùng
+            {totalItems} người dùng
           </span>
         </div>
         {/* Action buttons */}
@@ -315,24 +331,17 @@ export default function UserRoleTable() {
             <UserPlus size={16} />
             Thêm người dùng
           </button>
-          <button
-            onClick={handleExportUsers}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-          >
-            <Download size={16} />
-            Xuất dữ liệu
-          </button>
         </div>
       </div>
 
       {/* Search and Filter */}
       <div className="mb-6">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-2">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
           {/* Search Bar */}
           <SearchInput
             placeholder="Tìm kiếm người dùng..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearchChange}
           />
 
           {/* Dropdown for Role Filter */}
@@ -340,17 +349,14 @@ export default function UserRoleTable() {
             <select
               title="Lọc theo vai trò"
               value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
+              onChange={handleRoleFilterChange}
               className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 pr-10 text-sm font-medium text-gray-800 shadow-theme-xs appearance-none focus:border-base-300 focus:outline-none focus:ring-3 focus:ring-base-500/10 dark:border-gray-800 dark:bg-gray-900 dark:text-white/90"
             >
-              {" "}
               <option value="">Tất cả vai trò</option>
               <option value="ADMIN">Admin</option>
               <option value="DOCTOR">Bác sĩ</option>
-              <option value="NURSE">Y tá</option>
               <option value="PHARMACIST">Dược sĩ</option>
               <option value="RECEPTIONIST">Lễ tân</option>
-              <option value="ACCOUNTANT">Kế toán</option>
               <option value="PATIENT">Bệnh nhân</option>
             </select>
           </div>
@@ -360,9 +366,10 @@ export default function UserRoleTable() {
             <select
               title="Lọc theo khoa"
               value={departmentFilter}
-              onChange={(e) => setDepartmentFilter(e.target.value)}
+              onChange={handleDepartmentFilterChange}
               className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 pr-10 text-sm font-medium text-gray-800 shadow-theme-xs appearance-none focus:border-base-300 focus:outline-none focus:ring-3 focus:ring-base-500/10 dark:border-gray-800 dark:bg-gray-900 dark:text-white/90"
-            >              <option value="">Tất cả khoa</option>
+            >
+              <option value="">Tất cả khoa</option>
               <option value="Quản trị hệ thống">Quản trị hệ thống</option>
               <option value="Tim mạch">Tim mạch</option>
               <option value="Nội khoa">Nội khoa</option>
@@ -383,28 +390,14 @@ export default function UserRoleTable() {
             </select>
           </div>
 
-          {/* Dropdown for Status Filter */}
-          <div className="relative">
-            <select
-              title="Lọc theo trạng thái"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 pr-10 text-sm font-medium text-gray-800 shadow-theme-xs appearance-none focus:border-base-300 focus:outline-none focus:ring-3 focus:ring-base-500/10 dark:border-gray-800 dark:bg-gray-900 dark:text-white/90"
-            >
-              <option value="">Tất cả trạng thái</option>
-              <option value="Hoạt động">Hoạt động</option>
-              <option value="Tạm khóa">Tạm khóa</option>
-              <option value="Chờ xác thực">Chờ xác thực</option>
-            </select>
-          </div>
-
-          {/* Filter Button */}
+          {/* Reset Filter Button */}
           <button
-            onClick={handleRefresh}
+            onClick={handleResetFilters}
+            type="button"
             className="h-11 w-full rounded-lg bg-base-700 text-white text-sm font-medium shadow-theme-xs hover:bg-base-600 focus:outline-hidden focus:ring-3 focus:ring-base-600/50 flex items-center justify-center gap-2"
           >
             <Settings size={16} />
-            Lọc
+            Đặt lại bộ lọc
           </button>
         </div>
       </div>
@@ -458,7 +451,9 @@ export default function UserRoleTable() {
               </TableCell>
             </TableRow>
           </TableHeader>{" "}
-          <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">            {loading ? (
+          <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+            {" "}
+            {loading ? (
               <TableRow>
                 <TableCell className="py-8 text-center">
                   <div className="flex items-center justify-center gap-2">
@@ -491,7 +486,9 @@ export default function UserRoleTable() {
               </TableRow>
             ) : (
               users.map((user) => (
-                <TableRow key={user.id}>                  <TableCell className="py-3">
+                <TableRow key={user.id}>
+                  {" "}
+                  <TableCell className="py-3">
                     <div className="flex items-center gap-3">
                       <div className="h-[40px] w-[40px] flex-shrink-0 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                         <img
@@ -535,16 +532,7 @@ export default function UserRoleTable() {
                       ? formatDateTime(user.createdAt)
                       : "Chưa có dữ liệu"}
                   </TableCell>
-                  <TableCell className="py-3">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleViewPermissions(user)}
-                        className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
-                        title="Xem và phân quyền"
-                      >
-                        <Shield size={14} />
-                        Phân quyền
-                      </button>
+                  <TableCell className="py-3">                    <div className="flex gap-2">
                       <button
                         onClick={() => handleEditUser(user)}
                         className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors dark:bg-slate-900/30 dark:text-slate-400 dark:hover:bg-slate-900/50"
@@ -607,69 +595,88 @@ export default function UserRoleTable() {
                   />
                 </svg>
               </button>
-            </div>            <form
-              className="space-y-4"
-              onSubmit={handleSubmitCreateUser}
-            >
+            </div>{" "}
+            <form className="space-y-4" onSubmit={handleSubmitCreateUser}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Số điện thoại *
+                  <label className="block font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Số điện thoại <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
                     required
                     value={createFormData.phone}
-                    onChange={(e) => setCreateFormData(prev => ({ ...prev, phone: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500 focus:border-base-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                     placeholder="Nhập số điện thoại..."
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Email
                   </label>
                   <input
                     type="email"
                     value={createFormData.email}
-                    onChange={(e) => setCreateFormData(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500 focus:border-base-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                     placeholder="Nhập email..."
                   />
                 </div>
-              </div>              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              </div>{" "}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Vai trò *
+                  <label className="block font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Vai trò <span className="text-red-500">*</span>
                   </label>
                   <select
                     title="Chọn vai trò"
                     required
                     value={createFormData.role}
-                    onChange={(e) => setCreateFormData(prev => ({ ...prev, role: e.target.value as CreateUserData['role'] }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500 focus:border-base-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        role: e.target.value as CreateUserData["role"],
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 dark:bg-gray-800 outline-0 dark:border-gray-600 dark:text-white"
                   >
                     <option value="ADMIN">Admin</option>
                     <option value="DOCTOR">Bác sĩ</option>
                     <option value="NURSE">Y tá</option>
                     <option value="PHARMACIST">Dược sĩ</option>
                     <option value="RECEPTIONIST">Lễ tân</option>
-                    <option value="ACCOUNTANT">Kế toán</option>
                   </select>
-                </div>                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Mật khẩu *
+                </div>{" "}
+                <div>
+                  <label className="block font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Mật khẩu <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="password"
                     required
                     value={createFormData.password}
-                    onChange={(e) => setCreateFormData(prev => ({ ...prev, password: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500 focus:border-base-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        password: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                     placeholder="Nhập mật khẩu..."
                   />
-                </div>              </div>
-
+                </div>{" "}
+              </div>
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -682,7 +689,8 @@ export default function UserRoleTable() {
                 >
                   Gửi email thông báo đến người dùng
                 </label>
-              </div>              <div className="flex justify-end gap-3 mt-6">
+              </div>{" "}
+              <div className="flex justify-end gap-3 mt-6">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
@@ -734,70 +742,68 @@ export default function UserRoleTable() {
                   />
                 </svg>
               </button>
-            </div>            <form
-              className="space-y-4"
-              onSubmit={handleSubmitUpdateUser}
-            >
+            </div>
+            <form className="space-y-4" onSubmit={handleSubmitUpdateUser}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Số điện thoại *
+                  <label className="block font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Số điện thoại <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
                     required
                     value={updateFormData.phone}
-                    onChange={(e) => setUpdateFormData(prev => ({ ...prev, phone: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500 focus:border-base-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                    onChange={(e) =>
+                      setUpdateFormData((prev) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                     placeholder="Nhập số điện thoại..."
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Email
                   </label>
                   <input
                     type="email"
-                    value={updateFormData.email || ""}
-                    onChange={(e) => setUpdateFormData(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500 focus:border-base-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                    value={updateFormData.email}
+                    onChange={(e) =>
+                      setUpdateFormData((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                     placeholder="Nhập email..."
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Vai trò *
-                  </label>
-                  <select
-                    title="Chọn vai trò"
-                    required
-                    value={updateFormData.role}
-                    onChange={(e) => setUpdateFormData(prev => ({ ...prev, role: e.target.value as UpdateUserData['role'] }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500 focus:border-base-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-                  >
-                    <option value="ADMIN">Admin</option>
-                    <option value="DOCTOR">Bác sĩ</option>
-                    <option value="NURSE">Y tá</option>
-                    <option value="PHARMACIST">Dược sĩ</option>
-                    <option value="RECEPTIONIST">Lễ tân</option>
-                    <option value="ACCOUNTANT">Kế toán</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Trạng thái (chỉ đọc)
-                  </label>
-                  <input
-                    type="text"
-                    value={selectedUser.status}
-                    disabled
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400"
-                    placeholder="Trạng thái hiện tại..."
-                  />
-                </div>
+              <div>
+                <label className="block font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Vai trò <span className="text-red-500">*</span>
+                </label>
+                <select
+                  title="Chọn vai trò"
+                  required
+                  value={updateFormData.role}
+                  onChange={(e) =>
+                    setUpdateFormData((prev) => ({
+                      ...prev,
+                      role: e.target.value as UpdateUserData["role"],
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 dark:bg-gray-800 outline-0 dark:border-gray-600 dark:text-white"
+                >
+                  <option value="ADMIN">Admin</option>
+                  <option value="DOCTOR">Bác sĩ</option>
+                  <option value="NURSE">Y tá</option>
+                  <option value="PHARMACIST">Dược sĩ</option>
+                  <option value="RECEPTIONIST">Lễ tân</option>
+                </select>
               </div>
 
               <div className="flex justify-end gap-3 mt-6">
@@ -815,136 +821,31 @@ export default function UserRoleTable() {
                   className="px-4 py-2 text-sm font-medium text-white bg-base-600 rounded-lg hover:bg-base-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {formLoading && (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <svg
+                      className="animate-spin h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
                   )}
-                  {formLoading ? "Đang cập nhật..." : "Cập nhật"}
+                  {formLoading ? "Đang lưu..." : "Lưu thay đổi"}
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Permission Modal */}
-      {showPermissionModal && selectedUser && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-3xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-            {" "}
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-white/90">
-                Phân quyền cho: {selectedUser.user.name}
-              </h3>
-              <button
-                onClick={() => setShowPermissionModal(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                title="Đóng"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">                <div className="flex items-center gap-3 mb-3">
-                  <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-                    <img
-                      src={selectedUser.user.image}
-                      className="h-full w-full object-cover"
-                      alt={selectedUser.user.name}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          "https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg";
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-800 dark:text-white/90">
-                      {selectedUser.user.name}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {selectedUser.role} • {selectedUser.department}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-800 dark:text-white/90 mb-3 flex items-center gap-2">
-                    <Shield size={16} className="text-green-600" />
-                    Quyền được cấp
-                  </h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-md">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        Xem dashboard
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-md">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        Quản lý bệnh nhân
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-md">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        Xem lịch hẹn
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-800 dark:text-white/90 mb-3 flex items-center gap-2">
-                    <Trash size={16} className="text-red-600" />
-                    Quyền bị hạn chế
-                  </h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-md">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        Xóa bệnh nhân
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-md">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        Quản lý tài chính
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-md">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        Quản lý hệ thống
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setShowPermissionModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-              >
-                Đóng
-              </button>
-              <button className="px-4 py-2 text-sm font-medium text-white bg-base-600 rounded-lg hover:bg-base-700">
-                Chỉnh sửa quyền
-              </button>
-            </div>
           </div>
         </div>
       )}
