@@ -30,6 +30,7 @@ type PaymentScreenProps = {
 }
 
 const API_BASE_URL = "http://192.168.120.172:8080"
+// const API_BASE_URL = "http://192.168.1.47:8080"
 
 export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route }) => {
   const { fontsLoaded } = useFont()
@@ -167,25 +168,27 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
   }
 
   const handlePaymentSuccess = (transactionId: string) => {
+    // Navigate to PaymentSuccess screen with required params
     navigation.navigate("PaymentSuccess", {
       doctor,
       selectedDate,
       selectedTime,
       transactionId,
-      billId,
-    })
+      selectedSymptoms: selectedSymptoms || [],
+      hasInsurance: hasInsurance || false
+    });
   }
 
   const handleWebViewNavigationStateChange = (navState: any) => {
-    if (navState.url.includes(`${API_BASE_URL}/api/payment/transactions/${billId}/success`)) {
-      setShowWebView(false)
-      handlePaymentSuccess(`TXN_SUCCESS_${Date.now()}`)
-    } else if (
-      navState.url.includes(`${API_BASE_URL}/api/payment/transactions/${billId}/cancel`) ||
-      navState.url.includes("payment-error")
-    ) {
-      setShowWebView(false)
-      Alert.alert("Thanh toán bị hủy", "Giao dịch đã bị hủy hoặc thất bại.", [{ text: "OK" }])
+    console.log('WebView URL:', navState.url);
+    
+    // Kiểm tra URL chứa thông tin thanh toán thành công
+    if (navState.url.includes('success') && !navState.loading) {
+      // Thêm một chút delay trước khi đóng WebView
+      setTimeout(() => {
+        setShowWebView(false);
+        handlePaymentSuccess(`TXN_SUCCESS_${Date.now()}`);
+      }, 100);
     }
   }
 
@@ -200,13 +203,37 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
         <WebView
           source={{ uri: webViewUrl }}
           onNavigationStateChange={handleWebViewNavigationStateChange}
-          startInLoadingState={true}
-          renderLoading={() => (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#00BCD4" />
-              <Text style={[styles.loadingText, { fontFamily: fontFamily.medium }]}>Đang tải trang thanh toán...</Text>
-            </View>
-          )}
+          onError={(syntheticEvent) => {
+            const { nativeEvent } = syntheticEvent;
+            console.warn('WebView error: ', nativeEvent);
+          }}
+          onHttpError={(syntheticEvent) => {
+            const { nativeEvent } = syntheticEvent;
+            console.warn('WebView HTTP error: ', nativeEvent);
+          }}
+          injectedJavaScript={`
+            (function() {
+              window.addEventListener('message', function(e) {
+                window.ReactNativeWebView.postMessage(e.data);
+              });
+              true;
+            })();
+          `}
+          onMessage={(event) => {
+            console.log('WebView message received:', event.nativeEvent.data);
+            try {
+              const data = JSON.parse(event.nativeEvent.data);
+              if (data.status === 'PAID' || data.code === '00') {
+                setShowWebView(false);
+                setTimeout(() => {
+                  handlePaymentSuccess(data.orderCode || `TXN_SUCCESS_${Date.now()}`);
+                }, 300);
+              }
+            } catch (error) {
+              console.log('Error parsing WebView message:', error);
+            }
+          }}
+          style={{ flex: 1 }}
         />
       </SafeAreaView>
     )
