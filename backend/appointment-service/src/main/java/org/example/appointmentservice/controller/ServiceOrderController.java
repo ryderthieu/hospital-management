@@ -51,4 +51,9 @@ public class ServiceOrderController {
     public ResponseEntity<List<ServiceOrderDto>> getOrdersByAppointmentId(@PathVariable Integer appointmentId) {
         return ResponseEntity.ok(serviceOrderService.getOrdersByAppointmentId(appointmentId));
     }
+
+    @GetMapping("/rooms/{roomId}/orders")
+    public ResponseEntity<List<ServiceOrderDto>> getOrdersByRoomId(@PathVariable Integer roomId) {
+        return ResponseEntity.ok(serviceOrderService.getOrdersByRoomId(roomId));
+    }
 }
