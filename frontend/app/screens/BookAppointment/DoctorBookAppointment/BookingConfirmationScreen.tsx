@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React, { useEffect } from "react"
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Alert, Image } from "react-native"
 import type { StackNavigationProp } from "@react-navigation/stack"
 import type { RouteProp } from "@react-navigation/native"
@@ -17,7 +17,26 @@ type BookingConfirmationScreenProps = {
 
 export const BookingConfirmationScreen: React.FC<BookingConfirmationScreenProps> = ({ navigation, route }) => {
   const { fontsLoaded } = useFont()
-  const { doctor, selectedDate, selectedTime, hasInsurance, selectedSymptoms } = route.params
+  const { doctor, selectedDate, selectedTime, hasInsurance, selectedSymptoms, location } = route.params
+
+  // Hàm format location để hiển thị thân thiện
+  const formatLocation = (location: string | undefined) => {
+    if (!location || location === "null") return "Không có thông tin phòng"
+    const cleanedLocation = location.replace(/null/g, "").trim()
+    const match = cleanedLocation.match(/^([A-Z])(\d+)/)
+    if (match) {
+      const building = match[1]
+      const floor = match[2]
+      return `Tòa ${building}, Tầng ${floor}`
+    }
+    return cleanedLocation || "Không có thông tin phòng"
+  }
+
+  // Log để debug
+  useEffect(() => {
+    console.log("[BookingConfirmationScreen] route.params:", JSON.stringify(route.params, null, 2))
+    console.log("[BookingConfirmationScreen] location:", location)
+  }, [route.params])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -58,6 +77,7 @@ export const BookingConfirmationScreen: React.FC<BookingConfirmationScreenProps>
       selectedTime,
       hasInsurance,
       selectedSymptoms,
+      location,
     })
   }
 
@@ -98,7 +118,7 @@ export const BookingConfirmationScreen: React.FC<BookingConfirmationScreenProps>
               <View style={[styles.iconContainer, { backgroundColor: "#E0F7FA" }]}>
                 <Ionicons name="location" size={20} color="#00BCD4" />
               </View>
-              <Text style={[styles.detailText, { fontFamily: fontFamily.medium }]}>{doctor.room}</Text>
+              <Text style={[styles.detailText, { fontFamily: fontFamily.medium }]}>{formatLocation(location)}</Text>
             </View>
 
             {/* Symptoms */}

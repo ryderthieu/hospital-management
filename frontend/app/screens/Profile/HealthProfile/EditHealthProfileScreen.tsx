@@ -3,85 +3,71 @@
 import type React from "react"
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
 import type { StackNavigationProp } from "@react-navigation/stack"
 import Slider from "@react-native-community/slider"
 import { fontFamily } from "../../../context/FontContext"
 import Header from "../../../components/Header"
-import { mockHealthProfile, mockAllergyOptions, mockChronicConditionOptions } from "../Data"
+import { mockHealthProfile, mockAllergyOptions } from "../Data"
 import type { RootStackParamList } from "../type"
+import { useAuth } from "../../../context/AuthContext"
+import API from "../../../services/api"
 
-// Define the AllergyOption interface locally if it's not exported from the types file
+// Define the AllergyOption interface
 interface AllergyOption {
   id: string
   name: string
   selected: boolean
 }
 
-// Define the ChronicConditionOption interface locally
-interface ChronicConditionOption {
-  id: string
-  name: string
-  selected: boolean
-}
+// Define blood type options
+const bloodTypeOptions = [
+  "A+",
+  "A-",
+  "B+",
+  "B-",
+  "AB+",
+  "AB-",
+  "O+",
+  "O-"
+]
 
 const EditHealthProfileScreen: React.FC = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, "EditHealthProfile">>()
+  const { patient, setPatient } = useAuth()
 
   // State for form data
-  const [height, setHeight] = useState(mockHealthProfile.height || 170)
-  const [weight, setWeight] = useState(mockHealthProfile.weight || 72)
-
-  // Allergies state
-  const [selectedAllergies, setSelectedAllergies] = useState<string[]>(mockHealthProfile.allergies || [])
+  const [height, setHeight] = useState<number>(patient?.height || mockHealthProfile.height || 170)
+  const [weight, setWeight] = useState<number>(patient?.weight || mockHealthProfile.weight || 72)
+  const [bloodType, setBloodType] = useState<string>(patient?.bloodType || mockHealthProfile.bloodType || "A+")
+  const [selectedAllergies, setSelectedAllergies] = useState<string[]>(patient?.allergies ? patient.allergies.split(",") : mockHealthProfile.allergies || [])
   const [allergyOptions, setAllergyOptions] = useState<AllergyOption[]>(mockAllergyOptions || [])
   const [allergySearchQuery, setAllergySearchQuery] = useState("")
-
-  // Chronic conditions state
-  const [selectedChronicConditions, setSelectedChronicConditions] = useState<string[]>(
-    mockHealthProfile.chronicConditions || [],
-  )
-  const [chronicConditionOptions, setChronicConditionOptions] = useState<ChronicConditionOption[]>(
-    mockChronicConditionOptions || [],
-  )
-  const [chronicSearchQuery, setChronicSearchQuery] = useState("")
-
-  // Show/hide sections
   const [showAllergiesOptions, setShowAllergiesOptions] = useState(true)
-  const [showChronicOptions, setShowChronicOptions] = useState(true)
-
-  useEffect(() => {
-    // Ensure allergyOptions is initialized with mockAllergyOptions when available
-    if (mockAllergyOptions && mockAllergyOptions.length > 0 && (!allergyOptions || allergyOptions.length === 0)) {
-      setAllergyOptions(mockAllergyOptions)
-    }
-
-    // Ensure chronicConditionOptions is initialized
-    if (
-      mockChronicConditionOptions &&
-      mockChronicConditionOptions.length > 0 &&
-      (!chronicConditionOptions || chronicConditionOptions.length === 0)
-    ) {
-      setChronicConditionOptions(mockChronicConditionOptions)
-    }
-  }, [mockAllergyOptions, mockChronicConditionOptions])
+  const [showBloodTypeOptions, setShowBloodTypeOptions] = useState(false)
 
   // Filter allergy options based on search query
   const filteredAllergyOptions = allergyOptions
     ? allergyOptions.filter((option) => option.name.toLowerCase().includes(allergySearchQuery.toLowerCase()))
     : []
 
-  // Filter chronic condition options based on search query
-  const filteredChronicOptions = chronicConditionOptions
-    ? chronicConditionOptions.filter((option) => option.name.toLowerCase().includes(chronicSearchQuery.toLowerCase()))
-    : []
+  // Initialize allergy options
+  useEffect(() => {
+    if (mockAllergyOptions && mockAllergyOptions.length > 0 && (!allergyOptions || allergyOptions.length === 0)) {
+      const initializedOptions = mockAllergyOptions.map(option => ({
+        ...option,
+        selected: selectedAllergies.includes(option.name)
+      }))
+      setAllergyOptions(initializedOptions)
+    }
+  }, [mockAllergyOptions, selectedAllergies])
 
   // Handle allergy selection
   const toggleAllergy = (allergyId: string, allergyName: string) => {
     const updatedOptions = allergyOptions.map((option) =>
-      option.id === allergyId ? { ...option, selected: !option.selected } : option,
+      option.id === allergyId ? { ...option, selected: !option.selected } : option
     )
     setAllergyOptions(updatedOptions)
 
@@ -96,43 +82,62 @@ const EditHealthProfileScreen: React.FC = () => {
   const removeAllergy = (allergyToRemove: string) => {
     setSelectedAllergies(selectedAllergies.filter((allergy) => allergy !== allergyToRemove))
     const updatedOptions = allergyOptions.map((option) =>
-      option.name === allergyToRemove ? { ...option, selected: false } : option,
+      option.name === allergyToRemove ? { ...option, selected: false } : option
     )
     setAllergyOptions(updatedOptions)
   }
 
-  // Handle chronic condition selection
-  const toggleChronicCondition = (conditionId: string, conditionName: string) => {
-    const updatedOptions = chronicConditionOptions.map((option) =>
-      option.id === conditionId ? { ...option, selected: !option.selected } : option,
-    )
-    setChronicConditionOptions(updatedOptions)
-
-    if (selectedChronicConditions.includes(conditionName)) {
-      setSelectedChronicConditions(selectedChronicConditions.filter((condition) => condition !== conditionName))
-    } else {
-      setSelectedChronicConditions([...selectedChronicConditions, conditionName])
-    }
-  }
-
-  // Remove chronic condition from selected list
-  const removeChronicCondition = (conditionToRemove: string) => {
-    setSelectedChronicConditions(selectedChronicConditions.filter((condition) => condition !== conditionToRemove))
-    const updatedOptions = chronicConditionOptions.map((option) =>
-      option.name === conditionToRemove ? { ...option, selected: false } : option,
-    )
-    setChronicConditionOptions(updatedOptions)
-  }
-
   // Handle save changes
-  const handleSaveChanges = () => {
-    // In a real app, you would save the data to your backend or local storage
-    Alert.alert("Thành công", "Hồ sơ sức khỏe đã được cập nhật!", [
-      {
-        text: "OK",
-        onPress: () => navigation.goBack(),
-      },
-    ])
+  const handleSaveChanges = useCallback(async () => {
+    if (!patient?.patientId) {
+      Alert.alert("Lỗi", "Không tìm thấy thông tin bệnh nhân")
+      return
+    }
+
+    try {
+      const updatedData = {
+        height,
+        weight,
+        allergies: selectedAllergies.join(","),
+        bloodType,
+        userId: patient.userId,
+        identityNumber: patient.identityNumber,
+        insuranceNumber: patient.insuranceNumber,
+        fullName: patient.fullName,
+        birthday: patient.birthday,
+        phone: patient.phone,
+        email: patient.email,
+        address: patient.address,
+        gender: patient.gender,
+      }
+
+      const response = await API.put(`/patients/${patient.patientId}`, updatedData)
+      const updatedPatient = response.data
+
+      setPatient({
+        ...patient,
+        height: updatedPatient.height,
+        weight: updatedPatient.weight,
+        allergies: updatedPatient.allergies,
+        bloodType: updatedPatient.bloodType,
+      })
+
+      Alert.alert("Thành công", "Hồ sơ sức khỏe đã được cập nhật!", [
+        {
+          text: "OK",
+          onPress: () => navigation.goBack(),
+        },
+      ])
+    } catch (error: any) {
+      console.error("Error updating health profile:", error)
+      Alert.alert("Lỗi", error.message || "Không thể cập nhật hồ sơ sức khỏe. Vui lòng thử lại.")
+    }
+  }, [height, weight, selectedAllergies, bloodType, patient, setPatient, navigation])
+
+  // Handle blood type selection
+  const toggleBloodType = (type: string) => {
+    setBloodType(type)
+    setShowBloodTypeOptions(false)
   }
 
   return (
@@ -214,7 +219,6 @@ const EditHealthProfileScreen: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Dị ứng</Text>
 
-          {/* Selected Allergies */}
           <View style={styles.selectedItemsContainer}>
             {selectedAllergies.map((allergy, index) => (
               <View key={index} style={styles.selectedItemTag}>
@@ -234,7 +238,6 @@ const EditHealthProfileScreen: React.FC = () => {
 
           {showAllergiesOptions && (
             <>
-              {/* Search Input */}
               <View style={styles.searchContainer}>
                 <Ionicons name="search" size={20} color="#757575" style={styles.searchIcon} />
                 <TextInput
@@ -246,7 +249,6 @@ const EditHealthProfileScreen: React.FC = () => {
                 />
               </View>
 
-              {/* Allergy Options */}
               <View style={styles.optionsContainer}>
                 {filteredAllergyOptions.map((option) => (
                   <TouchableOpacity
@@ -265,62 +267,43 @@ const EditHealthProfileScreen: React.FC = () => {
           )}
         </View>
 
-        {/* Chronic Conditions Section */}
+        {/* Blood Type Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Bệnh mãn tính</Text>
+          <Text style={styles.sectionTitle}>Nhóm máu</Text>
 
-          {/* Selected Chronic Conditions */}
           <View style={styles.selectedItemsContainer}>
-            {selectedChronicConditions.map((condition, index) => (
-              <View key={index} style={[styles.selectedItemTag, { backgroundColor: "#FFF0E0" }]}>
-                <Text style={[styles.selectedItemText, { color: "#F57C00" }]}>{condition}</Text>
-                <TouchableOpacity onPress={() => removeChronicCondition(condition)} style={styles.removeButton}>
-                  <Ionicons name="close" size={16} color="#F57C00" />
-                </TouchableOpacity>
-              </View>
-            ))}
-            <TouchableOpacity style={styles.expandButton} onPress={() => setShowChronicOptions(!showChronicOptions)}>
-              <Ionicons name={showChronicOptions ? "chevron-up" : "chevron-down"} size={20} color="#00B5B8" />
+            <View style={styles.selectedItemTag}>
+              <Text style={styles.selectedItemText}>{bloodType}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.expandButton}
+              onPress={() => setShowBloodTypeOptions(!showBloodTypeOptions)}
+            >
+              <Ionicons name={showBloodTypeOptions ? "chevron-up" : "chevron-down"} size={20} color="#00B5B8" />
             </TouchableOpacity>
           </View>
 
-          {showChronicOptions && (
-            <>
-              {/* Search Input */}
-              <View style={styles.searchContainer}>
-                <Ionicons name="search" size={20} color="#757575" style={styles.searchIcon} />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Tìm kiếm bệnh mãn tính"
-                  value={chronicSearchQuery}
-                  onChangeText={setChronicSearchQuery}
-                  placeholderTextColor="#757575"
-                />
-              </View>
-
-              {/* Chronic Condition Options */}
-              <View style={styles.optionsContainer}>
-                {filteredChronicOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.id}
-                    style={styles.optionItem}
-                    onPress={() => toggleChronicCondition(option.id, option.name)}
-                  >
-                    <View style={[styles.checkbox, option.selected && styles.checkboxSelected]}>
-                      {option.selected && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
-                    </View>
-                    <Text style={[styles.optionText, option.selected && styles.optionTextSelected]}>{option.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </>
+          {showBloodTypeOptions && (
+            <View style={styles.optionsContainer}>
+              {bloodTypeOptions.map((type) => (
+                <TouchableOpacity
+                  key={type}
+                  style={styles.optionItem}
+                  onPress={() => toggleBloodType(type)}
+                >
+                  <View style={[styles.checkbox, bloodType === type && styles.checkboxSelected]}>
+                    {bloodType === type && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
+                  </View>
+                  <Text style={[styles.optionText, bloodType === type && styles.optionTextSelected]}>{type}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           )}
         </View>
 
         <View style={styles.bottomSpace} />
       </ScrollView>
 
-      {/* Save Button */}
       <View style={styles.saveButtonContainer}>
         <TouchableOpacity style={styles.saveButton} onPress={handleSaveChanges}>
           <Text style={styles.saveButtonText}>Lưu thay đổi</Text>

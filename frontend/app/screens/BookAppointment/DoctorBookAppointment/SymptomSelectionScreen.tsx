@@ -132,7 +132,7 @@ export const SymptomSelectionScreen: React.FC<SymptomSelectionScreenProps> = ({ 
       slotStart,
       slotEnd,
       scheduleId,
-      symptoms: selectedSymptomNames.join(", "), // Vẫn gửi chuỗi cho API
+      symptoms: selectedSymptomNames.join(", "),
       doctorId: parseInt(doctor.id),
       patientId,
     };
@@ -146,7 +146,8 @@ export const SymptomSelectionScreen: React.FC<SymptomSelectionScreenProps> = ({ 
       selectedDate,
       selectedTime,
       hasInsurance,
-      selectedSymptoms: selectedSymptomNames, // Truyền mảng thay vì chuỗi
+      selectedSymptoms: selectedSymptomNames,
+      location: responseAppt.data.schedule.location,
     });
   } catch (error: any) {
     console.error("[SymptomSelectionScreen] Lỗi khi tạo cuộc hẹn:", error.message, error.response?.data);

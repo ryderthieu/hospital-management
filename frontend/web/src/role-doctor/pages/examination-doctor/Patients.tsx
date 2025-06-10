@@ -1,6 +1,6 @@
 import type React from "react"
 import { useState } from "react"
-import { Table, Input, DatePicker, Button, Avatar, Space, Card, Select, Tooltip, Empty, Modal } from "antd"
+import { Table, Input, DatePicker, Button, Avatar, Space, Card, Select, Tooltip, Empty } from "antd"
 import {
   EditOutlined,
   StepForwardOutlined,
@@ -9,15 +9,14 @@ import {
   UserOutlined,
   CalendarOutlined,
   ReloadOutlined,
-  MedicineBoxOutlined,
   ClearOutlined,
 } from "@ant-design/icons"
 import WeCareLoading from "../../components/common/WeCareLoading"
 import { useNavigate } from "react-router-dom"
 import { useAppointments } from "../../hooks/useAppointment"
 import {
+  formatTimeSlot,
   getAppointmentStatusColor,
-  formatAppointmentDate,
   getAppointmentStatusVietnameseText,
 } from "../../services/appointmentServices"
 import type { Appointment } from "../../types/appointment"
@@ -30,18 +29,17 @@ const Patients: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [genderFilter, setGenderFilter] = useState<string>("all")
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
-  const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
   const navigate = useNavigate()
 
   const {
     appointments,
+    paginatedData,
     loading,
     error,
     stats,
     filters,
     updateFilters,
+    updatePagination,
     clearDateFilter,
     setTodayFilter,
     updateAppointmentStatus,
@@ -51,7 +49,6 @@ const Patients: React.FC = () => {
   const handleViewPatient = (id: number) => {
     const appointment = appointments.find((a: Appointment) => a.appointmentId === id)
     if (appointment) {
-      // Navigate to PatientDetail with appointment data
       navigate("/doctor/examination/patient/detail", {
         state: {
           appointmentId: appointment.appointmentId,
@@ -59,7 +56,6 @@ const Patients: React.FC = () => {
       })
     }
   }
-    
 
   const handleRefresh = () => {
     refreshAppointments()
@@ -83,56 +79,31 @@ const Patients: React.FC = () => {
     updateFilters({ status: value === "all" ? undefined : value })
   }
 
+  const handleGenderFilterChange = (value: string) => {
+    setGenderFilter(value)
+    updateFilters({ gender: value === "all" ? undefined : value })
+  }
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setSearchTerm(value)
     updateFilters({ searchTerm: value || undefined })
   }
 
-  const getStatusBadge = (appointmentStatus?: string) => {
-    if (appointmentStatus) {
-      const { color, bgColor } = getAppointmentStatusColor(appointmentStatus)
-      return (
-        <span
-          style={{
-            color,
-            backgroundColor: bgColor,
-            padding: "4px 12px",
-            borderRadius: "20px",
-            fontSize: "12px",
-            fontWeight: 500,
-          }}
-        >
-          {getAppointmentStatusVietnameseText(appointmentStatus)}
-        </span>
-      )
-    }
-
-    // Fallback for non-appointment statuses
-    const statusConfig = {
-      "Hoàn thành": { color: "#059669", bgColor: "#d1fae5", text: "Hoàn thành" },
-      "Xét nghiệm": { color: "#2563eb", bgColor: "#dbeafe", text: "Xét nghiệm" },
-      "Đang chờ": { color: "#d97706", bgColor: "#fef3c7", text: "Đang chờ" },
-    }
-
-    const config = statusConfig[status as keyof typeof statusConfig] || {
-      color: "#6b7280",
-      bgColor: "#f3f4f6",
-      text: status,
-    }
-
+  const getStatusBadge = (appointmentStatus: string) => {
+    const { color, bgColor } = getAppointmentStatusColor(appointmentStatus)
     return (
       <span
         style={{
-          color: config.color,
-          backgroundColor: config.bgColor,
+          color,
+          backgroundColor: bgColor,
           padding: "4px 12px",
           borderRadius: "20px",
           fontSize: "12px",
           fontWeight: 500,
         }}
       >
-        {config.text}
+        {getAppointmentStatusVietnameseText(appointmentStatus)}
       </span>
     )
   }
@@ -140,18 +111,16 @@ const Patients: React.FC = () => {
   const columns = [
     {
       title: "STT",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "number",
+      key: "number",
       width: 70,
-      render: (id: number, record: Appointment, index: number) => (
-        <span style={{ fontWeight: 500, color: "#6b7280" }}>{record.number}</span>
-      ),
+      render: (number: number) => <span style={{ fontWeight: 500, color: "#6b7280" }}>{number}</span>,
     },
     {
       title: "Bệnh nhân",
-      dataIndex: "name",
-      key: "name",
-      render: (text: string, record: Appointment) => (
+      dataIndex: "patientInfo",
+      key: "patientInfo",
+      render: (patientInfo: any, record: Appointment) => (
         <div style={{ display: "flex", alignItems: "center" }}>
           <Avatar
             src="https://png.pngtree.com/png-clipart/20210608/ourlarge/pngtree-dark-gray-simple-avatar-png-image_3418404.jpg"
@@ -160,36 +129,46 @@ const Patients: React.FC = () => {
             icon={<UserOutlined />}
           />
           <div>
-            <div style={{ fontWeight: 600, color: "#111827", marginBottom: "2px" }}>{record.patientInfo?.fullName}</div>
-            
+            <div style={{ fontWeight: 600, color: "#111827", marginBottom: "2px" }}>
+              {patientInfo?.fullName || "Chưa có thông tin"}
+            </div>
           </div>
         </div>
       ),
     },
     {
       title: "Ngày khám",
-      dataIndex: "date",
-      key: "date",
-      render: (date: string, record: Appointment) => (
+      dataIndex: "schedule",
+      key: "schedule",
+      render: (schedule: any, record: Appointment) => (
         <div>
           <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
             <CalendarOutlined style={{ marginRight: 8, color: "#6b7280" }} />
-            <span style={{ color: "#374151" }}>{formatAppointmentDate(record.schedule.workDate)}</span>
+            <span style={{ color: "#374151" }}>{schedule?.workDate}</span>
           </div>
+          
         </div>
       ),
     },
     {
       title: "Giới tính",
-      dataIndex: "gender",
+      dataIndex: "patientInfo",
       key: "gender",
-      render: (gender: string, record: Appointment) => <span style={{ color: "#374151" }}>{record.patientInfo?.gender === "MALE" ? "Nam" : "Nữ" }</span>,
+      render: (patientInfo: any) => (
+        <span style={{ color: "#374151" }}>
+          {patientInfo?.gender === "MALE" ? "Nam" : patientInfo?.gender === "FEMALE" ? "Nữ" : "N/A"}
+        </span>
+      ),
     },
     {
       title: "Ngày sinh",
-      dataIndex: "birthday",
+      dataIndex: "patientInfo",
       key: "birthday",
-      render: (birthday: string, record: Appointment) => <span style={{ color: "#374151", fontWeight: 500 }}>{record.patientInfo?.birthday.split("-").reverse().join("-") || "N/A"}</span>,
+      render: (patientInfo: any) => (
+        <span style={{ color: "#374151", fontWeight: 500 }}>
+          {patientInfo?.birthday ? patientInfo.birthday.split("-").reverse().join("/") : "N/A"}
+        </span>
+      ),
     },
     {
       title: "Triệu chứng",
@@ -204,9 +183,9 @@ const Patients: React.FC = () => {
     },
     {
       title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
-      render: (status: string, record: Appointment) => getStatusBadge(record.appointmentStatus),
+      dataIndex: "appointmentStatus",
+      key: "appointmentStatus",
+      render: (status: string) => getStatusBadge(status),
     },
     {
       title: "Thao tác",
@@ -230,21 +209,6 @@ const Patients: React.FC = () => {
       ),
     },
   ]
-
-  // Apply additional client-side filtering for search and gender
-  const filteredAppointments = appointments.filter((appointment: Appointment) => {
-    const matchesSearch =
-      !searchTerm ||
-      appointment.patientInfo.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      appointment.patientInfo.patientId.toString().includes(searchTerm.toLowerCase())
-      appointment.symptoms.toLowerCase().includes(searchTerm.toLowerCase())
-
-    const matchesGender = genderFilter === "all" || appointment.patientInfo.gender === genderFilter
-
-    return matchesSearch && matchesGender
-  })
-
-  const totalItems = filteredAppointments.length
 
   return (
     <div style={{ background: "#f8fafc", minHeight: "100vh" }}>
@@ -331,7 +295,12 @@ const Patients: React.FC = () => {
               <Option value="CANCELLED">Đã hủy</Option>
             </Select>
 
-            <Select placeholder="Giới tính" value={genderFilter} onChange={setGenderFilter} style={{ width: 120 }}>
+            <Select
+              placeholder="Giới tính"
+              value={genderFilter}
+              onChange={handleGenderFilterChange}
+              style={{ width: 120 }}
+            >
               <Option value="all">Tất cả</Option>
               <Option value="MALE">Nam</Option>
               <Option value="FEMALE">Nữ</Option>
@@ -365,7 +334,7 @@ const Patients: React.FC = () => {
           style={{
             borderRadius: "16px",
             boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-            height: "100%"
+            height: "100%",
           }}
         >
           <div
@@ -397,7 +366,7 @@ const Patients: React.FC = () => {
                   borderRadius: "20px",
                 }}
               >
-                {filteredAppointments.length} bệnh nhân
+                {appointments.length} bệnh nhân
               </span>
             </div>
           </div>
@@ -408,25 +377,22 @@ const Patients: React.FC = () => {
             <div style={{ textAlign: "center", padding: "60px 0" }}>
               <Empty description={error} />
             </div>
-          ) : filteredAppointments.length === 0 ? (
+          ) : appointments.length === 0 ? (
             <Empty description="Không tìm thấy bệnh nhân nào" style={{ padding: "60px 0" }} />
           ) : (
             <Table
               columns={columns}
-              dataSource={filteredAppointments}
-              rowKey="id"
+              dataSource={appointments}
+              rowKey="appointmentId"
               pagination={{
-                current: currentPage,
-                pageSize: itemsPerPage,
-                total: totalItems,
+                current: paginatedData.pageNo + 1, // Convert from 0-based to 1-based
+                pageSize: paginatedData.pageSize,
+                total: paginatedData.totalElements,
                 showSizeChanger: true,
                 pageSizeOptions: ["10", "20", "50"],
                 showTotal: (total, range) => `Hiển thị ${range[0]}-${range[1]} trong tổng số ${total} bệnh nhân`,
                 onChange: (page, pageSize) => {
-                  setCurrentPage(page)
-                  if (pageSize !== itemsPerPage) {
-                    setItemsPerPage(pageSize)
-                  }
+                  updatePagination(page, pageSize)
                 },
                 style: { marginTop: "16px" },
               }}
@@ -436,69 +402,6 @@ const Patients: React.FC = () => {
           )}
         </Card>
       </div>
-
-      {/* Appointment Detail Modal */}
-      <Modal
-        title={
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <MedicineBoxOutlined style={{ marginRight: 8, color: "#047481" }} />
-            Chi tiết lịch hẹn
-          </div>
-        }
-        open={!!selectedAppointment}
-        onCancel={() => setSelectedAppointment(null)}
-        footer={[
-          <Button key="close" onClick={() => setSelectedAppointment(null)}>
-            Đóng
-          </Button>,
-          <Button
-            key="confirm"
-            type="primary"
-            onClick={() => {
-              if (selectedAppointment) {
-                handleStatusChange(selectedAppointment.appointmentId, "CONFIRMED")
-                setSelectedAppointment(null)
-              }
-            }}
-          >
-            Xác nhận lịch hẹn
-          </Button>,
-        ]}
-        width={600}
-      >
-        {selectedAppointment && (
-          <div style={{ padding: "16px 0" }}>
-            <div style={{ marginBottom: "16px" }}>
-              <strong>Mã lịch hẹn:</strong> {selectedAppointment.appointmentId}
-            </div>
-            <div style={{ marginBottom: "16px" }}>
-              <strong>Số thứ tự:</strong> {selectedAppointment.number}
-            </div>
-            <div style={{ marginBottom: "16px" }}>
-              <strong>Ngày khám:</strong> {formatAppointmentDate(selectedAppointment.schedule.workDate)}
-            </div>
-            <div style={{ marginBottom: "16px" }}>
-              <strong>Thời gian:</strong> {formatTimeSlot(selectedAppointment.slotStart, selectedAppointment.slotEnd)}
-            </div>
-            <div style={{ marginBottom: "16px" }}>
-              <strong>Ca làm việc:</strong> {selectedAppointment.schedule.shift}
-            </div>
-            <div style={{ marginBottom: "16px" }}>
-              <strong>Phòng:</strong> {selectedAppointment.schedule.roomId}
-            </div>
-            <div style={{ marginBottom: "16px" }}>
-              <strong>Triệu chứng:</strong> {selectedAppointment.symptoms}
-            </div>
-            <div style={{ marginBottom: "16px" }}>
-              <strong>Trạng thái:</strong>{" "}
-              {getStatusBadge(
-                getAppointmentStatusText(selectedAppointment.appointmentStatus),
-                selectedAppointment.appointmentStatus,
-              )}
-            </div>
-          </div>
-        )}
-      </Modal>
     </div>
   )
 }

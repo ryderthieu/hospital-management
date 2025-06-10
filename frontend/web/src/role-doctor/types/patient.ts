@@ -47,3 +47,23 @@ export interface PatientDetail {
   slotEnd: string
   slotStart: string
 }
+
+export interface PatientDetail2 {
+  appointmentId: string
+  patientId: string
+  patientInfo: PatientInfo
+  symptoms: string,
+  number: number,
+  slotEnd: string
+  slotStart: string
+  doctorId: number
+  schedule: Schedule
+  appointmentStatus: string,
+  
+  
+  createdAt: string,
+  
+  doctorInfo: DoctorInfo
+  appointmentNote: AppointmentNote
+  
+}

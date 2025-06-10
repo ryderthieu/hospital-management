@@ -20,6 +20,7 @@ export type RootStackParamList = {
     selectedTime: string
     hasInsurance: boolean
     selectedSymptoms: string[]
+    location?: string
   }
   Payment: {
     doctor: Doctor

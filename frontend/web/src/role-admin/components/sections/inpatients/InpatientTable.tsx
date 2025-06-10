@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { RoomDetail } from "../../../types/patient";
 import { patientService } from "../../../services/patientService";
 import {
@@ -73,8 +73,25 @@ export default function InpatientTable() {
     navigate(`/admin/inpatients/${inpatientId}`);
   };
 
-  const handleEdit = (inpatientId: number) => {
-    navigate(`/admin/inpatients/edit/${inpatientId}`);
+  const handleEdit = async (
+    detailId: number,
+    updatedData: Partial<RoomDetail>
+  ) => {
+    try {
+      const updated = await patientService.updateRoomDetail(
+        detailId,
+        updatedData
+      );
+      setInpatients((prev) =>
+        prev.map((inpatient) =>
+          inpatient.detailId === detailId
+            ? { ...inpatient, ...updated }
+            : inpatient
+        )
+      );
+    } catch (error) {
+      console.error("Error updating inpatient:", error);
+    }
   };
 
   const handleDelete = (inpatientId: number) => {
@@ -82,18 +99,20 @@ export default function InpatientTable() {
     setModalOpen(true);
   };
 
-  //   const handleConfirmDelete = async () => {
-  //     if (inpatientToDelete === null) return;
-  //     try {
-  //       await inpatientService.deleteInpatient(inpatientToDelete);
-  //       setInpatients((prev) => prev.filter((inpatient) => inpatient.inpatientId !== inpatientToDelete));
-  //     } catch (error) {
-  //       console.error("Error deleting inpatient:", error);
-  //     } finally {
-  //       setModalOpen(false);
-  //       setInpatientToDelete(null);
-  //     }
-  //   };
+  const handleConfirmDelete = async () => {
+    if (inpatientToDelete === null) return;
+    try {
+      await patientService.deleteRoomDetail(inpatientToDelete);
+      setInpatients((prev) =>
+        prev.filter((inpatient) => inpatient.detailId !== inpatientToDelete)
+      );
+    } catch (error) {
+      console.error("Error deleting inpatient:", error);
+    } finally {
+      setModalOpen(false);
+      setInpatientToDelete(null);
+    }
+  };
 
   // Format admission date
   const formatDate = (dateStr: string) => {
@@ -240,7 +259,9 @@ export default function InpatientTable() {
                 <TableCell className="py-3 text-theme-md">
                   <div className="flex gap-2">
                     <button
-                      //   onClick={() => handleView(inpatient.inpatientId)}
+                      onClick={() =>
+                        navigate(`/admin/inpatients/${inpatient.detailId}`)
+                      }
                       className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
                     >
                       <svg
@@ -259,7 +280,11 @@ export default function InpatientTable() {
                       Xem
                     </button>
                     <button
-                      //   onClick={() => handleEdit(inpatient.inpatientId)}
+                      onClick={() =>
+                        navigate(
+                          `/admin/inpatients-rooms/edit/${inpatient.detailId}`
+                        )
+                      }
                       className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
                     >
                       <svg
@@ -273,7 +298,7 @@ export default function InpatientTable() {
                       Sửa
                     </button>
                     <button
-                      //   onClick={() => handleDelete(inpatient.inpatientId)}
+                      onClick={() => handleDelete(inpatient.detailId)}
                       className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
                     >
                       <svg
@@ -310,13 +335,13 @@ export default function InpatientTable() {
         )}
       </div>
 
-      {/* <DeleteConfirmationModal
+      <DeleteConfirmationModal
         isOpen={isModalOpen}
         onClose={() => setModalOpen(false)}
-        // onConfirm={handleConfirmDelete}
+        onConfirm={handleConfirmDelete}
         title="Xác nhận xóa"
         message="Bạn có chắc chắn muốn xóa bệnh nhân nội trú này? Thao tác này sẽ không thể hoàn tác."
-      /> */}
+      />
     </div>
   );
 }

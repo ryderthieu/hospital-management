@@ -1,4 +1,5 @@
 import MedicalRecord from "./MedicalRecord";
+import AddMedicalRecordModal from "./AddMedicalRecordModal";
 import {
   Table,
   TableBody,
@@ -8,65 +9,103 @@ import {
 } from "../../ui/table";
 import { format } from "date-fns";
 import Badge from "../../ui/badge/Badge";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { patientService } from "../../../services/patientService";
-import { Patient, EmergencyContact } from "../../../types/patient";
-import { useParams } from "react-router-dom";
+import { Patient, EmergencyContact, PatientDto } from "../../../types/patient";
+import { useParams, useNavigate } from "react-router-dom";
 import { appointmentService } from "../../../services/appointmentService";
 import { Appointment } from "../../../types/appointment";
 import { AppointmentModal, DeleteAppointmentModal } from "./AppointmentModal";
 import { Bill } from "../../../types/payment";
 import { paymentService } from "../../../services/paymentService";
 import { BillModal, DeleteBillModal } from "./BillModal";
+import { PrescriptionResponse } from "../../../types/pharmacy";
+import { medicineService } from "../../../services/pharmacyService";
 
 export function MedicalRecordsContent() {
+  const { patientId } = useParams();
+  const navigate = useNavigate();
+  const [prescriptions, setPrescriptions] = useState<PrescriptionResponse[]>(
+    []
+  );
+  const [loading, setLoading] = useState(true);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!patientId) return;
+    const fetchPrescriptions = async () => {
+      try {
+        setLoading(true);
+        const data = await medicineService.getPrescriptionsByPatientId(
+          Number(patientId)
+        );
+        const mappedData = data.map((prescription: any) => ({
+          ...prescription,
+          prescriptionDetails:
+            prescription.prescriptionDetails?.map((detail: any) => ({
+              ...detail,
+              prescriptionId:
+                detail.prescriptionId ?? prescription.prescriptionId,
+            })) ?? [],
+        }));
+        setPrescriptions(mappedData);
+      } catch (error) {
+        setPrescriptions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPrescriptions();
+  }, [patientId]);
+
+  // Hàm xử lý khi submit modal
+  const handleAddMedicalRecord = async (data: any) => {
+    try {
+      await medicineService.createPrescription(data);
+      setIsAddModalOpen(false);
+      // Reload list
+      if (patientId) {
+        const newData = await medicineService.getPrescriptionsByPatientId(
+          Number(patientId)
+        );
+        setPrescriptions(newData);
+      }
+    } catch (error) {
+      alert("Thêm bệnh án thất bại!");
+    }
+  };
+
   return (
     <div className=" font-outfit bg-white py-6 px-4 rounded-lg border border-gray-200">
       <div className="flex justify-between mb-4 ml-1">
         <h2 className="text-xl font-semibold">Bệnh án</h2>
-        <button className="flex items-center justify-center bg-base-700 py-2.5 px-5 rounded-lg text-white text-sm hover:bg-base-700/70">
+        <button
+          className="flex items-center justify-center bg-base-700 py-2.5 px-5 rounded-lg text-white text-sm hover:bg-base-700/70"
+          onClick={() => setIsAddModalOpen(true)}
+        >
           Thêm bệnh án
           <span className="ml-2 text-lg">+</span>
         </button>
       </div>
       <div className="grid grid-cols-1 gap-4">
-        <MedicalRecord
-          date="15/04/2023"
-          recordNumber="12345"
-          reason="nhói tim vùng ngực trái, khó thở, tim đập nhanh sau khi tham dự buổi lễ và tiếp xúc trực quan với biểu tượng cờ Đảng. Các triệu chứng kéo dài khoảng 15-20 phút, có tiền sử tương tự trong tháng trước."
-          diagnosis="quá yêu nước"
-          treatment="uống thuốc kê đơn, theo dõi thêm trong 7 ngày"
-          prescription="ngắm quốc kỳ mỗi sáng, viên năng lượng yêu nước"
-          vitalSign="Huyết áp: 120/80 mmHg, Nhịp tim: 80 bpm, Respiratory Rate: 16 bpm, Nhiệt độ cơ thể: 36.5 °C, Chỉ số SPO2: 98%"
-        />
-        <MedicalRecord
-          date="15/04/2023"
-          recordNumber="12345"
-          reason="nhói tim, khó thở sau khi thấy cờ Đảng"
-          diagnosis="quá yêu nước"
-          treatment="uống thuốc kê đơn, theo dõi thêm trong 7 ngày"
-          prescription="ngắm quốc kỳ mỗi sáng, viên năng lượng yêu nước"
-          vitalSign="Huyết áp: 120/80 mmHg, Nhịp tim: 80 bpm, Respiratory Rate: 16 bpm, Nhiệt độ cơ thể: 36.5 °C, Chỉ số SPO2: 98%"
-        />
-        <MedicalRecord
-          date="15/04/2023"
-          recordNumber="12345"
-          reason="nhói tim, khó thở sau khi thấy cờ Đảng"
-          diagnosis="quá yêu nước"
-          treatment="uống thuốc kê đơn, theo dõi thêm trong 7 ngày"
-          prescription="ngắm quốc kỳ mỗi sáng, viên năng lượng yêu nước"
-          vitalSign="Blood Pressure: 120/80 mmHg, Pulse Rate: 80 bpm, Respiratory Rate: 16 bpm, Temperature: 36.5 °C, Oxygen Saturation: 98%"
-        />
-        <MedicalRecord
-          date="15/04/2023"
-          recordNumber="12345"
-          reason="nhói tim, khó thở sau khi thấy cờ Đảng"
-          diagnosis="quá yêu nước"
-          treatment="uống thuốc kê đơn, theo dõi thêm trong 7 ngày"
-          prescription="ngắm quốc kỳ mỗi sáng, viên năng lượng yêu nước"
-          vitalSign="Blood Pressure: 120/80 mmHg, Pulse Rate: 80 bpm, Respiratory Rate: 16 bpm, Temperature: 36.5 °C, Oxygen Saturation: 98%"
-        />
+        {loading ? (
+          <div className="text-center py-8">Đang tải bệnh án...</div>
+        ) : prescriptions.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            Không có bệnh án nào.
+          </div>
+        ) : (
+          prescriptions.map((pres) => (
+            <MedicalRecord key={pres.prescriptionId} prescription={pres} />
+          ))
+        )}
       </div>
+      <AddMedicalRecordModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSubmit={handleAddMedicalRecord}
+        patientId={Number(patientId)}
+      />
     </div>
   );
 }
@@ -335,14 +374,14 @@ export function InvoicesContent() {
                   <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
                     {format(new Date(bill.createdAt), "dd-MM-yyyy")}
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
+                  <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
                     {bill.status === "PAID"
                       ? "Đã thanh toán"
                       : bill.status === "UNPAID"
                       ? "Chưa thanh toán"
                       : "Đã hủy"}
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
+                  <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
                     {bill.totalCost.toLocaleString("vi-VN")} VNĐ
                   </TableCell>
                   <TableCell className="px-4 py-3 flex items-center text-gray-500 text-theme-md dark:text-gray-400">
@@ -595,6 +634,10 @@ export function PaymentsContent() {
 export function PatientInfoContent() {
   const [patient, setPatient] = useState<Patient | null>(null);
   const { patientId } = useParams();
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editData, setEditData] = useState<PatientDto>({} as PatientDto);
+  const [loading, setLoading] = useState(false);
+  const [errorModal, setErrorModal] = useState<string | null>(null);
 
   useEffect(() => {
     if (!patientId) return;
@@ -602,21 +645,87 @@ export function PatientInfoContent() {
     const fetchPatient = async () => {
       try {
         const data = await patientService.getPatientById(Number(patientId));
-        console.log("Patient data:", data);
         setPatient(data);
+        setEditData({
+          userId: data.patientId,
+          height: data.height,
+          weight: data.weight,
+          bloodType: data.bloodType,
+          avatar: data.avatar,
+          allergies: data.allergies,
+          fullName: data.fullName,
+          birthday: data.birthday,
+          gender: data.gender,
+          phone: data.phone,
+          email: data.email,
+          address: data.address,
+          insuranceNumber: data.insuranceNumber,
+          identityNumber: data.identityNumber,
+        });
       } catch (error) {
-        console.error("Failed to fetch patient data:", error);
+        setErrorModal("Không thể tải thông tin bệnh nhân!");
       }
     };
 
     fetchPatient();
   }, [patientId]);
 
+  const handleEditChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setEditData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!patientId) return;
+    try {
+      setLoading(true);
+      await patientService.updatePatient(Number(patientId), {
+        userId: editData.userId ?? patient?.patientId ?? 0,
+        identityNumber: editData.identityNumber || "",
+        insuranceNumber: editData.insuranceNumber || "",
+        fullName: editData.fullName || "",
+        birthday: editData.birthday || "",
+        phone: editData.phone || "",
+        email: editData.email || "",
+        avatar: patient?.avatar || "",
+        gender: editData.gender as "MALE" | "FEMALE" | "OTHER",
+        address: editData.address || "",
+        allergies: patient?.allergies || "",
+        height: patient?.height ?? 0,
+        weight: patient?.weight ?? 0,
+        bloodType: patient?.bloodType || "O+",
+      });
+      setShowEditModal(false);
+      const data = await patientService.getPatientById(Number(patientId));
+      setPatient(data);
+    } catch (error: any) {
+      console.error("Lỗi cập nhật:", error);
+      let message = "Cập nhật thông tin thất bại!";
+      if (error?.response?.data?.message) {
+        message = error.response.data.message;
+      } else if (error?.message) {
+        message = error.message;
+      }
+      setErrorModal(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="bg-white py-6 px-5 rounded-lg border border-gray-200">
       <div className="flex justify-between mb-4">
         <h2 className="text-xl font-semibold">Thông tin bệnh nhân</h2>
-        <button className="flex items-center justify-center bg-base-700 py-2.5 px-5 rounded-lg text-white text-sm hover:bg-base-700/70">
+        <button
+          className="flex items-center justify-center bg-base-700 py-2.5 px-5 rounded-lg text-white text-sm hover:bg-base-700/70"
+          onClick={() => setShowEditModal(true)}
+        >
           Sửa
         </button>
       </div>
@@ -646,14 +755,14 @@ export function PatientInfoContent() {
                 : "Khác"}
             </p>
           </div>
-          {/* <div>
+          <div>
             <p className="text-gray-500 text-sm">Điện thoại</p>
-            <p className="font-medium">{patient.phone || ""}</p>
+            <p className="font-medium">{patient?.phone || ""}</p>
           </div>
           <div>
             <p className="text-gray-500 text-sm">Email</p>
-            <p className="font-medium">{patient.email || ""}</p>
-          </div> */}
+            <p className="font-medium">{patient?.email || ""}</p>
+          </div>
           <div>
             <p className="text-gray-500 text-sm">Địa chỉ</p>
             <p className="font-medium">{patient?.address}</p>
@@ -676,6 +785,147 @@ export function PatientInfoContent() {
           </div>
         </div>
       </div>
+
+      {/* Modal chỉnh sửa thông tin bệnh nhân */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">
+              Chỉnh sửa thông tin bệnh nhân
+            </h2>
+            <form
+              onSubmit={handleEditSubmit}
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            >
+              <div className="space-y-4">
+                <div>
+                  <label className="block font-medium mb-1">Họ và tên</label>
+                  <input
+                    name="fullName"
+                    value={editData.fullName || ""}
+                    onChange={handleEditChange}
+                    className="w-full border rounded px-3 py-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-1">Ngày sinh</label>
+                  <input
+                    name="birthday"
+                    type="date"
+                    value={editData.birthday || ""}
+                    onChange={handleEditChange}
+                    className="w-full border rounded px-3 py-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-1">Giới tính</label>
+                  <select
+                    name="gender"
+                    value={editData.gender || ""}
+                    onChange={handleEditChange}
+                    className="w-full border rounded px-3 py-2"
+                    required
+                  >
+                    <option value="">Chọn giới tính</option>
+                    <option value="MALE">Nam</option>
+                    <option value="FEMALE">Nữ</option>
+                    <option value="OTHER">Khác</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-medium mb-1">Điện thoại</label>
+                  <input
+                    name="phone"
+                    value={editData.phone || ""}
+                    onChange={handleEditChange}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-1">Email</label>
+                  <input
+                    name="email"
+                    type="email"
+                    value={editData.email || ""}
+                    onChange={handleEditChange}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block font-medium mb-1">Địa chỉ</label>
+                  <input
+                    name="address"
+                    value={editData.address || ""}
+                    onChange={handleEditChange}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-1">
+                    Bảo hiểm y tế
+                  </label>
+                  <input
+                    name="insuranceNumber"
+                    value={editData.insuranceNumber || ""}
+                    onChange={handleEditChange}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-1">
+                    Căn cước công dân
+                  </label>
+                  <input
+                    name="identityNumber"
+                    value={editData.identityNumber || ""}
+                    onChange={handleEditChange}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+                <div className="flex justify-end gap-2 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                    disabled={loading}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    disabled={loading}
+                  >
+                    {loading ? "Đang lưu..." : "Lưu"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal thông báo lỗi */}
+      {errorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
+            <h2 className="text-lg font-semibold mb-4 text-red-600">Lỗi</h2>
+            <p>{errorModal}</p>
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => setErrorModal(null)}
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

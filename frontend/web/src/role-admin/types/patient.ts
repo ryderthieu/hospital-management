@@ -77,3 +77,17 @@ export interface RoomDetailDto {
   roomId: number;
   patientId: number;
 }
+
+export interface PatientRoom {
+  roomId: number;
+  roomName: string;
+  maxCapacity: number;
+  note: string;
+  createdAt: string;
+}
+
+export interface PatientRoomDto {
+  roomName: string;
+  maxCapacity: number;
+  note?: string;
+}

@@ -1,9 +1,14 @@
-import type { Appointment, AppointmentFilters, AppointmentStats } from "../types/appointment"
+import type { Appointment, AppointmentStats, PaginatedResponse } from "../types/appointment"
 import { api } from "../../services/api"
 
-
-const doctorId = localStorage.getItem("currentDoctorId")
-const doctorIdNumber = doctorId ? Number.parseInt(doctorId) : null
+// Get doctorId safely
+const getDoctorId = (): number | null => {
+  if (typeof window !== "undefined") {
+    const doctorId = localStorage.getItem("currentDoctorId")
+    return doctorId ? Number.parseInt(doctorId) : null
+  }
+  return null
+}
 
 // Utility functions for appointment data
 export const formatAppointmentDate = (dateString: string): string => {
@@ -19,7 +24,10 @@ export const formatAppointmentTime = (timeString: string): string => {
   return timeString?.substring(0, 5)
 }
 
-export const formatTimeSlot = (slotStart: string, slotEnd: string): string => {
+export const formatTimeSlot = (slotStart?: string, slotEnd?: string): string => {
+  if (!slotStart || !slotEnd) {
+    return "Chưa xác định"
+  }
   const formattedStart = formatAppointmentTime(slotStart)
   const formattedEnd = formatAppointmentTime(slotEnd)
   return `${formattedStart} - ${formattedEnd}`
@@ -43,6 +51,12 @@ export const getAppointmentStatusColor = (status: string): { color: string; bgCo
     CANCELLED: { color: "#dc2626", bgColor: "#fee2e2" },
   }
   return colorMap[status as keyof typeof colorMap] || { color: "#6b7280", bgColor: "#f3f4f6" }
+}
+
+// Interface cho pagination
+export interface PaginationParams {
+  page: number
+  size: number
 }
 
 export const calculateAppointmentStats = (appointments: Appointment[]): AppointmentStats => {
@@ -69,109 +83,52 @@ export const calculateAppointmentStats = (appointments: Appointment[]): Appointm
   )
 }
 
-export const filterAppointments = (appointments: Appointment[], filters: AppointmentFilters): Appointment[] => {
-  return appointments.filter((appointment) => {
-    // Filter by status
-    if (filters.status && filters.status !== "all" && appointment.appointmentStatus !== filters.status) {
-      return false
-    }
-
-    // Filter by date
-    if (filters.date && appointment.schedule?.workDate !== filters.date) {
-      return false
-    }
-
-    // Filter by schedule ID
-    if (filters.scheduleId && appointment.schedule.scheduleId !== filters.scheduleId) {
-      return false
-    }
-
-    // Filter by search term (symptoms)
-    if (filters.searchTerm) {
-      const searchLower = filters.searchTerm.toLowerCase()
-      if (!appointment.symptoms.toLowerCase().includes(searchLower)) {
-        return false
-      }
-    }
-
-    return true
-  })
-}
-
-export const sortAppointmentsByTime = (appointments: Appointment[]): Appointment[] => {
-  return [...appointments].sort((a, b) => {
-    return a.schedule?.workDate?.localeCompare(b.schedule?.workDate || '') || 0
-  })
-}
-
-
+// Service for API calls
 export const appointmentService = {
-  // Get appointments by doctorId
-  async getAppointments(filters?: AppointmentFilters): Promise<Appointment[]> {
+  async getAppointments(pagination: PaginationParams): Promise<PaginatedResponse<Appointment>> {
     try {
-      // Build query parameters
-      const params: any = {}
-
-      if (filters?.date) {
-        params.date = filters.date
-      }
-      if (filters?.status && filters.status !== "all") {
-        params.status = filters.status
-      }
-      if (filters?.scheduleId) {
-        params.scheduleId = filters.scheduleId
+      const doctorIdNumber = getDoctorId()
+      if (!doctorIdNumber) {
+        throw new Error("Doctor ID not found")
       }
 
-      console.log("Fetching appointments with params:", params)
+      const params = {
+        pageNo: pagination.page,
+        pageSize: pagination.size,
+      }
 
       const response = await api.get(`/appointments/doctor/${doctorIdNumber}`, { params })
-      let appointments = response.data
-
-      // Apply client-side filters if needed
-      if (filters) {
-        appointments = filterAppointments(appointments, filters)
-      }
-
-      // Sort by time
-      return sortAppointmentsByTime(appointments)
+      return response.data
     } catch (error) {
       console.error("Error fetching appointments:", error)
       throw error
     }
   },
 
-  // Get appointment by ID
   async getAppointmentById(appointmentId: number): Promise<Appointment> {
     const response = await api.get(`/appointments/${appointmentId}`)
     return response.data
   },
 
-  // Update appointment status
   async updateAppointmentStatus(appointmentId: number, status: string): Promise<Appointment> {
     const response = await api.patch(`/appointments/${appointmentId}/status`, { status })
     return response.data
   },
 
-  // Add appointment notes
   async updateAppointmentNotes(appointmentId: number, notes: string): Promise<Appointment> {
     const response = await api.patch(`/appointments/${appointmentId}/notes`, { notes })
     return response.data
   },
 
-  // Get appointments for a specific date
   async getAppointmentsByDate(date: string): Promise<Appointment[]> {
+    const doctorIdNumber = getDoctorId()
+    if (!doctorIdNumber) {
+      throw new Error("Doctor ID not found")
+    }
+
     const response = await api.get(`/doctors/${doctorIdNumber}/appointments`, {
       params: { date },
     })
-    return sortAppointmentsByTime(response.data)
+    return response.data.content || response.data
   },
-
-  // Get appointment statistics
-  async getAppointmentStats(): Promise<AppointmentStats> {
-    const appointments = await this.getAppointments()
-    return calculateAppointmentStats(appointments)
-  },
-
-  // Expose the calculation function for use in hooks
-  calculateAppointmentStats,
 }

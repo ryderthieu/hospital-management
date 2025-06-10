@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   View,
   Text,
@@ -17,18 +16,20 @@ import type { StackNavigationProp } from "@react-navigation/stack"
 import type { RouteProp } from "@react-navigation/native"
 import { Ionicons } from "@expo/vector-icons"
 import { WebView } from "react-native-webview"
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import type { RootStackParamList } from "../types"
 import { globalStyles, colors } from "../../../styles/globalStyles"
 import Header from "../../../components/Header"
 import { useFont, fontFamily } from "../../../context/FontContext"
-import { paymentService, type PaymentRequest } from "../../../services/PaymentService"
+import { useAuth } from "../../../context/AuthContext"
+import axios from "axios"
 
 type PaymentScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, "Payment">
   route: RouteProp<RootStackParamList, "Payment">
 }
 
-type PaymentMethod = "credit_card" | "momo" | "zalopay" | "vnpay"
+type PaymentMethod = "credit_card" | "momo" | "zalopay" | "vnpay" | "cash"
 
 interface PaymentOption {
   id: PaymentMethod
@@ -63,21 +64,106 @@ const paymentMethods: PaymentOption[] = [
     icon: "vnpay",
     description: "Thanh toán qua VNPay Gateway",
   },
+  {
+    id: "cash",
+    name: "Tiền mặt",
+    icon: "cash",
+    description: "Thanh toán tiền mặt tại quầy",
+  },
 ]
+
+const API_BASE_URL = "http://192.168.120.172:8080"
 
 export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route }) => {
   const { fontsLoaded } = useFont()
-  const { doctor, selectedDate, selectedTime, hasInsurance, selectedSymptoms } = route.params
-
+  const { patient } = useAuth() // Lấy patient từ AuthContext
+  const { doctor, selectedDate, selectedTime, hasInsurance, selectedSymptoms, location, appointmentId } = route.params
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("credit_card")
   const [agreedToTerms, setAgreedToTerms] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)
   const [showWebView, setShowWebView] = useState(false)
   const [webViewUrl, setWebViewUrl] = useState("")
+  const [billId, setBillId] = useState<number | null>(null)
 
   const totalAmount = 150000
-  const insuranceDiscount = hasInsurance ? 0 : 0
+  const insuranceDiscount = hasInsurance ? 30000 : 0
   const finalAmount = totalAmount - insuranceDiscount
+
+  // Tạo hóa đơn khi màn hình được tải
+  useEffect(() => {
+    const createBill = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token')
+        if (!token) {
+          throw new Error('Không tìm thấy token. Vui lòng đăng nhập lại.')
+        }
+        if (!patient?.patientId) {
+          throw new Error('Không tìm thấy patientId. Vui lòng kiểm tra thông tin người dùng.')
+        }
+
+        console.log('Sending request to:', `${API_BASE_URL}/api/payment/bills`)
+        console.log('Token:', token)
+        console.log('Payload:', {
+          appointmentId: appointmentId || 1,
+          patientId: patient.patientId,
+          totalCost: totalAmount,
+          insuranceDiscount: insuranceDiscount,
+          amount: finalAmount,
+          status: 'UNPAID',
+          billDetails: [
+            {
+              itemName: `Khám bệnh - ${doctor.specialty}`,
+              itemType: 'CONSULTATION',
+              quantity: 1,
+              unitPrice: totalAmount,
+              insuranceDiscount: insuranceDiscount,
+            },
+          ],
+        })
+
+        const response = await axios.post(`${API_BASE_URL}/api/payment/bills`, {
+          appointmentId: appointmentId || 1,
+          patientId: patient.patientId,
+          totalCost: totalAmount,
+          insuranceDiscount: insuranceDiscount,
+          amount: finalAmount,
+          status: 'UNPAID',
+          billDetails: [
+            {
+              itemName: `Khám bệnh - ${doctor.specialty}`,
+              itemType: 'CONSULTATION',
+              quantity: 1,
+              unitPrice: totalAmount,
+              insuranceDiscount: insuranceDiscount,
+            },
+          ],
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+
+        console.log('Response:', response.data)
+        if (response.data.billId) {
+          setBillId(response.data.billId)
+        } else {
+          throw new Error('Không nhận được billId từ server')
+        }
+      } catch (error: any) {
+        console.error('Lỗi khi tạo hóa đơn:', error.response?.data || error.message)
+        Alert.alert('Lỗi', error.message || 'Không thể tạo hóa đơn. Vui lòng thử lại.')
+        if (error.response?.status === 401) {
+          // Chuyển hướng về màn hình đăng nhập nếu token không hợp lệ
+          navigation.navigate('Login')
+        }
+      }
+    }
+
+    if (!billId) {
+      createBill()
+    }
+  }, [billId, appointmentId, doctor.specialty, totalAmount, insuranceDiscount, finalAmount, patient, navigation])
 
   const handlePaymentMethodSelect = (method: PaymentMethod) => {
     setSelectedPaymentMethod(method)
@@ -87,39 +173,59 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
     setAgreedToTerms(!agreedToTerms)
   }
 
-  const generateOrderId = () => {
-    return `ORDER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-  }
-
   const handleContinue = async () => {
     if (!agreedToTerms) {
       Alert.alert("Thông báo", "Vui lòng đồng ý với điều khoản dịch vụ để tiếp tục.", [{ text: "OK" }])
       return
     }
 
-    setIsProcessing(true)
-
-    const paymentRequest: PaymentRequest = {
-      amount: finalAmount,
-      currency: "VND",
-      description: `Khám bệnh - ${doctor.name} - ${selectedDate} ${selectedTime}`,
-      orderId: generateOrderId(),
-      returnUrl: "yourapp://payment-result",
+    if (!billId) {
+      Alert.alert("Lỗi", "Hóa đơn chưa được tạo. Vui lòng thử lại.")
+      return
     }
 
+    setIsProcessing(true)
+
     try {
-      const result = await paymentService.mockPayment(selectedPaymentMethod, paymentRequest)
-
-      setIsProcessing(false)
-
-      if (result.success) {
-        handlePaymentSuccess(result.transactionId!)
-      } else {
-        Alert.alert("Thanh toán thất bại", result.error || "Có lỗi xảy ra. Vui lòng thử lại.", [{ text: "OK" }])
+      const token = await AsyncStorage.getItem('token')
+      if (!token) {
+        throw new Error('Không tìm thấy token. Vui lòng đăng nhập lại.')
       }
-    } catch (error) {
+
+      if (selectedPaymentMethod === "cash") {
+        const response = await axios.post(`${API_BASE_URL}/payment/transactions/cash-payment/${billId}`, {}, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+        if (response.data.error === 0) {
+          handlePaymentSuccess(`CASH_${Date.now()}`)
+        } else {
+          throw new Error(response.data.message || "Thanh toán tiền mặt thất bại")
+        }
+      } else {
+        const response = await axios.post(`${API_BASE_URL}/api/payment/transactions/create-payment/${billId}`, {}, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+        if (response.data.error === 0 && response.data.data) {
+          setWebViewUrl(response.data.data)
+          setShowWebView(true)
+        } else {
+          throw new Error(response.data.message || "Không thể tạo link thanh toán")
+        }
+      }
+    } catch (error: any) {
+      console.error('Lỗi thanh toán:', error.response?.data || error.message)
+      Alert.alert('Lỗi', error.message || 'Không thể xử lý thanh toán. Vui lòng thử lại.', [{ text: "OK" }])
+      if (error.response?.status === 401) {
+        navigation.navigate('Login')
+      }
+    } finally {
       setIsProcessing(false)
-      Alert.alert("Lỗi", "Không thể xử lý thanh toán. Vui lòng thử lại.", [{ text: "OK" }])
     }
   }
 
@@ -129,14 +235,18 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
       selectedDate,
       selectedTime,
       transactionId,
+      billId,
     })
   }
 
   const handleWebViewNavigationStateChange = (navState: any) => {
-    if (navState.url.includes("payment-success")) {
+    if (navState.url.includes(`${API_BASE_URL}/api/payment/transactions/${billId}/success`)) {
       setShowWebView(false)
-      handlePaymentSuccess("TXN_SUCCESS_" + Date.now())
-    } else if (navState.url.includes("payment-cancel") || navState.url.includes("payment-error")) {
+      handlePaymentSuccess(`TXN_SUCCESS_${Date.now()}`)
+    } else if (
+      navState.url.includes(`${API_BASE_URL}/api/payment/transactions/${billId}/cancel`) ||
+      navState.url.includes("payment-error")
+    ) {
       setShowWebView(false)
       Alert.alert("Thanh toán bị hủy", "Giao dịch đã bị hủy hoặc thất bại.", [{ text: "OK" }])
     }
@@ -197,6 +307,11 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
               <Text style={[styles.vnPayText, { fontFamily: fontFamily.bold }]}>VNPay</Text>
             </View>
           )}
+          {method.icon === "cash" && (
+            <View style={styles.cashIcon}>
+              <Ionicons name="cash-outline" size={24} color={colors.text} />
+            </View>
+          )}
         </View>
       </TouchableOpacity>
     )
@@ -206,7 +321,6 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
     return null
   }
 
-  // Show WebView for payment processing
   if (showWebView) {
     return (
       <SafeAreaView style={globalStyles.container}>
@@ -290,17 +404,15 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
       {/* Continue Button - Fixed at bottom */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity
-          style={[globalStyles.button, (!agreedToTerms || isProcessing) && styles.disabledButton]}
+          style={[globalStyles.button, (!agreedToTerms || isProcessing || !billId) && styles.disabledButton]}
           onPress={handleContinue}
-          disabled={!agreedToTerms || isProcessing}
+          disabled={!agreedToTerms || isProcessing || !billId}
           activeOpacity={0.8}
         >
           {isProcessing ? (
             <View style={styles.processingContainer}>
               <ActivityIndicator size="small" color={colors.white} />
-              <Text style={[globalStyles.buttonText, { fontFamily: fontFamily.bold, marginLeft: 8 }]}>
-                Đang xử lý...
-              </Text>
+              <Text style={[globalStyles.buttonText, { fontFamily: fontFamily.bold, marginLeft: 8 }]}>Đang xử lý...</Text>
             </View>
           ) : (
             <Text style={[globalStyles.buttonText, { fontFamily: fontFamily.bold }]}>Thanh toán</Text>
@@ -325,7 +437,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   doctorImage: {
     width: 60,
@@ -461,6 +573,9 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 12,
   },
+  cashIcon: {
+    padding: 8,
+  },
   termsContainer: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -527,7 +642,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 34, // Safe area bottom padding
+    paddingBottom: 34,
     paddingTop: 16,
     backgroundColor: colors.white,
     borderTopWidth: 1,

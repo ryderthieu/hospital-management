@@ -153,7 +153,7 @@ export default function PatientSidebar({ activeTab, setActiveTab }) {
         {/* Patient Image */}
         <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200">
           <img
-            src="/images/user/owner.jpg"
+            src={patient?.avatar || "/images/default-avatar.png"}
             alt="Patient"
             className="w-full h-full object-cover"
           />

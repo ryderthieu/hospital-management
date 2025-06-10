@@ -1,60 +1,139 @@
-import { useState, useEffect, useCallback } from "react"
-import type { Appointment, AppointmentFilters, AppointmentStats} from "../types/appointment"
-import { appointmentService, formatAppointmentDate } from "../services/appointmentServices"
+"use client"
+
+import { useState, useEffect, useCallback, useMemo } from "react"
+import type { Appointment, AppointmentFilters, AppointmentStats } from "../types/appointment"
+import { appointmentService } from "../services/appointmentServices"
 import { message } from "antd"
 import dayjs from "dayjs"
 
+export interface PaginatedResponse<T> {
+  content: T[]
+  pageNo: number
+  pageSize: number
+  totalElements: number
+  totalPages: number
+  last: boolean
+}
+
+export interface PaginationParams {
+  page: number
+  size: number
+}
+
 export const useAppointments = (initialFilters?: AppointmentFilters) => {
-  const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([])
+  const [paginatedData, setPaginatedData] = useState<PaginatedResponse<Appointment>>({
+    content: [],
+    pageNo: 0,
+    pageSize: 10,
+    totalElements: 0,
+    totalPages: 0,
+    last: true,
+  })
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Set default date to today
+  // Pagination state for API calls
+  const [pagination, setPagination] = useState<PaginationParams>({
+    page: 0,
+    size: 10,
+  })
+
+  // Client-side filters for additional filtering
   const [filters, setFilters] = useState<AppointmentFilters>({
-    date: dayjs().format("YYYY-MM-DD"), // Default to today
+    date: dayjs().format("YYYY-MM-DD"),
     ...initialFilters,
   })
 
-  const [stats, setStats] = useState<AppointmentStats>({
-    total: 0,
-    pending: 0,
-    confirmed: 0,
-    completed: 0,
-    cancelled: 0,
-  })
-
+  // Fetch data from API
   const fetchAppointments = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
-      const appointmentData = await appointmentService.getAppointments(filters)
-      setAppointments(appointmentData)
-      setFilteredAppointments(appointmentData)
 
-      // Calculate stats from filtered data
-      const statsData = appointmentService.calculateAppointmentStats(appointmentData)
-      setStats(statsData)
-      console.log("Applied filters:", filters)
+      const response = await appointmentService.getAppointments(pagination)
+      setPaginatedData(response)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Không thể tải danh sách lịch hẹn/bệnh nhân"
+      const errorMessage = err instanceof Error ? err.message : "Không thể tải danh sách lịch hẹn"
       setError(errorMessage)
       message.error(errorMessage)
     } finally {
       setLoading(false)
     }
-  }, [filters])
+  }, [pagination])
 
   useEffect(() => {
     fetchAppointments()
   }, [fetchAppointments])
 
-  const updateFilters = useCallback((newFilters: Partial<AppointmentFilters>) => {
-    setFilters((prev) => {
-      const updatedFilters = { ...prev, ...newFilters }
-      console.log("Updating filters:", updatedFilters)
-      return updatedFilters
+  // Apply client-side filters to the current page data
+  const filteredAppointments = useMemo(() => {
+    return paginatedData.content.filter((appointment) => {
+      // Filter by status
+      if (filters.status && filters.status !== "all" && appointment.appointmentStatus !== filters.status) {
+        return false
+      }
+
+      // Filter by date
+      if (filters.date && appointment.schedule?.workDate !== filters.date) {
+        return false
+      }
+
+      // Filter by gender - only filter if patientInfo exists
+      if (filters.gender && filters.gender !== "all" && appointment.patientInfo?.gender !== filters.gender) {
+        return false
+      }
+
+      // Filter by search term
+      if (filters.searchTerm) {
+        const searchLower = filters.searchTerm.toLowerCase()
+        const symptomsMatch = appointment.symptoms.toLowerCase().includes(searchLower)
+        const nameMatch = appointment.patientInfo?.fullName?.toLowerCase().includes(searchLower) || false
+        if (!symptomsMatch && !nameMatch) {
+          return false
+        }
+      }
+
+      return true
     })
+  }, [paginatedData.content, filters])
+
+  // Calculate stats from filtered data
+  const stats = useMemo((): AppointmentStats => {
+    return filteredAppointments.reduce(
+      (stats, appointment) => {
+        stats.total++
+        switch (appointment.appointmentStatus) {
+          case "PENDING":
+            stats.pending++
+            break
+          case "CONFIRMED":
+            stats.confirmed++
+            break
+          case "COMPLETED":
+            stats.completed++
+            break
+          case "CANCELLED":
+            stats.cancelled++
+            break
+        }
+        return stats
+      },
+      { total: 0, pending: 0, confirmed: 0, completed: 0, cancelled: 0 },
+    )
+  }, [filteredAppointments])
+
+  // Update filters (client-side only)
+  const updateFilters = useCallback((newFilters: Partial<AppointmentFilters>) => {
+    setFilters((prev) => ({ ...prev, ...newFilters }))
+  }, [])
+
+  // Update pagination (triggers API call)
+  const updatePagination = useCallback((page: number, size?: number) => {
+    setPagination((prev) => ({
+      page: page - 1, // Convert from 1-based to 0-based
+      size: size || prev.size,
+    }))
   }, [])
 
   const clearDateFilter = useCallback(() => {
@@ -73,7 +152,7 @@ export const useAppointments = (initialFilters?: AppointmentFilters) => {
       try {
         await appointmentService.updateAppointmentStatus(appointmentId, status)
         message.success("Cập nhật trạng thái thành công")
-        fetchAppointments() // Refresh data
+        fetchAppointments()
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Không thể cập nhật trạng thái"
         message.error(errorMessage)
@@ -87,7 +166,7 @@ export const useAppointments = (initialFilters?: AppointmentFilters) => {
       try {
         await appointmentService.updateAppointmentNotes(appointmentId, notes)
         message.success("Cập nhật ghi chú thành công")
-        fetchAppointments() // Refresh data
+        fetchAppointments()
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Không thể cập nhật ghi chú"
         message.error(errorMessage)
@@ -101,13 +180,14 @@ export const useAppointments = (initialFilters?: AppointmentFilters) => {
   }, [fetchAppointments])
 
   return {
-    appointments,
-    filteredAppointments,
+    appointments: filteredAppointments,
+    paginatedData,
     loading,
     error,
     filters,
     stats,
     updateFilters,
+    updatePagination,
     clearDateFilter,
     setTodayFilter,
     updateAppointmentStatus,
@@ -115,30 +195,3 @@ export const useAppointments = (initialFilters?: AppointmentFilters) => {
     refreshAppointments,
   }
 }
-
-// //Dành cho việc hiển thị bảng danh sách bệnh nhân
-// export const useAppointmentPatientsTable = () => {
-//   const { appointments, loading, error, ...appointmentHook } = useAppointments()
-
-//   // Transform appointments to patient format
-
-//     const transformAppointments = appointments.map((appointment, index) => ({
-//         appointmentId: appointment.appointmentId,
-//         number: appointment.number,
-//         patientName: appointment.patientInfo.fullName, 
-//         patientId: appointment.patientInfo.patientId,
-//         date: formatAppointmentDate(appointment.schedule.workDate),
-//         gender: appointment.patientInfo.gender,
-//         birthday: appointment.patientInfo.birthday,
-//         symptom: appointment.symptoms,
-//         status: getAppointmentStatusText(appointment.appointmentStatus),
-//         appointmentFullData: appointment
-//     }))
-
-//   return {
-//     transformAppointments ,
-//     loading,
-//     error,
-//     ...appointmentHook,
-//   }
-// }
