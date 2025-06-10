@@ -1,4 +1,10 @@
-import type { Doctor, DoctorDto, CreateDoctorRequest } from "../types/doctor";
+import type {
+  Doctor,
+  DoctorDto,
+  CreateDoctorRequest,
+  ExaminationRoom,
+  ExaminationRoomDto,
+} from "../types/doctor";
 import { api } from "../../services/api";
 
 export const doctorService = {
@@ -74,6 +80,35 @@ export const doctorService = {
 
     const response = await api.get<Doctor | null>(
       `/doctors/filter?${queryParams.toString()}`
+    );
+    return response.data;
+  },
+
+  // Get all examination rooms
+  async getAllExaminationRooms(): Promise<ExaminationRoom[]> {
+    const response = await api.get<ExaminationRoom[]>(
+      "/doctors/examination-rooms"
+    );
+    return response.data;
+  },
+
+  // Get examination room by ID
+  async getExaminationRoomById(
+    roomId: number
+  ): Promise<ExaminationRoom | null> {
+    const response = await api.get<ExaminationRoom | null>(
+      `/doctors/examination-rooms/${roomId}`
+    );
+    return response.data;
+  },
+
+  // Create examination room
+  async createExaminationRoom(
+    roomData: Omit<ExaminationRoomDto, "roomId">
+  ): Promise<ExaminationRoomDto> {
+    const response = await api.post<ExaminationRoomDto>(
+      "/doctors/examination-rooms",
+      roomData
     );
     return response.data;
   },

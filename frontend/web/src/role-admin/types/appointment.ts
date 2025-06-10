@@ -130,3 +130,77 @@ export interface AppointmentNoteDto {
   noteType: "DOCTOR" | "PATIENT";
   noteText: string;
 }
+
+export interface AppointmentResponse {
+  appointmentId: number;
+  doctorId: number;
+  schedule: ScheduleDto;
+  symptoms: string;
+  number: number;
+  slotStart: string;
+  slotEnd: string;
+  appointmentStatus: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+  createdAt: string;
+  patientInfo: PatientDto;
+  doctorInfo: DoctorDto;
+  appointmentNotes: AppointmentNoteDto[];
+}
+
+export interface ScheduleDto {
+  scheduleId: number;
+  doctorId: number;
+  workDate: string;
+  startTime: string;
+  endTime: string;
+  shift: string;
+  roomId: number;
+  createdAt: string;
+  location: string;
+}
+
+export interface PatientDto {
+  patientId: number;
+  userId: number;
+  identityNumber: string;
+  insuranceNumber: string;
+  fullName: string;
+  avatar: string;
+  birthday: string;
+  gender: string;
+  address: string;
+  allergies: string;
+  height: number;
+  weight: number;
+  bloodType: string;
+  createdAt: string;
+}
+
+export interface DoctorDto {
+  doctorId: number;
+  userId: number;
+  identityNumber: string;
+  fullName: string;
+  avatar: string;
+  birthday: string;
+  gender: string;
+  address: string;
+  academicDegree: string;
+  specialization: string;
+  type: string;
+  consultationFee: string;
+  departmentId: number;
+  departmentName: string;
+  createdAt: string;
+}
+
+export interface AppointmentUpdateRequest {
+  appointmentId: number;
+  doctorId: number;
+  patientId: number;
+  scheduleId: number;
+  symptoms: string;
+  number: number;
+  appointmentStatus: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+  slotStart: string;
+  slotEnd: string;
+}
