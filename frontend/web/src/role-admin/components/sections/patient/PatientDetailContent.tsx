@@ -92,7 +92,7 @@ export function AppointmentsContent() {
       const data = await appointmentService.getAppointmentsByPatientId(
         Number(patientId)
       );
-      setAppointments(data);
+      setAppointments(Array.isArray(data) ? data : data.content || []);
     } catch (error) {
       console.error("Failed to fetch appointments:", error);
     }
@@ -148,7 +148,7 @@ export function AppointmentsContent() {
             appointments.map((appt) => (
               <TableRow key={appt.appointmentId}>
                 <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
-                  {appt.appointmentId}
+                  CH{appt.appointmentId.toString().padStart(4, "0")}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
                   {appt.doctorInfo?.fullName}
@@ -330,9 +330,9 @@ export function InvoicesContent() {
               {bills.map((bill) => (
                 <TableRow key={bill.billId}>
                   <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
-                    {bill.billId}
+                    HD{bill.billId.toString().padStart(4, "0")}
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
+                  <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
                     {format(new Date(bill.createdAt), "dd-MM-yyyy")}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
@@ -539,7 +539,7 @@ export function PaymentsContent() {
               {paymentData.map((transaction) => (
                 <TableRow key={transaction.id}>
                   <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm font-bold dark:text-gray-400">
-                    {transaction.id}
+                    GD{transaction.id.toString().padStart(4, "0")}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
                     {transaction.transactionDate}
@@ -628,7 +628,9 @@ export function PatientInfoContent() {
           </div>
           <div>
             <p className="text-gray-500 text-sm">Mã bệnh nhân</p>
-            <p className="font-medium">{patient?.patientId}</p>
+            <p className="font-medium">
+              BN{patient?.patientId.toString().padStart(4, "0")}
+            </p>
           </div>
           <div>
             <p className="text-gray-500 text-sm">Ngày sinh</p>
@@ -731,22 +733,10 @@ export function HealthInfoContent() {
               <p className="font-medium">{patient?.weight} kg</p>
             </div>
             <div className="p-3 bg-gray-50 rounded-lg text-center">
-              <p className="text-gray-500 text-sm">BMI</p>
-              <p className="font-medium">22.7</p>
-            </div>
-            <div className="p-3 bg-gray-50 rounded-lg text-center">
-              <p className="text-gray-500 text-sm">Huyết áp</p>
-              <p className="font-medium">120/80 mmHg</p>
-            </div>
-            <div className="p-3 bg-gray-50 rounded-lg text-center">
               <p className="text-gray-500 text-sm">Nhóm máu</p>
               <p className="font-medium">
                 {patient?.bloodType || "Chưa xác định"}
               </p>
-            </div>
-            <div className="p-3 bg-gray-50 rounded-lg text-center">
-              <p className="text-gray-500 text-sm">Đường huyết</p>
-              <p className="font-medium">95 mg/dL</p>
             </div>
           </div>
         </div>

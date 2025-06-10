@@ -164,7 +164,7 @@ export default function PatientSidebar({ activeTab, setActiveTab }) {
           {patient ? patient.fullName : "Đang tải..."}
         </h3>
         <p className="text-gray-500 text-sm my-1">
-          Mã bệnh nhân: {patient ? patient.patientId : ""}
+          BN{patient ? patient.patientId.toString().padStart(4, "0") : ""}
         </p>
         {/* <p className="text-gray-700 text-sm">{patient?.phone || ""}</p> */}
       </div>

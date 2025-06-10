@@ -59,9 +59,13 @@ export const appointmentService = {
   },
 
   // Get all appointments by patient ID
-  async getAppointmentsByPatientId(patientId: number): Promise<Appointment[]> {
-    const response = await api.get<Appointment[]>(
-      `/appointments/patient/${patientId}`
+  async getAppointmentsByPatientId(
+    patientId: number,
+    pageNo: number = 0,
+    pageSize: number = 10
+  ): Promise<any> {
+    const response = await api.get(
+      `/appointments/patient/${patientId}?pageNo=${pageNo}&pageSize=${pageSize}`
     );
     return response.data;
   },
