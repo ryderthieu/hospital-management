@@ -113,7 +113,15 @@ const HealthIcon = () => (
   </svg>
 );
 
-export default function PatientSidebar({ activeTab, setActiveTab }) {
+interface PatientSidebarProps {
+  activeTab: string;
+  setActiveTab: (tabId: string) => void;
+}
+
+export default function PatientSidebar({
+  activeTab,
+  setActiveTab,
+}: PatientSidebarProps) {
   const navigate = useNavigate();
   const { patientId } = useParams<{ patientId: string }>();
   const [patient, setPatient] = useState<Patient | null>(null);
@@ -136,14 +144,14 @@ export default function PatientSidebar({ activeTab, setActiveTab }) {
   const menuItems = [
     { id: "medical-records", name: "Bệnh án", icon: <MedicalRecordIcon /> },
     { id: "appointments", name: "Lịch khám", icon: <CalendarIcon /> },
-    { id: "invoices", name: "Hóa đơn", icon: <ListIcon /> },
-    { id: "payments", name: "Thanh toán", icon: <PaymentIcon /> },
+    { id: "invoices", name: "Hóa đơn", icon: <PaymentIcon /> },
+    // { id: "payments", name: "Thanh toán", icon: <PaymentIcon /> },
     { id: "patient-info", name: "Thông tin bệnh nhân", icon: <UserIcon /> },
     { id: "health-info", name: "Thông tin sức khỏe", icon: <HealthIcon /> },
     {
       id: "contact-info",
       name: "Thông tin liên lạc khẩn cấp",
-      icon: <HealthIcon />,
+      icon: <ListIcon />,
     },
   ];
 
