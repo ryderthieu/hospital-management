@@ -209,25 +209,25 @@ export default function InpatientTable() {
             <TableRow>
               <TableCell
                 isHeader
-                className="py-3 pr-6 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                className="py-3 pr-9 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
                 Mã nội trú
               </TableCell>
               <TableCell
                 isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                className="py-3 pr-9 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
                 Mã phòng
               </TableCell>
               <TableCell
                 isHeader
-                className="py-3 pr-6 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                className="py-3 pr-7 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
                 Mã bệnh nhân
               </TableCell>
               <TableCell
                 isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+                className="py-3 pr-13 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
                 Ngày tạo
               </TableCell>
@@ -246,7 +246,7 @@ export default function InpatientTable() {
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                   MT{inpatient.detailId.toString().padStart(4, "0")}
                 </TableCell>
-                <TableCell className="py-3 font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                   P{inpatient.roomId.toString().padStart(4, "0")}
                 </TableCell>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
