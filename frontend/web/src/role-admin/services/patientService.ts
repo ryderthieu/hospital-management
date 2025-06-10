@@ -29,10 +29,10 @@ export const patientService = {
   },
 
   async updatePatient(
-    patientId: string,
-    patientData: Partial<PatientDto>
-  ): Promise<Patient> {
-    const response = await api.put<Patient>(
+    patientId: number,
+    patientData: PatientDto
+  ): Promise<PatientDto> {
+    const response = await api.put<PatientDto>(
       `/patients/${patientId}`,
       patientData
     );
