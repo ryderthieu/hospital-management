@@ -14,7 +14,10 @@ import { patientService } from "../../../services/patientService";
 import { Patient, EmergencyContact, PatientDto } from "../../../types/patient";
 import { useParams, useNavigate } from "react-router-dom";
 import { appointmentService } from "../../../services/appointmentService";
-import { Appointment } from "../../../types/appointment";
+import {
+  Appointment,
+  AppointmentUpdateRequest,
+} from "../../../types/appointment";
 import { AppointmentModal, DeleteAppointmentModal } from "./AppointmentModal";
 import { Bill } from "../../../types/payment";
 import { paymentService } from "../../../services/paymentService";
@@ -117,6 +120,9 @@ export function AppointmentsContent() {
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
   const [deleteModal, setDeleteModal] = useState<Appointment | null>(null);
+  const [editModal, setEditModal] = useState<AppointmentUpdateRequest | null>(
+    null
+  );
 
   const formatHHmm = (timeStr: string) => {
     if (!timeStr) return "N/A";
@@ -134,6 +140,28 @@ export function AppointmentsContent() {
       setAppointments(Array.isArray(data) ? data : data.content || []);
     } catch (error) {
       console.error("Failed to fetch appointments:", error);
+    }
+  };
+
+  const handleEdit = async (appointmentId: number) => {
+    try {
+      const data = await appointmentService.getAppointmentById(appointmentId);
+      setEditModal({
+        appointmentId: data.appointmentId,
+        doctorId: data.doctorId,
+        patientId: data.patientInfo?.patientId ?? data.patientId ?? 0,
+        scheduleId: data.schedule?.scheduleId ?? data.scheduleId ?? 0,
+        symptoms: data.symptoms || "",
+        number:
+          typeof data.number === "number"
+            ? data.number
+            : parseInt(data.number, 10) || 0,
+        appointmentStatus: data.appointmentStatus,
+        slotStart: data.slotStart,
+        slotEnd: data.slotEnd,
+      });
+    } catch (error) {
+      alert("Không thể tải thông tin cuộc hẹn!");
     }
   };
 
@@ -223,13 +251,14 @@ export function AppointmentsContent() {
                 </TableCell>
                 <TableCell className="px-4 py-3 flex items-center text-gray-500 text-theme-md dark:text-gray-400">
                   <div className="flex gap-2">
+                    {/* Xem */}
                     <button
                       onClick={() => setSelectedAppointment(appt)}
-                      className="flex size-10 justify-center items-center gap-1 px-3 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                      className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
+                        className="h-4 w-4"
                         viewBox="0 0 20 20"
                         fill="currentColor"
                       >
@@ -241,14 +270,28 @@ export function AppointmentsContent() {
                         />
                       </svg>
                     </button>
-
+                    {/* Sửa */}
                     <button
-                      onClick={() => setDeleteModal(appt)}
-                      className="flex size-10 justify-center items-center gap-1 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                      onClick={() => handleEdit(appt.appointmentId)}
+                      className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
+                        className="h-4 w-4"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                      </svg>
+                    </button>
+                    {/* Xóa */}
+                    <button
+                      onClick={() => setDeleteModal(appt)}
+                      className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 transition-colors dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
                         viewBox="0 0 20 20"
                         fill="currentColor"
                       >
@@ -280,6 +323,37 @@ export function AppointmentsContent() {
           {...selectedAppointment}
           isOpen={true}
           onClose={() => setSelectedAppointment(null)}
+        />
+      )}
+      {/* Hiển thị modal chỉnh sửa */}
+      {editModal && (
+        <AppointmentEditModal
+          appointment={{
+            ...editModal,
+          }}
+          isOpen={true}
+          onClose={() => setEditModal(null)}
+          onSubmit={async (updatedData) => {
+            try {
+              await appointmentService.updateAppointment(
+                editModal.appointmentId,
+                {
+                  doctorId: updatedData.doctorId,
+                  patientId: updatedData.patientId,
+                  scheduleId: updatedData.scheduleId,
+                  symptoms: updatedData.symptoms,
+                  number: updatedData.number,
+                  appointmentStatus: updatedData.appointmentStatus,
+                  slotStart: updatedData.slotStart,
+                  slotEnd: updatedData.slotEnd,
+                }
+              );
+              setEditModal(null);
+              reloadAppointments();
+            } catch (error) {
+              throw error;
+            }
+          }}
         />
       )}
       {/* Hiển thị modal xóa */}
@@ -606,16 +680,38 @@ export function PaymentsContent() {
                   <TableCell className="px-4 py-3 flex items-center text-gray-500 text-theme-md dark:text-gray-400">
                     <button className="flex items-center gap-2 px-5 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
                       <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
+                        className="stroke-current fill-white dark:fill-gray-800"
+                        width="20"
+                        height="20"
                         viewBox="0 0 20 20"
-                        fill="currentColor"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
                       >
-                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                         <path
-                          fillRule="evenodd"
-                          d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                          clipRule="evenodd"
+                          d="M2.29004 5.90393H17.7067"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M17.7075 14.0961H2.29085"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M12.0826 3.33331C13.5024 3.33331 14.6534 4.48431 14.6534 5.90414C14.6534 7.32398 13.5024 8.47498 12.0826 8.47498C10.6627 8.47498 9.51172 7.32398 9.51172 5.90415C9.51172 4.48432 10.6627 3.33331 12.0826 3.33331Z"
+                          fill="currentColor"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                        />
+                        <path
+                          d="M7.91745 11.525C6.49762 11.525 5.34662 12.676 5.34662 14.0959C5.34661 15.5157 6.49762 16.6667 7.91745 16.6667C9.33728 16.6667 10.4883 15.5157 10.4883 14.0959C10.4883 12.676 9.33728 11.525 7.91745 11.525Z"
+                          fill="currentColor"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
                         />
                       </svg>
                     </button>
@@ -693,7 +789,7 @@ export function PatientInfoContent() {
         birthday: editData.birthday || "",
         phone: editData.phone || "",
         email: editData.email || "",
-        avatar: patient?.avatar || "",
+        avatar: editData.avatar || "",
         gender: editData.gender as "MALE" | "FEMALE" | "OTHER",
         address: editData.address || "",
         allergies: patient?.allergies || "",
@@ -852,6 +948,23 @@ export function PatientInfoContent() {
                     onChange={handleEditChange}
                     className="w-full border rounded px-3 py-2"
                   />
+                </div>
+                <div className="">
+                  <label className="block font-medium mb-1">Avatar (URL)</label>
+                  <input
+                    name="avatar"
+                    value={editData.avatar || ""}
+                    onChange={handleEditChange}
+                    className="w-full border rounded px-3 py-2"
+                    placeholder="Nhập đường dẫn ảnh đại diện"
+                  />
+                  {editData.avatar && (
+                    <img
+                      src={editData.avatar}
+                      alt="Avatar"
+                      className="mt-2 w-20 h-20 object-cover rounded-full border"
+                    />
+                  )}
                 </div>
               </div>
               <div className="space-y-4">
@@ -1094,5 +1207,212 @@ export function ContactInfoContent() {
         </div>
       </div>
     </div>
+  );
+}
+
+export function AppointmentEditModal({
+  appointment,
+  isOpen,
+  onClose,
+  onSubmit,
+}: {
+  appointment: AppointmentUpdateRequest;
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: AppointmentUpdateRequest) => Promise<void>;
+}) {
+  const [formData, setFormData] = useState<AppointmentUpdateRequest>({
+    ...appointment,
+    number: appointment.number,
+  });
+  const [loading, setLoading] = useState(false);
+  const [errorModal, setErrorModal] = useState<string | null>(null);
+
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "number" || name === "doctorId" ? Number(value) : value,
+    }));
+  };
+
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      appointmentStatus: e.target
+        .value as AppointmentUpdateRequest["appointmentStatus"],
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await onSubmit(formData);
+      setErrorModal(null);
+    } catch (error: any) {
+      // In chi tiết lỗi ra console
+      console.error("Lỗi cập nhật lịch khám:", error);
+
+      // Lấy thông tin chi tiết lỗi từ backend nếu có
+      let message = "Cập nhật lịch khám thất bại!";
+      if (error?.response?.data) {
+        // Nếu backend trả về mảng lỗi hoặc object lỗi chi tiết
+        if (Array.isArray(error.response.data)) {
+          message = error.response.data
+            .map((err: any) => err.message || JSON.stringify(err))
+            .join("\n");
+        } else if (typeof error.response.data === "object") {
+          // Nếu là object, lấy từng trường lỗi
+          message = Object.values(error.response.data)
+            .map((msg) => (Array.isArray(msg) ? msg.join(", ") : msg))
+            .join("\n");
+        } else if (error.response.data.message) {
+          message = error.response.data.message;
+        } else {
+          message = JSON.stringify(error.response.data);
+        }
+      } else if (error?.message) {
+        message = error.message;
+      }
+      alert(message);
+      setErrorModal(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+        <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-lg">
+          <h2 className="text-lg font-semibold mb-4">Chỉnh sửa lịch khám</h2>
+          <form
+            onSubmit={handleSubmit}
+            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+          >
+            <div className="space-y-4">
+              <div>
+                <label className="block font-medium mb-1">Bác sĩ (ID)</label>
+                <input
+                  name="doctorId"
+                  type="number"
+                  value={formData.doctorId}
+                  onChange={handleChange}
+                  className="w-full border rounded px-3 py-2"
+                  required
+                  disabled
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1">Triệu chứng</label>
+                <textarea
+                  name="symptoms"
+                  value={formData.symptoms}
+                  onChange={handleChange}
+                  className="w-full border rounded px-3 py-2"
+                  rows={2}
+                />
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block font-medium mb-1">
+                  Thời gian bắt đầu
+                </label>
+                <input
+                  name="slotStart"
+                  type="time"
+                  value={formData.slotStart}
+                  onChange={handleChange}
+                  className="w-full border rounded px-3 py-2"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1">
+                  Thời gian kết thúc
+                </label>
+                <input
+                  name="slotEnd"
+                  type="time"
+                  value={formData.slotEnd}
+                  onChange={handleChange}
+                  className="w-full border rounded px-3 py-2"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1">Số thứ tự</label>
+                <input
+                  name="number"
+                  type="number"
+                  value={formData.number}
+                  onChange={handleChange}
+                  className="w-full border rounded px-3 py-2"
+                  min={1}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1">Tình trạng</label>
+                <select
+                  name="appointmentStatus"
+                  value={formData.appointmentStatus || ""}
+                  onChange={handleStatusChange}
+                  className="w-full border rounded px-3 py-2"
+                  required
+                >
+                  <option value="PENDING">Chờ xác nhận</option>
+                  <option value="CONFIRMED">Đã xác nhận</option>
+                  <option value="COMPLETED">Đã khám</option>
+                  <option value="CANCELLED">Đã hủy</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                  disabled={loading}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  disabled={loading}
+                >
+                  {loading ? "Đang lưu..." : "Lưu"}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+      {/* Modal lỗi */}
+      {errorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
+            <h2 className="text-lg font-semibold mb-4 text-red-600">Lỗi</h2>
+            <p>{errorModal}</p>
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => setErrorModal(null)}
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

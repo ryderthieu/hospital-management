@@ -33,4 +33,6 @@ public interface DoctorService {
 
     DoctorDto deleteAvatar(Integer id);
 
+//    DoctorDto createUserForDoctor(Integer doctorId, String phone, String email, String password);
+
 }

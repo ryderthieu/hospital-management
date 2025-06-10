@@ -19,4 +19,6 @@ public interface ServiceOrderService {
     void deleteOrder(Integer serviceId, Integer orderId);
     
     List<ServiceOrderDto> getOrdersByAppointmentId(Integer appointmentId);
+
+    List<ServiceOrderDto> getOrdersByRoomId(Integer roomId);
 }

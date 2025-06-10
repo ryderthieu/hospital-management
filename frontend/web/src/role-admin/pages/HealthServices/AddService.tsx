@@ -5,6 +5,7 @@ import { appointmentService } from "../../services/appointmentService";
 import type { ServiceDto } from "../../types/appointment";
 import PageMeta from "../../components/common/PageMeta";
 import { Plus, X } from "lucide-react";
+import ReturnButton from "../../components/ui/button/ReturnButton";
 
 export default function AddService() {
   const navigate = useNavigate();
@@ -48,7 +49,8 @@ export default function AddService() {
         description="Thêm dịch vụ mới vào hệ thống"
       />
 
-      <div className="mb-6">
+      <div className="mb-6 flex items-center">
+        <ReturnButton />
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">
           Thêm dịch vụ mới
         </h2>
@@ -58,7 +60,7 @@ export default function AddService() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block font-medium text-base-700 dark:text-gray-300 mb-2">
                 Tên dịch vụ <span className="text-red-500">*</span>
               </label>
               <input
@@ -73,7 +75,7 @@ export default function AddService() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block font-medium text-base-700 dark:text-gray-300 mb-2">
                 Loại dịch vụ <span className="text-red-500">*</span>
               </label>
               <select
@@ -92,7 +94,7 @@ export default function AddService() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block font-medium text-base-700 dark:text-gray-300 mb-2">
                 Giá dịch vụ (VND) <span className="text-red-500">*</span>
               </label>
               <input
@@ -119,7 +121,7 @@ export default function AddService() {
             <button
               type="button"
               onClick={() => navigate("/admin/services")}
-              className="flex items-center gap-2 px-6 py-2 bg-gray-500/70 text-white rounded-lg hover:bg-gray-600/70"
+              className="flex items-center gap-2 px-6 py-2 bg-gray-400/40 rounded-lg hover:bg-gray-500/40"
             >
               Hủy
             </button>

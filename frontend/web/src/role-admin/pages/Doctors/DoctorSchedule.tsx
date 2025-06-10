@@ -437,7 +437,7 @@ const DoctorSchedule = () => {
                     type="text"
                     value={newEvent.title}
                     onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                     placeholder="VD: Khám bệnh, Phẫu thuật..."
                   />
                 </div>
@@ -451,7 +451,7 @@ const DoctorSchedule = () => {
                       type="date"
                       value={newEvent.date}
                       onChange={(e) => setNewEvent({...newEvent, date: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                     />
                   </div>
                   <div>
@@ -461,7 +461,7 @@ const DoctorSchedule = () => {
                     <select
                       value={newEvent.calendar}
                       onChange={(e) => setNewEvent({...newEvent, calendar: e.target.value as 'morning' | 'afternoon' | 'surgery' | 'meeting'})}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                       title="Chọn loại ca làm việc"
                     >
                       <option value="morning">Ca sáng</option>
@@ -481,7 +481,7 @@ const DoctorSchedule = () => {
                       type="time"
                       value={newEvent.startTime}
                       onChange={(e) => setNewEvent({...newEvent, startTime: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                       title="Chọn thời gian bắt đầu"
                     />
                   </div>
@@ -493,7 +493,7 @@ const DoctorSchedule = () => {
                       type="time"
                       value={newEvent.endTime}
                       onChange={(e) => setNewEvent({...newEvent, endTime: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                       title="Chọn thời gian kết thúc"
                     />
                   </div>
@@ -508,7 +508,7 @@ const DoctorSchedule = () => {
                       type="text"
                       value={newEvent.department}
                       onChange={(e) => setNewEvent({...newEvent, department: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                       placeholder="VD: Nội tim mạch"
                     />
                   </div>
@@ -520,7 +520,7 @@ const DoctorSchedule = () => {
                       type="text"
                       value={newEvent.location}
                       onChange={(e) => setNewEvent({...newEvent, location: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                       placeholder="VD: Phòng khám P102"
                     />
                   </div>
@@ -533,7 +533,7 @@ const DoctorSchedule = () => {
                   <textarea
                     value={newEvent.description}
                     onChange={(e) => setNewEvent({...newEvent, description: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                     rows={3}
                     placeholder="Mô tả chi tiết về hoạt động..."
                   />
@@ -551,7 +551,7 @@ const DoctorSchedule = () => {
                 <button
                   onClick={handleAddEvent}
                   type="button"
-                  className="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                  className="px-4 py-2.5 text-sm font-medium text-white bg-base-600 rounded-lg hover:bg-base-700"
                 >
                   Thêm lịch
                 </button>

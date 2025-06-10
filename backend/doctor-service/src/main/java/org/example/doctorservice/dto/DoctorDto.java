@@ -64,6 +64,7 @@ public class DoctorDto {
         this.userId = doctor.getUserId();
         this.identityNumber = doctor.getIdentityNumber();
         this.fullName = doctor.getFullName();
+        this.phone = doctor.getPhone();
         this.birthday = doctor.getBirthday();
         this.gender = doctor.getGender();
         this.address = doctor.getAddress();

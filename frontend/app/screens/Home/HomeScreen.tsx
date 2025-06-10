@@ -63,14 +63,35 @@ interface DoctorDto {
   academicDegree: string | null;
 }
 
+interface PageResponse<T> {
+  content: T[];
+  pageable?: {
+    pageNumber: number;
+    pageSize: number;
+    offset: number;
+    paged: boolean;
+    unpaged: boolean;
+  };
+  totalPages?: number;
+  totalElements?: number;
+  last?: boolean;
+  number?: number;
+  size?: number;
+  numberOfElements?: number;
+  first?: boolean;
+  empty?: boolean;
+}
+
 interface DepartmentDto {
   departmentId: number;
   departmentName: string;
   description: string | null;
+  location: string | null;
+  staffCount: number;
   createdAt: string | null;
-  examinationRoomDtos: any[] | null;
+  foundedYear: number | null;
+  examinationRoomDtos?: any[] | null;
 }
-
 export default function HomeScreen() {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const { fontsLoaded } = useFont();

@@ -58,6 +58,8 @@ export default function LoginScreen() {
   }, [showSuccessAlert]);
 
   const handleLogin = async () => {
+    const storedToken = await AsyncStorage.getItem('token');
+  console.log('Stored token before login:', storedToken);
     if (!phone || !password) {
       Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại và mật khẩu');
       return;

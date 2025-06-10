@@ -49,6 +49,14 @@
             "./assets/fonts/SVN-Gilroy-SemiBold-Italic.otf"
           ]
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#ffffff",
+          "sounds": ["./assets/notification-sound.wav"]
+        }
       ]
     ]
   }

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   SafeAreaView,
   StyleSheet,
@@ -20,44 +20,82 @@ import { fontFamily } from "../../../context/FontContext"
 import Header from "../../../components/Header"
 import { colors } from "../../../styles/globalStyles"
 import type { Prescription } from "../type"
+import API from "../../../services/api"
+import { useAuth } from "../../../context/AuthContext"
 
-// Sample data
-const prescriptions: Prescription[] = [
-  {
-    id: "1",
-    specialty: "Tim mạch",
-    examinationDate: "23/04/2024",
-    doctor: "BSCKII. Trần Đỗ Phương Nhi",
-  },
-  {
-    id: "2",
-    specialty: "Tim mạch",
-    examinationDate: "23/04/2024",
-    doctor: "BSCKII. Trần Đỗ Phương Nhi",
-  },
-  {
-    id: "3",
-    specialty: "Tim mạch",
-    examinationDate: "23/04/2024",
-    doctor: "BSCKII. Trần Đỗ Phương Nhi",
-  },
-  {
-    id: "4",
-    specialty: "Tim mạch",
-    examinationDate: "23/04/2024",
-    doctor: "BSCKII. Trần Đỗ Phương Nhi",
-  },
-]
+// Định nghĩa kiểu dữ liệu từ backend
+interface BackendPrescription {
+  prescriptionId: number;
+  appointmentId: number;
+  patientId: number;
+  followUpDate: string | null;
+  isFollowUp: boolean;
+  diagnosis: string;
+  systolicBloodPressure: number;
+  diastolicBloodPressure: number;
+  heartRate: number;
+  bloodSugar: number;
+  note: string | null;
+  createdAt: string;
+  prescriptionDetails: {
+    detailId: number;
+    prescriptionId: number;
+    medicine: {
+      medicineId: number;
+      medicineName: string;
+      unit: string;
+    };
+    dosage: string;
+    frequency: string;
+    duration: string;
+    prescriptionNotes: string | null;
+    quantity: number;
+    createdAt: string;
+  }[];
+}
+
+// Hàm ánh xạ dữ liệu từ backend sang frontend
+const mapBackendToFrontendPrescription = (backend: BackendPrescription): Prescription => ({
+  id: backend.prescriptionId.toString(),
+  specialty: backend.diagnosis, // Có thể cần API bác sĩ để lấy chuyên khoa chính xác
+  examinationDate: new Date(backend.createdAt).toLocaleDateString("vi-VN"),
+  doctor: "Unknown", // Cần gọi API bác sĩ để lấy tên bác sĩ
+})
 
 const PrescriptionManagementScreen: React.FC = () => {
+  const { patient } = useAuth()
   const navigation = useNavigation()
-  const [fromDate, setFromDate] = useState(new Date(2025, 9, 9)) // 09-10-2025
-  const [toDate, setToDate] = useState(new Date(2025, 10, 9)) // 09-11-2025
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
+  const [fromDate, setFromDate] = useState(new Date(2025, 9, 9))
+  const [toDate, setToDate] = useState(new Date(2025, 10, 9))
   const [fromDateText, setFromDateText] = useState("09-10-2025")
   const [toDateText, setToDateText] = useState("09-11-2025")
   const [activeFilter, setActiveFilter] = useState<"today" | "week" | "month" | null>(null)
   const [showFromDatePicker, setShowFromDatePicker] = useState(false)
   const [showToDatePicker, setShowToDatePicker] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const fetchPrescriptions = async () => {
+    if (!patient?.patientId) {
+      console.error("Không tìm thấy patientId")
+      return
+    }
+    setLoading(true)
+    try {
+      const response = await API.get(`/pharmacy/prescriptions/patient/${patient.patientId}`)
+      const backendPrescriptions: BackendPrescription[] = response.data
+      const frontendPrescriptions = backendPrescriptions.map(mapBackendToFrontendPrescription)
+      setPrescriptions(frontendPrescriptions)
+    } catch (error) {
+      console.error("Lỗi khi lấy đơn thuốc:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchPrescriptions()
+  }, [patient?.patientId])
 
   const formatDate = (date: Date): string => {
     const day = date.getDate().toString().padStart(2, "0")
@@ -70,7 +108,6 @@ const PrescriptionManagementScreen: React.FC = () => {
     if (Platform.OS === "android") {
       setShowFromDatePicker(false)
     }
-
     if (selectedDate) {
       setFromDate(selectedDate)
       setFromDateText(formatDate(selectedDate))
@@ -81,7 +118,6 @@ const PrescriptionManagementScreen: React.FC = () => {
     if (Platform.OS === "android") {
       setShowToDatePicker(false)
     }
-
     if (selectedDate) {
       setToDate(selectedDate)
       setToDateText(formatDate(selectedDate))
@@ -90,32 +126,25 @@ const PrescriptionManagementScreen: React.FC = () => {
 
   const handleFilterPress = (filter: "today" | "week" | "month") => {
     setActiveFilter(filter)
-
     const today = new Date()
-
     if (filter === "today") {
       setFromDate(today)
       setToDate(today)
       setFromDateText(formatDate(today))
       setToDateText(formatDate(today))
     } else if (filter === "week") {
-      // Calculate week start and end
       const weekStart = new Date(today)
       const weekEnd = new Date(today)
-      const day = today.getDay() || 7 // Get day of week (0-6), convert Sunday from 0 to 7
-
-      weekStart.setDate(today.getDate() - day + 1) // Monday
-      weekEnd.setDate(today.getDate() + (7 - day)) // Sunday
-
+      const day = today.getDay() || 7
+      weekStart.setDate(today.getDate() - day + 1)
+      weekEnd.setDate(today.getDate() + (7 - day))
       setFromDate(weekStart)
       setToDate(weekEnd)
       setFromDateText(formatDate(weekStart))
       setToDateText(formatDate(weekEnd))
     } else if (filter === "month") {
-      // Calculate month start and end
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
       const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-
       setFromDate(monthStart)
       setToDate(monthEnd)
       setFromDateText(formatDate(monthStart))
@@ -132,12 +161,11 @@ const PrescriptionManagementScreen: React.FC = () => {
   }
 
   const handleSearch = () => {
-    // Implement search functionality
-    console.log("Searching with dates:", fromDateText, toDateText)
+    console.log("Tìm kiếm với ngày:", fromDateText, toDateText)
+    fetchPrescriptions()
   }
 
   const handlePrescriptionPress = (prescription: Prescription) => {
-    // Navigate to prescription details
     navigation.navigate("PrescriptionDetails", { prescriptionId: prescription.id })
   }
 
@@ -169,11 +197,8 @@ const PrescriptionManagementScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-
       <Header title="Quản lý đơn thuốc" showBack={true} onBackPress={() => navigation.goBack()} />
-
       <View style={styles.content}>
-        {/* Date Range Filter */}
         <View style={styles.filterContainer}>
           <View style={styles.filterHeader}>
             <Text style={[styles.filterTitle, { fontFamily: fontFamily.medium }]}>Khoảng thời gian</Text>
@@ -181,7 +206,6 @@ const PrescriptionManagementScreen: React.FC = () => {
               <Text style={[styles.resetButton, { fontFamily: fontFamily.medium }]}>Đặt lại</Text>
             </TouchableOpacity>
           </View>
-
           <View style={styles.dateRangeContainer}>
             <View style={styles.dateInputContainer}>
               <Text style={[styles.dateLabel, { fontFamily: fontFamily.regular }]}>Từ ngày</Text>
@@ -195,17 +219,10 @@ const PrescriptionManagementScreen: React.FC = () => {
                 />
                 <TouchableOpacity style={styles.calendarIconContainer} onPress={() => setShowFromDatePicker(true)}>
                   <View style={styles.calendarIcon}>
-                    {/* Calendar binding rings */}
                     <View style={styles.calendarRing1} />
                     <View style={styles.calendarRing2} />
-
-                    {/* Calendar body */}
                     <View style={styles.calendarBody} />
-
-                    {/* Calendar header */}
                     <View style={styles.calendarHeader} />
-
-                    {/* Calendar grid dots */}
                     <View style={styles.calendarDot1} />
                     <View style={styles.calendarDot2} />
                     <View style={styles.calendarDot3} />
@@ -216,7 +233,6 @@ const PrescriptionManagementScreen: React.FC = () => {
                 </TouchableOpacity>
               </View>
             </View>
-
             <View style={styles.dateInputContainer}>
               <Text style={[styles.dateLabel, { fontFamily: fontFamily.regular }]}>Đến ngày</Text>
               <View style={styles.dateInputWrapper}>
@@ -229,17 +245,10 @@ const PrescriptionManagementScreen: React.FC = () => {
                 />
                 <TouchableOpacity style={styles.calendarIconContainer} onPress={() => setShowToDatePicker(true)}>
                   <View style={styles.calendarIcon}>
-                    {/* Calendar binding rings */}
                     <View style={styles.calendarRing1} />
                     <View style={styles.calendarRing2} />
-
-                    {/* Calendar body */}
                     <View style={styles.calendarBody} />
-
-                    {/* Calendar header */}
                     <View style={styles.calendarHeader} />
-
-                    {/* Calendar grid dots */}
                     <View style={styles.calendarDot1} />
                     <View style={styles.calendarDot2} />
                     <View style={styles.calendarDot3} />
@@ -251,7 +260,6 @@ const PrescriptionManagementScreen: React.FC = () => {
               </View>
             </View>
           </View>
-
           <View style={styles.quickFiltersContainer}>
             <TouchableOpacity
               style={[styles.quickFilterButton, activeFilter === "today" && styles.activeQuickFilterButton]}
@@ -267,7 +275,6 @@ const PrescriptionManagementScreen: React.FC = () => {
                 Hôm nay
               </Text>
             </TouchableOpacity>
-
             <TouchableOpacity
               style={[styles.quickFilterButton, activeFilter === "week" && styles.activeQuickFilterButton]}
               onPress={() => handleFilterPress("week")}
@@ -282,7 +289,6 @@ const PrescriptionManagementScreen: React.FC = () => {
                 Tuần này
               </Text>
             </TouchableOpacity>
-
             <TouchableOpacity
               style={[styles.quickFilterButton, activeFilter === "month" && styles.activeQuickFilterButton]}
               onPress={() => handleFilterPress("month")}
@@ -298,31 +304,28 @@ const PrescriptionManagementScreen: React.FC = () => {
               </Text>
             </TouchableOpacity>
           </View>
-
           <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
             <Text style={[styles.searchButtonText, { fontFamily: fontFamily.medium }]}>Tìm kiếm</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Prescription List */}
         <View style={styles.prescriptionListContainer}>
           <Text style={[styles.prescriptionListTitle, { fontFamily: fontFamily.medium }]}>
             Danh sách đơn thuốc ({prescriptions.length})
           </Text>
-
-          <FlatList
-            data={prescriptions}
-            renderItem={renderPrescriptionItem}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.prescriptionList}
-            showsVerticalScrollIndicator={false}
-          />
+          {loading ? (
+            <Text style={[styles.loadingText, { fontFamily: fontFamily.regular }]}>Đang tải...</Text>
+          ) : (
+            <FlatList
+              data={prescriptions}
+              renderItem={renderPrescriptionItem}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.prescriptionList}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
         </View>
       </View>
-
-      {/* Date Pickers */}
       {Platform.OS === "ios" ? (
-        // iOS Date Picker Modal
         <Modal visible={showFromDatePicker || showToDatePicker} transparent animationType="slide">
           <View style={styles.datePickerModalContainer}>
             <View style={styles.datePickerModalContent}>
@@ -347,7 +350,6 @@ const PrescriptionManagementScreen: React.FC = () => {
                   <Text style={styles.datePickerDoneButton}>Xong</Text>
                 </TouchableOpacity>
               </View>
-
               <DateTimePicker
                 value={showFromDatePicker ? fromDate : toDate}
                 mode="date"
@@ -359,7 +361,6 @@ const PrescriptionManagementScreen: React.FC = () => {
           </View>
         </Modal>
       ) : (
-        // Android Date Picker
         <>
           {showFromDatePicker && (
             <DateTimePicker value={fromDate} mode="date" display="default" onChange={handleFromDateChange} />
@@ -449,7 +450,6 @@ const styles = StyleSheet.create({
     height: 20,
     position: "relative",
   },
-  // Calendar binding rings (spiral binding at top)
   calendarRing1: {
     position: "absolute",
     top: -2,
@@ -468,7 +468,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#666",
     borderRadius: 1.5,
   },
-  // Calendar body (main rectangle)
   calendarBody: {
     position: "absolute",
     top: 2,
@@ -478,7 +477,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#666",
     borderRadius: 2,
   },
-  // Calendar header (top section)
   calendarHeader: {
     position: "absolute",
     top: 2,
@@ -489,7 +487,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 2,
     borderTopRightRadius: 2,
   },
-  // Calendar grid dots (representing dates)
   calendarDot1: {
     position: "absolute",
     top: 10,
@@ -655,7 +652,6 @@ const styles = StyleSheet.create({
     transform: [{ rotate: "-45deg" }],
     bottom: 6,
   },
-  // Date Picker Modal Styles
   datePickerModalContainer: {
     flex: 1,
     justifyContent: "flex-end",
@@ -691,6 +687,11 @@ const styles = StyleSheet.create({
   },
   datePickerIOS: {
     height: 200,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
   },
 })
 

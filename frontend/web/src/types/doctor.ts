@@ -16,7 +16,6 @@ export interface Doctor {
   type: "EXAMINATION" | "SERVICE"
   department: Department;
   profileImage?: string;
-  avatar?: string;
   createdAt: string;
 }
 
@@ -39,23 +38,6 @@ export interface DoctorDto {
   specialization: string;
   type: "EXAMINATION" | "SERVICE";
   departmentId: number;
-}
-
-export interface CreateDoctorRequest {
-  email?: string;
-  phone: string;
-  password: string;
-  identityNumber: string;
-  fullName: string;
-  birthday: string; // Will be converted to LocalDate in backend
-  gender: "MALE" | "FEMALE";
-  address?: string;
-  academicDegree: "BS" | "BS_CKI" | "BS_CKII" | "THS_BS" | "TS_BS" | "PGS_TS_BS" | "GS_TS_BS";
-  specialization: string;
-  avatar?: string;
-  type: "EXAMINATION" | "SERVICE";
-  departmentId: number;
-  consultationFee?: number;
 }
 
 // Academic degree labels for display

@@ -324,7 +324,7 @@ layer(base);
   }
 
   &::-webkit-scrollbar-track {
-    @apply rounded-full;
+    @apply rounded-full my-6;
   }
 
   &::-webkit-scrollbar-thumb {

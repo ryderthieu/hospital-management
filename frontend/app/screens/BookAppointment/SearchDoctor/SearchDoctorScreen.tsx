@@ -220,9 +220,6 @@ export const SpecialistSearchScreen: React.FC<SpecialistSearchScreenProps> = ({ 
           )}
         </View>
       </View>
-      <Text style={[globalStyles.label, { fontFamily: fontFamily.bold }]}>
-        Tìm theo chuyên khoa
-      </Text>
       <FlatList
         data={paginatedSpecialties}
         renderItem={renderSpecialtyItem}

@@ -89,6 +89,7 @@ public class DoctorServiceImpl implements DoctorService {
                 .userId(createdUser.getUserId().intValue())
                 .identityNumber(request.getIdentityNumber())
                 .fullName(request.getFullName())
+                .phone(request.getPhone())
                 .birthday(request.getBirthday())
                 .gender(request.getGender())
                 .address(request.getAddress())
