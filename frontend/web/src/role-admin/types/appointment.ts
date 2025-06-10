@@ -204,3 +204,12 @@ export interface AppointmentUpdateRequest {
   slotStart: string;
   slotEnd: string;
 }
+
+export interface AppointmentRequest {
+  slotStart: string;
+  slotEnd: string;
+  scheduleId: number;
+  symptoms: string;
+  doctorId: number;
+  patientId: number;
+}
