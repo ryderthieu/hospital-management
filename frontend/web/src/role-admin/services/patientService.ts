@@ -131,4 +131,24 @@ export const patientService = {
     );
     return response.data;
   },
+
+  //Update patient room
+  async updatePatientRoom(
+    roomId: number,
+    patientRoomData: Partial<PatientRoom>
+  ): Promise<PatientRoom> {
+    const response = await api.put<PatientRoom>(
+      `/patients/patient-rooms/${roomId}`,
+      patientRoomData
+    );
+    return response.data;
+  },
+
+  // Delete a patient room
+  async deletePatientRoom(roomId: number): Promise<string> {
+    const response = await api.delete<string>(
+      `/patients/patient-rooms/${roomId}`
+    );
+    return response.data;
+  },
 };
