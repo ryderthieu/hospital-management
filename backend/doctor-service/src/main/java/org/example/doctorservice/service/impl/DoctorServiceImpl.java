@@ -31,10 +31,10 @@ import java.time.format.DateTimeFormatter;
 public class DoctorServiceImpl implements DoctorService {
     private final DoctorRepository doctorRepository;
     private final DepartmentRepository departmentRepository;
+    private final UserServiceClient userServiceClient;
     // TODO: Fix AppointmentServiceClient dependency issue
     // private final AppointmentServiceClient appointmentServiceClient;
     private final PatientServiceClient patientServiceClient;
-    private final UserServiceClient userServiceClient;
     private final FileStorageService fileStorageService;
 
     @Override
@@ -63,17 +63,7 @@ public class DoctorServiceImpl implements DoctorService {
         // Validate required fields
         validateCreateDoctorRequest(request);
 
-        // Validate department BEFORE creating user
-        Department department = departmentRepository.findById(request.getDepartmentId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khoa với ID: " + request.getDepartmentId()));
-
-        // Check if identity number already exists BEFORE creating user
-        doctorRepository.findByIdentityNumber(request.getIdentityNumber())
-                .ifPresent(d -> {
-                    throw new RuntimeException("Số CMND/CCCD đã tồn tại trong hệ thống");
-                });
-
-        // Create new user ONLY after all validations pass
+        // Create new user first
         UserDto userDto = new UserDto();
         if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
             userDto.setEmail(request.getEmail());
@@ -82,43 +72,36 @@ public class DoctorServiceImpl implements DoctorService {
         userDto.setPassword(request.getPassword());
         userDto.setRole("DOCTOR");
         
-        UserDto createdUser = null;
-        Doctor createdDoctor = null;
-        
-        try {
-            // Step 1: Create user FIRST
-            createdUser = userServiceClient.addUser(userDto);
-            log.info("✅ Đã tạo user mới với ID: {}", createdUser.getUserId());
+        UserDto createdUser = userServiceClient.addUser(userDto);
+        log.info("Đã tạo user mới với ID: {}", createdUser.getUserId());
 
-            // Step 2: Create doctor with valid userId
-            Doctor doctor = Doctor.builder()
-                    .userId(createdUser.getUserId().intValue())
-                    .identityNumber(request.getIdentityNumber())
-                    .fullName(request.getFullName())
-                    .birthday(request.getBirthday())
-                    .gender(request.getGender())
-                    .address(request.getAddress())
-                    .academicDegree(request.getAcademicDegree())
-                    .specialization(request.getSpecialization())
-                    .avatar(request.getAvatar())
-                    .type(request.getType())
-                    .department(department)
-                    .consultationFee(request.getConsultationFee())
-                    .build();
-                    
-            createdDoctor = doctorRepository.save(doctor);
-            log.info("✅ Đã tạo bác sĩ thành công với ID: {}", createdDoctor.getDoctorId());
-            
-        } catch (Exception e) {
-            // If doctor creation fails after user was created, log for cleanup
-            if (createdUser != null) {
-                log.error("❌ Doctor creation failed after user creation. User ID: {} may need cleanup", 
-                         createdUser.getUserId());
-                // TODO: Implement user cleanup/rollback mechanism if needed
-            }
-            throw new RuntimeException("Tạo bác sĩ thất bại: " + e.getMessage(), e);
-        }
+        // Validate department
+        Department department = departmentRepository.findById(request.getDepartmentId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khoa với ID: " + request.getDepartmentId()));
 
+        // Check if identity number already exists
+        doctorRepository.findByIdentityNumber(request.getIdentityNumber())
+                .ifPresent(d -> {
+                    throw new RuntimeException("Số CMND/CCCD đã tồn tại trong hệ thống");
+                });
+
+        Doctor doctor = Doctor.builder()
+                .userId(createdUser.getUserId().intValue())
+                .identityNumber(request.getIdentityNumber())
+                .fullName(request.getFullName())
+                .birthday(request.getBirthday())
+                .gender(request.getGender())
+                .address(request.getAddress())
+                .academicDegree(request.getAcademicDegree())
+                .specialization(request.getSpecialization())
+                .avatar(request.getAvatar())
+                .type(request.getType())
+                .department(department)
+                .consultationFee(request.getConsultationFee())
+                .build();
+
+        Doctor createdDoctor = doctorRepository.save(doctor);
+        log.info("Đã tạo bác sĩ thành công với ID: {}", createdDoctor.getDoctorId());
         return new DoctorDto(createdDoctor);
     }
 
