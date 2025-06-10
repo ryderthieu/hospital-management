@@ -39,7 +39,12 @@ interface PatientData {
   province: string;
   district: string;
   ward: string;
-  emergencyContactDtos: { phone: string; name: string; relationship: string }[];
+  emergencyContactDtos: {
+    contactId?: number;
+    phone: string;
+    name: string;
+    relationship: string;
+  }[];
 }
 
 interface UserData {
@@ -48,7 +53,13 @@ interface UserData {
   email: string;
 }
 
-// Input field component
+interface EmergencyContactResponse {
+  contactId?: number;
+  contactPhone: string;
+  contactName: string;
+  relationship: string;
+}
+
 const InputField = ({
   label,
   value,
@@ -73,7 +84,12 @@ const InputField = ({
   return (
     <View style={styles.inputContainer}>
       <Text style={styles.inputLabel}>{label}</Text>
-      <View style={[styles.inputWrapper, isPhone || isEmail ? styles.inputWithIcon : null]}>
+      <View
+        style={[
+          styles.inputWrapper,
+          isPhone || isEmail ? styles.inputWithIcon : null,
+        ]}
+      >
         {isPhone && (
           <View style={styles.phoneIconContainer}>
             <Ionicons name="call" size={16} color="#FFFFFF" />
@@ -86,9 +102,13 @@ const InputField = ({
         )}
         <TextInput
           ref={inputRef}
-          style={[styles.input, !editable && styles.readOnlyInput, (isPhone || isEmail) && styles.inputWithPadding]}
+          style={[
+            styles.input,
+            !editable && styles.readOnlyInput,
+            (isPhone || isEmail) && styles.inputWithPadding,
+          ]}
           value={value || ""}
-          onChangeText={onChangeText}
+          onChangeText={(text) => onChangeText && onChangeText(text)}
           editable={editable}
           placeholder={placeholder || `Nhập ${label.toLowerCase()}`}
           placeholderTextColor="#9CA3AF"
@@ -105,11 +125,29 @@ const InputField = ({
   );
 };
 
-// Section component
-const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+const Section = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) => (
   <View style={styles.section}>
     <Text style={styles.sectionTitle}>{title}</Text>
     <View style={styles.sectionContent}>{children}</View>
+  </View>
+);
+
+const InfoItem = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | undefined | null;
+}) => (
+  <View style={styles.infoItem}>
+    <Text style={styles.infoLabel}>{label}</Text>
+    <Text style={styles.infoValue}>{value || "Chưa cập nhật"}</Text>
   </View>
 );
 
@@ -138,30 +176,52 @@ const EditAccountInfoScreen: React.FC = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showRelationshipModal, setShowRelationshipModal] = useState(false);
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
+  const [emergencyContacts, setEmergencyContacts] = useState<
+    PatientData["emergencyContactDtos"]
+  >(patient?.emergencyContactDtos || []);
 
   useEffect(() => {
     if (showSuccessAlert) {
       const timer = setTimeout(() => {
         setShowSuccessAlert(false);
-        console.log('Success alert auto-dismissed');
-      }, 2000); // Tự tắt sau 2 giây
+        console.log("Success alert auto-dismissed");
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [showSuccessAlert]);
 
   useEffect(() => {
     if (patient && user) {
-      const [lastName, ...firstNameParts] = patient.fullName.split(" ");
+      const [lastName, ...firstNameParts] = patient.fullName
+        .split(" ")
+        .filter(Boolean); // Loại bỏ phần tử rỗng
+      const firstName = firstNameParts.join(" ");
+      // Chuyển đổi birthday sang định dạng dd/MM/yyyy
+      const dob = patient.birthday
+        ? new Date(patient.birthday).toLocaleDateString("vi-VN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          })
+        : "";
+      // Chuyển đổi gender sang giá trị giao diện
+      const gender =
+        patient.gender === "FEMALE"
+          ? "Nữ"
+          : patient.gender === "MALE"
+          ? "Nam"
+          : "";
+
       setFormState({
         patientId: patient.patientId.toString(),
         userId: patient.userId.toString(),
         identityNumber: patient.identityNumber || "",
         insuranceNumber: patient.insuranceNumber || "",
-        firstName: firstNameParts.join(" "),
-        lastName: lastName,
-        dob: patient.birthday || "",
-        gender: patient.gender || "",
-        phone: user.phone || "", // Lấy phone từ user
+        firstName: firstName || "",
+        lastName: lastName || "",
+        dob: dob || "",
+        gender: gender || "",
+        phone: user.phone || "",
         email: patient.email || "",
         province: patient.province || "",
         district: patient.district || "",
@@ -169,29 +229,34 @@ const EditAccountInfoScreen: React.FC = () => {
         fullAddress: patient.address || "",
         emergencyContactPhone: patient.emergencyContactDtos?.[0]?.phone || "",
         emergencyContactName: patient.emergencyContactDtos?.[0]?.name || "",
-        emergencyContactRelationship: patient.emergencyContactDtos?.[0]?.relationship || "",
+        emergencyContactRelationship:
+          patient.emergencyContactDtos?.[0]?.relationship || "",
       });
+      setEmergencyContacts(patient.emergencyContactDtos || []);
     } else {
-      Alert.alert('Lỗi', 'Không tìm thấy thông tin bệnh nhân hoặc người dùng. Vui lòng đăng nhập lại.');
+      Alert.alert(
+        "Lỗi",
+        "Không tìm thấy thông tin bệnh nhân hoặc người dùng. Vui lòng đăng nhập lại."
+      );
     }
   }, [patient, user]);
 
-  // Update a single field in the form state
   const updateField = (field: string, value: string) => {
+    console.log(`Updating ${field} to:`, value);
     setFormState((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
 
-  // Format date from DD/MM/YYYY to YYYY-MM-DD for API
   const formatStringToDate = (dateString: string) => {
     if (!dateString) return "";
     const [day, month, year] = dateString.split("/").map(Number);
-    return `${year}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+    return `${year}-${month.toString().padStart(2, "0")}-${day
+      .toString()
+      .padStart(2, "0")}`;
   };
 
-  // Format date from Date object to DD/MM/YYYY
   const formatDateToString = (date: Date) => {
     const day = date.getDate().toString().padStart(2, "0");
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
@@ -207,54 +272,191 @@ const EditAccountInfoScreen: React.FC = () => {
   };
 
   const handleSave = async () => {
+    console.log("handleSave called", { patient, user });
     if (!patient || !user) {
-      Alert.alert('Lỗi', 'Không tìm thấy thông tin bệnh nhân hoặc người dùng. Vui lòng đăng nhập lại.');
+      console.log("No patient or user data");
+      Alert.alert(
+        "Lỗi",
+        "Không tìm thấy thông tin bệnh nhân hoặc người dùng. Vui lòng đăng nhập lại."
+      );
       return;
     }
 
-    // Construct the patient data for the API, excluding phone
+    // Ghép fullName từ lastName và firstName
+    const fullName = `${formState.lastName || ""} ${
+      formState.firstName || ""
+    }`.trim();
+    if (!fullName || !formState.dob || !formState.gender) {
+      Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin cá nhân.");
+      return;
+    }
+
     const updatedPatient = {
       userId: parseInt(formState.userId),
       patientId: parseInt(formState.patientId),
       identityNumber: formState.identityNumber,
       insuranceNumber: formState.insuranceNumber,
-      fullName: `${formState.lastName} ${formState.firstName}`,
+      fullName: fullName,
       birthday: formatStringToDate(formState.dob),
-      gender: formState.gender,
+      gender:
+        formState.gender === "Nữ"
+          ? "FEMALE"
+          : formState.gender === "Nam"
+          ? "MALE"
+          : formState.gender,
       address: formState.fullAddress,
       email: formState.email,
       province: formState.province,
       district: formState.district,
       ward: formState.ward,
-      emergencyContactDtos: [
-        {
-          phone: formState.emergencyContactPhone,
-          name: formState.emergencyContactName,
-          relationship: formState.emergencyContactRelationship,
-        },
-      ],
+      emergencyContactDtos: emergencyContacts.map((contact) => ({
+        ...contact,
+        relationship: contact.relationship,
+      })),
     };
 
     try {
-      console.log('Updating patient with data:', updatedPatient);
-      await API.put(`/patients/${patient.patientId}`, updatedPatient);
-      // Cập nhật patient trong context và AsyncStorage
-      await AsyncStorage.setItem('patient', JSON.stringify(updatedPatient));
+      console.log("Updating patient with data:", updatedPatient);
+      const response = await API.put(
+        `/patients/${patient.patientId}`,
+        updatedPatient
+      );
+      console.log("API response:", response.data);
+      await AsyncStorage.setItem("patient", JSON.stringify(updatedPatient));
       setPatient(updatedPatient);
-      setShowSuccessAlert(true); // Kích hoạt alert
+      setShowSuccessAlert(true);
       navigation.goBack();
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Cập nhật thông tin thất bại. Vui lòng thử lại.';
-      console.error('Update patient error:', error.message, error.response?.data);
-      if (error.response?.status === 401) {
-        await AsyncStorage.removeItem('token');
-        await AsyncStorage.removeItem('user');
-        await AsyncStorage.removeItem('patient');
-        setPatient(null);
-        Alert.alert('Lỗi', 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
-      } else {
-        Alert.alert('Lỗi', errorMessage);
-      }
+      console.error(
+        "Update patient error:",
+        error.message,
+        error.response?.data
+      );
+      const errorMessage =
+        error.message || "Cập nhật thông tin thất bại. Vui lòng thử lại.";
+      Alert.alert("Lỗi", errorMessage);
+    }
+  };
+
+  const handleAddEmergencyContact = async () => {
+    if (!patient?.patientId) {
+      Alert.alert("Lỗi", "Không tìm thấy thông tin bệnh nhân.");
+      return;
+    }
+
+    console.log("Form state before adding:", formState);
+
+    const {
+      emergencyContactPhone,
+      emergencyContactName,
+      emergencyContactRelationship,
+    } = formState;
+
+    if (!emergencyContactPhone || emergencyContactPhone.trim() === "") {
+      console.log("Phone is invalid:", emergencyContactPhone);
+      Alert.alert("Lỗi", "Vui lòng điền số điện thoại.");
+      return;
+    }
+    if (!emergencyContactName || emergencyContactName.trim() === "") {
+      console.log("Name is invalid:", emergencyContactName);
+      Alert.alert("Lỗi", "Vui lòng điền họ tên.");
+      return;
+    }
+    if (!emergencyContactRelationship) {
+      console.log("Relationship is invalid:", emergencyContactRelationship);
+      Alert.alert("Lỗi", "Vui lòng chọn mối quan hệ.");
+      return;
+    }
+
+    const newContact = {
+      contactPhone: emergencyContactPhone,
+      contactName: emergencyContactName,
+      relationship: emergencyContactRelationship,
+    };
+
+    try {
+      console.log("Sending new contact:", newContact);
+      const response = await API.post(
+        `/patients/${patient.patientId}/contacts`,
+        newContact
+      );
+      console.log("API response:", response.data);
+
+      const updatedContact: PatientData["emergencyContactDtos"][number] = {
+        contactId: response.data.contactId,
+        phone: response.data.contactPhone || emergencyContactPhone,
+        name: response.data.contactName || emergencyContactName,
+        relationship:
+          response.data.relationship || emergencyContactRelationship,
+      };
+      setEmergencyContacts((prev) => [...prev, updatedContact]);
+      Alert.alert("Thành công", "Thêm liên hệ khẩn cấp thành công");
+      updateField("emergencyContactPhone", "");
+      updateField("emergencyContactName", "");
+      updateField("emergencyContactRelationship", "");
+    } catch (error: any) {
+      console.error(
+        "Error adding emergency contact:",
+        error.message,
+        error.response?.data
+      );
+      const errorMessage =
+        error.response?.data?.message || "Thêm liên hệ khẩn cấp thất bại";
+      Alert.alert("Lỗi", errorMessage);
+    }
+  };
+
+  const handleDeleteEmergencyContact = async (contactId: number) => {
+    try {
+      await API.delete(`/patients/${patient?.patientId}/contacts/${contactId}`);
+      setEmergencyContacts(
+        emergencyContacts.filter((contact) => contact.contactId !== contactId)
+      );
+      Alert.alert("Thành công", "Xóa liên hệ khẩn cấp thành công");
+    } catch (error: any) {
+      console.error(
+        "Error deleting emergency contact:",
+        error.message,
+        error.response?.data
+      );
+      Alert.alert(
+        "Lỗi",
+        error.response?.data?.message || "Xóa liên hệ khẩn cấp thất bại"
+      );
+    }
+  };
+
+  const handleUpdateEmergencyContact = async (contactId: number) => {
+    const updatedContact = {
+      contactPhone: formState.emergencyContactPhone,
+      contactName: formState.emergencyContactName,
+      relationship: formState.emergencyContactRelationship,
+    };
+
+    try {
+      const response = await API.put(
+        `/patients/${patient?.patientId}/contacts/${contactId}`,
+        updatedContact
+      );
+      setEmergencyContacts(
+        emergencyContacts.map((contact) =>
+          contact.contactId === contactId ? response.data : contact
+        )
+      );
+      Alert.alert("Thành công", "Cập nhật liên hệ khẩn cấp thành công");
+      updateField("emergencyContactPhone", "");
+      updateField("emergencyContactName", "");
+      updateField("emergencyContactRelationship", "");
+    } catch (error: any) {
+      console.error(
+        "Error updating emergency contact:",
+        error.message,
+        error.response?.data
+      );
+      Alert.alert(
+        "Lỗi",
+        error.response?.data?.message || "Cập nhật liên hệ khẩn cấp thất bại"
+      );
     }
   };
 
@@ -263,20 +465,31 @@ const EditAccountInfoScreen: React.FC = () => {
     setShowRelationshipModal(false);
   };
 
-  // Relationship option item
   const RelationshipItem = ({
     item,
     onSelect,
-  }: { item: { id: string; label: string; value: string }; onSelect: (value: string) => void }) => (
-    <TouchableOpacity style={styles.relationshipItem} onPress={() => onSelect(item.value)}>
+  }: {
+    item: { id: string; label: string; value: string };
+    onSelect: (value: string) => void;
+  }) => (
+    <TouchableOpacity
+      style={styles.relationshipItem}
+      onPress={() => onSelect(item.value)}
+    >
       <Text style={styles.relationshipItemText}>{item.label}</Text>
-      {formState.emergencyContactRelationship === item.value && <Ionicons name="checkmark" size={20} color="#0BC5C5" />}
+      {formState.emergencyContactRelationship === item.value && (
+        <Ionicons name="checkmark" size={20} color="#0BC5C5" />
+      )}
     </TouchableOpacity>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header title="Chỉnh sửa thông tin" showBack={true} onBackPress={() => navigation.goBack()} />
+      <Header
+        title="Chỉnh sửa thông tin"
+        showBack={true}
+        onBackPress={() => navigation.goBack()}
+      />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -286,7 +499,11 @@ const EditAccountInfoScreen: React.FC = () => {
         <ScrollView style={styles.scrollView}>
           {/* Personal Information Section */}
           <Section title="Thông tin cá nhân">
-            <InputField label="Mã bệnh nhân" value={formState.patientId} editable={false} />
+            <InputField
+              label="Mã bệnh nhân"
+              value={formState.patientId}
+              editable={false}
+            />
             <InputField
               label="CCCD/CMND"
               value={formState.identityNumber}
@@ -307,8 +524,16 @@ const EditAccountInfoScreen: React.FC = () => {
             />
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Ngày sinh</Text>
-              <TouchableOpacity style={styles.datePickerButton} onPress={() => setShowDatePicker(true)}>
-                <Text style={[styles.datePickerText, !formState.dob && styles.placeholderText]}>
+              <TouchableOpacity
+                style={styles.datePickerButton}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text
+                  style={[
+                    styles.datePickerText,
+                    !formState.dob && styles.placeholderText,
+                  ]}
+                >
                   {formState.dob || "Chọn ngày sinh"}
                 </Text>
                 <Ionicons name="calendar-outline" size={20} color="#9CA3AF" />
@@ -319,16 +544,36 @@ const EditAccountInfoScreen: React.FC = () => {
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Giới tính</Text>
               <View style={styles.genderContainer}>
-                <TouchableOpacity style={styles.genderOption} onPress={() => updateField("gender", "Nữ")}>
-                  <View style={[styles.radioButton, formState.gender === "Nữ" && styles.radioButtonSelected]}>
-                    {formState.gender === "Nữ" && <View style={styles.radioButtonInner} />}
+                <TouchableOpacity
+                  style={styles.genderOption}
+                  onPress={() => updateField("gender", "Nữ")}
+                >
+                  <View
+                    style={[
+                      styles.radioButton,
+                      formState.gender === "Nữ" && styles.radioButtonSelected,
+                    ]}
+                  >
+                    {formState.gender === "Nữ" && (
+                      <View style={styles.radioButtonInner} />
+                    )}
                   </View>
                   <Text style={styles.genderText}>Nữ</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.genderOption} onPress={() => updateField("gender", "Nam")}>
-                  <View style={[styles.radioButton, formState.gender === "Nam" && styles.radioButtonSelected]}>
-                    {formState.gender === "Nam" && <View style={styles.radioButtonInner} />}
+                <TouchableOpacity
+                  style={styles.genderOption}
+                  onPress={() => updateField("gender", "Nam")}
+                >
+                  <View
+                    style={[
+                      styles.radioButton,
+                      formState.gender === "Nam" && styles.radioButtonSelected,
+                    ]}
+                  >
+                    {formState.gender === "Nam" && (
+                      <View style={styles.radioButtonInner} />
+                    )}
                   </View>
                   <Text style={styles.genderText}>Nam</Text>
                 </TouchableOpacity>
@@ -361,10 +606,45 @@ const EditAccountInfoScreen: React.FC = () => {
 
           {/* Emergency Contact Section */}
           <Section title="Liên hệ khẩn cấp">
+            {emergencyContacts.map((contact, index) => (
+              <View key={contact.contactId || index} style={styles.contactItem}>
+                <View style={styles.infoRow}>
+                  <InfoItem label="Số điện thoại" value={contact.phone} />
+                  <TouchableOpacity
+                    onPress={() =>
+                      handleDeleteEmergencyContact(contact.contactId!)
+                    }
+                  >
+                    <Ionicons name="trash" size={20} color="#EF4444" />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.infoRow}>
+                  <InfoItem label="Họ tên" value={contact.name} />
+                </View>
+                <View style={styles.infoRow}>
+                  <InfoItem label="Mối quan hệ" value={contact.relationship} />
+                </View>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => {
+                    updateField("emergencyContactPhone", contact.phone || "");
+                    updateField("emergencyContactName", contact.name || "");
+                    updateField(
+                      "emergencyContactRelationship",
+                      contact.relationship || ""
+                    );
+                  }}
+                >
+                  <Text style={styles.editButtonText}>Sửa</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
             <InputField
               label="Số điện thoại"
               value={formState.emergencyContactPhone}
-              onChangeText={(text) => updateField("emergencyContactPhone", text)}
+              onChangeText={(text) =>
+                updateField("emergencyContactPhone", text)
+              }
               isPhone={true}
               placeholder="Nhập số điện thoại người thân"
             />
@@ -374,15 +654,18 @@ const EditAccountInfoScreen: React.FC = () => {
               onChangeText={(text) => updateField("emergencyContactName", text)}
               placeholder="Nhập họ tên người thân"
             />
-
-            {/* Relationship Dropdown */}
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Mối quan hệ</Text>
-              <TouchableOpacity style={styles.dropdownButton} onPress={() => setShowRelationshipModal(true)}>
+              <TouchableOpacity
+                style={styles.dropdownButton}
+                onPress={() => setShowRelationshipModal(true)}
+              >
                 <Text
                   style={[
                     styles.dropdownText,
-                    formState.emergencyContactRelationship ? styles.dropdownTextSelected : styles.placeholderText,
+                    formState.emergencyContactRelationship
+                      ? styles.dropdownTextSelected
+                      : styles.placeholderText,
                   ]}
                 >
                   {formState.emergencyContactRelationship || "Chọn mối quan hệ"}
@@ -390,10 +673,22 @@ const EditAccountInfoScreen: React.FC = () => {
                 <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
               </TouchableOpacity>
             </View>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={handleAddEmergencyContact}
+            >
+              <Text style={styles.addButtonText}>Thêm liên hệ khẩn cấp</Text>
+            </TouchableOpacity>
           </Section>
 
           {/* Save Button */}
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={() => {
+              console.log("Save button pressed");
+              handleSave();
+            }}
+          >
             <Text style={styles.saveButtonText}>Lưu thay đổi</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -402,7 +697,11 @@ const EditAccountInfoScreen: React.FC = () => {
       {/* Date Picker */}
       {showDatePicker && (
         <DateTimePicker
-          value={formState.dob ? new Date(formState.dob.split("/").reverse().join("-")) : new Date()}
+          value={
+            formState.dob
+              ? new Date(formState.dob.split("/").reverse().join("-"))
+              : new Date()
+          }
           mode="date"
           display="default"
           onChange={handleDateChange}
@@ -411,17 +710,16 @@ const EditAccountInfoScreen: React.FC = () => {
       )}
 
       {/* Success Alert */}
-      {showSuccessAlert && (
-        Alert.alert('Thành công', 'Cập nhật thông tin thành công', [
+      {showSuccessAlert &&
+        Alert.alert("Thành công", "Cập nhật thông tin thành công", [
           {
-            text: 'OK',
+            text: "OK",
             onPress: () => {
               setShowSuccessAlert(false);
-              console.log('Alert OK pressed');
+              console.log("Alert OK pressed");
             },
           },
-        ])
-      )}
+        ])}
 
       {/* Relationship Selection Modal */}
       <Modal
@@ -441,7 +739,12 @@ const EditAccountInfoScreen: React.FC = () => {
 
             <FlatList
               data={relationshipOptions}
-              renderItem={({ item }) => <RelationshipItem item={item} onSelect={handleSelectRelationship} />}
+              renderItem={({ item }) => (
+                <RelationshipItem
+                  item={item}
+                  onSelect={handleSelectRelationship}
+                />
+              )}
               keyExtractor={(item) => item.id}
               style={styles.relationshipList}
             />
@@ -452,20 +755,38 @@ const EditAccountInfoScreen: React.FC = () => {
   );
 };
 
-// Define relationship options
+// Define relationship options with enum values
 const relationshipOptions = [
-  { id: "1", label: "Bố", value: "Bố" },
-  { id: "2", label: "Mẹ", value: "Mẹ" },
-  { id: "3", label: "Anh ruột", value: "Anh ruột" },
-  { id: "4", label: "Chị ruột", value: "Chị ruột" },
-  { id: "5", label: "Em trai", value: "Em trai" },
-  { id: "6", label: "Em gái", value: "Em gái" },
-  { id: "7", label: "Vợ", value: "Vợ" },
-  { id: "8", label: "Chồng", value: "Chồng" },
-  { id: "9", label: "Con", value: "Con" },
-  { id: "10", label: "Bạn", value: "Bạn" },
-  { id: "11", label: "Họ hàng khác", value: "Họ hàng khác" },
+  { id: "1", label: "Bố", value: "FAMILY" },
+  { id: "2", label: "Mẹ", value: "FAMILY" },
+  { id: "3", label: "Anh ruột", value: "FAMILY" },
+  { id: "4", label: "Chị ruột", value: "FAMILY" },
+  { id: "5", label: "Em trai", value: "FAMILY" },
+  { id: "6", label: "Em gái", value: "FAMILY" },
+  { id: "7", label: "Vợ", value: "FAMILY" },
+  { id: "8", label: "Chồng", value: "FAMILY" },
+  { id: "9", label: "Con", value: "FAMILY" },
+  { id: "10", label: "Bạn", value: "FRIEND" },
+  { id: "11", label: "Họ hàng khác", value: "OTHERS" },
 ];
+
+const RelationshipItem = ({
+  item,
+  onSelect,
+}: {
+  item: { id: string; label: string; value: string };
+  onSelect: (value: string) => void;
+}) => (
+  <TouchableOpacity
+    style={styles.relationshipItem}
+    onPress={() => onSelect(item.value)}
+  >
+    <Text style={styles.relationshipItemText}>{item.label}</Text>
+    {formState.emergencyContactRelationship === item.value && (
+      <Ionicons name="checkmark" size={20} color="#0BC5C5" />
+    )}
+  </TouchableOpacity>
+);
 
 const styles = StyleSheet.create({
   container: {
@@ -474,10 +795,10 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    padding: 20, // Tăng padding
+    padding: 20,
   },
   section: {
-    marginBottom: 32, // Tăng khoảng cách
+    marginBottom: 32,
   },
   sectionTitle: {
     fontFamily: fontFamily.medium,
@@ -489,7 +810,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   inputContainer: {
-    marginBottom: 20, // Tăng khoảng cách giữa các input
+    marginBottom: 20,
   },
   inputLabel: {
     fontFamily: fontFamily.regular,
@@ -628,7 +949,8 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: "center",
     alignItems: "center",
-    marginVertical: 32, // Tăng margin
+    marginVertical: 32,
+    opacity: 1,
   },
   saveButtonText: {
     fontFamily: fontFamily.bold,
@@ -676,6 +998,63 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.medium,
     fontSize: 16,
     color: "#111827",
+  },
+  contactItem: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  infoItem: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  infoLabel: {
+    fontFamily: fontFamily.regular,
+    fontSize: 14,
+    color: "#6B7280",
+    marginRight: 8,
+  },
+  infoValue: {
+    fontFamily: fontFamily.medium,
+    fontSize: 14,
+    color: "#111827",
+  },
+  editButton: {
+    backgroundColor: "#0BC5C5",
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  editButtonText: {
+    fontFamily: fontFamily.bold,
+    fontSize: 14,
+    color: "#FFFFFF",
+  },
+  addButton: {
+    backgroundColor: "#34A853",
+    borderRadius: 8,
+    height: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    marginVertical: 16,
+  },
+  addButtonText: {
+    fontFamily: fontFamily.bold,
+    fontSize: 16,
+    color: "#FFFFFF",
   },
 });
 

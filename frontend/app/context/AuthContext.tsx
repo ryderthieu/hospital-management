@@ -1,5 +1,5 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useState, useContext, ReactNode } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface UserData {
   userId: number;
@@ -21,7 +21,7 @@ interface PatientData {
   province: string;
   district: string;
   ward: string;
-  emergencyContactDtos: { phone: string; name: string; relationship: string }[];
+  emergencyContactDtos: { contactId?: number; phone: string; name: string; relationship: string }[];
 }
 
 interface AuthContextType {
@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

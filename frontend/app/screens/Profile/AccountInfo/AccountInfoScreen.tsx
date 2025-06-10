@@ -32,7 +32,13 @@ const AccountInfoScreen: React.FC = () => {
   const { patient, user } = useAuth();
 
   // Info section component
-  const InfoItem = ({ label, value }: { label: string; value: string | null | undefined }) => (
+  const InfoItem = ({
+    label,
+    value,
+  }: {
+    label: string;
+    value: string | null | undefined;
+  }) => (
     <View style={styles.infoItem}>
       <Text style={styles.infoLabel}>{label}</Text>
       <Text style={[styles.infoValue, !value && styles.placeholderText]}>
@@ -42,7 +48,13 @@ const AccountInfoScreen: React.FC = () => {
   );
 
   // Section component
-  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  const Section = ({
+    title,
+    children,
+  }: {
+    title: string;
+    children: React.ReactNode;
+  }) => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
       <View style={styles.sectionContent}>{children}</View>
@@ -83,7 +95,10 @@ const AccountInfoScreen: React.FC = () => {
         {/* Personal Information Section */}
         <Section title="Thông tin cá nhân">
           <View style={styles.infoRow}>
-            <InfoItem label="Mã bệnh nhân" value={patient.patientId.toString()} />
+            <InfoItem
+              label="Mã bệnh nhân"
+              value={patient.patientId.toString()}
+            />
             <InfoItem label="CCCD/CMND" value={patient.identityNumber} />
           </View>
           <View style={styles.infoRow}>
@@ -103,7 +118,12 @@ const AccountInfoScreen: React.FC = () => {
           </View>
           <View style={styles.fullWidthItem}>
             <Text style={styles.infoLabel}>Địa chỉ</Text>
-            <Text style={[styles.infoValue, !patient.address && styles.placeholderText]}>
+            <Text
+              style={[
+                styles.infoValue,
+                !patient.address && styles.placeholderText,
+              ]}
+            >
               {patient.address || "Chưa cập nhật"}
             </Text>
           </View>
@@ -112,19 +132,26 @@ const AccountInfoScreen: React.FC = () => {
         {/* Emergency Contact Section */}
         <Section title="Liên hệ khẩn cấp">
           {patient.emergencyContactDtos?.length > 0 ? (
-            <>
-              <View style={styles.infoRow}>
-                <InfoItem label="Số điện thoại" value={patient.emergencyContactDtos[0].phone} />
+            patient.emergencyContactDtos.map((contact, index) => (
+              <View key={contact.contactId || index}>
+                <View style={styles.infoRow}>
+                  <InfoItem label="Số điện thoại" value={contact.phone} />
+                </View>
+                <View style={styles.infoRow}>
+                  <InfoItem label="Họ tên" value={contact.name} />
+                </View>
+                <View style={styles.infoRow}>
+                  <InfoItem label="Mối quan hệ" value={contact.relationship} />
+                </View>
+                {index < patient.emergencyContactDtos.length - 1 && (
+                  <View style={styles.separator} />
+                )}
               </View>
-              <View style={styles.infoRow}>
-                <InfoItem label="Họ tên" value={patient.emergencyContactDtos[0].name} />
-              </View>
-              <View style={styles.infoRow}>
-                <InfoItem label="Mối quan hệ" value={patient.emergencyContactDtos[0].relationship} />
-              </View>
-            </>
+            ))
           ) : (
-            <Text style={styles.placeholderText}>Chưa có thông tin liên hệ khẩn cấp</Text>
+            <Text style={styles.placeholderText}>
+              Chưa có thông tin liên hệ khẩn cấp
+            </Text>
           )}
         </Section>
       </ScrollView>
@@ -149,6 +176,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#6B7280",
     marginBottom: 16,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: "#E5E7EB",
+    marginVertical: 10,
   },
   sectionContent: {
     backgroundColor: "#FFFFFF",

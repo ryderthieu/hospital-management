@@ -1,7 +1,7 @@
 import PageMeta from "../../components/common/PageMeta";
 import AddButton from "../../components/ui/button/AddButton";
-import MedicineTable from "../../components/sections/medicines/MedicineTable";
-
+import InpatientTable from "../../components/sections/inpatients/InpatientTable";
+import { Link } from "react-router-dom";
 
 export default function Inpatient() {
   return (
@@ -17,10 +17,12 @@ export default function Inpatient() {
       </div>
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <div className="col-span-12 xl:col-span-7">
-            <MedicineTable/>
+          <InpatientTable />
         </div>
         <div className="fixed right-5 bottom-5">
-          <AddButton />
+          <Link to="/admin/inpatients-rooms/add">
+            <AddButton />
+          </Link>
         </div>
       </div>
     </div>
