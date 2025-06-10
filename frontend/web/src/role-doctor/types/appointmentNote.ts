@@ -9,6 +9,7 @@ export interface AppointmentNote {
   noteType: NoteType
   noteText: string
   createdAt?: string
+  doctorName?: string // Thêm field tên bác sĩ
 }
 
 export interface CreateAppointmentNoteRequest {

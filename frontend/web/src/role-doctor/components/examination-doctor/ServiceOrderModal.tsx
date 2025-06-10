@@ -2,10 +2,11 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { Modal, Form, Input, Select, Button, Table, Typography, message } from "antd"
+import { Modal, Form, Input, Select, Button, Table, Typography, message, Spin } from "antd"
 import { SearchOutlined, DeleteOutlined, PlusOutlined, EyeOutlined } from "@ant-design/icons"
 import { useMedicalOrderModal } from "../../hooks/useServiceOrder"
-import type { Service } from "../../types/services"
+import type { Services } from "../../types/services"
+import type { ServiceOrder } from "../../types/serviceOrder"
 
 const { Text } = Typography
 
@@ -15,44 +16,56 @@ interface ModalProps {
   appointmentId?: number
 }
 
-interface MedicalOrderItem {
+interface MedicalOrderItem extends Omit<ServiceOrder, "orderId" | "createdAt"> {
   id: string
-  serviceId: number
-  serviceName: string
-  serviceType: string
-  room: string
   expectedTime: string
 }
 
-export const MedicalOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appointmentId }) => {
-  const { services, loading, createServiceOrder } = useMedicalOrderModal(appointmentId)
+export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appointmentId }) => {
+  const { services, loading, searchLoading, searchServices, createServiceOrder } = useMedicalOrderModal(appointmentId)
   const [indications, setIndications] = useState<MedicalOrderItem[]>([])
   const [searchInput, setSearchInput] = useState("")
-  const [filteredServices, setFilteredServices] = useState<Service[]>([])
+  const [filteredServices, setFilteredServices] = useState<Services[]>([])
+  const [showSearchResults, setShowSearchResults] = useState(false)
 
+  // Search services when input changes
   useEffect(() => {
-    if (searchInput) {
-      const filtered = services.filter(
-        (service) =>
-          service.serviceName.toLowerCase().includes(searchInput.toLowerCase()) ||
-          service.serviceType.toLowerCase().includes(searchInput.toLowerCase()),
-      )
-      setFilteredServices(filtered)
-    } else {
-      setFilteredServices(services)
-    }
-  }, [searchInput, services])
+    const timeoutId = setTimeout(async () => {
+      if (searchInput.trim()) {
+        const results = await searchServices(searchInput)
+        setFilteredServices(results)
+        setShowSearchResults(true)
+      } else {
+        setFilteredServices([])
+        setShowSearchResults(false)
+      }
+    }, 300)
 
-  const addIndication = (service: Service) => {
+    return () => clearTimeout(timeoutId)
+  }, [searchInput, searchServices])
+
+  const addIndication = (service: Services) => {
     const newIndication: MedicalOrderItem = {
       id: Date.now().toString(),
       serviceId: service.serviceId,
       serviceName: service.serviceName,
       serviceType: service.serviceType,
-      room: "CT-Scan [01]",
+      roomId: 1, // Default value, will be updated by the select
       expectedTime: "30 phút",
+      price: service.price,
+      quantity: 1,
+      status: "pending",
+      appointmentId: appointmentId || 0,
+      service,
+      orderStatus: "ORDERED",
+      result: "",
+      number: 1,
+      orderTime: new Date().toISOString(),
+      resultTime: "",
     }
     setIndications((prev) => [...prev, newIndication])
+    setShowSearchResults(false)
+    setSearchInput("")
   }
 
   const updateField = (index: number, field: keyof MedicalOrderItem, value: any) => {
@@ -72,8 +85,7 @@ export const MedicalOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
     try {
       // Create service orders for each indication
       for (const indication of indications) {
-        const roomId = Number.parseInt(indication.room.match(/\[(\d+)\]/)?.[1] || "1")
-        await createServiceOrder(indication.serviceId, roomId)
+        await createServiceOrder(indication.service.serviceId, indication.roomId || 1)
       }
 
       // Clear indications and close modal
@@ -94,28 +106,29 @@ export const MedicalOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
         <div>
           <div className="font-medium">{text}</div>
           <div className="text-sm text-gray-500">{record.serviceType}</div>
+          <div className="text-xs text-gray-400">{record.service.price.toLocaleString("vi-VN")} VNĐ</div>
         </div>
       ),
     },
     {
       title: "Phòng",
-      dataIndex: "room",
-      key: "room",
+      dataIndex: "roomId",
+      key: "roomId",
       width: 200,
-      render: (text: string, record: MedicalOrderItem, index: number) => (
+      render: (roomId: number, record: MedicalOrderItem, index: number) => (
         <Select
-          value={text}
-          onChange={(value) => updateField(index, "room", value)}
+          value={roomId}
+          onChange={(value) => updateField(index, "roomId", value)}
           style={{ width: "100%" }}
           options={[
-            { value: "CT-Scan [01]", label: "CT-Scan [01]" },
-            { value: "CT-Scan [02]", label: "CT-Scan [02]" },
-            { value: "MRI [01]", label: "MRI [01]" },
-            { value: "MRI [02]", label: "MRI [02]" },
-            { value: "X-Ray [01]", label: "X-Ray [01]" },
-            { value: "X-Ray [02]", label: "X-Ray [02]" },
-            { value: "Blood Test [01]", label: "Blood Test [01]" },
-            { value: "Blood Test [02]", label: "Blood Test [02]" },
+            { value: 1, label: "CT-Scan [01]" },
+            { value: 2, label: "CT-Scan [02]" },
+            { value: 3, label: "MRI [01]" },
+            { value: 4, label: "MRI [02]" },
+            { value: 5, label: "X-Ray [01]" },
+            { value: 6, label: "X-Ray [02]" },
+            { value: 7, label: "Blood Test [01]" },
+            { value: 8, label: "Blood Test [02]" },
           ]}
         />
       ),
@@ -160,13 +173,40 @@ export const MedicalOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
         </div>
 
         <div className="flex items-center mb-4">
-          <Input
-            placeholder="Tìm dịch vụ..."
-            prefix={<SearchOutlined />}
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="w-80"
-          />
+          <div className="relative flex-1 max-w-md">
+            <Input
+              placeholder="Tìm dịch vụ..."
+              prefix={<SearchOutlined />}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="w-full"
+              suffix={searchLoading ? <Spin size="small" /> : null}
+            />
+
+            {/* Search Results Dropdown */}
+            {showSearchResults && filteredServices.length > 0 && (
+              <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
+                {filteredServices.map((service) => (
+                  <div
+                    key={service.serviceId}
+                    className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    onClick={() => addIndication(service)}
+                  >
+                    <div className="font-medium">{service.serviceName}</div>
+                    <div className="text-sm text-gray-500">{service.serviceType}</div>
+                    <div className="text-xs text-gray-400">{service.price.toLocaleString("vi-VN")} VNĐ</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {showSearchResults && filteredServices.length === 0 && searchInput && !searchLoading && (
+              <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 p-3">
+                <div className="text-gray-500 text-center">Không tìm thấy dịch vụ</div>
+              </div>
+            )}
+          </div>
+
           <Button type="primary" icon={<PlusOutlined />} className="ml-3">
             Thêm chỉ định
           </Button>
@@ -174,28 +214,6 @@ export const MedicalOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
             Xem chỉ định
           </Button>
         </div>
-
-        {/* Available Services */}
-        {searchInput && (
-          <div className="mb-4 max-h-40 overflow-y-auto border rounded p-2">
-            <Text strong className="block mb-2">
-              Dịch vụ có sẵn:
-            </Text>
-            {filteredServices.map((service) => (
-              <div
-                key={service.serviceId}
-                className="flex justify-between items-center p-2 hover:bg-gray-50 cursor-pointer rounded"
-                onClick={() => addIndication(service)}
-              >
-                <div>
-                  <div className="font-medium">{service.serviceName}</div>
-                  <div className="text-sm text-gray-500">{service.serviceType}</div>
-                </div>
-                <div className="text-sm text-gray-500">{service.price.toLocaleString("vi-VN")} VNĐ</div>
-              </div>
-            ))}
-          </div>
-        )}
 
         <Table
           columns={columns}

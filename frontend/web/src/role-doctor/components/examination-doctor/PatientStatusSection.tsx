@@ -11,26 +11,26 @@ const { Text } = Typography
 interface PatientStatusSectionProps {
   roomNumber?: string | number
   initialTestingStatus?: string
-  initialMedicationStatus?: string
+  initialAppointmentStatus?: string
   onTestingStatusChange?: (status: string) => void
-  onMedicationStatusChange?: (status: string) => void
+  onAppointmentStatusChange?: (status: string) => void
 }
 
 export const PatientStatusSection: React.FC<PatientStatusSectionProps> = ({
   roomNumber = "305",
   initialTestingStatus = "Đang xét nghiệm",
-  initialMedicationStatus = "Chưa kê thuốc",
+  initialAppointmentStatus = "Đang khám",
   onTestingStatusChange,
-  onMedicationStatusChange,
+  onAppointmentStatusChange,
 }) => {
   const [testingStatus, setTestingStatus] = useState(initialTestingStatus)
-  const [medicationStatus, setMedicationStatus] = useState(initialMedicationStatus)
+  const [appointmentStatus, setAppointmentStatus] = useState(initialAppointmentStatus)
 
   // Options for testing status dropdown
-  const testingOptions: string[] = ["Đang xét nghiệm", "Chờ kết quả", "Đã có kết quả", "Cần xét nghiệm lại"]
+  const testingOptions: string[] = ["Chưa có chỉ định", "Đang xét nghiệm", "Chờ kết quả", "Đã có kết quả"]
 
-  // Options for medication status dropdown
-  const medicationOptions: string[] = ["Chưa kê thuốc", "Đã kê thuốc", "Đã phát thuốc"]
+  // Options for appointment status dropdown
+  const appointmentOptions: string[] = ["Đang chờ", "Đang khám", "Hoàn thành", "Đã hủy"]
 
   const handleTestingStatusChange: MenuProps["onClick"] = ({ key }) => {
     const newStatus = key as string
@@ -40,11 +40,11 @@ export const PatientStatusSection: React.FC<PatientStatusSectionProps> = ({
     }
   }
 
-  const handleMedicationStatusChange: MenuProps["onClick"] = ({ key }) => {
+  const handleAppointmentStatusChange: MenuProps["onClick"] = ({ key }) => {
     const newStatus = key as string
-    setMedicationStatus(newStatus)
-    if (onMedicationStatusChange) {
-      onMedicationStatusChange(newStatus)
+    setAppointmentStatus(newStatus)
+    if (onAppointmentStatusChange) {
+      onAppointmentStatusChange(newStatus)
     }
   }
 
@@ -53,7 +53,7 @@ export const PatientStatusSection: React.FC<PatientStatusSectionProps> = ({
     label: option,
   }))
 
-  const medicationItems: MenuProps["items"] = medicationOptions.map((option) => ({
+  const appointmentItems: MenuProps["items"] = appointmentOptions.map((option) => ({
     key: option,
     label: option,
   }))
@@ -82,12 +82,12 @@ export const PatientStatusSection: React.FC<PatientStatusSectionProps> = ({
       </div>
 
       <div>
-        <Text type="secondary">Trạng thái thuốc:</Text>
-        <Dropdown menu={{ items: medicationItems, onClick: handleMedicationStatusChange }} trigger={["click"]}>
+        <Text type="secondary">Trạng thái cuộc hẹn:</Text>
+        <Dropdown menu={{ items: appointmentItems, onClick: handleAppointmentStatusChange }} trigger={["click"]}>
           <Button className="bg-base-100 rounded py-1 px-4 mt-1 flex items-center justify-between w-full">
             <Space>
               <div className="w-3 h-3 bg-base-700 rounded-full"></div>
-              <Text strong>{medicationStatus}</Text>
+              <Text strong>{appointmentStatus}</Text>
             </Space>
             <DownOutlined />
           </Button>

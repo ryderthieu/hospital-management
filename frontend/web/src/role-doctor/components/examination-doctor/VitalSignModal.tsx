@@ -93,19 +93,6 @@ export const VitalSignModal: React.FC<VitalSignModalProps> = ({ isOpen, onClose,
             </Form.Item>
           </Col>
         </Row>
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item label="Nhiệt độ (°C)" name="temperature">
-              <InputNumber min={30} max={45} step={0.1} className="w-full" placeholder="36.5" />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item label="Cân nặng (kg)" name="weight">
-              <InputNumber min={0} max={200} className="w-full" placeholder="65" />
-            </Form.Item>
-          </Col>
-        </Row>
       </Form>
     </Modal>
   )
