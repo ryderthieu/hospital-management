@@ -53,6 +53,6 @@ public class Appointment {
     private List<AppointmentNote> appointmentNotes = new ArrayList<>();
 
     public enum AppointmentStatus {
-        PENDING, CONFIRMED, CANCELLED, COMPLETED
+        PENDING, PENDING_EXAMINATION, PENDING_TEST_RESULT ,CONFIRMED, CANCELLED, COMPLETED
     }
 }
