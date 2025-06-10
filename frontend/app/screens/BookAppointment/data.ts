@@ -177,12 +177,8 @@ export const fetchRealTimeDates = async (doctorId: string, days: number): Promis
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Reset giờ để so sánh ngày
 
-    // Gọi API với tham số workDate từ ngày hiện tại
-    const response = await API.get<ScheduleDto[]>(`/doctors/${doctorId}/schedules`, {
-      params: {
-        workDate: format(today, "yyyy-MM-dd"), // e.g., "2025-06-09"
-      },
-    });
+    // Gọi API mà không giới hạn workDate để lấy tất cả lịch
+    const response = await API.get<ScheduleDto[]>(`/doctors/${doctorId}/schedules`);
     console.log(`[data.ts] Phản hồi lịch:`, JSON.stringify(response.data, null, 2));
 
     // Tạo danh sách ngày trong 'days' ngày tới
@@ -190,7 +186,7 @@ export const fetchRealTimeDates = async (doctorId: string, days: number): Promis
     response.data.forEach((schedule) => {
       const workDate = schedule.workDate;
       const workDateObj = new Date(workDate);
-      if (workDateObj >= today && workDateObj <= addDays(today, days)) {
+      if (workDateObj >= today && workDateObj <= addDays(today, days - 1)) {
         const schedules = dateMap.get(workDate) || [];
         schedules.push(schedule);
         dateMap.set(workDate, schedules);
@@ -206,16 +202,19 @@ export const fetchRealTimeDates = async (doctorId: string, days: number): Promis
         return total + schedule.availableTimeSlots.filter((slot) => slot.available).length;
       }, 0);
 
+      // Chỉ vô hiệu hóa các ngày trong quá khứ
+      const isPast = date < today && !isToday(date);
+
       dates.push({
         id: dateString,
         day: isToday(date) ? "Hôm Nay" : isTomorrow(date) ? "Ngày Mai" : format(date, "EEEE", { locale: vi }),
         date: format(date, "dd/MM", { locale: vi }),
-        disabled: schedules.length === 0,
+        disabled: isPast, // Chỉ vô hiệu hóa ngày trong quá khứ
         availableSlots,
         isToday: isToday(date),
         isTomorrow: isTomorrow(date),
         isWeekend: isWeekend(date),
-        scheduleIds: schedules.map(s => s.scheduleId), // Lưu tất cả scheduleIds
+        scheduleIds: schedules.map(s => s.scheduleId),
       });
     }
 
