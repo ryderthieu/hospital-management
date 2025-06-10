@@ -61,11 +61,6 @@ export function BillModal({
           }
         />
       </div>
-      <div className="flex justify-end">
-        <button className="btn btn-secondary" onClick={onClose}>
-          Đóng
-        </button>
-      </div>
     </Modal>
   );
 }

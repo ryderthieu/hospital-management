@@ -14,6 +14,7 @@ import { DeleteConfirmationModal } from "../../ui/modal/DeleteConfirmationModal"
 import { patientService } from "../../../services/patientService";
 import { Patient } from "../../../types/patient";
 import { format } from "date-fns";
+import { X } from "lucide-react";
 
 export default function PatientTable() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -270,11 +271,11 @@ export default function PatientTable() {
                     </button>
                     <button
                       onClick={() => handleEditClick(patient)}
-                      className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 transition-colors"
+                      className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 text-yellow-500"
+                        className="h-4 w-4 text-slate-500"
                         viewBox="0 0 20 20"
                         fill="currentColor"
                       >
@@ -310,17 +311,21 @@ export default function PatientTable() {
       {/* Modal sửa bệnh nhân */}
       {showEditModal && editPatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-lg text-center relative">
-            <button
-              onClick={() => setShowEditModal(false)}
-              className="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-xl"
-              aria-label="Đóng"
-            >
-              &times;
-            </button>
-            <h2 className="text-xl font-semibold mb-4 text-teal-600">
-              Sửa thông tin bệnh nhân
-            </h2>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-lg text-center relative">
+            <div className="flex flex-row justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-base-600">
+                Sửa thông tin bệnh nhân
+              </h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="p-2 text-gray-400 hover:bg-slate-500/20 bg-slate-500/10 rounded-full"
+                aria-label="Đóng"
+              >
+                <X size={16}/>
+              </button>
+
+            </div>
+            
             <form onSubmit={handleEditSubmit} className="space-y-4 text-left">
               <div>
                 <label className="block font-medium mb-1">Họ tên</label>
@@ -383,14 +388,14 @@ export default function PatientTable() {
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={editLoading}
-                  className="px-4 py-2 rounded bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-60"
+                  className="px-4 py-2 rounded-lg bg-base-600 text-white hover:bg-base-700 disabled:opacity-60"
                 >
                   {editLoading ? "Đang lưu..." : "Lưu"}
                 </button>
