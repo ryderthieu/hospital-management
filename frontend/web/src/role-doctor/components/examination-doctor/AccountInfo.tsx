@@ -157,7 +157,7 @@ const AccountInfo = () => {
               style={{ color: "black" }}
             />
           </Form.Item>
-          <div></div>
+          
 
           <Form.Item label="Giới tính" name="gender">
             <Select
@@ -172,17 +172,7 @@ const AccountInfo = () => {
             />
           </Form.Item>
 
-          <Form.Item
-            label="Ngày sinh"
-            name="dateOfBirth"
-          >
-            <DatePicker
-              format="DD/MM/YYYY"
-              style={{ width: "100%" }}
-              placeholder="Chưa có dữ liệu"
-              onChange={handleDateChange}
-            />
-          </Form.Item>
+          
         </div>
 
         <Form.Item

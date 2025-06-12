@@ -376,7 +376,7 @@ const PatientDetail: React.FC = () => {
             <div className="flex flex-row justify-between items-center mb-6">
               <div className="flex flex-col items-center mb-6">
                 <img
-                  src="/placeholder.svg?height=96&width=96"
+                  src="https://static-00.iconduck.com/assets.00/avatar-default-symbolic-icon-440x512-ni4kvfm4.png"
                   alt="Patient"
                   className="w-24 h-24 rounded-full mb-3"
                 />
