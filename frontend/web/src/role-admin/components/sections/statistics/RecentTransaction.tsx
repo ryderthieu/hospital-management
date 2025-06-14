@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import { paymentService } from "../../../services/paymentService";
+import { Bill } from "../../../types/payment";
 import {
   Table,
   TableBody,
@@ -6,85 +9,23 @@ import {
   TableRow,
 } from "../../ui/table";
 import Badge from "../../ui/badge/Badge";
-
-// Define the TypeScript interface for the table rows
-interface Transaction {
-  id: number; // Unique identifier for each product
-  name: string; // Product name
-  variants: string; // Number of variants (e.g., "1 Variant", "2 Variants")
-  amount: string; // Category of the product
-  time: string; // time of the product (as a string with currency symbol)
-  // status: string; // Status of the product
-  image: string; // URL or path to the product image
-  status: "Thành công" | "Đang chờ" | "Lỗi"; // Status of the product
-  method: "Tiền mặt" | "Chuyển khoản" | "Thẻ"
-}
-
-// Define the table data using the interface
-const tableData: Transaction[] = [
-  {
-    id: 1,
-    name: "Trần Đỗ Phương N",
-    variants: "2 Variants",
-    amount: "2.000.000 VNĐ",
-    time: "12:56 19/05/2025",
-    status: "Thành công",
-    image: "/images/product/product-01.jpg", 
-    method: "Chuyển khoản"
-  },
-  {
-    id: 2,
-    name: "Trần Ngọc Anh T",
-    variants: "1 Variant",
-    amount: "542.000 VNĐ",
-    time: "12:34 19/05/2025",
-    status: "Đang chờ",
-    image: "/images/product/product-02.jpg", 
-    method: "Chuyển khoản"
-  },
-  {
-    id: 3,
-    name: "Lê Thiện N",
-    variants: "2 Variants",
-    amount: "350.000 VNĐ",
-    time: "12:05 19/05/2025",
-    status: "Thành công",
-    image: "/images/product/product-03.jpg", 
-    method: "Thẻ"
-  },
-  {
-    id: 4,
-    name: "Huỳnh Văn T",
-    variants: "2 Variants",
-    amount: "580.000 VNĐ",
-    time: "11:05 19/05/2025",
-    status: "Lỗi",
-    image: "/images/product/product-04.jpg", 
-    method: "Chuyển khoản"
-  },
-  {
-    id: 5,
-    name: "Trịnh Thị Phương Q",
-    variants: "1 Variant",
-    amount: "860.000 VNĐ",
-    time: "10:44 19/05/2025",
-    status: "Thành công",
-    image: "/images/product/product-05.jpg", 
-    method: "Thẻ"
-  },
-  {
-    id: 6,
-    name: "Trần Nhật T",
-    variants: "1 Variant",
-    amount: "4.060.000 VNĐ",
-    time: "09:34 19/05/2025",
-    status: "Đang chờ",
-    image: "/images/product/product-05.jpg", 
-    method: "Tiền mặt"
-  },
-];
+import { format } from "date-fns";
 
 export default function RecentTransactions() {
+  const [bills, setBills] = useState<Bill[]>([]);
+
+  useEffect(() => {
+    const fetchBills = async () => {
+      try {
+        const data = await paymentService.getAllBills(1, 10);
+        setBills(data.content);
+      } catch (error) {
+        console.error("Không thể tải danh sách hóa đơn:", error);
+      }
+    };
+    fetchBills();
+  }, []);
+
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
@@ -147,7 +88,13 @@ export default function RecentTransactions() {
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
-                Bệnh nhân
+                Mã giao dịch
+              </TableCell>
+              <TableCell
+                isHeader
+                className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+              >
+                Mã cuộc hẹn
               </TableCell>
               <TableCell
                 isHeader
@@ -159,7 +106,13 @@ export default function RecentTransactions() {
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
               >
-                Tổng thu
+                Tổng số tiền
+              </TableCell>
+              <TableCell
+                isHeader
+                className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
+              >
+                Số tiền sau khi giảm
               </TableCell>
               <TableCell
                 isHeader
@@ -167,64 +120,46 @@ export default function RecentTransactions() {
               >
                 Tình trạng
               </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-sm dark:text-gray-400"
-              >
-                Phương thức
-              </TableCell>
             </TableRow>
           </TableHeader>
 
-          {/* Table Body */}
-
           <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {tableData.map((product) => (
-              <TableRow key={product.id} className="">
-                <TableCell className="py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-[50px] w-[50px] overflow-hidden rounded-md">
-                      <img
-                        src={product.image}
-                        className="h-[50px] w-[50px]"
-                        alt={product.name}
-                      />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                        {product.name}
-                      </p>
-                      <span className="text-gray-500 text-theme-xs dark:text-gray-400">
-                        {product.variants}
-                      </span>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {product.time}
-                </TableCell>
-                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {product.amount}
-                </TableCell>
-                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  <Badge
-                    size="sm"
-                    color={
-                      product.status === "Thành công"
-                        ? "success"
-                        : product.status === "Đang chờ"
-                        ? "warning"
-                        : "error"
-                    }
-                  >
-                    {product.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {product.method}
-                </TableCell>
-              </TableRow>
-            ))}
+            {Array.isArray(bills) &&
+              bills.map((bill) => (
+                <TableRow key={bill.billId} className="">
+                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    {bill.billId}
+                  </TableCell>
+                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    {bill.appointmentId}
+                  </TableCell>
+                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    {bill.createdAt
+                      ? format(new Date(bill.createdAt), "dd/MM/yyyy HH:mm")
+                      : "Chưa xác định"}
+                  </TableCell>
+                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    {bill.totalCost} VNĐ
+                  </TableCell>
+                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    {bill.amount} VNĐ
+                  </TableCell>
+                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    <Badge
+                      size="sm"
+                      color={
+                        bill.status === "PAID"
+                          ? "Đã thanh toán"
+                          : bill.status === "UNPAID"
+                          ? "Chưa thanh toán"
+                          : "Đã hủy"
+                      }
+                    >
+                      {bill.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </div>
