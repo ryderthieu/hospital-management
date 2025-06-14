@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { Calendar, ChevronDown, ArrowLeft } from "lucide-react";
+import { Calendar, ChevronDown, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { CreatePatientRequest } from "../../types/patient";
 import { patientService } from "../../services/patientService";
@@ -9,6 +9,7 @@ import ReturnButton from "../../components/ui/button/ReturnButton";
 
 export default function PatientAddForm() {
   const navigate = useNavigate();
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formData, setFormData] = useState<CreatePatientRequest>({
     email: "",
     phone: "",
@@ -52,8 +53,11 @@ export default function PatientAddForm() {
           : formData.birthday;
       const dataToSend = { ...formData, birthday };
       await patientService.createPatient(dataToSend);
-      alert("Thêm bệnh nhân thành công!");
-      navigate("/admin/patients");
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/admin/patients");
+      }, 1500);
     } catch (error: any) {
       alert(
         "Có lỗi khi thêm bệnh nhân!\n" + JSON.stringify(error.response?.data)
@@ -63,7 +67,30 @@ export default function PatientAddForm() {
   };
 
   return (
-    <div className="">
+    <div className="relative">
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="absolute inset-0 flex items-center justify-center z-50">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]" />
+          
+          {/* Modal Content */}
+          <div className="relative bg-white rounded-lg p-6 w-[320px] shadow-lg animate-fadeIn">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-green-100 p-2 flex items-center justify-center mb-3">
+                <CheckCircle2 className="w-8 h-8 text-green-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Thêm bệnh nhân thành công!
+              </h3>
+              <p className="text-sm text-gray-500">
+                Đang chuyển hướng về trang danh sách bệnh nhân...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center mb-6">
         <Link
           to="/admin/patients"
@@ -77,7 +104,6 @@ export default function PatientAddForm() {
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-       
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
@@ -213,19 +239,7 @@ export default function PatientAddForm() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500/20 focus:border-base-500"
               />
             </div>
-            <div className="space-y-2">
-              <label className="block text-base-600 font-medium">
-                Ảnh đại diện (URL)
-              </label>
-              <input
-                type="text"
-                name="avatar"
-                value={formData.avatar}
-                onChange={handleChange}
-                placeholder="URL ảnh đại diện"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500"
-              />
-            </div>
+            
             <div className="space-y-2">
               <label className="block text-base-600 font-medium">Dị ứng</label>
               <input

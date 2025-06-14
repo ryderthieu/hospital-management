@@ -1,24 +1,25 @@
 package org.example.appointmentservice.service;
 
 import org.example.appointmentservice.dto.ServiceOrderDto;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public interface ServiceOrderService {
 
-    List<ServiceOrderDto> getAllOrders(Integer serviceId);
+    List<ServiceOrderDto> getAllOrders();
 
-    ServiceOrderDto getOrderById(Integer serviceId, Integer orderId);
+    ServiceOrderDto getOrderById(Integer orderId);
 
-    ServiceOrderDto createOrder(Integer serviceId, ServiceOrderDto serviceOrderDto);
+    ServiceOrderDto createOrder(ServiceOrderDto serviceOrderDto);
 
-    ServiceOrderDto updateOrder(Integer serviceId,
-                                Integer orderId,
-                                ServiceOrderDto serviceOrderDto);
+    ServiceOrderDto updateOrder(Integer orderId, ServiceOrderDto serviceOrderDto);
 
-    void deleteOrder(Integer serviceId, Integer orderId);
+    void deleteOrder(Integer orderId);
     
     List<ServiceOrderDto> getOrdersByAppointmentId(Integer appointmentId);
 
     List<ServiceOrderDto> getOrdersByRoomId(Integer roomId);
+
+    ServiceOrderDto uploadTestResult(Integer orderId, MultipartFile file);
 }

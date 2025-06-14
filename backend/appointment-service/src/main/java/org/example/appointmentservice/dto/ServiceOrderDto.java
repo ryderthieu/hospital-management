@@ -1,5 +1,6 @@
 package org.example.appointmentservice.dto;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.appointmentservice.entity.ServiceOrder;
@@ -12,10 +13,13 @@ import java.time.format.DateTimeFormatter;
 public class ServiceOrderDto {
     private Integer orderId;
 
+    @NotNull(message = "Mã lịch hẹn không được để trống")
     private Integer appointmentId;
 
+    @NotNull(message = "Mã phòng không được để trống")
     private Integer roomId;
 
+    @NotNull(message = "Mã dịch vụ không được để trống")
     private Integer serviceId;
 
     private ServiceOrder.OrderStatus orderStatus;

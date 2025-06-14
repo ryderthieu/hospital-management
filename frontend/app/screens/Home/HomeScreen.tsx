@@ -92,6 +92,7 @@ interface DepartmentDto {
   staffCount: number;
   createdAt: string | null;
   foundedYear: number | null;
+  icon: string | null;
   examinationRoomDtos?: any[] | null;
 }
 
@@ -109,7 +110,7 @@ export default function HomeScreen() {
       date: "2025-06-12",
       content:
         "Duy trì sức khỏe tim mạch bao gồm tập thể dục đều đặn, chế độ ăn uống cân bằng và kiểm tra định kỳ...",
-      image: require("../../assets/images/logo/Logo.png"),
+      image: require("../../assets/images/news/news1.webp"),
     },
     {
       id: 2,
@@ -118,7 +119,7 @@ export default function HomeScreen() {
       date: "2025-06-11",
       content:
         "Các siêu thực phẩm như quả mọng, hạt và rau xanh có thể tăng cường sức khỏe gia đình bạn...",
-      image: require("../../assets/images/logo/Logo.png"),
+      image: require("../../assets/images/news/news2.webp"),
     },
     {
       id: 3,
@@ -126,7 +127,7 @@ export default function HomeScreen() {
       date: "2025-06-12",
       content:
         "Duy trì sức khỏe tim mạch bao gồm tập thể dục đều đặn, chế độ ăn uống cân bằng và kiểm tra định kỳ...",
-      image: require("../../assets/images/logo/Logo.png"),
+      image: require("../../assets/images/news/news3.webp"),
     },
     {
       id: 4,
@@ -135,7 +136,7 @@ export default function HomeScreen() {
       date: "2025-06-11",
       content:
         "Các siêu thực phẩm như quả mọng, hạt và rau xanh có thể tăng cường sức khỏe gia đình bạn...",
-      image: require("../../assets/images/logo/Logo.png"),
+      image: require("../../assets/images/news/news4.webp"),
     },
   ];
 

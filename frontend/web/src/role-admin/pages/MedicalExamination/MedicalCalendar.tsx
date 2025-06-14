@@ -69,6 +69,20 @@ interface DatePickerProps extends React.ComponentProps<typeof DatePicker> {
   disabled?: boolean;
 }
 
+// Helper function to convert gender to Vietnamese
+const getGenderText = (gender: string): string => {
+  switch (gender) {
+    case "MALE":
+      return "Nam";
+    case "FEMALE":
+      return "Nữ";
+    case "OTHER":
+      return "Khác";
+    default:
+      return "Không xác định";
+  }
+};
+
 const MedicalCalendar: React.FC = () => {
   // State cho form tạo lịch khám mới
   const [appointmentForm, setAppointmentForm] = useState<AppointmentFormData>({
@@ -365,26 +379,8 @@ const MedicalCalendar: React.FC = () => {
     if (!doctorId || !date) return;
     setIsLoadingSchedules(true);
     try {
-      const response = await scheduleService.getSchedulesByDoctorId(parseInt(doctorId));
-      // Filter schedules for selected date
-      const filteredSchedules = response.filter(schedule => schedule.workDate === date);
-      
-      // Convert to Schedule type
-      const mappedSchedules: Schedule[] = filteredSchedules.map(schedule => ({
-        id: schedule.scheduleId,
-        doctorId: schedule.doctorId,
-        doctorName: doctorName, // Use selected doctor name
-        departmentId: parseInt(departmentId), // Convert to number
-        departmentName: department, // Use selected department name
-        date: schedule.workDate,
-        startTime: schedule.startTime,
-        endTime: schedule.endTime,
-        maxPatients: 20, // Default value or get from API
-        currentPatients: 0, // Default value or get from API
-        status: "AVAILABLE"
-      }));
-      
-      setSchedules(mappedSchedules);
+      const schedules = await mockDataService.getSchedulesByDoctorAndDate(doctorId, date);
+      setSchedules(schedules);
     } catch (error) {
       console.error("Error loading schedules:", error);
       setNotification({
@@ -432,17 +428,8 @@ const MedicalCalendar: React.FC = () => {
   const loadPatients = async () => {
     setIsLoadingPatients(true);
     try {
-      const response = await patientService.getPatients();
-      // Convert PatientType to AppointmentPatient
-      const convertedPatients: AppointmentPatient[] = response.data.map(patient => ({
-        id: patient.patientId,
-        fullName: patient.fullName,
-        phoneNumber: patient.phoneNumber || "",
-        age: patient.age || 0,
-        gender: patient.gender,
-        insuranceId: patient.insuranceNumber
-      }));
-      setPatients(convertedPatients);
+      const patients = await mockDataService.getPatients();
+      setPatients(patients);
     } catch (error) {
       console.error("Error loading patients:", error);
       setNotification({
@@ -457,17 +444,8 @@ const MedicalCalendar: React.FC = () => {
   // Load patient details
   const loadPatientDetails = async (patientId: number) => {
     try {
-      const response = await patientService.getPatientById(patientId);
-      // Convert PatientType to AppointmentPatient
-      const convertedPatient: AppointmentPatient = {
-        id: response.data.patientId,
-        fullName: response.data.fullName,
-        phoneNumber: response.data.phoneNumber || "",
-        age: response.data.age || 0,
-        gender: response.data.gender,
-        insuranceId: response.data.insuranceNumber
-      };
-      setSelectedPatient(convertedPatient);
+      const patient = await mockDataService.getPatientById(patientId);
+      setSelectedPatient(patient);
     } catch (error) {
       console.error("Error loading patient details:", error);
       setNotification({
@@ -495,14 +473,9 @@ const MedicalCalendar: React.FC = () => {
     setSchedules([]);
     setSelectedSchedule(null);
     setSelectedPatient(null);
-    setAppointmentForm({
-      slotStart: "",
-      slotEnd: "",
-      scheduleId: 0,
-      symptoms: "",
-      doctorId: 0,
-      patientId: 0,
-    });
+    setSymptoms("");
+    setDepartmentId("");
+    setDoctorId("");
     setErrors({});
   };
 
@@ -515,11 +488,19 @@ const MedicalCalendar: React.FC = () => {
   // Validate form
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!appointmentForm.scheduleId) newErrors.scheduleId = "Chọn lịch trống";
-    if (!appointmentForm.patientId) newErrors.patientId = "Chọn bệnh nhân";
-    if (!appointmentForm.slotStart) newErrors.slotStart = "Chọn giờ bắt đầu";
-    if (!appointmentForm.slotEnd) newErrors.slotEnd = "Chọn giờ kết thúc";
-    if (!appointmentForm.symptoms) newErrors.symptoms = "Nhập triệu chứng";
+    
+    if (!selectedSchedule) {
+      newErrors.scheduleId = "Vui lòng chọn lịch trống";
+    }
+    
+    if (!selectedPatient) {
+      newErrors.patientId = "Vui lòng chọn bệnh nhân";
+    }
+    
+    if (!symptoms.trim()) {
+      newErrors.symptoms = "Vui lòng nhập triệu chứng";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -527,25 +508,40 @@ const MedicalCalendar: React.FC = () => {
   // Handle create appointment
   const handleCreateAppointment = async () => {
     if (!validateForm()) return;
+    
     setIsSubmitting(true);
     try {
-      const response = await appointmentService.createAppointment(appointmentForm);
-      const appointmentResponse = response as unknown as AppointmentResponse;
+      if (!selectedSchedule || !selectedPatient) return;
+
+      // Prepare appointment data
+      const appointmentData = {
+        scheduleId: selectedSchedule.id,
+        patientId: selectedPatient.id,
+        doctorId: parseInt(doctorId),
+        symptoms: symptoms,
+        slotStart: selectedSchedule.startTime,
+        slotEnd: selectedSchedule.endTime
+      };
+
+      await mockDataService.createAppointment(appointmentData);
+      
+      // Handle success
       closeModal();
       resetModalFields();
       setNotification({
         type: "success",
-        message: `Tạo lịch khám thành công! Số thứ tự: ${appointmentResponse.orderNumber}`,
+        message: "Đặt lịch khám thành công!"
       });
-      setTimeout(() => setNotification(null), 5000);
-      // Reload appointments
-      fetchAppointments();
+      
+      // Reload appointments after success
+      await fetchAppointments();
+      
     } catch (error) {
-      setNotification({ 
-        type: "error", 
-        message: "Tạo lịch khám thất bại!" 
+      console.error("Error creating appointment:", error);
+      setNotification({
+        type: "error",
+        message: "Đặt lịch khám thất bại. Vui lòng thử lại!"
       });
-      setTimeout(() => setNotification(null), 5000);
     } finally {
       setIsSubmitting(false);
     }
@@ -562,41 +558,36 @@ const MedicalCalendar: React.FC = () => {
   // Fetch appointments
   const fetchAppointments = async () => {
     try {
-      const res = await appointmentService.getAllAppointments(0, 200);
-      const apiEvents = (res.content || [])
-        .map((item): CalendarEvent | null => {
-          const schedule = item.schedule as ScheduleDto;
-          const date = schedule?.date || item.createdAt?.split("T")[0] || "";
-          if (!date) return null;
-
-          const start = `${date}T${item.slotStart || ""}`;
-          const end = `${date}T${item.slotEnd || ""}`;
-          
-          return {
-            id: item.appointmentId.toString(),
-            title: item.patientInfo?.fullName || `Lịch khám #${item.appointmentId}`,
-            start,
-            end,
-            extendedProps: {
-              calendar: item.appointmentStatus as EventStatus,
-              patientName: item.patientInfo?.fullName || "",
-              patientId: item.patientInfo?.patientId?.toString() || "",
-              insuranceId: item.patientInfo?.insuranceId || "",
-              phoneNumber: item.patientInfo?.phoneNumber || "",
-              patientAge: item.patientInfo?.age || 0,
-              symptoms: item.symptoms || "",
-              eventTime: item.slotStart || "",
-              doctorName: schedule?.doctorName || "",
-              department: schedule?.departmentName || "",
-              departmentId: schedule?.departmentId?.toString() || "",
-              doctorId: item.doctorId?.toString() || "",
-            },
-          };
-        })
-        .filter((event): event is CalendarEvent => event !== null);
+      const appointments = await mockDataService.getAppointments();
+      const apiEvents = appointments.map((item): CalendarEvent => {
+        const date = item.schedule?.date || new Date().toISOString().split("T")[0];
+        const start = `${date}T${item.slotStart || ""}`;
+        const end = `${date}T${item.slotEnd || ""}`;
+        
+        return {
+          id: item.id.toString(),
+          title: item.patientInfo?.fullName || `Lịch khám #${item.id}`,
+          start,
+          end,
+          extendedProps: {
+            calendar: item.status as EventStatus,
+            patientName: item.patientInfo?.fullName || "",
+            patientId: item.patientInfo?.id?.toString() || "",
+            insuranceId: item.patientInfo?.insuranceId || "",
+            phoneNumber: item.patientInfo?.phoneNumber || "",
+            patientAge: item.patientInfo?.age || 0,
+            symptoms: item.symptoms || "",
+            eventTime: item.slotStart || "",
+            doctorName: item.schedule?.doctorName || "",
+            department: item.schedule?.departmentName || "",
+            departmentId: item.schedule?.departmentId?.toString() || "",
+            doctorId: item.doctorId?.toString() || "",
+          },
+        };
+      });
       setEvents(apiEvents);
     } catch (error) {
-      console.error("Không thể tải lịch khám từ API:", error);
+      console.error("Không thể tải lịch khám:", error);
       setEvents([]); // Set empty array on error
     }
   };
@@ -654,6 +645,24 @@ const MedicalCalendar: React.FC = () => {
         )}
       </div>
     );
+  };
+
+  // Handle schedule selection
+  const handleScheduleSelect = (schedule: Schedule) => {
+    setSelectedSchedule(schedule);
+    setErrors((prev) => ({ ...prev, scheduleId: "" }));
+  };
+
+  // Handle patient selection
+  const handlePatientChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const patientId = e.target.value;
+    if (!patientId) {
+      setSelectedPatient(null);
+      return;
+    }
+    const patient = patients.find(p => p.id === patientId);
+    setSelectedPatient(patient || null);
+    setErrors(prev => ({ ...prev, patientId: "" }));
   };
 
   return (
@@ -915,31 +924,44 @@ const MedicalCalendar: React.FC = () => {
                   <label className="block mb-1.5 text-sm font-medium text-gray-700">
                     Lịch trống <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    value={selectedSchedule?.id?.toString() || ""}
-                    onChange={(e) => {
-                      const scheduleId = parseInt(e.target.value);
-                      const schedule = schedules.find((s) => s.id === scheduleId);
-                      setSelectedSchedule(schedule || null);
-                    }}
-                    className="w-full h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm"
-                    disabled={!selectedDate || isLoadingSchedules || !doctorId}
-                  >
-                    <option value="">
-                      {isLoadingSchedules
-                        ? "Đang tải..."
-                        : !doctorId
-                        ? "Vui lòng chọn bác sĩ trước"
-                        : !selectedDate
-                        ? "Vui lòng chọn ngày trước"
-                        : "Chọn lịch trống"}
-                    </option>
+                  <div className="grid grid-cols-2 gap-4">
                     {schedules.map((schedule) => (
-                      <option key={schedule.id} value={schedule.id.toString()}>
-                        {`${formatTimeRange(schedule.startTime, schedule.endTime)}`}
-                      </option>
+                      <div
+                        key={schedule.id}
+                        onClick={() => handleScheduleSelect(schedule)}
+                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                          selectedSchedule?.id === schedule.id
+                            ? "border-base-500 bg-base-50"
+                            : "border-gray-200 hover:border-base-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-900">
+                            {schedule.startTime} - {schedule.endTime}
+                          </span>
+                          <span className={`px-2 py-1 text-xs rounded ${
+                            schedule.status === "AVAILABLE"
+                              ? "bg-green-100 text-green-800"
+                              : schedule.status === "FULL"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}>
+                            {schedule.status === "AVAILABLE"
+                              ? "Còn trống"
+                              : schedule.status === "FULL"
+                              ? "Đã đầy"
+                              : "Đã hủy"}
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Số bệnh nhân: {schedule.currentPatients}/{schedule.maxPatients}
+                        </div>
+                      </div>
                     ))}
-                  </select>
+                  </div>
+                  {errors.scheduleId && (
+                    <p className="text-red-500 text-xs mt-1">{errors.scheduleId}</p>
+                  )}
                 </div>
 
                 {/* Thông tin bác sĩ và khoa */}
@@ -973,34 +995,18 @@ const MedicalCalendar: React.FC = () => {
                 
                 <div>
                   <label className="block mb-1.5 text-sm font-medium text-gray-700">
-                    Chọn bệnh nhân <span className="text-red-500">*</span>
+                    Bệnh nhân <span className="text-red-500">*</span>
                   </label>
                   <select
-                    value={appointmentForm.patientId || ""}
-                    onChange={(e) => {
-                      const patientId = Number(e.target.value);
-                      setAppointmentForm((prev) => ({
-                        ...prev,
-                        patientId,
-                      }));
-                      // Load patient details if needed
-                      if (patientId) {
-                        loadPatientDetails(patientId);
-                      }
-                    }}
+                    value={selectedPatient?.id || ""}
+                    onChange={handlePatientChange}
                     className="w-full h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm"
-                    disabled={!selectedSchedule || isLoadingPatients}
+                    required
                   >
-                    <option value="">
-                      {isLoadingPatients
-                        ? "Đang tải..."
-                        : selectedSchedule
-                        ? "Chọn bệnh nhân"
-                        : "Vui lòng chọn lịch trước"}
-                    </option>
-                    {patients?.map((patient) => (
+                    <option value="">Chọn bệnh nhân</option>
+                    {patients.map((patient) => (
                       <option key={patient.id} value={patient.id}>
-                        {patient.fullName} - {patient.phoneNumber}
+                        {patient.fullName} - {patient.phoneNumber} - {getGenderText(patient.gender)}
                       </option>
                     ))}
                   </select>
@@ -1009,17 +1015,18 @@ const MedicalCalendar: React.FC = () => {
                   )}
                 </div>
 
-                {/* Hiển thị thông tin bệnh nhân đã chọn */}
+                {/* Show selected patient details */}
                 {selectedPatient && (
-                  <div className="mt-2 p-3 bg-green-50 rounded-lg">
-                    <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <h4 className="text-sm font-medium text-gray-900 mb-2">Thông tin bệnh nhân</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="font-medium text-gray-600">Mã BN:</span>{" "}
-                        <span className="text-gray-800">{selectedPatient.id}</span>
+                        <span className="font-medium text-gray-600">Họ tên:</span>{" "}
+                        <span className="text-gray-800">{selectedPatient.fullName}</span>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-600">BHYT:</span>{" "}
-                        <span className="text-gray-800">{selectedPatient.insuranceId || "Không có"}</span>
+                        <span className="font-medium text-gray-600">Số điện thoại:</span>{" "}
+                        <span className="text-gray-800">{selectedPatient.phoneNumber}</span>
                       </div>
                       <div>
                         <span className="font-medium text-gray-600">Tuổi:</span>{" "}
@@ -1027,62 +1034,29 @@ const MedicalCalendar: React.FC = () => {
                       </div>
                       <div>
                         <span className="font-medium text-gray-600">Giới tính:</span>{" "}
-                        <span className="text-gray-800">{selectedPatient.gender}</span>
+                        <span className="text-gray-800">{getGenderText(selectedPatient.gender)}</span>
                       </div>
+                      {selectedPatient.insuranceNumber && (
+                        <div className="col-span-2">
+                          <span className="font-medium text-gray-600">Số BHYT:</span>{" "}
+                          <span className="text-gray-800">{selectedPatient.insuranceNumber}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
-
-                {/* Khung giờ */}
-                <div>
-                  <label className="block mb-1.5 text-sm font-medium text-gray-700">
-                    Khung giờ <span className="text-red-500">*</span>
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <TimePicker
-                      id="slot-start"
-                      placeholder="Bắt đầu"
-                      value={appointmentForm.slotStart}
-                      onChange={(_, val) =>
-                        setAppointmentForm((prev) => ({
-                          ...prev,
-                          slotStart: val,
-                        }))
-                      }
-                      error={errors.slotStart}
-                    />
-                    <TimePicker
-                      id="slot-end"
-                      placeholder="Kết thúc"
-                      value={appointmentForm.slotEnd}
-                      onChange={(_, val) =>
-                        setAppointmentForm((prev) => ({ ...prev, slotEnd: val }))
-                      }
-                      error={errors.slotEnd}
-                    />
-                  </div>
-                  {(errors.slotStart || errors.slotEnd) && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.slotStart || errors.slotEnd}
-                    </p>
-                  )}
-                </div>
 
                 {/* Triệu chứng */}
                 <div>
                   <label className="block mb-1.5 text-sm font-medium text-gray-700">
                     Triệu chứng <span className="text-red-500">*</span>
                   </label>
-                  <textarea
-                    placeholder="Mô tả triệu chứng của bệnh nhân"
-                    value={appointmentForm.symptoms}
-                    onChange={(e) =>
-                      setAppointmentForm((prev) => ({
-                        ...prev,
-                        symptoms: e.target.value,
-                      }))
-                    }
-                    className="w-full h-24 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm resize-none"
+                  <input
+                    type="text"
+                    value={symptoms}
+                    onChange={(e) => setSymptoms(e.target.value)}
+                    placeholder="Nhập triệu chứng"
+                    className="w-full h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm"
                   />
                   {errors.symptoms && (
                     <p className="text-red-500 text-xs mt-1">{errors.symptoms}</p>

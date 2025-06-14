@@ -919,7 +919,7 @@ export function PatientInfoContent() {
           <div>
             <p className="text-gray-500 text-sm">Mã bệnh nhân</p>
             <p className="font-medium">
-              BN{patient?.patientId.toString().padStart(4, "0")}
+              BN{patient?.patientId?.toString().padStart(4, "0")}
             </p>
           </div>
           <div>

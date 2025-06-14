@@ -57,34 +57,7 @@ export default function Signup1({ navigation }: Signup1Props) {
       Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số');
       return;
     }
-
-    setIsLoading(true);
-    try {
-      const payload = {
-        phone: formattedPhone,
-        password,
-        fullName: 'temp',
-        identityNumber: 'temp',
-        insuranceNumber: 'temp',
-        birthday: '2000-01-01',
-        gender: 'OTHER',
-        address: 'temp',
-      };
-      const response = await API.post<RegisterResponse>('/users/auth/register', payload);
-
-      Alert.alert('Thành công', response.data.message || 'Vui lòng nhập thông tin cá nhân', [
-        {
-          text: 'OK',
-          onPress: () => navigation.navigate('Signup2', { phone: formattedPhone, password }),
-        },
-      ]);
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.';
-      Alert.alert('Lỗi', errorMessage);
-      console.error('Signup error:', error.message, error.response?.data);
-    } finally {
-      setIsLoading(false);
-    }
+    navigation.navigate('Signup2', { phone: formattedPhone, password });
   };
 
   const handleLogin = () => {
