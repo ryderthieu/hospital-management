@@ -2,6 +2,7 @@ import { Services } from './services';
 
 export interface ServiceOrder {
   orderId: number;
+  serviceId: number,
   appointmentId: number;
   roomId: number;
   service: Services;

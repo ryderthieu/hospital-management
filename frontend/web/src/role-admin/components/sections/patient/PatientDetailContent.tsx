@@ -1,5 +1,6 @@
 import MedicalRecord from "./MedicalRecord";
 import AddMedicalRecordModal from "./AddMedicalRecordModal";
+import EditMedicalRecordModal from "./EditMedicalRecordModal";
 import {
   Table,
   TableBody,
@@ -27,7 +28,7 @@ import { AppointmentModal, DeleteAppointmentModal } from "./AppointmentModal";
 import { Bill } from "../../../types/payment";
 import { paymentService } from "../../../services/paymentService";
 import { BillModal, DeleteBillModal } from "./BillModal";
-import { PrescriptionResponse } from "../../../types/pharmacy";
+import { PrescriptionResponse, UpdatePrescriptionRequest } from "../../../types/pharmacy";
 import { medicineService } from "../../../services/pharmacyService";
 import { DeleteConfirmationModal } from "../../ui/modal/DeleteConfirmationModal";
 
@@ -39,6 +40,8 @@ export function MedicalRecordsContent() {
   );
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingPrescription, setEditingPrescription] = useState<PrescriptionResponse | null>(null);
+  const [deletingPrescriptionId, setDeletingPrescriptionId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!patientId) return;
@@ -48,17 +51,26 @@ export function MedicalRecordsContent() {
         const data = await medicineService.getPrescriptionsByPatientId(
           Number(patientId)
         );
+        console.log("Raw prescription data from backend:", data);
+        
+        // Additional processing to ensure quantity is properly handled
         const mappedData = data.map((prescription: any) => ({
           ...prescription,
           prescriptionDetails:
-            prescription.prescriptionDetails?.map((detail: any) => ({
-              ...detail,
-              prescriptionId:
-                detail.prescriptionId ?? prescription.prescriptionId,
-            })) ?? [],
+            prescription.prescriptionDetails?.map((detail: any) => {
+              console.log(`Mapping prescription detail: ID=${detail.detailId}, quantity=${detail.quantity}, type=${typeof detail.quantity}`);
+              return {
+                ...detail,
+                prescriptionId: detail.prescriptionId ?? prescription.prescriptionId,
+                // Ensure quantity is a number and has a default value
+                quantity: detail.quantity !== undefined && detail.quantity !== null ? Number(detail.quantity) : 1
+              };
+            }) ?? [],
         }));
+        console.log("Final mapped prescription data:", mappedData);
         setPrescriptions(mappedData);
       } catch (error) {
+        console.error("Error fetching prescriptions:", error);
         setPrescriptions([]);
       } finally {
         setLoading(false);
@@ -70,17 +82,103 @@ export function MedicalRecordsContent() {
   // Hàm xử lý khi submit modal
   const handleAddMedicalRecord = async (data: any) => {
     try {
+      console.log("Creating prescription with data:", data);
       await medicineService.createPrescription(data);
       setIsAddModalOpen(false);
+      
+      // Reload list with timeout to ensure state updates
+      setTimeout(async () => {
+        if (patientId) {
+          try {
+            const newData = await medicineService.getPrescriptionsByPatientId(
+              Number(patientId)
+            );
+            const mappedData = newData.map((prescription: any) => ({
+              ...prescription,
+              prescriptionDetails:
+                prescription.prescriptionDetails?.map((detail: any) => ({
+                  ...detail,
+                  prescriptionId:
+                    detail.prescriptionId ?? prescription.prescriptionId,
+                })) ?? [],
+            }));
+            setPrescriptions(mappedData);
+          } catch (error) {
+            console.error("Error reloading prescriptions:", error);
+          }
+        }
+      }, 200);
+    } catch (error) {
+      console.error("Error creating prescription:", error);
+      alert("Thêm bệnh án thất bại!");
+    }
+  };
+
+  // Hàm xử lý chỉnh sửa bệnh án
+  const handleEditMedicalRecord = (prescriptionId: number) => {
+    const prescription = prescriptions.find(p => p.prescriptionId === prescriptionId);
+    if (prescription) {
+      setEditingPrescription(prescription);
+    }
+  };
+
+  // Hàm xử lý khi submit edit modal
+  const handleUpdateMedicalRecord = async (prescriptionId: number, data: UpdatePrescriptionRequest) => {
+    try {
+      await medicineService.updatePrescription(prescriptionId, data);
+      setEditingPrescription(null);
       // Reload list
       if (patientId) {
         const newData = await medicineService.getPrescriptionsByPatientId(
           Number(patientId)
         );
-        setPrescriptions(newData);
+        const mappedData = newData.map((prescription: any) => ({
+          ...prescription,
+          prescriptionDetails:
+            prescription.prescriptionDetails?.map((detail: any) => ({
+              ...detail,
+              prescriptionId:
+                detail.prescriptionId ?? prescription.prescriptionId,
+            })) ?? [],
+        }));
+        setPrescriptions(mappedData);
       }
     } catch (error) {
-      alert("Thêm bệnh án thất bại!");
+      alert("Cập nhật bệnh án thất bại!");
+    }
+  };
+
+  // Hàm xử lý xóa bệnh án
+  const handleDeleteMedicalRecord = (prescriptionId: number) => {
+    setDeletingPrescriptionId(prescriptionId);
+  };
+
+  // Hàm xử lý xác nhận xóa bệnh án
+  const handleConfirmDeleteMedicalRecord = async () => {
+    if (!deletingPrescriptionId) return;
+    
+    try {
+      await medicineService.deletePrescription(deletingPrescriptionId);
+      setDeletingPrescriptionId(null);
+      // Reload list after delete
+      if (patientId) {
+        const newData = await medicineService.getPrescriptionsByPatientId(
+          Number(patientId)
+        );
+        const mappedData = newData.map((prescription: any) => ({
+          ...prescription,
+          prescriptionDetails:
+            prescription.prescriptionDetails?.map((detail: any) => ({
+              ...detail,
+              prescriptionId:
+                detail.prescriptionId ?? prescription.prescriptionId,
+            })) ?? [],
+        }));
+        setPrescriptions(mappedData);
+      }
+      alert("Xóa bệnh án thành công!");
+    } catch (error) {
+      alert("Xóa bệnh án thất bại!");
     }
   };
 
@@ -105,7 +203,12 @@ export function MedicalRecordsContent() {
           </div>
         ) : (
           prescriptions.map((pres) => (
-            <MedicalRecord key={pres.prescriptionId} prescription={pres} />
+            <MedicalRecord 
+              key={pres.prescriptionId} 
+              prescription={pres}
+              onEdit={handleEditMedicalRecord}
+              onDelete={handleDeleteMedicalRecord}
+            />
           ))
         )}
       </div>
@@ -114,6 +217,21 @@ export function MedicalRecordsContent() {
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={handleAddMedicalRecord}
         patientId={Number(patientId)}
+      />
+      <EditMedicalRecordModal
+        isOpen={!!editingPrescription}
+        onClose={() => setEditingPrescription(null)}
+        onSubmit={handleUpdateMedicalRecord}
+        prescription={editingPrescription}
+      />
+      <DeleteConfirmationModal
+        isOpen={!!deletingPrescriptionId}
+        onClose={() => setDeletingPrescriptionId(null)}
+        onConfirm={handleConfirmDeleteMedicalRecord}
+        title="Xác nhận xóa bệnh án"
+        message="Bạn có chắc chắn muốn xóa bệnh án này không? Hành động này không thể hoàn tác."
+        confirmButtonText="Xóa"
+        cancelButtonText="Hủy"
       />
     </div>
   );
@@ -516,8 +634,8 @@ export function InvoicesContent() {
                           bill.status === "PAID"
                             ? "success"
                             : bill.status === "UNPAID"
-                            ? "warning"
-                            : "error"
+                            ? "error"
+                            : "cancel"
                         }
                       >
                         {bill.status === "PAID"
@@ -527,7 +645,7 @@ export function InvoicesContent() {
                           : "Đã hủy"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
+                    <TableCell className="px-4 py-3 text-gray-700 text-start text-xs text-green-700 font-semibold">
                       {bill.amount.toLocaleString("vi-VN")} VNĐ
                     </TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 text-theme-md dark:text-gray-400">
@@ -969,140 +1087,285 @@ export function PatientInfoContent() {
 
       {/* Modal chỉnh sửa thông tin bệnh nhân */}
       {showEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">
-              Chỉnh sửa thông tin bệnh nhân
-            </h2>
-            <form
-              onSubmit={handleEditSubmit}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        <div className="fixed inset-0 flex items-center justify-center overflow-y-auto modal z-99999">
+          <div
+            className="fixed inset-0 h-full w-full bg-gray-400/50 backdrop-blur-[32px]"
+            onClick={() => setShowEditModal(false)}
+          ></div>
+          <div
+            className="relative w-full rounded-3xl bg-white dark:bg-gray-900 max-w-[700px] lg:p-8 mt-[5vh] mb-8 max-h-[90vh] overflow-y-auto custom-scrollbar"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowEditModal(false)}
+              className="absolute right-3 top-3 z-999 flex h-9.5 w-9.5 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white sm:right-6 sm:top-6 sm:h-11 sm:w-11"
             >
-              <div className="space-y-4">
-                <div>
-                  <label className="block font-medium mb-1">Họ và tên</label>
-                  <input
-                    name="fullName"
-                    value={editData.fullName || ""}
-                    onChange={handleEditChange}
-                    className="w-full border rounded px-3 py-2"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block font-medium mb-1">Ngày sinh</label>
-                  <input
-                    name="birthday"
-                    type="date"
-                    value={editData.birthday || ""}
-                    onChange={handleEditChange}
-                    className="w-full border rounded px-3 py-2"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block font-medium mb-1">Giới tính</label>
-                  <select
-                    name="gender"
-                    value={editData.gender || ""}
-                    onChange={handleEditChange}
-                    className="w-full border rounded px-3 py-2"
-                    required
-                  >
-                    <option value="">Chọn giới tính</option>
-                    <option value="MALE">Nam</option>
-                    <option value="FEMALE">Nữ</option>
-                    <option value="OTHER">Khác</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-medium mb-1">Điện thoại</label>
-                  <input
-                    name="phone"
-                    value={editData.phone || ""}
-                    onChange={handleEditChange}
-                    className="w-full border rounded px-3 py-2"
-                  />
-                </div>
-                <div>
-                  <label className="block font-medium mb-1">Email</label>
-                  <input
-                    name="email"
-                    type="email"
-                    value={editData.email || ""}
-                    onChange={handleEditChange}
-                    className="w-full border rounded px-3 py-2"
-                  />
-                </div>
-                <div className="">
-                  <label className="block font-medium mb-1">Avatar (URL)</label>
-                  <input
-                    name="avatar"
-                    value={editData.avatar || ""}
-                    onChange={handleEditChange}
-                    className="w-full border rounded px-3 py-2"
-                    placeholder="Nhập đường dẫn ảnh đại diện"
-                  />
-                  {editData.avatar && (
-                    <img
-                      src={editData.avatar}
-                      alt="Avatar"
-                      className="mt-2 w-20 h-20 object-cover rounded-full border"
-                    />
-                  )}
-                </div>
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M6.04289 16.5413C5.65237 16.9318 5.65237 17.565 6.04289 17.9555C6.43342 18.346 7.06658 18.346 7.45711 17.9555L11.9987 13.4139L16.5408 17.956C16.9313 18.3466 17.5645 18.3466 17.955 17.956C18.3455 17.5655 18.3455 16.9323 17.955 16.5418L13.4129 11.9997L17.955 7.4576C18.3455 7.06707 18.3455 6.43391 17.955 6.04338C17.5645 5.65286 16.9313 5.65286 16.5408 6.04338L11.9987 10.5855L7.45711 6.0439C7.06658 5.65338 6.43342 5.65338 6.04289 6.0439C5.65237 6.43442 5.65237 7.06759 6.04289 7.45811L10.5845 11.9997L6.04289 16.5413Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+            
+            <div className="flex flex-col h-full">
+              <div className="flex-shrink-0 px-2 pb-4">
+                <h5 className="mb-4 font-semibold text-gray-800 modal-title text-theme-xl dark:text-white/90 lg:text-xl">
+                  Chỉnh sửa thông tin bệnh nhân
+                </h5>
               </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block font-medium mb-1">Địa chỉ</label>
-                  <input
-                    name="address"
-                    value={editData.address || ""}
-                    onChange={handleEditChange}
-                    className="w-full border rounded px-3 py-2"
-                  />
-                </div>
-                <div>
-                  <label className="block font-medium mb-1">
-                    Bảo hiểm y tế
-                  </label>
-                  <input
-                    name="insuranceNumber"
-                    value={editData.insuranceNumber || ""}
-                    onChange={handleEditChange}
-                    className="w-full border rounded px-3 py-2"
-                  />
-                </div>
-                <div>
-                  <label className="block font-medium mb-1">
-                    Căn cước công dân
-                  </label>
-                  <input
-                    name="identityNumber"
-                    value={editData.identityNumber || ""}
-                    onChange={handleEditChange}
-                    className="w-full border rounded px-3 py-2"
-                  />
-                </div>
-                <div className="flex justify-end gap-2 mt-4">
+              
+              <div className="flex-1 px-2">
+                <form
+                  id="patient-edit-form"
+                  onSubmit={handleEditSubmit}
+                  className="space-y-6"
+                >
+                  {/* Thông tin cơ bản */}
+                  <div>
+                    <h6 className="text-base font-medium text-gray-800 mb-3 pb-2 border-b border-gray-200">
+                      Thông tin cơ bản
+                    </h6>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Họ và tên <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            name="fullName"
+                            value={editData.fullName || ""}
+                            onChange={handleEditChange}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                            placeholder="Nhập họ và tên"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Giới tính <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            name="gender"
+                            value={editData.gender || ""}
+                            onChange={handleEditChange}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                            required
+                          >
+                            <option value="">Chọn giới tính</option>
+                            <option value="MALE">Nam</option>
+                            <option value="FEMALE">Nữ</option>
+                            <option value="OTHER">Khác</option>
+                          </select>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Ngày sinh <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          name="birthday"
+                          type="date"
+                          value={editData.birthday || ""}
+                          onChange={handleEditChange}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Thông tin liên hệ */}
+                  <div>
+                    <h6 className="text-base font-medium text-gray-800 mb-3 pb-2 border-b border-gray-200">
+                      Thông tin liên hệ
+                    </h6>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Điện thoại
+                          </label>
+                          <input
+                            name="phone"
+                            value={editData.phone || ""}
+                            onChange={handleEditChange}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                            placeholder="Nhập số điện thoại"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Email
+                          </label>
+                          <input
+                            name="email"
+                            type="email"
+                            value={editData.email || ""}
+                            onChange={handleEditChange}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                            placeholder="Nhập địa chỉ email"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Địa chỉ
+                        </label>
+                        <input
+                          name="address"
+                          value={editData.address || ""}
+                          onChange={handleEditChange}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                          placeholder="Nhập địa chỉ"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Thông tin giấy tờ */}
+                  <div>
+                    <h6 className="text-base font-medium text-gray-800 mb-3 pb-2 border-b border-gray-200">
+                      Thông tin giấy tờ
+                    </h6>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Căn cước công dân
+                        </label>
+                        <input
+                          name="identityNumber"
+                          value={editData.identityNumber || ""}
+                          onChange={handleEditChange}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                          placeholder="Nhập số căn cước công dân"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Bảo hiểm y tế
+                        </label>
+                        <input
+                          name="insuranceNumber"
+                          value={editData.insuranceNumber || ""}
+                          onChange={handleEditChange}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                          placeholder="Nhập số bảo hiểm y tế"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ảnh đại diện */}
+                  <div>
+                    <h6 className="text-base font-medium text-gray-800 mb-3 pb-2 border-b border-gray-200">
+                      Ảnh đại diện
+                    </h6>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          URL ảnh đại diện
+                        </label>
+                        <input
+                          name="avatar"
+                          value={editData.avatar || ""}
+                          onChange={handleEditChange}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                          placeholder="Nhập đường dẫn ảnh đại diện (https://...)"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">
+                          Nhập URL hình ảnh hợp lệ.
+                        </p>
+                      </div>
+                      
+                      {/* Preview ảnh */}
+                      {editData.avatar && (
+                        <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg border">
+                          <div className="flex-shrink-0">
+                            <div className="relative">
+                              <img
+                                src={editData.avatar}
+                                alt="Preview ảnh đại diện"
+                                className="w-16 h-16 object-cover rounded-full border-2 border-white shadow-lg"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzIiIGZpbGw9IiNGM0Y0RjYiLz4KPHN2ZyB4PSIxNiIgeT0iMTYiIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIj4KPHA0aCBzdHJva2U9IiM5Q0E0QUYiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGQ9Ik0yMCAyMXYtMmE0IDQgMCAwIDAtNC00SDhhNCA0IDAgMCAwLTQgNHYyIi8+CjxjaXJjbGUgY3g9IjEyIiBjeT0iNyIgcj0iNCIgc3Ryb2tlPSIjOUNBNEFGIiBzdHJva2Utd2lkdGg9IjEuNSIvPgo8L3N2Zz4KPC9zdmc+';
+                                  target.classList.add('opacity-50');
+                                }}
+                              />
+                              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full flex items-center justify-center">
+                                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-medium text-gray-900">Preview ảnh đại diện</h4>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Đây là cách ảnh của bạn sẽ hiển thị trong hệ thống
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => setEditData(prev => ({ ...prev, avatar: "" }))}
+                              className="mt-2 text-xs text-red-600 hover:text-red-700 font-medium"
+                            >
+                              Xóa ảnh
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Placeholder khi chưa có ảnh */}
+                      {!editData.avatar && (
+                        <div className="flex items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                          <div className="text-center">
+                            <div className="w-12 h-12 mx-auto mb-3 bg-gray-200 rounded-full flex items-center justify-center">
+                              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                            <p className="text-sm text-gray-500">Chưa có ảnh đại diện</p>
+                            <p className="text-xs text-gray-400">Nhập URL ảnh bên trên để xem preview</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+              <div className="flex-shrink-0 px-2 pt-4 border-t border-gray-200 bg-white">
+                <div className="flex justify-end gap-3">
                   <button
                     type="button"
+                    className="px-4 py-2.5 text-sm font-medium text-gray-800 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => setShowEditModal(false)}
-                    className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
                     disabled={loading}
                   >
                     Hủy
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    form="patient-edit-form"
+                    className="px-4 py-2.5 text-sm font-medium text-white bg-base-600 rounded-lg hover:bg-base-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={loading}
                   >
-                    {loading ? "Đang lưu..." : "Lưu"}
+                    {loading ? "Đang lưu..." : "Lưu thay đổi"}
                   </button>
                 </div>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
@@ -1246,82 +1509,133 @@ export function HealthInfoContent() {
 
       {/* Modal chỉnh sửa thông tin sức khỏe */}
       {showEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">
-              Chỉnh sửa thông tin sức khỏe
-            </h2>
-            <form onSubmit={handleEditSubmit} className="space-y-4">
-              <div>
-                <label className="block font-medium mb-1">Dị ứng</label>
-                <textarea
-                  name="allergies"
-                  value={editData.allergies || ""}
-                  onChange={handleEditChange}
-                  className="w-full border rounded px-3 py-2"
-                  rows={3}
-                  placeholder="Nhập dị ứng (mỗi dòng 1 dị ứng)"
+        <div className="fixed inset-0 flex items-center justify-center overflow-y-auto modal z-99999">
+          <div
+            className="fixed inset-0 h-full w-full bg-gray-400/50 backdrop-blur-[32px]"
+            onClick={() => setShowEditModal(false)}
+          ></div>
+          <div
+            className="relative w-full rounded-3xl bg-white dark:bg-gray-900 max-w-[500px] lg:p-8 mt-[5vh] mb-8 max-h-[90vh] overflow-y-auto custom-scrollbar"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowEditModal(false)}
+              className="absolute right-3 top-3 z-999 flex h-9.5 w-9.5 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white sm:right-6 sm:top-6 sm:h-11 sm:w-11"
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M6.04289 16.5413C5.65237 16.9318 5.65237 17.565 6.04289 17.9555C6.43342 18.346 7.06658 18.346 7.45711 17.9555L11.9987 13.4139L16.5408 17.956C16.9313 18.3466 17.5645 18.3466 17.955 17.956C18.3455 17.5655 18.3455 16.9323 17.955 16.5418L13.4129 11.9997L17.955 7.4576C18.3455 7.06707 18.3455 6.43391 17.955 6.04338C17.5645 5.65286 16.9313 5.65286 16.5408 6.04338L11.9987 10.5855L7.45711 6.0439C7.06658 5.65338 6.43342 5.65338 6.04289 6.0439C5.65237 6.43442 5.65237 7.06759 6.04289 7.45811L10.5845 11.9997L6.04289 16.5413Z"
+                  fill="currentColor"
                 />
+              </svg>
+            </button>
+            
+            <div className="flex flex-col h-full">
+              <div className="flex-shrink-0 px-2 pb-4">
+                <h5 className="mb-4 font-semibold text-gray-800 modal-title text-theme-xl dark:text-white/90 lg:text-2xl">
+                  Chỉnh sửa thông tin sức khỏe
+                </h5>
               </div>
-              <div>
-                <label className="block font-medium mb-1">Chiều cao (cm)</label>
-                <input
-                  name="height"
-                  type="number"
-                  value={editData.height ?? ""}
-                  onChange={handleEditChange}
-                  className="w-full border rounded px-3 py-2"
-                  min={0}
-                />
+              
+              <div className="flex-1 px-2">
+                <form id="health-edit-form" onSubmit={handleEditSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Dị ứng
+                    </label>
+                    <textarea
+                      name="allergies"
+                      value={editData.allergies || ""}
+                      onChange={handleEditChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0 min-h-[80px] resize-none"
+                      placeholder="Nhập dị ứng (mỗi dòng 1 dị ứng)"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Chiều cao (cm)
+                      </label>
+                      <input
+                        name="height"
+                        type="number"
+                        value={editData.height ?? ""}
+                        onChange={handleEditChange}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                        min={0}
+                        placeholder="Nhập chiều cao"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Cân nặng (kg)
+                      </label>
+                      <input
+                        name="weight"
+                        type="number"
+                        value={editData.weight ?? ""}
+                        onChange={handleEditChange}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                        min={0}
+                        placeholder="Nhập cân nặng"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nhóm máu
+                    </label>
+                    <select
+                      name="bloodType"
+                      value={editData.bloodType || ""}
+                      onChange={handleEditChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                    >
+                      <option value="">Chọn nhóm máu</option>
+                      <option value="O+">O+</option>
+                      <option value="O-">O-</option>
+                      <option value="A+">A+</option>
+                      <option value="A-">A-</option>
+                      <option value="B+">B+</option>
+                      <option value="B-">B-</option>
+                      <option value="AB+">AB+</option>
+                      <option value="AB-">AB-</option>
+                    </select>
+                  </div>
+                </form>
               </div>
-              <div>
-                <label className="block font-medium mb-1">Cân nặng (kg)</label>
-                <input
-                  name="weight"
-                  type="number"
-                  value={editData.weight ?? ""}
-                  onChange={handleEditChange}
-                  className="w-full border rounded px-3 py-2"
-                  min={0}
-                />
+
+              <div className="flex-shrink-0 px-2 pt-4 border-t border-gray-200 bg-white">
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    className="px-4 py-2.5 text-sm font-medium text-gray-800 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setShowEditModal(false)}
+                    disabled={loading}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    form="health-edit-form"
+                    className="px-4 py-2.5 text-sm font-medium text-white bg-base-600 rounded-lg hover:bg-base-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={loading}
+                  >
+                    {loading ? "Đang lưu..." : "Lưu thay đổi"}
+                  </button>
+                </div>
               </div>
-              <div>
-                <label className="block font-medium mb-1">Nhóm máu</label>
-                <select
-                  name="bloodType"
-                  value={editData.bloodType || ""}
-                  onChange={handleEditChange}
-                  className="w-full border rounded px-3 py-2"
-                >
-                  <option value="">Chọn nhóm máu</option>
-                  <option value="O+">O+</option>
-                  <option value="O-">O-</option>
-                  <option value="A+">A+</option>
-                  <option value="A-">A-</option>
-                  <option value="B+">B+</option>
-                  <option value="B-">B-</option>
-                  <option value="AB+">AB+</option>
-                  <option value="AB-">AB-</option>
-                </select>
-              </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-                  disabled={loading}
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-600"
-                  disabled={loading}
-                >
-                  {loading ? "Đang lưu..." : "Lưu"}
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
@@ -1427,9 +1741,9 @@ export function AppointmentEditModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-        <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-lg">
-          <h2 className="text-lg font-semibold mb-4">Chỉnh sửa lịch khám</h2>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md">
+        <div className="bg-white rounded-2xl p-6 w-full max-w-2xl ">
+          <h2 className="text-xl font-semibold mb-4">Chỉnh sửa lịch khám</h2>
           <form
             onSubmit={handleSubmit}
             className="grid grid-cols-1 md:grid-cols-2 gap-6"
@@ -1516,14 +1830,14 @@ export function AppointmentEditModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                  className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
                   disabled={loading}
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="px-4 py-2 bg-base-600 text-white rounded-lg hover:bg-base-700"
                   disabled={loading}
                 >
                   {loading ? "Đang lưu..." : "Lưu"}
@@ -1846,7 +2160,7 @@ export function ContactInfoContent() {
 
       {/* Modal chỉnh sửa */}
       {editContact && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-lg">
             <h2 className="text-lg font-semibold mb-4">Chỉnh sửa liên hệ</h2>
             <form onSubmit={handleEditSubmit} className="space-y-4">
@@ -1901,14 +2215,14 @@ export function ContactInfoContent() {
                 <button
                   type="button"
                   onClick={() => setEditContact(null)}
-                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                  className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
                   disabled={loading}
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
+                  className="px-4 py-2 bg-base-600 text-white rounded-lg hover:bg-base-700"
                   disabled={loading}
                 >
                   {loading ? "Đang lưu..." : "Lưu"}

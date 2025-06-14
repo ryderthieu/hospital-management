@@ -5,6 +5,7 @@ import { message } from "antd"
 import { patientService, type UpdatePatientRequest } from "../services/patientServices"
 import { pharmacyService } from "../services/pharmacyServices"
 import { appointmentNoteService } from "../services/appointmentNoteServices"
+import { servicesService } from "../services/servicesServices"
 import { getServiceOrdersByAppointmentId } from "../services/serviceOrderServices"
 import type { PatientDetail } from "../types/patient"
 import type { Prescription } from "../types/prescription"
@@ -60,6 +61,10 @@ interface UsePatientDetailReturn {
 
   // Refresh all data
   refreshAll: (appointmentId: number) => Promise<void>
+  refreshSpecific: (
+    appointmentId: number,
+    targets: ("patient" | "prescription" | "services" | "notes")[],
+  ) => Promise<void[]>
 }
 
 export const usePatientDetail = (initialAppointmentId?: number): UsePatientDetailReturn => {
@@ -109,7 +114,7 @@ export const usePatientDetail = (initialAppointmentId?: number): UsePatientDetai
       const data = await pharmacyService.getCurrentPrescriptionByAppointmentId(appointmentId)
       const result = Array.isArray(data) ? data[data.length - 1] : data //do db bị sai nên dẫn đến 1 appointmentId có nhiều đơn thuốc
       setPrescription(result)
-      
+
       // Auto-update currentPrescriptionId when prescription is fetched
       if (data?.prescriptionId) {
         setCurrentPrescriptionId(data.prescriptionId)
@@ -123,20 +128,66 @@ export const usePatientDetail = (initialAppointmentId?: number): UsePatientDetai
     }
   }, [])
 
-  // Fetch service orders
-  const fetchServiceOrders = useCallback(async (appointmentId: number) => {
+  // ✅ Cache danh sách services
+  const [servicesCache, setServicesCache] = useState<Map<number, any>>(new Map())
+  const [servicesCacheLoaded, setServicesCacheLoaded] = useState(false)
+
+  const loadServicesCache = useCallback(async () => {
+    if (servicesCacheLoaded) return servicesCache
+
     try {
-      setServiceOrdersLoading(true)
-      const data = await getServiceOrdersByAppointmentId(appointmentId)
-      setServiceOrders(data)
+      const allServices = await servicesService.getAllServices()
+      const cache = new Map()
+      allServices.forEach((service) => {
+        cache.set(service.serviceId, {
+          serviceName: service.serviceName,
+          servicePrice: service.price,
+        })
+      })
+      setServicesCache(cache)
+      setServicesCacheLoaded(true)
+      return cache
     } catch (error) {
-      console.error("Error fetching service orders:", error)
-      message.error("Không thể tải danh sách chỉ định")
-      setServiceOrders([])
-    } finally {
-      setServiceOrdersLoading(false)
+      console.error("Error loading services cache:", error)
+      return new Map()
     }
-  }, [])
+  }, [servicesCache, servicesCacheLoaded])
+
+  // ✅ Tối ưu với cache và parallel calls
+  const fetchServiceOrders = useCallback(
+    async (appointmentId: number) => {
+      try {
+        setServiceOrdersLoading(true)
+
+        // Parallel calls thay vì sequential
+        const [serviceOrdersRes, serviceCache] = await Promise.all([
+          getServiceOrdersByAppointmentId(appointmentId),
+          loadServicesCache(), // Sử dụng cache
+        ])
+
+        const serviceOrders = serviceOrdersRes || []
+
+        // Tối ưu merge logic
+        const mergedOrders = serviceOrders.map((order) => {
+          const serviceInfo = serviceCache.get(order.serviceId)
+          return {
+            ...order,
+            serviceName: serviceInfo?.serviceName || "Không rõ tên dịch vụ",
+            price: serviceInfo?.servicePrice || "Không rõ giá",
+          }
+        })
+
+        setServiceOrders(mergedOrders)
+      } catch (error) {
+        console.error("Error fetching service orders:", error)
+        message.error("Không thể tải danh sách chỉ định")
+        setServiceOrders([])
+      } finally {
+        setServiceOrdersLoading(false)
+      }
+    },
+    [loadServicesCache],
+  ) // Dependency ổn định hơn
 
   // Fetch appointment notes
   const fetchAppointmentNotes = useCallback(async (appointmentId: number) => {
@@ -151,7 +202,6 @@ export const usePatientDetail = (initialAppointmentId?: number): UsePatientDetai
       setNotesLoading(false)
     }
   }, [])
-
 
   // Create appointment note
   const createAppointmentNote = useCallback(
@@ -261,117 +311,129 @@ export const usePatientDetail = (initialAppointmentId?: number): UsePatientDetai
   }, [])
 
   // Add medicine to prescription
-  const addMedicine = useCallback((medicine: Medicine) => {
-    if (!initialAppointmentId) {
-      message.error("Không tìm thấy thông tin cuộc hẹn")
-      return
-    }
+  const addMedicine = useCallback(
+    (medicine: Medicine) => {
+      if (!initialAppointmentId) {
+        message.error("Không tìm thấy thông tin cuộc hẹn")
+        return
+      }
 
-    // Create empty prescription to satisfy type requirements
-    const emptyPrescription: Prescription = {
-      prescriptionId: 0,
-      patientId: 0,
-      appointmentId: initialAppointmentId,
-      followUpDate: "",
-      isFollowUp: false,
-      diagnosis: "",
-      systolicBloodPressure: 0,
-      diastolicBloodPressure: 0,
-      heartRate: 0,
-      bloodSugar: 0,
-      note: "",
-      createdAt: new Date().toISOString(),
-      prescriptionDetails: [],
-    }
+      // Create empty prescription to satisfy type requirements
+      const emptyPrescription: Prescription = {
+        prescriptionId: 0,
+        patientId: 0,
+        appointmentId: initialAppointmentId,
+        followUpDate: "",
+        isFollowUp: false,
+        diagnosis: "",
+        systolicBloodPressure: 0,
+        diastolicBloodPressure: 0,
+        heartRate: 0,
+        bloodSugar: 0,
+        note: "",
+        createdAt: new Date().toISOString(),
+        prescriptionDetails: [],
+      }
 
-    const newMedication: PrescriptionDetail = {
-      detailId: Date.now(),
-      medicine,
-      dosage: "1",
-      frequency: "Ngày 1 lần, buổi sáng",
-      duration: "7 ngày",
-      quantity: 7,
-      prescriptionNotes: "Trước ăn",
-      createdAt: new Date().toISOString(),
-      prescription: emptyPrescription,
-    }
+      const newMedication: PrescriptionDetail = {
+        detailId: Date.now(),
+        medicine,
+        dosage: "1",
+        frequency: "Ngày 1 lần, buổi sáng",
+        duration: "7 ngày",
+        quantity: 7,
+        prescriptionNotes: "Trước ăn",
+        createdAt: new Date().toISOString(),
+        prescription: emptyPrescription,
+      }
 
-    setMedications((prev) => [...prev, newMedication])
-    message.success(`Đã thêm ${medicine.medicineName}`)
-  }, [initialAppointmentId])
+      setMedications((prev) => [...prev, newMedication])
+      message.success(`Đã thêm ${medicine.medicineName}`)
+    },
+    [initialAppointmentId],
+  )
 
   // Update medication field
-  const updateMedicationField = useCallback((index: number, field: keyof PrescriptionDetail, value: any) => {
-    if (index < 0 || index >= medications.length) return
+  const updateMedicationField = useCallback(
+    (index: number, field: keyof PrescriptionDetail, value: any) => {
+      if (index < 0 || index >= medications.length) return
 
-    setMedications((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)))
-  }, [medications.length])
+      setMedications((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)))
+    },
+    [medications.length],
+  )
 
   // Delete medication
-  const deleteMedication = useCallback((index: number) => {
-    if (index < 0 || index >= medications.length) return
+  const deleteMedication = useCallback(
+    (index: number) => {
+      if (index < 0 || index >= medications.length) return
 
-    setMedications((prev) => prev.filter((_, i) => i !== index))
-  }, [medications.length])
+      setMedications((prev) => prev.filter((_, i) => i !== index))
+    },
+    [medications.length],
+  )
 
   // Save prescription
-  const savePrescription = useCallback(async (prescriptionData: Prescription): Promise<Prescription | null> => {
-    if (!initialAppointmentId) {
-      message.error("Không tìm thấy thông tin cuộc hẹn")
-      return null
-    }
-
-    if (!medications || medications.length === 0) {
-      message.warning("Chưa có thuốc nào trong toa thuốc")
-      return null
-    }
-
-    try {
-      setSaving(true)
-
-      const fullPrescriptionData = {
-        ...prescriptionData,
-        prescriptionDetails: medications.map((med) => ({
-          medicineId: med.medicine?.medicineId || 0,
-          dosage: med.dosage || "1",
-          frequency: med.frequency || "Ngày 1 lần",
-          duration: med.duration || "7 ngày",
-          quantity: med.quantity || 1,
-          prescriptionNotes: med.prescriptionNotes || "",
-        })),
+  const savePrescription = useCallback(
+    async (prescriptionData: Prescription): Promise<Prescription | null> => {
+      if (!initialAppointmentId) {
+        message.error("Không tìm thấy thông tin cuộc hẹn")
+        return null
       }
 
-      let savedPrescription: Prescription
-
-      if (currentPrescriptionId) {
-        // Update existing prescription
-        console.log("test prescriptionId", currentPrescriptionId )
-        console.log("test full data cập nhật",fullPrescriptionData)
-        savedPrescription = await pharmacyService.updatePrescription(currentPrescriptionId, fullPrescriptionData)
-        message.success("Cập nhật toa thuốc thành công")
-      } else {
-        // Create new prescription
-        savedPrescription = await pharmacyService.createPrescription(initialAppointmentId, fullPrescriptionData)
-        setCurrentPrescriptionId(savedPrescription.prescriptionId)
-        message.success("Tạo toa thuốc thành công")
+      if (!medications || medications.length === 0) {
+        message.warning("Chưa có thuốc nào trong toa thuốc")
+        return null
       }
 
-      // Refresh prescription data after save
-      await fetchPrescription(initialAppointmentId)
-      
-      // Clear medications after successful save
-      setMedications([])
-      hasLoadedRef.current = false
+      try {
+        setSaving(true)
 
-      return savedPrescription
-    } catch (error) {
-      console.error("Error saving prescription:", error)
-      message.error("Không thể lưu toa thuốc")
-      return null
-    } finally {
-      setSaving(false)
-    }
-  }, [initialAppointmentId, medications, currentPrescriptionId, fetchPrescription])
+        const fullPrescriptionData = {
+          ...prescriptionData,
+          prescriptionDetails: medications.map((med) => ({
+            medicineId: med.medicine?.medicineId || 0,
+            dosage: med.dosage || "1",
+            frequency: med.frequency || "Ngày 1 lần",
+            duration: med.duration || "7 ngày",
+            quantity: med.quantity || 1,
+            prescriptionNotes: med.prescriptionNotes || "",
+          })),
+        }
+
+        let savedPrescription: Prescription
+
+        if (currentPrescriptionId) {
+          // Update existing prescription
+          console.log("test prescriptionId", currentPrescriptionId)
+          console.log("test full data cập nhật", fullPrescriptionData)
+          savedPrescription = await pharmacyService.updatePrescription(currentPrescriptionId, fullPrescriptionData)
+          message.success("Cập nhật toa thuốc thành công")
+        } else {
+          // Create new prescription
+          savedPrescription = await pharmacyService.createPrescription(initialAppointmentId, fullPrescriptionData)
+          setCurrentPrescriptionId(savedPrescription.prescriptionId)
+          message.success("Tạo toa thuốc thành công")
+        }
+
+        // Refresh prescription data after save
+        await fetchPrescription(initialAppointmentId)
+
+        // Clear medications after successful save
+        setMedications([])
+        hasLoadedRef.current = false
+
+        return savedPrescription
+      } catch (error) {
+        console.error("Error saving prescription:", error)
+        message.error("Không thể lưu toa thuốc")
+        return null
+      } finally {
+        setSaving(false)
+      }
+    },
+    [initialAppointmentId, medications, currentPrescriptionId, fetchPrescription],
+  )
 
   // Load existing prescription for editing
   const loadExistingPrescription = useCallback((prescription: Prescription | null) => {
@@ -423,12 +485,35 @@ export const usePatientDetail = (initialAppointmentId?: number): UsePatientDetai
   // Refresh all data
   const refreshAll = useCallback(
     async (appointmentId: number) => {
-      await Promise.all([
+      const [patientData, prescriptionData, serviceOrdersData, notesData] = await Promise.allSettled([
         fetchPatientDetail(appointmentId),
         fetchPrescription(appointmentId),
         fetchServiceOrders(appointmentId),
         fetchAppointmentNotes(appointmentId),
       ])
+    },
+    [fetchPatientDetail, fetchPrescription, fetchServiceOrders, fetchAppointmentNotes],
+  )
+
+  // ✅ Refresh có chọn lọc
+  const refreshSpecific = useCallback(
+    (appointmentId: number, targets: ("patient" | "prescription" | "services" | "notes")[]) => {
+      const refreshPromises = []
+
+      if (targets.includes("patient")) {
+        refreshPromises.push(fetchPatientDetail(appointmentId))
+      }
+      if (targets.includes("prescription")) {
+        refreshPromises.push(fetchPrescription(appointmentId))
+      }
+      if (targets.includes("services")) {
+        refreshPromises.push(fetchServiceOrders(appointmentId))
+      }
+      if (targets.includes("notes")) {
+        refreshPromises.push(fetchAppointmentNotes(appointmentId))
+      }
+
+      return Promise.all(refreshPromises)
     },
     [fetchPatientDetail, fetchPrescription, fetchServiceOrders, fetchAppointmentNotes],
   )
@@ -486,5 +571,6 @@ export const usePatientDetail = (initialAppointmentId?: number): UsePatientDetai
 
     // Combined Actions
     refreshAll,
+    refreshSpecific,
   }
 }

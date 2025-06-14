@@ -1,112 +1,149 @@
-import type React from "react"
-import { useState } from "react"
-import { Table, Input, DatePicker, Button, Avatar, Space, Card, Select, Tooltip, Empty } from "antd"
+"use client";
+
+import type React from "react";
+import { useState, useEffect } from "react";
+import {
+  Table,
+  Input,
+  Button,
+  Avatar,
+  Space,
+  Card,
+  Select,
+  Tooltip,
+  Empty,
+  Tag,
+} from "antd";
 import {
   EditOutlined,
-  StepForwardOutlined,
   SearchOutlined,
   FilterOutlined,
   UserOutlined,
   CalendarOutlined,
   ReloadOutlined,
   ClearOutlined,
-} from "@ant-design/icons"
-import WeCareLoading from "../../components/common/WeCareLoading"
-import { useNavigate } from "react-router-dom"
-import { useAppointments } from "../../hooks/useAppointment"
-import {
-  formatTimeSlot,
-  getAppointmentStatusColor,
-  getAppointmentStatusVietnameseText,
-} from "../../services/appointmentServices"
-import type { Appointment } from "../../types/appointment"
-import dayjs, { type Dayjs } from "dayjs"
+  PhoneOutlined,
+  MailOutlined,
+} from "@ant-design/icons";
+import WeCareLoading from "../../components/common/WeCareLoading";
+import { useNavigate } from "react-router-dom";
+import { useServiceOrders } from "./useServiceOrders";
+import type { ServiceOrder } from "../../types/serviceOrder";
 
-const { Search } = Input
-const { Option } = Select
+
+const { Search } = Input;
+const { Option } = Select;
 
 const Patients: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [genderFilter, setGenderFilter] = useState<string>("all")
-  const navigate = useNavigate()
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [serviceTypeFilter, setServiceTypeFilter] = useState<string>("all");
+  const navigate = useNavigate();
+
+  // Using roomId = 1 as default (you can get this from user context)
+  const roomId = 1;
 
   const {
-    appointments,
-    paginatedData,
+    serviceOrdersTable,
+    appointmentsData,
+    roomsData,
     loading,
     error,
     stats,
     filters,
     updateFilters,
-    updatePagination,
-    clearDateFilter,
-    setTodayFilter,
-    updateAppointmentStatus,
-    refreshAppointments,
-  } = useAppointments()
+    clearFilters,
+    refreshServiceOrders,
+  } = useServiceOrders(roomId);
 
-  const handleViewPatient = (id: number) => {
-    const appointment = appointments.find((a: Appointment) => a.appointmentId === id)
-    if (appointment) {
-      navigate("/doctor/examination/patient/detail", {
-        state: {
-          appointmentId: appointment.appointmentId,
-        },
-      })
-    }
-  }
+
+  const handleViewServiceOrder = (record: ServiceOrder) => {
+    const appointment = appointmentsData[record.appointmentId];
+    const room = roomsData[record.roomId];
+    navigate("/doctor/service/patient/detail", {
+      state: {
+        orderId: record.orderId,
+        roomId: record.roomId,
+        appointmentData: appointment,
+        roomData: room,
+        serviceOrder: record
+      },
+    });
+  };
 
   const handleRefresh = () => {
-    refreshAppointments()
-  }
-
-  const handleStatusChange = async (appointmentId: number, newStatus: string) => {
-    await updateAppointmentStatus(appointmentId, newStatus)
-  }
-
-  const handleDateChange = (date: Dayjs | null, dateString: string | string[]) => {
-    const dateStr = Array.isArray(dateString) ? dateString[0] : dateString
-    if (dateStr) {
-      updateFilters({ date: dateStr })
-    } else {
-      clearDateFilter()
-    }
-  }
+    refreshServiceOrders();
+  };
 
   const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value)
-    updateFilters({ status: value === "all" ? undefined : value })
-  }
+    setStatusFilter(value);
+    updateFilters({ status: value === "all" ? undefined : value });
+  };
 
-  const handleGenderFilterChange = (value: string) => {
-    setGenderFilter(value)
-    updateFilters({ gender: value === "all" ? undefined : value })
-  }
+  const handleServiceTypeFilterChange = (value: string) => {
+    setServiceTypeFilter(value);
+    updateFilters({ serviceType: value === "all" ? undefined : value });
+  };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setSearchTerm(value)
-    updateFilters({ searchTerm: value || undefined })
-  }
+    const value = e.target.value;
+    setSearchTerm(value);
+    updateFilters({ searchTerm: value || undefined });
+  };
 
-  const getStatusBadge = (appointmentStatus: string) => {
-    const { color, bgColor } = getAppointmentStatusColor(appointmentStatus)
+  const getStatusBadge = (orderStatus: string) => {
+    const statusConfig = {
+      ORDERED: { color: "#d97706", bgColor: "#fef3c7", text: "Đang chờ" },
+      COMPLETED: {
+        color: "#059669",
+        bgColor: "#d1fae5",
+        text: "Đã hoàn thành",
+      },
+    };
+
+    const config = statusConfig[orderStatus as keyof typeof statusConfig] || {
+      color: "#6b7280",
+      bgColor: "#f3f4f6",
+      text: "Không xác định",
+    };
+
     return (
       <span
         style={{
-          color,
-          backgroundColor: bgColor,
+          color: config.color,
+          backgroundColor: config.bgColor,
           padding: "4px 12px",
           borderRadius: "20px",
           fontSize: "12px",
           fontWeight: 500,
         }}
       >
-        {getAppointmentStatusVietnameseText(appointmentStatus)}
+        {config.text}
       </span>
-    )
-  }
+    );
+  };
+
+  const formatDateTime = (dateString?: string) => {
+    if (!dateString) return "Chưa có";
+    try {
+      const date = new Date(dateString);
+      const hours = date.getHours().toString().padStart(2, "0");
+      const minutes = date.getMinutes().toString().padStart(2, "0");
+      const day = date.getDate().toString().padStart(2, "0");
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
+      const year = date.getFullYear();
+
+      return `${hours}:${minutes} ${day}/${month}/${year}`;
+    } catch (e) {
+      return "Định dạng không hợp lệ";
+    }
+  };
+
+  const getRoomDisplayName = (roomId: number) => {
+    const room = roomsData[roomId];
+    if (!room) return `Phòng ${roomId}`;
+    return `Tòa ${room.building} - Tầng ${room.floor}`;
+  };
 
   const columns = [
     {
@@ -114,101 +151,178 @@ const Patients: React.FC = () => {
       dataIndex: "number",
       key: "number",
       width: 70,
-      render: (number: number) => <span style={{ fontWeight: 500, color: "#6b7280" }}>{number}</span>,
+      render: (number: number) => (
+        <span style={{ fontWeight: 500, color: "#6b7280" }}>{number}</span>
+      ),
     },
     {
       title: "Bệnh nhân",
-      dataIndex: "patientInfo",
-      key: "patientInfo",
-      render: (patientInfo: any, record: Appointment) => (
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <Avatar
-            src="https://png.pngtree.com/png-clipart/20210608/ourlarge/pngtree-dark-gray-simple-avatar-png-image_3418404.jpg"
-            size={48}
-            style={{ marginRight: 12, border: "2px solid #f0f9ff" }}
-            icon={<UserOutlined />}
-          />
-          <div>
-            <div style={{ fontWeight: 600, color: "#111827", marginBottom: "2px" }}>
-              {patientInfo?.fullName || "Chưa có thông tin"}
+      dataIndex: "appointmentId",
+      key: "patient",
+      render: (appointmentId: number, record: ServiceOrder) => {
+        const appointment = appointmentsData[appointmentId];
+        const patientInfo = appointment?.patientInfo;
+
+        return (
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <Avatar
+              src={
+                patientInfo?.avatar ||
+                "https://png.pngtree.com/png-clipart/20210608/ourlarge/pngtree-dark-gray-simple-avatar-png-image_3418404.jpg"
+              }
+              size={48}
+              style={{ marginRight: 12, border: "2px solid #f0f9ff" }}
+              icon={<UserOutlined />}
+            />
+            <div>
+              <div
+                style={{
+                  fontWeight: 600,
+                  color: "#111827",
+                  marginBottom: "2px",
+                }}
+              >
+                {patientInfo?.fullName || "Đang tải..."}
+              </div>
+              <div style={{ fontSize: "12px", color: "#6b7280" }}>
+                Mã BN: {patientInfo?.patientId || "N/A"}
+              </div>
+              <div style={{ fontSize: "12px", color: "#6b7280" }}>
+                <div>
+                  {patientInfo?.birthday
+                    ? new Date(patientInfo.birthday).toLocaleDateString(
+                        "vi-VN"
+                      )
+                    : "N/A"}
+                </div>
+                <div>
+                  {patientInfo?.gender === "MALE"
+                    ? "Nam"
+                    : patientInfo?.gender === "FEMALE"
+                    ? "Nữ"
+                    : "N/A"}{" "}
+                  -
+                  {patientInfo?.birthday
+                    ? ` ${
+                        new Date().getFullYear() -
+                        new Date(patientInfo.birthday).getFullYear()
+                      } tuổi`
+                    : " N/A"}
+                </div>
+              </div>
+              {/* Contact info */}
+              <div
+                style={{ fontSize: "11px", color: "#9ca3af", marginTop: "2px" }}
+              >
+                {patientInfo?.phoneNumber && (
+                  <span style={{ marginRight: "8px" }}>
+                    <PhoneOutlined style={{ marginRight: "2px" }} />
+                    {patientInfo.phoneNumber}
+                  </span>
+                )}
+                {patientInfo?.email && (
+                  <span>
+                    <MailOutlined style={{ marginRight: "2px" }} />
+                    {patientInfo.email}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
-      title: "Ngày khám",
-      dataIndex: "schedule",
-      key: "schedule",
-      render: (schedule: any, record: Appointment) => (
+      title: "Tên chỉ định",
+      dataIndex: "serviceName",
+      key: "serviceName",
+      render: (serviceName: any) => (
         <div>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
-            <CalendarOutlined style={{ marginRight: 8, color: "#6b7280" }} />
-            <span style={{ color: "#374151" }}>{schedule?.workDate}</span>
+          <div
+            style={{ fontWeight: 500, color: "#374151", marginBottom: "4px" }}
+          >
+            {serviceName || "Không có tên"}
           </div>
-          
+          {/* {getServiceTypeBadge(service?.serviceType || "OTHER")} */}
         </div>
       ),
     },
     {
-      title: "Giới tính",
-      dataIndex: "patientInfo",
-      key: "gender",
-      render: (patientInfo: any) => (
-        <span style={{ color: "#374151" }}>
-          {patientInfo?.gender === "MALE" ? "Nam" : patientInfo?.gender === "FEMALE" ? "Nữ" : "N/A"}
-        </span>
+      title: "Nơi thực hiện",
+      dataIndex: "roomId",
+      key: "roomId",
+      render: (roomId: number) => (
+        <div>
+          <div style={{ color: "#374151", fontWeight: 500 }}>
+            {getRoomDisplayName(roomId)}
+          </div>
+          {roomsData[roomId]?.note && (
+            <div style={{ fontSize: "14px", color: "#6b7280" }}>
+              {roomsData[roomId].note}
+            </div>
+          )}
+        </div>
       ),
     },
     {
-      title: "Ngày sinh",
-      dataIndex: "patientInfo",
-      key: "birthday",
-      render: (patientInfo: any) => (
-        <span style={{ color: "#374151", fontWeight: 500 }}>
-          {patientInfo?.birthday ? patientInfo.birthday.split("-").reverse().join("/") : "N/A"}
-        </span>
-      ),
-    },
-    {
-      title: "Triệu chứng",
-      dataIndex: "symptoms",
-      key: "symptoms",
-      ellipsis: true,
-      render: (symptoms: string) => (
-        <Tooltip title={symptoms}>
-          <span style={{ color: "#374151" }}>{symptoms}</span>
-        </Tooltip>
+      title: "Thời gian đặt",
+      dataIndex: "orderTime",
+      key: "orderTime",
+      render: (orderTime: string) => (
+        <div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              marginBottom: "4px",
+            }}
+          >
+            <CalendarOutlined style={{ marginRight: 8, color: "#6b7280" }} />
+            <span style={{ color: "#374151", fontSize: "16px" }}>
+              {formatDateTime(orderTime)}
+            </span>
+          </div>
+        </div>
       ),
     },
     {
       title: "Trạng thái",
-      dataIndex: "appointmentStatus",
-      key: "appointmentStatus",
+      dataIndex: "orderStatus",
+      key: "orderStatus",
       render: (status: string) => getStatusBadge(status),
+    },
+    {
+      title: "Kết quả",
+      dataIndex: "result",
+      key: "result",
+      ellipsis: true,
+      render: (result: string) => (
+        <Tooltip title={result || "Chưa có kết quả"}>
+          <span style={{ color: result ? "#374151" : "#9ca3af" }}>
+            {result || "Chưa có kết quả"}
+          </span>
+        </Tooltip>
+      ),
     },
     {
       title: "Thao tác",
       key: "action",
       width: 120,
-      render: (_: any, record: Appointment) => (
+      render: (_: any, record: ServiceOrder) => (
         <Space size="small">
-          <Tooltip title="Bỏ qua">
-            <Button icon={<StepForwardOutlined />} type="text" size="small" style={{ color: "#6b7280" }} />
-          </Tooltip>
           <Tooltip title="Xem chi tiết">
             <Button
               icon={<EditOutlined />}
               type="text"
               size="small"
-              onClick={() => handleViewPatient(record.appointmentId)}
+              onClick={() => handleViewServiceOrder(record)}
               style={{ color: "#047481" }}
             />
           </Tooltip>
         </Space>
       ),
     },
-  ]
+  ];
 
   return (
     <div style={{ background: "#f8fafc", minHeight: "100vh" }}>
@@ -224,15 +338,10 @@ const Patients: React.FC = () => {
               marginBottom: "8px",
             }}
           >
-            Danh sách bệnh nhân xét nghiệm
+            Danh sách chỉ định - {getRoomDisplayName(roomId)}
           </h1>
           <p style={{ color: "#6b7280", fontSize: "16px", margin: 0 }}>
-            Quản lý và theo dõi thông tin bệnh nhân
-            {filters.date && (
-              <span style={{ marginLeft: "8px", fontWeight: 500 }}>
-                - Ngày: {dayjs(filters.date).format("DD/MM/YYYY")}
-              </span>
-            )}
+            Quản lý và theo dõi các đơn xét nghiệm
           </p>
         </div>
 
@@ -246,20 +355,28 @@ const Patients: React.FC = () => {
           }}
         >
           <Card size="small" style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "24px", fontWeight: "bold", color: "#111827" }}>{stats.total}</div>
-            <div style={{ color: "#6b7280" }}>Tổng lịch hẹn</div>
+            <div
+              style={{ fontSize: "24px", fontWeight: "bold", color: "#111827" }}
+            >
+              {stats.total}
+            </div>
+            <div style={{ color: "#6b7280" }}>Tổng đơn xét nghiệm</div>
           </Card>
           <Card size="small" style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "24px", fontWeight: "bold", color: "#d97706" }}>{stats.pending}</div>
+            <div
+              style={{ fontSize: "24px", fontWeight: "bold", color: "#d97706" }}
+            >
+              {stats.ordered}
+            </div>
             <div style={{ color: "#6b7280" }}>Đang chờ</div>
           </Card>
           <Card size="small" style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "24px", fontWeight: "bold", color: "#2563eb" }}>{stats.confirmed}</div>
-            <div style={{ color: "#6b7280" }}>Đã xác nhận</div>
-          </Card>
-          <Card size="small" style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "24px", fontWeight: "bold", color: "#059669" }}>{stats.completed}</div>
-            <div style={{ color: "#6b7280" }}>Hoàn thành</div>
+            <div
+              style={{ fontSize: "24px", fontWeight: "bold", color: "#059669" }}
+            >
+              {stats.completed}
+            </div>
+            <div style={{ color: "#6b7280" }}>Đã hoàn thành</div>
           </Card>
         </div>
 
@@ -272,12 +389,19 @@ const Patients: React.FC = () => {
             boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)",
           }}
         >
-          <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "16px",
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
             <Search
-              placeholder="Tìm kiếm bệnh nhân..."
+              placeholder="Tìm kiếm theo tên xét nghiệm, mã đơn, tên bệnh nhân..."
               value={searchTerm}
               onChange={handleSearchChange}
-              style={{ width: 320 }}
+              style={{ width: 600 }}
               prefix={<SearchOutlined style={{ color: "#6b7280" }} />}
             />
 
@@ -285,50 +409,30 @@ const Patients: React.FC = () => {
               placeholder="Trạng thái"
               value={statusFilter}
               onChange={handleStatusFilterChange}
-              style={{ width: 150 }}
+              style={{ width: 200 }}
               suffixIcon={<FilterOutlined style={{ color: "#6b7280" }} />}
             >
               <Option value="all">Tất cả trạng thái</Option>
-              <Option value="PENDING">Đang chờ</Option>
-              <Option value="CONFIRMED">Đã xác nhận</Option>
-              <Option value="COMPLETED">Hoàn thành</Option>
-              <Option value="CANCELLED">Đã hủy</Option>
+              <Option value="ORDERED">Đang chờ</Option>
+              <Option value="COMPLETED">Đã hoàn thành</Option>
             </Select>
 
-            <Select
-              placeholder="Giới tính"
-              value={genderFilter}
-              onChange={handleGenderFilterChange}
-              style={{ width: 120 }}
+            <Button icon={<ClearOutlined />} onClick={clearFilters} type="text">
+              Xóa bộ lọc
+            </Button>
+
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={handleRefresh}
+              loading={loading}
+              style={{ marginLeft: "auto" }}
             >
-              <Option value="all">Tất cả</Option>
-              <Option value="MALE">Nam</Option>
-              <Option value="FEMALE">Nữ</Option>
-            </Select>
-
-            <DatePicker
-              placeholder="Chọn ngày"
-              style={{ width: 200 }}
-              value={filters.date ? dayjs(filters.date) : null}
-              onChange={handleDateChange}
-              format="DD/MM/YYYY"
-            />
-
-            <Button icon={<ClearOutlined />} onClick={clearDateFilter} disabled={!filters.date} type="text">
-              Xóa bộ lọc ngày
-            </Button>
-
-            <Button onClick={setTodayFilter} type="text">
-              Hôm nay
-            </Button>
-
-            <Button icon={<ReloadOutlined />} onClick={handleRefresh} loading={loading} style={{ marginLeft: "auto" }}>
               Làm mới
             </Button>
           </div>
         </Card>
 
-        {/* Patient table */}
+        {/* Service Orders table */}
         <Card
           bordered={false}
           style={{
@@ -354,7 +458,7 @@ const Patients: React.FC = () => {
                   margin: 0,
                 }}
               >
-                Danh sách bệnh nhân xét nghiệm
+                Danh sách các chỉ định được yêu cầu
               </h2>
               <span
                 style={{
@@ -366,7 +470,7 @@ const Patients: React.FC = () => {
                   borderRadius: "20px",
                 }}
               >
-                {appointments.length} bệnh nhân
+                {serviceOrdersTable.length} đơn
               </span>
             </div>
           </div>
@@ -377,33 +481,34 @@ const Patients: React.FC = () => {
             <div style={{ textAlign: "center", padding: "60px 0" }}>
               <Empty description={error} />
             </div>
-          ) : appointments.length === 0 ? (
-            <Empty description="Không tìm thấy bệnh nhân nào" style={{ padding: "60px 0" }} />
+          ) : serviceOrdersTable.length === 0 ? (
+            <Empty
+              description="Không tìm thấy đơn xét nghiệm nào"
+              style={{ padding: "60px 0" }}
+            />
           ) : (
             <Table
               columns={columns}
-              dataSource={appointments}
-              rowKey="appointmentId"
+              dataSource={serviceOrdersTable}
+              rowKey="orderId"
               pagination={{
-                current: paginatedData.pageNo + 1, // Convert from 0-based to 1-based
-                pageSize: paginatedData.pageSize,
-                total: paginatedData.totalElements,
+                pageSize: 10,
                 showSizeChanger: true,
                 pageSizeOptions: ["10", "20", "50"],
-                showTotal: (total, range) => `Hiển thị ${range[0]}-${range[1]} trong tổng số ${total} bệnh nhân`,
-                onChange: (page, pageSize) => {
-                  updatePagination(page, pageSize)
-                },
+                showTotal: (total, range) =>
+                  `Hiển thị ${range[0]}-${range[1]} trong tổng số ${total} đơn xét nghiệm`,
                 style: { marginTop: "16px" },
               }}
               style={{ borderRadius: "12px" }}
-              rowClassName={(record, index) => (index % 2 === 0 ? "table-row-light" : "table-row-dark")}
+              rowClassName={(record, index) =>
+                index % 2 === 0 ? "table-row-light" : "table-row-dark"
+              }
             />
           )}
         </Card>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Patients
+export default Patients;

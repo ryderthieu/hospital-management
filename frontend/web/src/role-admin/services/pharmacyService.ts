@@ -142,28 +142,138 @@ export const medicineService = {
     patientId: number
   ): Promise<PrescriptionResponse[]> {
     try {
+      console.log("=== DEBUG: Calling getPrescriptionsByPatientId ===");
+      console.log("PatientId:", patientId);
+      console.log("API URL:", `/pharmacy/prescriptions/patient/${patientId}`);
+      
       const response = await api.get<PrescriptionResponse[]>(
         `/pharmacy/prescriptions/patient/${patientId}`
       );
-      return response.data;
+      
+      // Debug: Log the raw response to see what backend returns
+      console.log("=== DEBUG: Raw backend response ===");
+      console.log("Response status:", response.status);
+      console.log("Response headers:", response.headers);
+      console.log("Response data:", JSON.stringify(response.data, null, 2));
+      
+      // Check if response has data
+      if (!response.data || !Array.isArray(response.data)) {
+        console.warn("Backend returned unexpected data format:", response.data);
+        return [];
+      }
+      
+      // Process and validate the response data
+      const processedData = response.data.map((prescription, prescriptionIndex) => {
+        console.log(`=== Processing prescription ${prescriptionIndex + 1} ===`);
+        console.log("Prescription ID:", prescription.prescriptionId);
+        console.log("Raw prescription:", JSON.stringify(prescription, null, 2));
+        
+        return {
+          ...prescription,
+          prescriptionDetails: prescription.prescriptionDetails?.map((detail, detailIndex) => {
+            console.log(`--- Processing detail ${detailIndex + 1} ---`);
+            console.log("Detail ID:", detail.detailId);
+            console.log("Medicine:", detail.medicine?.medicineName);
+            console.log("Raw quantity value:", detail.quantity);
+            console.log("Quantity type:", typeof detail.quantity);
+            console.log("Quantity === undefined:", detail.quantity === undefined);
+            console.log("Quantity === null:", detail.quantity === null);
+            
+            const processedDetail = {
+              ...detail,
+              // Ensure quantity has a default value if undefined/null
+              quantity: detail.quantity !== undefined && detail.quantity !== null ? detail.quantity : 1
+            };
+            
+            console.log("Processed quantity:", processedDetail.quantity);
+            console.log("Processed detail:", JSON.stringify(processedDetail, null, 2));
+            
+            return processedDetail;
+          }) || []
+        };
+      });
+      
+      console.log("=== Final processed data ===");
+      console.log(JSON.stringify(processedData, null, 2));
+      return processedData;
     } catch (error) {
-      console.error("Error getting prescriptions by patient ID:", error);
+      console.error("=== ERROR in getPrescriptionsByPatientId ===");
+      console.error("Error details:", error);
       throw error;
     }
   },
 
   // Create a new prescription
   async createPrescription(
-    prescriptionData: PrescriptionResponse
+    prescriptionData: any
   ): Promise<PrescriptionResponse> {
     try {
+      // Debug: Log the data being sent to backend
+      console.log("Sending prescription data to backend:", prescriptionData);
+      
+      // Ensure all prescription details have valid quantity
+      const processedData = {
+        ...prescriptionData,
+        prescriptionDetails: prescriptionData.prescriptionDetails?.map((detail: any) => {
+          const quantity = typeof detail.quantity === 'number' ? detail.quantity : parseInt(String(detail.quantity)) || 1;
+          console.log(`Processing detail for backend: medicine=${detail.medicineId}, quantity=${quantity}`);
+          return {
+            ...detail,
+            quantity: Math.max(1, quantity) // Ensure quantity is at least 1
+          };
+        }) || []
+      };
+      
+      console.log("Processed data for backend:", processedData);
+      
       const response = await api.post<PrescriptionResponse>(
         "/pharmacy/prescriptions",
-        prescriptionData
+        processedData
       );
       return response.data;
     } catch (error) {
       console.error("Error creating prescription:", error);
+      throw error;
+    }
+  },
+
+  // Update an existing prescription
+  async updatePrescription(
+    prescriptionId: number,
+    prescriptionData: any
+  ): Promise<PrescriptionResponse> {
+    try {
+      console.log("Updating prescription with data:", prescriptionData);
+      
+      // Ensure all prescription details have valid quantity
+      const processedData = {
+        ...prescriptionData,
+        prescriptionDetails: prescriptionData.prescriptionDetails?.map((detail: any) => {
+          const quantity = typeof detail.quantity === 'number' ? detail.quantity : parseInt(String(detail.quantity)) || 1;
+          return {
+            ...detail,
+            quantity: Math.max(1, quantity)
+          };
+        }) || []
+      };
+      
+      const response = await api.put<PrescriptionResponse>(
+        `/pharmacy/prescriptions/${prescriptionId}`,
+        processedData
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating prescription:", error);
+      throw error;
+    }
+  },
+
+  // Delete a prescription
+  async deletePrescription(prescriptionId: number): Promise<void> {
+    try {
+      await api.delete(`/pharmacy/prescriptions/${prescriptionId}`);
+    } catch (error) {
+      console.error("Error deleting prescription:", error);
       throw error;
     }
   },

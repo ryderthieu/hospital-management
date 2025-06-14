@@ -1,4 +1,4 @@
-export type BillStatus = 'PAID' | 'UNPAID' | 'CANCELLED';
+export type BillStatus = "PAID" | "UNPAID" | "CANCELLED";
 export type BillDetailItemType = "CONSULTATION" | "MEDICINE" | "SERVICE";
 export type PaymentMethod = "CASH" | "ONLINE BANKING" | "CARD";
 export type TransactionStatus = "SUCCESS" | "FAILED" | "PENDING";
@@ -58,4 +58,16 @@ export interface TransactionDto {
   amount: number;
   paymentMethod: PaymentMethod;
   status: TransactionStatus;
+}
+
+export interface BillResponse {
+  billId: number;
+  appointmentId: number;
+  patientId: number;
+  totalCost: number;
+  insuranceDiscount: number;
+  amount: number;
+  status: "PAID" | "UNPAID" | "CANCELLED";
+  createdAt: string;
+  billDetails: BillDetail[];
 }

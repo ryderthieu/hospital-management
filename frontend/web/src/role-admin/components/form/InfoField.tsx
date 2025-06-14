@@ -14,9 +14,9 @@ const InfoField: React.FC<InfoFieldProps> = ({
   contentClassName = "",
 }) => {
   return (
-    <div className={`grid grid-cols-6 space-y-2 ${className}`}>
+    <div className={`grid grid-cols-6 gap-4 ${className}`}>
       {label && (
-        <p className={`col-span-2 text-md font-semibold text-gray-800 mr-5 ${labelClassName}`}>
+        <p className={`col-span-2 text-md font-semibold text-gray-800 ${labelClassName}`}>
           {label}:
         </p>
       )}

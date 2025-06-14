@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { message } from "antd"
 import { createServiceOrder, getServiceOrdersByAppointmentId } from "../services/serviceOrderServices"
@@ -7,7 +5,7 @@ import { servicesService } from "../services/servicesServices"
 import type { Services } from "../types/services"
 import type { ServiceOrder } from "../types/serviceOrder"
 
-export const useMedicalOrderModal = (appointmentId?: number) => {
+export const useServiceOrderModal = (appointmentId?: number) => {
   const [services, setServices] = useState<Services[]>([])
   const [loading, setLoading] = useState(false)
   const [searchLoading, setSearchLoading] = useState(false)
@@ -78,7 +76,6 @@ export const useMedicalOrderModal = (appointmentId?: number) => {
       }
 
       const result = await createServiceOrder(serviceId, serviceOrder)
-      message.success(`Đã thêm chỉ định: ${service.serviceName}`)
       return result
     } catch (error) {
       console.error("Error creating service order:", error)

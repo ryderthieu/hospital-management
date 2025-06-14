@@ -12,7 +12,10 @@ type BadgeColor =
   | "confirmed"
   | "cancelled"
   | "completed"
-  | "pending";
+  | "pending"
+  | "Đã thanh toán"
+  | "Chưa thanh toán"
+  | "Đã hủy";
 
 interface BadgeProps {
   variant?: BadgeVariant; // Light or solid variant
@@ -61,8 +64,12 @@ const Badge: React.FC<BadgeProps> = ({
         "bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-500",
       pending:
         "bg-yellow-50 text-yellow-600 dark:bg-yellow-500/15 dark:text-yellow-500",
-      base:
-        "bg-base-50 text-base-600 dark:bg-base-500/15 dark:text-base-500",
+      base: "bg-base-50 text-base-600 dark:bg-base-500/15 dark:text-base-500",
+      "Đã thanh toán":
+        "bg-green-50 text-green-600 dark:bg-green-500/15 dark:text-green-500",
+      "Chưa thanh toán":
+        "bg-yellow-50 text-yellow-600 dark:bg-yellow-500/15 dark:text-yellow-500",
+      "Đã hủy": "bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-500",
     },
     solid: {
       primary: "bg-brand-500 text-white dark:text-white",
@@ -77,6 +84,9 @@ const Badge: React.FC<BadgeProps> = ({
       completed: "bg-blue-600 text-white dark:text-white",
       pending: "bg-yellow-600 text-white dark:text-white",
       base: "bg-base-600 text-white dark:text-white",
+      "Đã thanh toán": "bg-green-600 text-white dark:text-white",
+      "Chưa thanh toán": "bg-yellow-600 text-white dark:text-white",
+      "Đã hủy": "bg-red-600 text-white dark:text-white",
     },
   };
 

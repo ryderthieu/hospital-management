@@ -1,8 +1,6 @@
-"use client"
-
-import type React from "react"
-import { useState, useEffect } from "react"
-import { useLocation, useNavigate } from "react-router-dom"
+import type React from "react";
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Row,
   Col,
@@ -17,7 +15,7 @@ import {
   DatePicker,
   Space,
   Popconfirm,
-} from "antd"
+} from "antd";
 import {
   SaveOutlined,
   ArrowLeftOutlined,
@@ -29,174 +27,200 @@ import {
   PhoneOutlined,
   MailOutlined,
   HomeOutlined,
-} from "@ant-design/icons"
-import type { ServiceOrder } from "../../types/serviceOrder"
-import type { ExaminationRoom } from "../../types/examinationRoom"
-import { getServiceOrderById, updateServiceOrder, deleteServiceOrder } from "../../services/serviceOrderServices"
-import { appointmentService } from "../../services/appointmentServices"
-import { examinationRoomService } from "../../services/examinationRoomServices"
-import type { Appointment } from "../../types/appointment"
-import dayjs from "dayjs"
+} from "@ant-design/icons";
+import type { ServiceOrder } from "../../types/serviceOrder";
+import type { ExaminationRoom } from "../../types/examinationRoom";
+import {
+  getServiceOrderById,
+  updateServiceOrder,
+  deleteServiceOrder,
+} from "../../services/serviceOrderServices";
+import { appointmentService } from "../../services/appointmentServices";
+import { examinationRoomService } from "../../services/examinationRoomServices";
+import type { Appointment } from "../../types/appointment";
+import dayjs from "dayjs";
 
-const { Title, Text } = Typography
-const { TextArea } = Input
-const { Option } = Select
+const { Title, Text } = Typography;
+const { TextArea } = Input;
+const { Option } = Select;
 
 const PatientDetail: React.FC = () => {
-  const [serviceOrder, setServiceOrder] = useState<ServiceOrder | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const [form] = Form.useForm()
-  const location = useLocation()
-  const navigate = useNavigate()
-  const [appointment, setAppointment] = useState<Appointment | null>(null)
-  const [examinationRoom, setExaminationRoom] = useState<ExaminationRoom | null>(null)
+  // const [serviceOrder, setServiceOrder] = useState<ServiceOrder | null>(null)
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [form] = Form.useForm();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [appointment, setAppointment] = useState<Appointment | null>(null);
+  const [examinationRoom, setExaminationRoom] =
+    useState<ExaminationRoom | null>(null);
 
-  const { orderId, roomId } = location.state || {}
+  const { orderId, roomId, appointmentData, roomData, serviceOrder } =
+    location.state || {};
+
+  // setServiceOrder(data)  //phía dứa tự hiểu là serviceOrder
+  // setAppointment(appointmentData)
+  // setExaminationRoom(roomData)
 
   const fetchServiceOrder = async () => {
     if (!orderId || !roomId) {
-      message.error("Không tìm thấy thông tin đơn xét nghiệm")
-      return
+      message.error("Không tìm thấy thông tin đơn xét nghiệm");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
       // We need serviceId to get the service order, but we don't have it directly
       // This is a limitation of the current API structure
       // For now, we'll assume we can get it somehow or modify the API
-      const data = await getServiceOrderById(1, orderId) // Using serviceId = 1 as placeholder
-      setServiceOrder(data)
+      // const data = await getServiceOrderById(1, orderId) // Using serviceId = 1 as placeholder
+      // setServiceOrder(data)
 
-      // Fetch appointment data to get patient information
-      if (data.appointmentId) {
-        try {
-          const appointmentData = await appointmentService.getAppointmentById(data.appointmentId)
-          setAppointment(appointmentData)
-        } catch (appointmentError) {
-          console.error("Error fetching appointment data:", appointmentError)
-          // Don't show error message for appointment fetch failure, just log it
-        }
-      }
+      // // Fetch appointment data to get patient information
+      // if (data.appointmentId) {
+      //   try {
+      //     const appointmentData = await appointmentService.getAppointmentById(data.appointmentId)
+      //     setAppointment(appointmentData)
+      //   } catch (appointmentError) {
+      //     console.error("Error fetching appointment data:", appointmentError)
+      //     // Don't show error message for appointment fetch failure, just log it
+      //   }
+      // }
 
-      // Fetch examination room data
-      if (data.roomId) {
-        try {
-          const roomData = await examinationRoomService.getExaminationRoomById(data.roomId)
-          setExaminationRoom(roomData)
-        } catch (roomError) {
-          console.error("Error fetching room data:", roomError)
-        }
-      }
+      // // Fetch examination room data
+      // if (data.roomId) {
+      //   try {
+      //     const roomData = await examinationRoomService.getExaminationRoomById(data.roomId)
+      //     setExaminationRoom(roomData)
+      //   } catch (roomError) {
+      //     console.error("Error fetching room data:", roomError)
+      //   }
+      // }
+      setAppointment(appointmentData);
+      setExaminationRoom(roomData);
+
+      console.log("appointmentData", appointmentData);
+      console.log("roomData", roomData);
+      console.log("serviceOrder", serviceOrder);
 
       // Set form values
       form.setFieldsValue({
-        serviceName: data.service?.serviceName || "",
-        serviceType: data.service?.serviceType || "",
-        orderStatus: data.orderStatus,
-        result: data.result || "",
-        orderTime: data.orderTime ? dayjs(data.orderTime) : null,
-        resultTime: data.resultTime ? dayjs(data.resultTime) : null,
-      })
+        serviceName: serviceOrder.serviceName || "",
+        orderStatus: serviceOrder.orderStatus,
+        result: serviceOrder.result || "",
+        orderTime: serviceOrder.orderTime
+          ? dayjs(serviceOrder.orderTime)
+          : null,
+        resultTime: serviceOrder.resultTime
+          ? dayjs(serviceOrder.resultTime)
+          : null,
+      });
     } catch (error) {
-      console.error("Error fetching service order:", error)
-      message.error("Không thể tải thông tin đơn xét nghiệm")
+      console.error("Error fetching service order:", error);
+      message.error("Không thể tải thông tin đơn xét nghiệm");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleSave = async () => {
     try {
-      const values = await form.validateFields()
+      const values = await form.validateFields();
 
       if (!serviceOrder) {
-        message.error("Không tìm thấy thông tin đơn xét nghiệm")
-        return
+        message.error("Không tìm thấy thông tin đơn xét nghiệm");
+        return;
       }
 
-      setSaving(true)
+      setSaving(true);
 
       const updateData: Partial<ServiceOrder> = {
         ...serviceOrder,
         orderStatus: values.orderStatus,
         result: values.result || "",
-        resultTime: values.orderStatus === "COMPLETED" ? new Date().toISOString() : serviceOrder.resultTime,
-      }
+        resultTime:
+          values.orderStatus === "COMPLETED"
+            ? new Date().toISOString()
+            : serviceOrder.resultTime,
+      };
 
-      await updateServiceOrder(serviceOrder.service.serviceId, orderId, updateData as ServiceOrder)
+      await updateServiceOrder(
+        serviceOrder.service.serviceId,
+        orderId,
+        updateData as ServiceOrder
+      );
 
-      message.success("Cập nhật kết quả xét nghiệm thành công")
+      message.success("Cập nhật kết quả xét nghiệm thành công");
 
       // Refresh data
-      await fetchServiceOrder()
+      await fetchServiceOrder();
     } catch (error) {
-      console.error("Error updating service order:", error)
-      message.error("Có lỗi xảy ra khi cập nhật kết quả")
+      console.error("Error updating service order:", error);
+      message.error("Có lỗi xảy ra khi cập nhật kết quả");
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const handleDelete = async () => {
     if (!serviceOrder) {
-      message.error("Không tìm thấy thông tin đơn xét nghiệm")
-      return
+      message.error("Không tìm thấy thông tin đơn xét nghiệm");
+      return;
     }
 
-    setDeleting(true)
+    setDeleting(true);
     try {
-      await deleteServiceOrder(serviceOrder.service.serviceId, orderId)
-      message.success("Xóa đơn xét nghiệm thành công")
-      navigate(-1) // Go back to previous page
+      await deleteServiceOrder(serviceOrder.service.serviceId, orderId);
+      message.success("Xóa đơn xét nghiệm thành công");
+      navigate(-1); // Go back to previous page
     } catch (error) {
-      console.error("Error deleting service order:", error)
-      message.error("Có lỗi xảy ra khi xóa đơn xét nghiệm")
+      console.error("Error deleting service order:", error);
+      message.error("Có lỗi xảy ra khi xóa đơn xét nghiệm");
     } finally {
-      setDeleting(false)
+      setDeleting(false);
     }
-  }
+  };
 
   const handleBack = () => {
-    navigate(-1)
-  }
+    navigate(-1);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ORDERED":
-        return "#d97706"
+        return "#d97706";
       case "COMPLETED":
-        return "#059669"
+        return "#059669";
       default:
-        return "#6b7280"
+        return "#6b7280";
     }
-  }
+  };
 
   const formatDateTime = (dateString?: string) => {
-    if (!dateString) return "Chưa có"
+    if (!dateString) return "Chưa có";
     try {
-      return new Date(dateString).toLocaleString("vi-VN")
+      return new Date(dateString).toLocaleString("vi-VN");
     } catch (e) {
-      return "Định dạng không hợp lệ"
+      return "Định dạng không hợp lệ";
     }
-  }
+  };
 
   const getRoomDisplayName = () => {
-    if (!examinationRoom) return `Phòng ${roomId}`
-    return `${examinationRoom.roomName} - ${examinationRoom.building} tầng ${examinationRoom.floor}`
-  }
+    if (!examinationRoom) return `Phòng ${roomId}`;
+    return `${examinationRoom.note} - Tòa ${examinationRoom.building}, Tầng ${examinationRoom.floor}`;
+  };
 
   useEffect(() => {
-    fetchServiceOrder()
-  }, [orderId, roomId])
+    fetchServiceOrder();
+  }, [orderId, roomId]);
 
   if (loading && !serviceOrder) {
     return (
       <div className="flex-1 min-h-screen bg-gray-50 flex items-center justify-center">
         <Spin size="large" />
       </div>
-    )
+    );
   }
 
   if (!serviceOrder) {
@@ -209,7 +233,7 @@ const PatientDetail: React.FC = () => {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -218,7 +242,11 @@ const PatientDetail: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
-            <Button icon={<ArrowLeftOutlined />} onClick={handleBack} type="text">
+            <Button
+              icon={<ArrowLeftOutlined />}
+              onClick={handleBack}
+              type="text"
+            >
               Quay lại
             </Button>
             <div>
@@ -230,7 +258,11 @@ const PatientDetail: React.FC = () => {
           </div>
 
           <Space>
-            <Button icon={<ReloadOutlined />} onClick={fetchServiceOrder} loading={loading}>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={fetchServiceOrder}
+              loading={loading}
+            >
               Làm mới
             </Button>
             <Popconfirm
@@ -251,160 +283,159 @@ const PatientDetail: React.FC = () => {
         <Row gutter={24}>
           {/* Left column - Service Order Info */}
           <Col span={8}>
-            <Card title="Thông tin đơn xét nghiệm" className="mb-6">
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <ExperimentOutlined className="text-blue-600" />
-                  <div>
-                    <div className="font-medium">{serviceOrder.service?.serviceName}</div>
-                    <div className="text-sm text-gray-500">Loại: {serviceOrder.service?.serviceType}</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <UserOutlined className="text-green-600" />
-                  <div>
-                    <div className="font-medium">Cuộc hẹn #{serviceOrder.appointmentId}</div>
-                    <div className="text-sm text-gray-500">{getRoomDisplayName()}</div>
-                    {examinationRoom?.note && (
-                      <div className="text-sm text-gray-500">Ghi chú: {examinationRoom.note}</div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <CalendarOutlined className="text-purple-600" />
-                  <div>
-                    <div className="font-medium">Thời gian đặt</div>
-                    <div className="text-sm text-gray-500">{formatDateTime(serviceOrder.orderTime)}</div>
-                  </div>
-                </div>
-
-                {serviceOrder.resultTime && (
-                  <div className="flex items-center space-x-3">
-                    <CalendarOutlined className="text-orange-600" />
-                    <div>
-                      <div className="font-medium">Thời gian trả kết quả</div>
-                      <div className="text-sm text-gray-500">{formatDateTime(serviceOrder.resultTime)}</div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="pt-2">
-                  <div className="text-sm text-gray-500 mb-1">Trạng thái hiện tại</div>
-                  <span
-                    style={{
-                      color: getStatusColor(serviceOrder.orderStatus),
-                      backgroundColor: `${getStatusColor(serviceOrder.orderStatus)}20`,
-                      padding: "4px 12px",
-                      borderRadius: "20px",
-                      fontSize: "12px",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {serviceOrder.orderStatus === "ORDERED" ? "Đang chờ" : "Đã hoàn thành"}
-                  </span>
-                </div>
-              </div>
-            </Card>
-
             {/* Patient Information Card */}
             {appointment?.patientInfo && (
-              <Card title="Thông tin bệnh nhân" className="mb-6">
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <UserOutlined className="text-blue-600" />
-                    <div>
-                      <div className="font-medium">{appointment.patientInfo.fullName}</div>
-                      <div className="text-sm text-gray-500">Mã BN: {appointment.patientInfo.patientId}</div>
-                    </div>
+              <div className="flex-[400px] p-6 bg-white rounded-2xl border border-gray-200">
+                <div className="flex flex-row justify-between items-center mb-6">
+                  <div className="flex flex-col items-center mb-6">
+                    <img
+                      src={appointment.patientInfo.avatar || "https://static-00.iconduck.com/assets.00/avatar-default-symbolic-icon-440x512-ni4kvfm4.png" }
+                      alt="Patient"
+                      className="w-24 h-24 rounded-full mb-3"
+                    />
+                    <p className="text-black font-semibold text-xl">
+                     {appointment.patientInfo.fullName}
+                    </p>
+                    <p className="text-gray-600">
+                      Mã bệnh nhân: {appointment.patientInfo.patientId}
+                    </p>
+                    <p className="text-gray-600">
+                      {appointment.patientInfo.gender === "MALE"
+                        ? "Nam"
+                        : appointment.patientInfo.gender === "FEMALE"
+                        ? "Nữ"
+                        : "N/A"}
+                      ,{" "}
+                      {appointment.patientInfo.birthday
+                        ? new Date().getFullYear() -
+                          new Date(
+                            appointment.patientInfo.birthday
+                          ).getFullYear()
+                        : "N/A"}{" "}
+                      tuổi
+                    </p>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-gray-500">Giới tính:</span>
-                      <div className="font-medium">
-                        {appointment.patientInfo.gender === "MALE"
-                          ? "Nam"
-                          : appointment.patientInfo.gender === "FEMALE"
-                            ? "Nữ"
-                            : "N/A"}
-                      </div>
-                    </div>
-
-                    <div>
-                      <span className="text-gray-500">Ngày sinh:</span>
-                      <div className="font-medium">
-                        {appointment.patientInfo.birthday
-                          ? new Date(appointment.patientInfo.birthday).toLocaleDateString("vi-VN")
-                          : "N/A"}
-                      </div>
-                    </div>
-
-                    <div>
-                      <span className="text-gray-500">Chiều cao:</span>
-                      <div className="font-medium">
-                        {appointment.patientInfo.height ? `${appointment.patientInfo.height} cm` : "Chưa có"}
-                      </div>
-                    </div>
-
-                    <div>
-                      <span className="text-gray-500">Cân nặng:</span>
-                      <div className="font-medium">
-                        {appointment.patientInfo.weight ? `${appointment.patientInfo.weight} kg` : "Chưa có"}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-sm">
-                    <span className="text-gray-500 flex items-center">
-                      <HomeOutlined className="mr-1" /> Địa chỉ:
-                    </span>
-                    <div className="font-medium mt-1">{appointment.patientInfo.address || "Chưa có thông tin"}</div>
-                  </div>
-
-                  <div className="text-sm">
-                    <span className="text-gray-500">Dị ứng:</span>
-                    <div className="font-medium mt-1">{appointment.patientInfo.allergies || "Không có"}</div>
-                  </div>
-
-                  {/* Contact Information */}
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-gray-500 flex items-center">
-                        <PhoneOutlined className="mr-1" /> Số điện thoại:
-                      </span>
-                      <div className="font-medium">{appointment.patientInfo.phoneNumber || "Chưa có"}</div>
-                    </div>
-
-                    <div>
-                      <span className="text-gray-500 flex items-center">
-                        <MailOutlined className="mr-1" /> Email:
-                      </span>
-                      <div className="font-medium">{appointment.patientInfo.email || "Chưa có"}</div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-gray-500">CMND/CCCD:</span>
-                      <div className="font-medium">{appointment.patientInfo.identityNumber || "Chưa có"}</div>
-                    </div>
-
-                    <div>
-                      <span className="text-gray-500">Số BHYT:</span>
-                      <div className="font-medium">{appointment.patientInfo.insuranceNumber || "Chưa có"}</div>
-                    </div>
-                  </div>
-
-                  {appointment.patientInfo.bloodType && (
-                    <div className="text-sm">
-                      <span className="text-gray-500">Nhóm máu:</span>
-                      <div className="font-medium">{appointment.patientInfo.bloodType}</div>
-                    </div>
-                  )}
                 </div>
-              </Card>
+
+                {/* Contact info */}
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-base-700 font-medium">
+                      Thông tin cá nhân
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-2">
+                    <div className="w-[200px] py-2">
+                      <div className="mb-1">
+                        <span className="text-gray-500 text-sm">Địa chỉ</span>
+                      </div>
+                      <p className="text-black text-sm">
+                        {appointment.patientInfo.address || "Không có"}
+                      </p>
+                    </div>
+
+                    <div className="py-2 text-right">
+                      <div className="mb-1">
+                        <span className="text-gray-500 text-sm w-full text-right">
+                          CMND/CCCD
+                        </span>
+                      </div>
+                      <p className="text-black text-sm">
+                        {appointment.patientInfo.identityNumber || "Không có"}
+                      </p>
+                    </div>
+
+                    <div className="py-2">
+                      <div className="mb-1">
+                        <span className="text-gray-500 text-sm">Ngày sinh</span>
+                      </div>
+                      <p className="text-black text-sm">
+                        {appointment.patientInfo.birthday
+                          ? new Date(
+                              appointment.patientInfo.birthday
+                            ).toLocaleDateString("vi-VN")
+                          : "N/A"}
+                      </p>
+                    </div>
+
+                    <div className="py-2 text-right">
+                      <div className="mb-1">
+                        <span className="text-gray-500 text-sm w-full text-right">
+                          Số BHYT
+                        </span>
+                      </div>
+                      <p className="text-black text-sm">
+                        {appointment.patientInfo.insuranceNumber || "Không có"}
+                      </p>
+                    </div>
+
+                    <div className="py-2">
+                      <div className="mb-1">
+                        <span className="text-gray-500 text-sm">
+                          Chiều cao (cm)
+                        </span>
+                      </div>
+                      <p className="text-black text-sm">
+                        {appointment.patientInfo.height || "Chưa có dữ liệu"}
+                      </p>
+                    </div>
+
+                    <div className="py-2 text-right">
+                      <div className="mb-1">
+                        <span className="text-gray-500 text-sm w-full text-right">
+                          Cân nặng (kg)
+                        </span>
+                      </div>
+                      <p className="text-black text-sm">
+                        {appointment.patientInfo.weight || "Không xác định"}
+                      </p>
+                    </div>
+
+                    <div className="py-2">
+                      <div className="mb-1">
+                        <span className="text-gray-500 text-sm">Nhóm máu</span>
+                      </div>
+                      <p className="text-black text-sm">
+                        {appointment.patientInfo.bloodType || "Không xác định"}
+                      </p>
+                    </div>
+
+                    <div className="py-2 text-right">
+                      <div className="mb-1">
+                        <span className="text-gray-500 text-sm w-full text-right">
+                          Dị ứng
+                        </span>
+                      </div>
+                      <p className="text-black text-sm">
+                        {appointment.patientInfo.allergies || "Không xác định"}
+                      </p>
+                    </div>
+
+                    <div className="py-2">
+                      <div className="mb-1">
+                        <span className="text-gray-500 text-sm">
+                          Số điện thoại
+                        </span>
+                      </div>
+                      <p className="text-black text-sm">
+                        {appointment.patientInfo.phoneNumber || "Chưa có"}
+                      </p>
+                    </div>
+
+                    <div className="py-2 text-right">
+                      <div className="mb-1">
+                        <span className="text-gray-500 text-sm w-full text-right">
+                          Email
+                        </span>
+                      </div>
+                      <p className="text-black text-sm">
+                        {appointment.patientInfo.email || "Chưa có"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
           </Col>
 
@@ -415,25 +446,16 @@ const PatientDetail: React.FC = () => {
                 <Row gutter={16}>
                   <Col span={12}>
                     <Form.Item label="Tên xét nghiệm" name="serviceName">
-                      <Input disabled />
+                      <Input disabled style={{ color: "black" }} />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
-                    <Form.Item label="Loại xét nghiệm" name="serviceType">
-                      <Input disabled />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Form.Item label="Phòng xét nghiệm">
-                      <Input value={getRoomDisplayName()} disabled />
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item label="Loại phòng">
-                      <Input value={examinationRoom?.type === "TEST" ? "Phòng xét nghiệm" : "Phòng khám"} disabled />
+                    <Form.Item label="Nơi thực hiện">
+                      <Input
+                        value={getRoomDisplayName()}
+                        disabled
+                        style={{ color: "black" }}
+                      />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -441,12 +463,25 @@ const PatientDetail: React.FC = () => {
                 <Row gutter={16}>
                   <Col span={12}>
                     <Form.Item label="Thời gian đặt" name="orderTime">
-                      <DatePicker showTime disabled style={{ width: "100%" }} format="DD/MM/YYYY HH:mm:ss" />
+                      <DatePicker
+                        showTime
+                        disabled
+                        className="custom-disabled-picker"
+                        style={{ width: "100%" }}
+                        format="HH:mm DD/MM/YYYY"
+                      />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
                     <Form.Item label="Thời gian trả kết quả" name="resultTime">
-                      <DatePicker showTime disabled style={{ width: "100%" }} format="DD/MM/YYYY HH:mm:ss" />
+                      <DatePicker
+                        placeholder="Chưa có kết quả"
+                        showTime
+                        disabled
+                        className="custom-disabled-picker"
+                        style={{ width: "100%" }}
+                        format="HH:mm DD/MM/YYYY"
+                      />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -454,9 +489,11 @@ const PatientDetail: React.FC = () => {
                 <Form.Item
                   label="Trạng thái"
                   name="orderStatus"
-                  rules={[{ required: true, message: "Vui lòng chọn trạng thái!" }]}
+                  rules={[
+                    { required: true, message: "Vui lòng chọn trạng thái!" },
+                  ]}
                 >
-                  <Select>
+                  <Select style={{ width: "180px" }}>
                     <Option value="ORDERED">Đang chờ</Option>
                     <Option value="COMPLETED">Đã hoàn thành</Option>
                   </Select>
@@ -466,22 +503,41 @@ const PatientDetail: React.FC = () => {
                   label="Kết quả xét nghiệm"
                   name="result"
                   rules={[
+                    {
+                      required: true,
+                      message: "Trường này là bắt buộc",
+                    },
                     ({ getFieldValue }) => ({
                       validator(_, value) {
-                        if (getFieldValue("orderStatus") === "COMPLETED" && !value) {
-                          return Promise.reject(new Error("Vui lòng nhập kết quả khi đánh dấu hoàn thành!"))
+                        if (
+                          getFieldValue("orderStatus") === "COMPLETED" &&
+                          !value
+                        ) {
+                          return Promise.reject(
+                            new Error(
+                              "Vui lòng nhập kết quả khi đánh dấu hoàn thành!"
+                            )
+                          );
                         }
-                        return Promise.resolve()
+                        return Promise.resolve();
                       },
                     }),
                   ]}
                 >
-                  <TextArea rows={6} placeholder="Nhập kết quả xét nghiệm chi tiết..." />
+                  <TextArea
+                    rows={6}
+                    placeholder="Nhập kết quả xét nghiệm chi tiết..."
+                  />
                 </Form.Item>
 
                 <div className="flex justify-end space-x-4">
                   <Button onClick={handleBack}>Hủy</Button>
-                  <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={saving}>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    icon={<SaveOutlined />}
+                    loading={saving}
+                  >
                     Lưu kết quả
                   </Button>
                 </div>
@@ -491,7 +547,7 @@ const PatientDetail: React.FC = () => {
         </Row>
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default PatientDetail
+export default PatientDetail;
