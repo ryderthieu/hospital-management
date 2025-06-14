@@ -1,91 +1,148 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { Modal, Form, Input, Select, Button, Table, Typography, message, Spin } from "antd"
-import { SearchOutlined, DeleteOutlined, PlusOutlined, EyeOutlined } from "@ant-design/icons"
-import { useMedicalOrderModal } from "../../hooks/useServiceOrder"
-import type { Services } from "../../types/services"
-import type { ServiceOrder } from "../../types/serviceOrder"
-import { examinationRoomService } from "../../services/examinationRoomServices"
-import type { ExaminationRoom } from "../../types/examinationRoom"
-import { appointmentService } from "../../services/appointmentServices"
+import type React from "react";
+import { useState, useEffect, useRef } from "react";
+import {
+  Modal,
+  Form,
+  Input,
+  Select,
+  Button,
+  Table,
+  Typography,
+  message,
+  Spin,
+} from "antd";
+import {
+  SearchOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  EyeOutlined,
+} from "@ant-design/icons";
+import { useServiceOrderModal } from "../../hooks/useServiceOrder";
+import type { Services } from "../../types/services";
+import type { ServiceOrder } from "../../types/serviceOrder";
+import { examinationRoomService } from "../../services/examinationRoomServices";
+import type { ExaminationRoom } from "../../types/examinationRoom";
+import { appointmentService } from "../../services/appointmentServices";
 
-const { Text } = Typography
+const { Text } = Typography;
 
 interface ModalProps {
-  isOpen: boolean
-  onClose: () => void
-  appointmentId?: number
+  isOpen: boolean;
+  onClose: () => void;
+  appointmentId?: number;
 }
 
 interface MedicalOrderItem extends Omit<ServiceOrder, "orderId" | "createdAt"> {
-  id: string
-  expectedTime: string
+  serviceId: number;
+  expectedTime: string;
 }
 
-export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appointmentId }) => {
-  const { services, loading, searchLoading, searchServices, createServiceOrder } = useMedicalOrderModal(appointmentId)
-  const [indications, setIndications] = useState<MedicalOrderItem[]>([])
-  const [searchInput, setSearchInput] = useState("")
-  const [filteredServices, setFilteredServices] = useState<Services[]>([])
-  const [showSearchResults, setShowSearchResults] = useState(false)
-  const [examinationRooms, setExaminationRooms] = useState<ExaminationRoom[]>([])
-  const [roomsLoading, setRoomsLoading] = useState(false)
-  const [appointmentData, setAppointmentData] = useState<any>(null)
+export const ServiceOrderModal: React.FC<ModalProps> = ({
+  isOpen,
+  onClose,
+  appointmentId,
+}) => {
+  const {
+    services,
+    loading,
+    searchLoading,
+    searchServices,
+    createServiceOrder,
+  } = useServiceOrderModal(appointmentId);
+  const [indications, setIndications] = useState<MedicalOrderItem[]>([]);
+  const [searchInput, setSearchInput] = useState("");
+  const [filteredServices, setFilteredServices] = useState<Services[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [examinationRooms, setExaminationRooms] = useState<ExaminationRoom[]>(
+    []
+  );
+  const [roomsLoading, setRoomsLoading] = useState(false);
+  const [appointmentData, setAppointmentData] = useState<any>(null);
+  
 
-  // Search services when input changes
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
       if (searchInput.trim()) {
-        const results = await searchServices(searchInput)
-        setFilteredServices(results)
-        setShowSearchResults(true)
+        const results = await searchServices(searchInput);
+        setFilteredServices(results);
       } else {
-        setFilteredServices([])
-        setShowSearchResults(false)
+        const all = await searchServices("");
+        setFilteredServices(all);
       }
-    }, 300)
+    }, 300);
 
-    return () => clearTimeout(timeoutId)
-  }, [searchInput, searchServices])
+    return () => clearTimeout(timeoutId);
+  }, [searchInput, searchServices]);
+
+  // Hiển thị dropdown chỉ khi input được focus và có dữ liệu
+  useEffect(() => {
+    if (isInputFocused && filteredServices.length > 0) {
+      setShowSearchResults(true);
+    } else if (!isInputFocused) {
+      setShowSearchResults(false);
+    }
+  }, [isInputFocused, filteredServices]);
+
+  // Handle click outside to close search results
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setIsInputFocused(false);
+      }
+    };
+
+    if (isInputFocused) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isInputFocused]);
 
   useEffect(() => {
     const fetchTestRooms = async () => {
-      setRoomsLoading(true)
+      setRoomsLoading(true);
       try {
-        const allRooms = await examinationRoomService.getAllExaminationRooms()
-        const testRooms = allRooms.filter((room) => room.type === "TEST")
-        setExaminationRooms(testRooms)
+        const allRooms = await examinationRoomService.getAllExaminationRooms();
+        const testRooms = allRooms.filter((room) => room.type === "TEST");
+        setExaminationRooms(testRooms);
       } catch (error) {
-        console.error("Error fetching examination rooms:", error)
-        message.error("Không thể tải danh sách phòng xét nghiệm")
+        console.error("Error fetching examination rooms:", error);
+        message.error("Không thể tải danh sách phòng xét nghiệm");
       } finally {
-        setRoomsLoading(false)
+        setRoomsLoading(false);
       }
-    }
+    };
 
     if (isOpen) {
-      fetchTestRooms()
+      fetchTestRooms();
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   useEffect(() => {
     const fetchAppointmentData = async () => {
       if (appointmentId) {
         try {
-          const data = await appointmentService.getAppointmentById(appointmentId)
-          setAppointmentData(data)
+          const data = await appointmentService.getAppointmentById(
+            appointmentId
+          );
+          setAppointmentData(data);
         } catch (error) {
-          console.error("Error fetching appointment:", error)
+          console.error("Error fetching appointment:", error);
         }
       }
-    }
+    };
 
     if (isOpen && appointmentId) {
-      fetchAppointmentData()
+      fetchAppointmentData();
     }
-  }, [isOpen, appointmentId])
+  }, [isOpen, appointmentId]);
 
   const addIndication = (service: Services) => {
     const newIndication: MedicalOrderItem = {
@@ -93,8 +150,14 @@ export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
       serviceId: service.serviceId,
       serviceName: service.serviceName,
       serviceType: service.serviceType,
-      roomId: 1, // Default value, will be updated by the select
-      expectedTime: "30 phút",
+      roomId: null,
+      expectedTime: new Date(Date.now() + 60 * 60 * 1000).toLocaleTimeString(
+        "vi-VN",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+        }
+      ),
       price: service.price,
       quantity: 1,
       status: "pending",
@@ -102,43 +165,52 @@ export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
       service,
       orderStatus: "ORDERED",
       result: "",
-      number: 1,
+      number: 1,  //sửa backend
       orderTime: new Date().toISOString(),
       resultTime: "",
-    }
-    setIndications((prev) => [...prev, newIndication])
-    setShowSearchResults(false)
-    setSearchInput("")
-  }
+    };
+    setIndications((prev) => [...prev, newIndication]);
+    setIsInputFocused(false);
+    setSearchInput("");
+  };
 
-  const updateField = (index: number, field: keyof MedicalOrderItem, value: any) => {
-    setIndications((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)))
-  }
+  const updateField = (
+    index: number,
+    field: keyof MedicalOrderItem,
+    value: any
+  ) => {
+    setIndications((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+    );
+  };
 
   const deleteIndication = (index: number) => {
-    setIndications((prev) => prev.filter((_, i) => i !== index))
-  }
+    setIndications((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSave = async () => {
     if (!appointmentId) {
-      message.error("Không tìm thấy thông tin cuộc hẹn")
-      return
+      message.error("Không tìm thấy thông tin mã hồ sơ để thêm chỉ định");
+      return;
     }
 
     try {
       // Create service orders for each indication
       for (const indication of indications) {
-        await createServiceOrder(indication.service.serviceId, indication.roomId || 1)
+        await createServiceOrder(
+          indication.service.serviceId,
+          indication.roomId
+        );
       }
 
       // Clear indications and close modal
-      setIndications([])
-      message.success("Lưu chỉ định thành công")
-      onClose()
+      setIndications([]);
+      message.success("Thêm chỉ định thành công");
+      onClose();
     } catch (error) {
-      message.error("Không thể lưu chỉ định")
+      message.error("Không thể thêm chỉ định");
     }
-  }
+  };
 
   const columns = [
     {
@@ -147,27 +219,28 @@ export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
       key: "serviceName",
       render: (text: string, record: MedicalOrderItem) => (
         <div>
-          <div className="font-medium">{text}</div>
-          <div className="text-sm text-gray-500">{record.serviceType}</div>
-          <div className="text-xs text-gray-400">{record.service.price.toLocaleString("vi-VN")} VNĐ</div>
+          <div className="font-medium mb-1">{text}</div>
+          <div className="text-xs text-gray-400">
+            {record.service.price.toLocaleString("vi-VN")} VNĐ
+          </div>
         </div>
       ),
     },
     {
-      title: "Phòng",
+      title: "Nơi thực hiện",
       dataIndex: "roomId",
       key: "roomId",
-      width: 200,
+      width: 400,
       render: (roomId: number, record: MedicalOrderItem, index: number) => (
         <Select
           value={roomId}
           onChange={(value) => updateField(index, "roomId", value)}
           style={{ width: "100%" }}
           loading={roomsLoading}
-          placeholder="Chọn phòng xét nghiệm"
+          placeholder="Chọn nơi thực hiện"
           options={examinationRooms.map((room) => ({
             value: room.roomId,
-            label: `${room.roomName} - ${room.building} T${room.floor}`,
+            label: `${room.note} - Tòa ${room.building} Tầng ${room.floor}`,
           }))}
         />
       ),
@@ -176,9 +249,14 @@ export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
       title: "Thời gian dự kiến",
       dataIndex: "expectedTime",
       key: "expectedTime",
-      width: 200,
+      width: 170,
       render: (text: string, record: MedicalOrderItem, index: number) => (
-        <Input value={text} onChange={(e) => updateField(index, "expectedTime", e.target.value)} className="w-full" />
+        <Input
+          value={text}
+          disabled={true}
+          onChange={(e) => updateField(index, "expectedTime", e.target.value)}
+          style={{ color: "black" }}
+        />
       ),
     },
     {
@@ -186,40 +264,69 @@ export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
       key: "action",
       width: 70,
       render: (_: any, record: MedicalOrderItem, index: number) => (
-        <Button type="text" danger icon={<DeleteOutlined />} onClick={() => deleteIndication(index)} />
+        <Button
+          type="text"
+          danger
+          icon={<DeleteOutlined />}
+          onClick={() => deleteIndication(index)}
+        />
       ),
     },
-  ]
+  ];
 
   return (
-    <Modal title="Thêm chỉ định" open={isOpen} onCancel={onClose} footer={null} width={1000}>
+    <Modal
+      title="Thêm chỉ định"
+      open={isOpen}
+      onCancel={onClose}
+      footer={null}
+      width={1000}
+    >
       <div className="mb-6">
         <div className="flex items-center mb-4">
           <div className="flex-1">
-            <Text strong>Bệnh nhân: {appointmentData?.patientInfo?.fullName || "Đang tải..."}</Text>
+            <Text strong>
+              Bệnh nhân:{" "}
+              {appointmentData?.patientInfo?.fullName || "Đang tải..."}
+            </Text>
             <div>
-              <Text type="secondary">Mã bệnh nhân: {appointmentData?.patientInfo?.patientId || "N/A"}</Text>
+              <Text type="secondary">
+                Mã bệnh nhân:{" "}
+                {appointmentData?.patientInfo?.patientId || "Đang tải..."}
+              </Text>
             </div>
           </div>
           <div className="text-right">
             <Text strong>Ngày: {new Date().toLocaleDateString("vi-VN")}</Text>
             <div>
               <Text type="secondary">
-                Giờ: {new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                Giờ:{" "}
+                {new Date().toLocaleTimeString("vi-VN", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </Text>
             </div>
           </div>
         </div>
 
         <div className="flex items-center mb-4">
-          <div className="relative flex-1 max-w-md">
+          <div className="relative flex-1 max-w-md" ref={searchContainerRef}>
             <Input
-              placeholder="Tìm dịch vụ..."
+              placeholder="Tìm chỉ định..."
               prefix={<SearchOutlined />}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               className="w-full"
               suffix={searchLoading ? <Spin size="small" /> : null}
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => {
+                setTimeout(() => {
+                  if (!searchContainerRef.current?.contains(document.activeElement)) {
+                    setIsInputFocused(false);
+                  }
+                }, 100);
+              }}
             />
 
             {/* Search Results Dropdown */}
@@ -231,27 +338,28 @@ export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
                     className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                     onClick={() => addIndication(service)}
                   >
-                    <div className="font-medium">{service.serviceName}</div>
-                    <div className="text-sm text-gray-500">{service.serviceType}</div>
-                    <div className="text-xs text-gray-400">{service.price.toLocaleString("vi-VN")} VNĐ</div>
+                    <div className="font-medium mb-1">
+                      {service.serviceName}
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      {service.price.toLocaleString("vi-VN")} VNĐ
+                    </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {showSearchResults && filteredServices.length === 0 && searchInput && !searchLoading && (
-              <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 p-3">
-                <div className="text-gray-500 text-center">Không tìm thấy dịch vụ</div>
-              </div>
-            )}
+            {showSearchResults &&
+              filteredServices.length === 0 &&
+              searchInput &&
+              !searchLoading && (
+                <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 p-3">
+                  <div className="text-gray-500 text-center">
+                    Không tìm thấy dịch vụ
+                  </div>
+                </div>
+              )}
           </div>
-
-          <Button type="primary" icon={<PlusOutlined />} className="ml-3">
-            Thêm chỉ định
-          </Button>
-          <Button icon={<EyeOutlined />} className="ml-3">
-            Xem chỉ định
-          </Button>
         </div>
 
         <Table
@@ -262,12 +370,6 @@ export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
           className="mb-6"
           loading={loading}
         />
-
-        <Form layout="vertical">
-          <Form.Item label="Ghi chú của bác sĩ">
-            <Input.TextArea rows={4} placeholder="Nhập ghi chú cho các chỉ định..." />
-          </Form.Item>
-        </Form>
       </div>
 
       <div className="flex justify-end space-x-3">
@@ -277,5 +379,5 @@ export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
         </Button>
       </div>
     </Modal>
-  )
-}
+  );
+};

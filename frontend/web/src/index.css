@@ -1453,3 +1453,7 @@ span.flatpickr-weekday,
 .custom-disabled-select .ant-select-selector {
   color: black !important;
 }
+
+.custom-disabled-picker.ant-picker-disabled input {
+  color: black !important;
+}

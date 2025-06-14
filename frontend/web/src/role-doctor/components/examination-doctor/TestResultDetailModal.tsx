@@ -2,8 +2,14 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { Modal, Form, Input, Button, Typography, Spin, message, Row, Col, Card, Tag } from "antd"
-import { SaveOutlined, ReloadOutlined, ExperimentOutlined, CalendarOutlined, UserOutlined } from "@ant-design/icons"
+import { Modal, Form, Input, Button, Typography, Spin, message, Row, Col, Card } from "antd"
+import {
+  SaveOutlined,
+  ReloadOutlined,
+  ExperimentOutlined,
+  CalendarOutlined,
+  EnvironmentOutlined,
+} from "@ant-design/icons"
 import type { ServiceOrder } from "../../types/serviceOrder"
 import type { ExaminationRoom } from "../../types/examinationRoom"
 import type { Appointment } from "../../types/appointment"
@@ -27,46 +33,85 @@ export const TestResultDetailModal: React.FC<TestResultDetailModalProps> = ({ is
   const [appointment, setAppointment] = useState<Appointment | null>(null)
   const [examinationRoom, setExaminationRoom] = useState<ExaminationRoom | null>(null)
 
+  // Cache for API responses
+  const appointmentCache = new Map<number, Appointment>()
+  const roomCache = new Map<number, ExaminationRoom>()
+
   // Fetch related data when modal opens
   useEffect(() => {
+    let isMounted = true
     const fetchRelatedData = async () => {
       if (!serviceOrder || !isOpen) return
 
       setLoading(true)
       try {
-        // Fetch appointment data
-        if (serviceOrder.appointmentId) {
-          try {
-            const appointmentData = await appointmentService.getAppointmentById(serviceOrder.appointmentId)
-            setAppointment(appointmentData)
-          } catch (error) {
-            console.error("Error fetching appointment:", error)
-          }
+        // Parallel data fetching with caching
+        const fetchPromises = []
+
+        // Fetch appointment data if not cached
+        if (serviceOrder.appointmentId && !appointmentCache.has(serviceOrder.appointmentId)) {
+          fetchPromises.push(
+            appointmentService
+              .getAppointmentById(serviceOrder.appointmentId)
+              .then((data) => {
+                if (isMounted) {
+                  appointmentCache.set(serviceOrder.appointmentId!, data)
+                  setAppointment(data)
+                }
+              })
+              .catch((error) => {
+                console.error("Error fetching appointment:", error)
+                if (isMounted) setAppointment(null)
+              }),
+          )
+        } else if (serviceOrder.appointmentId) {
+          // Use cached data
+          setAppointment(appointmentCache.get(serviceOrder.appointmentId))
         }
 
-        // Fetch examination room data
-        if (serviceOrder.roomId) {
-          try {
-            const roomData = await examinationRoomService.getExaminationRoomById(serviceOrder.roomId)
-            setExaminationRoom(roomData)
-          } catch (error) {
-            console.error("Error fetching room:", error)
-          }
+        // Fetch examination room data if not cached
+        if (serviceOrder.roomId && !roomCache.has(serviceOrder.roomId)) {
+          fetchPromises.push(
+            examinationRoomService
+              .getExaminationRoomById(serviceOrder.roomId)
+              .then((data) => {
+                if (isMounted) {
+                  roomCache.set(serviceOrder.roomId!, data)
+                  setExaminationRoom(data)
+                }
+              })
+              .catch((error) => {
+                console.error("Error fetching room:", error)
+                if (isMounted) setExaminationRoom(null)
+              }),
+          )
+        } else if (serviceOrder.roomId) {
+          // Use cached data
+          setExaminationRoom(roomCache.get(serviceOrder.roomId))
         }
+
+        // Wait for all promises to resolve
+        await Promise.all(fetchPromises)
 
         // Set form values
-        form.setFieldsValue({
-          result: serviceOrder.result || "",
-          orderStatus: serviceOrder.orderStatus,
-        })
+        if (isMounted) {
+          form.setFieldsValue({
+            result: serviceOrder.result || "",
+            orderStatus: serviceOrder.orderStatus,
+          })
+        }
       } catch (error) {
         console.error("Error fetching related data:", error)
       } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     }
 
     fetchRelatedData()
+
+    return () => {
+      isMounted = false
+    }
   }, [serviceOrder, isOpen, form])
 
   const handleSave = async () => {
@@ -109,32 +154,6 @@ export const TestResultDetailModal: React.FC<TestResultDetailModalProps> = ({ is
     }
   }
 
-  const getServiceTypeColor = (serviceType: string) => {
-    switch (serviceType) {
-      case "TEST":
-        return "blue"
-      case "IMAGING":
-        return "purple"
-      case "CONSULTATION":
-        return "green"
-      default:
-        return "default"
-    }
-  }
-
-  const getServiceTypeText = (serviceType: string) => {
-    switch (serviceType) {
-      case "TEST":
-        return "Xét nghiệm"
-      case "IMAGING":
-        return "Chẩn đoán hình ảnh"
-      case "CONSULTATION":
-        return "Tư vấn"
-      default:
-        return "Khác"
-    }
-  }
-
   const formatDateTime = (dateString?: string) => {
     if (!dateString) return "Chưa có"
     try {
@@ -146,7 +165,7 @@ export const TestResultDetailModal: React.FC<TestResultDetailModalProps> = ({ is
 
   const getRoomDisplayName = () => {
     if (!examinationRoom) return `Phòng ${serviceOrder?.roomId}`
-    return `${examinationRoom.roomName} - ${examinationRoom.building} tầng ${examinationRoom.floor}`
+    return `${examinationRoom.note} - Tòa ${examinationRoom.building} - Tầng ${examinationRoom.floor}`
   }
 
   if (!serviceOrder) {
@@ -157,8 +176,7 @@ export const TestResultDetailModal: React.FC<TestResultDetailModalProps> = ({ is
     <Modal
       title={
         <div className="flex items-center">
-          <ExperimentOutlined className="mr-2 text-blue-600" />
-          <span>Chi tiết kết quả xét nghiệm</span>
+          <span>Chi tiết kết quả thực hiện chỉ định</span>
         </div>
       }
       open={isOpen}
@@ -178,26 +196,25 @@ export const TestResultDetailModal: React.FC<TestResultDetailModalProps> = ({ is
             <Row gutter={24}>
               <Col span={12}>
                 <div className="space-y-3">
+                  <Title level={5} style={{ color: "#036672" }}>
+                    Thông tin chỉ định
+                  </Title>
                   <div className="flex items-center space-x-3">
-                    <ExperimentOutlined className="text-blue-600" />
+                    <ExperimentOutlined />
                     <div>
-                      <div className="font-medium text-lg">{serviceOrder.service?.serviceName}</div>
-                      <Tag color={getServiceTypeColor(serviceOrder.service?.serviceType || "OTHER")}>
-                        {getServiceTypeText(serviceOrder.service?.serviceType || "OTHER")}
-                      </Tag>
+                      <span className="font-medium text-lg">{serviceOrder.serviceName}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-3">
-                    <UserOutlined className="text-green-600" />
+                    <EnvironmentOutlined />
                     <div>
-                      <div className="font-medium">Cuộc hẹn #{serviceOrder.appointmentId}</div>
-                      <div className="text-sm text-gray-500">{getRoomDisplayName()}</div>
+                      <div className="font-medium">{getRoomDisplayName()}</div>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-3">
-                    <CalendarOutlined className="text-purple-600" />
+                    <CalendarOutlined />
                     <div>
                       <div className="font-medium">Thời gian đặt</div>
                       <div className="text-sm text-gray-500">{formatDateTime(serviceOrder.orderTime)}</div>
@@ -206,7 +223,7 @@ export const TestResultDetailModal: React.FC<TestResultDetailModalProps> = ({ is
 
                   {serviceOrder.resultTime && (
                     <div className="flex items-center space-x-3">
-                      <CalendarOutlined className="text-orange-600" />
+                      <CalendarOutlined />
                       <div>
                         <div className="font-medium">Thời gian trả kết quả</div>
                         <div className="text-sm text-gray-500">{formatDateTime(serviceOrder.resultTime)}</div>
@@ -220,7 +237,7 @@ export const TestResultDetailModal: React.FC<TestResultDetailModalProps> = ({ is
                 {/* Patient Information */}
                 {appointment?.patientInfo && (
                   <div className="space-y-3">
-                    <Title level={5} className="mb-3">
+                    <Title level={5} style={{ color: "#036672" }}>
                       Thông tin bệnh nhân
                     </Title>
                     <div>
@@ -250,7 +267,7 @@ export const TestResultDetailModal: React.FC<TestResultDetailModalProps> = ({ is
                     {appointment.patientInfo.allergies && (
                       <div className="text-sm">
                         <span className="text-gray-500">Dị ứng:</span>
-                        <div className="font-medium text-red-600">{appointment.patientInfo.allergies}</div>
+                        <div className="font-medium">{appointment.patientInfo.allergies}</div>
                       </div>
                     )}
                   </div>
@@ -276,7 +293,7 @@ export const TestResultDetailModal: React.FC<TestResultDetailModalProps> = ({ is
                 <div className="text-right">
                   <Text type="secondary">Giá dịch vụ:</Text>
                   <div className="font-bold text-lg text-blue-600">
-                    {serviceOrder.service?.price?.toLocaleString("vi-VN")} VNĐ
+                    {serviceOrder?.price.toLocaleString("vi-VN")} VNĐ
                   </div>
                 </div>
               </div>
@@ -284,10 +301,9 @@ export const TestResultDetailModal: React.FC<TestResultDetailModalProps> = ({ is
           </Card>
 
           {/* Result Form */}
-          <Card title="Kết quả xét nghiệm" className="mb-6">
+          <Card title={<div style={{ color: "#036672" }}>Kết quả</div>}>
             <Form form={form} layout="vertical" onFinish={handleSave}>
               <Form.Item
-                label="Kết quả chi tiết"
                 name="result"
                 rules={[
                   {
@@ -322,36 +338,6 @@ export const TestResultDetailModal: React.FC<TestResultDetailModalProps> = ({ is
               )}
             </Form>
           </Card>
-
-          {/* Room Information */}
-          {examinationRoom && (
-            <Card title="Thông tin phòng xét nghiệm" size="small" className="mb-6">
-              <Row gutter={16}>
-                <Col span={8}>
-                  <Text type="secondary">Tên phòng:</Text>
-                  <div className="font-medium">{examinationRoom.roomName}</div>
-                </Col>
-                <Col span={8}>
-                  <Text type="secondary">Vị trí:</Text>
-                  <div className="font-medium">
-                    {examinationRoom.building} - Tầng {examinationRoom.floor}
-                  </div>
-                </Col>
-                <Col span={8}>
-                  <Text type="secondary">Loại phòng:</Text>
-                  <div className="font-medium">
-                    {examinationRoom.type === "TEST" ? "Phòng xét nghiệm" : "Phòng khám"}
-                  </div>
-                </Col>
-              </Row>
-              {examinationRoom.note && (
-                <div className="mt-3">
-                  <Text type="secondary">Ghi chú:</Text>
-                  <div className="font-medium">{examinationRoom.note}</div>
-                </div>
-              )}
-            </Card>
-          )}
 
           {/* Footer Actions */}
           <div className="flex justify-end space-x-3">
