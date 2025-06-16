@@ -126,11 +126,6 @@ export default function DoctorDetail() {
         throw new Error("Số điện thoại không được để trống");
       }
 
-      // Check if doctor has user data
-      if (!doctorData.userId) {
-        throw new Error("Bác sĩ này chưa có tài khoản người dùng. Vui lòng liên hệ admin để tạo tài khoản.");
-      }
-
       // Map form values to API structure matching backend DoctorDto exactly
       const updateData = {
         // Required fields - must not be null or empty
@@ -460,9 +455,9 @@ export default function DoctorDetail() {
         onClose={closeEditModal}
         className="max-w-[800px] m-4"
       >
-        <div className="relative w-full p-6 overflow-y-auto bg-white rounded-2xl max-h-[80vh]">
+        <div className="relative w-full p-6 overflow-y-auto custom-scrollbar bg-white rounded-2xl max-h-[80vh]">
           <div className="mb-6">
-            <h4 className="mb-2 text-lg font-medium text-gray-900">
+            <h4 className="mb-2 text-lg font-semibold text-gray-900">
               Chỉnh sửa thông tin bác sĩ
             </h4>
             <p className="text-sm text-gray-500">

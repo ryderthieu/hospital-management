@@ -120,7 +120,7 @@ export default function CalendarView() {
             <div
               key={`${weekIndex}-${dayIndex}`}
               className={`flex flex-col items-center p-2 rounded-md ${
-                day.isActive ? "bg-teal-600 text-white" : "hover:bg-gray-100"
+                day.isActive ? "bg-base-600 text-white" : "hover:bg-gray-100"
               }`}
             >
               <span className="text-xs">{day.day}</span>

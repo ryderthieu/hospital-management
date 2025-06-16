@@ -1076,7 +1076,7 @@ const MedicalCalendar: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting || !selectedSchedule || !selectedPatient}
-                  className="px-6 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2.5 rounded-lg bg-base-600 text-white text-sm font-medium hover:bg-base-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">

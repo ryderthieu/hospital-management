@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { doctorService } from "../../services/doctorService";
 import { ExaminationRoomDto } from "../../types/doctor";
 import { ChevronDown, ArrowLeft } from "lucide-react";
+import ReturnButton from "../../components/ui/button/ReturnButton";
 
 const AddClinic: React.FC = () => {
   const navigate = useNavigate();
@@ -45,25 +46,20 @@ const AddClinic: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg border border-gray-200 mt-8">
+    <div className="">
       <PageMeta
         title="Thêm phòng khám | Bệnh viện Đa khoa Trung tâm"
         description="Thêm mới phòng khám"
       />
       <div className="flex items-center mb-6">
-        <Link
-          to="/admin/outpatient-clinics"
-          className="text-base-600 hover:text-base-700 flex items-center"
-        >
-          <ArrowLeft className="mr-2" size={20} />
-          <span className="text-xl font-medium text-base-600">
+          <ReturnButton />
+          <span className="text-xl font-semibold text-base-600">
             Thêm phòng khám
           </span>
-        </Link>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-        <h2 className="text-xl font-bold text-blue-600 mb-6">
+        <h2 className="text-xl font-bold text-red-600 mb-6">
           Thông tin phòng khám
         </h2>
         <form onSubmit={handleSubmit}>
