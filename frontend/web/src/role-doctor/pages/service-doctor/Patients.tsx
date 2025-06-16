@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react"; // Add useCallback
 import {
   Table,
   Input,
@@ -13,6 +13,8 @@ import {
   Tooltip,
   Empty,
   Tag,
+  DatePicker,
+  message,
 } from "antd";
 import {
   EditOutlined,
@@ -27,35 +29,172 @@ import {
 } from "@ant-design/icons";
 import WeCareLoading from "../../components/common/WeCareLoading";
 import { useNavigate } from "react-router-dom";
-import { useServiceOrders } from "./useServiceOrders";
+import { useServiceOrders } from "./useServiceOrders"; 
 import type { ServiceOrder } from "../../types/serviceOrder";
-
+import { api } from "../../../services/api";
+import dayjs from "dayjs";
+import type { Dayjs } from "dayjs";
 
 const { Search } = Input;
 const { Option } = Select;
+const { RangePicker } = DatePicker;
+
+// Interface for work schedule
+interface WorkSchedule {
+  workDate: string;
+  roomId: number;
+  startTime: string;
+  endTime: string;
+}
 
 const Patients: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [serviceTypeFilter, setServiceTypeFilter] = useState<string>("all");
+  // Thay đổi dateRange thành single date cho việc chọn lịch làm việc theo ngày
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs()); // Mặc định là ngày hiện tại
+  const [selectedRoomId, setSelectedRoomId] = useState<number | undefined>(undefined); // Phòng được chọn từ lịch làm việc
+
+  const [workSchedules, setWorkSchedules] = useState<WorkSchedule[]>([]);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Using roomId = 1 as default (you can get this from user context)
-  const roomId = 1;
+  const doctorId = localStorage.getItem("currentDoctorId");
 
+  // Fetch work schedules
+  const fetchWorkSchedules = async () => {
+    if (!doctorId) {
+      message.error("Không tìm thấy ID bác sĩ.");
+      return;
+    }
+    setScheduleLoading(true);
+    try {
+      const response = await api.get(`/doctors/${doctorId}/schedules`);
+      setWorkSchedules(response.data);
+      // Sau khi tải lịch làm việc, cập nhật selectedRoomId nếu có lịch cho ngày đã chọn
+      // Ưu tiên chọn roomId đầu tiên tìm thấy cho ngày hiện tại nếu chưa có gì được chọn
+      if (selectedDate && !selectedRoomId && response.data.length > 0) {
+        const todaySchedule = response.data.find((schedule: WorkSchedule) =>
+          dayjs(schedule.workDate).isSame(selectedDate, 'day')
+        );
+        if (todaySchedule) {
+          setSelectedRoomId(todaySchedule.roomId);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching work schedules:', error);
+      message.error('Không thể tải lịch làm việc');
+    } finally {
+      setScheduleLoading(false);
+    }
+  };
+
+  // Load work schedules on component mount and when doctorId changes
+  useEffect(() => {
+    fetchWorkSchedules();
+  }, [doctorId, selectedDate]); // Thêm selectedDate vào dependency để khi đổi ngày sẽ thử chọn lại phòng
+
+  // Use useServiceOrders with the selectedRoomId
   const {
     serviceOrdersTable,
     appointmentsData,
     roomsData,
     loading,
     error,
-    stats,
-    filters,
-    updateFilters,
-    clearFilters,
     refreshServiceOrders,
-  } = useServiceOrders(roomId);
+  } = useServiceOrders(selectedRoomId); // Truyền roomId duy nhất hoặc undefined
 
+    const getRoomDisplayName = (roomId: number) => {
+    const room = roomsData[roomId];
+    if (!room) return `Phòng ${roomId}`;
+    return `${room.note} - Tòa ${room.building} - Tầng ${room.floor}`;
+  };
+
+  // Lấy danh sách các phòng mà bác sĩ có lịch làm việc trong ngày đã chọn
+  const getRoomsForSelectedDate = useMemo(() => {
+    if (!selectedDate) return [];
+    const dateFormatted = selectedDate.format('YYYY-MM-DD');
+    const roomsToday = workSchedules.filter(schedule =>
+      schedule.workDate === dateFormatted
+    ).map(schedule => schedule.roomId);
+    const uniqueRoomIds = [...new Set(roomsToday)];
+    console.log("test danh sach phong lam viec: ", uniqueRoomIds)
+    return uniqueRoomIds.map(roomId => ({
+      roomId,
+      displayName: getRoomDisplayName(roomId)
+    }));
+  }, [selectedDate, workSchedules, roomsData]);
+
+  // Bộ lọc service orders dựa trên lịch làm việc của phòng được chọn và ngày
+  const getFilteredServiceOrders = useMemo(() => {
+    let filtered = [...serviceOrdersTable];
+
+    if (!selectedDate || selectedRoomId === undefined) {
+        return []; // Không có ngày hoặc phòng được chọn thì không hiển thị gì
+    }
+
+    const selectedDateFormatted = selectedDate.format('YYYY-MM-DD');
+
+    // Lọc theo lịch làm việc của phòng đã chọn và ngày đã chọn
+    filtered = filtered.filter(order => {
+      if (!order.orderTime) return false;
+
+      const orderDateTime = dayjs(order.orderTime);
+      const orderDate = orderDateTime.format('YYYY-MM-DD');
+      const orderTime = orderDateTime.format('HH:mm');
+
+      // Chỉ hiển thị các đơn hàng trong phòng và ngày đã chọn
+      if (order.roomId !== selectedRoomId || orderDate !== selectedDateFormatted) {
+          return false;
+      }
+
+      // Tìm lịch làm việc khớp với ngày và phòng 
+      const matchingSchedule = workSchedules.find(schedule =>
+        schedule.workDate === orderDate &&
+        schedule.roomId === order.roomId
+      );
+
+      if (!matchingSchedule) return false; // Nếu không có lịch làm việc thì loại bỏ
+
+      // Kiểm tra thời gian đơn hàng có nằm trong ca làm việc không
+      return orderTime >= matchingSchedule.startTime &&
+             orderTime <= matchingSchedule.endTime;
+    });
+
+    // Apply search term filter
+    if (searchTerm) {
+      const lowerCaseSearchTerm = searchTerm.toLowerCase();
+      filtered = filtered.filter(order => {
+        const patientInfo = appointmentsData[order.appointmentId]?.patientInfo;
+        return (
+          order.serviceName?.toLowerCase().includes(lowerCaseSearchTerm) ||
+          order.orderId.toString().includes(lowerCaseSearchTerm) ||
+          patientInfo?.fullName?.toLowerCase().includes(lowerCaseSearchTerm) ||
+          patientInfo?.patientId?.toLowerCase().includes(lowerCaseSearchTerm)
+        );
+      });
+    }
+
+    // Apply status filter
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(order => order.orderStatus === statusFilter);
+    }
+
+    // Note: serviceTypeFilter is present in state but not used in the original filter logic
+    // If you need to filter by serviceType, add similar logic here.
+
+    return filtered.map((order, index) => ({ ...order, number: index + 1 })); // Add sequential number
+  }, [serviceOrdersTable, workSchedules, selectedDate, selectedRoomId, searchTerm, statusFilter, appointmentsData]); // Dependencies for memoization
+
+  // Calculate filtered stats
+  const getFilteredStats = useMemo(() => {
+    const filtered = getFilteredServiceOrders; // Use the already filtered orders
+    return {
+      total: filtered.length,
+      ordered: filtered.filter(order => order.orderStatus === 'ORDERED').length,
+      completed: filtered.filter(order => order.orderStatus === 'COMPLETED').length,
+    };
+  }, [getFilteredServiceOrders]);
 
   const handleViewServiceOrder = (record: ServiceOrder) => {
     const appointment = appointmentsData[record.appointmentId];
@@ -72,23 +211,44 @@ const Patients: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    refreshServiceOrders();
+    refreshServiceOrders(); // This will re-fetch based on `selectedRoomId`
+    fetchWorkSchedules(); // Also re-fetch work schedules
   };
 
   const handleStatusFilterChange = (value: string) => {
     setStatusFilter(value);
-    updateFilters({ status: value === "all" ? undefined : value });
   };
 
   const handleServiceTypeFilterChange = (value: string) => {
     setServiceTypeFilter(value);
-    updateFilters({ serviceType: value === "all" ? undefined : value });
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
-    updateFilters({ searchTerm: value || undefined });
+  };
+
+  // Handler for changing the selected date
+  const handleDateChange = (date: Dayjs | null) => {
+    setSelectedDate(date);
+    // Khi ngày thay đổi, reset selectedRoomId và để useEffect xử lý chọn lại phòng
+    setSelectedRoomId(undefined);
+  };
+
+  // Handler for changing the selected room
+  const handleRoomChange = (value: number) => {
+    setSelectedRoomId(value);
+  };
+
+  const handleClearFilters = () => {
+    // clearFilters(); // Có thể không cần nếu filters được quản lý hoàn toàn ở client-side
+    setSelectedDate(dayjs()); // Quay về ngày hiện tại
+    setSelectedRoomId(undefined); // Reset phòng
+    setSearchTerm("");
+    setStatusFilter("all");
+    setServiceTypeFilter("all");
+    // Gọi refresh nếu việc clear filters cần kích hoạt lại việc fetch data từ hook
+    handleRefresh();
   };
 
   const getStatusBadge = (orderStatus: string) => {
@@ -139,11 +299,7 @@ const Patients: React.FC = () => {
     }
   };
 
-  const getRoomDisplayName = (roomId: number) => {
-    const room = roomsData[roomId];
-    if (!room) return `Phòng ${roomId}`;
-    return `Tòa ${room.building} - Tầng ${room.floor}`;
-  };
+
 
   const columns = [
     {
@@ -243,7 +399,6 @@ const Patients: React.FC = () => {
           >
             {serviceName || "Không có tên"}
           </div>
-          {/* {getServiceTypeBadge(service?.serviceType || "OTHER")} */}
         </div>
       ),
     },
@@ -338,10 +493,20 @@ const Patients: React.FC = () => {
               marginBottom: "8px",
             }}
           >
-            Danh sách chỉ định - {getRoomDisplayName(roomId)}
+            Danh sách chỉ định theo lịch làm việc
           </h1>
           <p style={{ color: "#6b7280", fontSize: "16px", margin: 0 }}>
-            Quản lý và theo dõi các đơn xét nghiệm
+            Quản lý và theo dõi các đơn xét nghiệm theo lịch làm việc
+            {selectedRoomId !== undefined && (
+              <span style={{ marginLeft: "8px" }}>
+                - Phòng: {getRoomDisplayName(selectedRoomId)} (Ngày: {selectedDate?.format('DD/MM/YYYY')})
+              </span>
+            )}
+            {selectedRoomId === undefined && selectedDate && (
+                <span style={{ marginLeft: "8px", color: '#ef4444' }}>
+                    - Không có phòng nào được chọn cho ngày {selectedDate.format('DD/MM/YYYY')}
+                </span>
+            )}
           </p>
         </div>
 
@@ -358,7 +523,7 @@ const Patients: React.FC = () => {
             <div
               style={{ fontSize: "24px", fontWeight: "bold", color: "#111827" }}
             >
-              {stats.total}
+              {getFilteredStats.total}
             </div>
             <div style={{ color: "#6b7280" }}>Tổng đơn xét nghiệm</div>
           </Card>
@@ -366,7 +531,7 @@ const Patients: React.FC = () => {
             <div
               style={{ fontSize: "24px", fontWeight: "bold", color: "#d97706" }}
             >
-              {stats.ordered}
+              {getFilteredStats.ordered}
             </div>
             <div style={{ color: "#6b7280" }}>Đang chờ</div>
           </Card>
@@ -374,7 +539,7 @@ const Patients: React.FC = () => {
             <div
               style={{ fontSize: "24px", fontWeight: "bold", color: "#059669" }}
             >
-              {stats.completed}
+              {getFilteredStats.completed}
             </div>
             <div style={{ color: "#6b7280" }}>Đã hoàn thành</div>
           </Card>
@@ -401,15 +566,43 @@ const Patients: React.FC = () => {
               placeholder="Tìm kiếm theo tên xét nghiệm, mã đơn, tên bệnh nhân..."
               value={searchTerm}
               onChange={handleSearchChange}
-              style={{ width: 600 }}
+              style={{ width: 400 }}
               prefix={<SearchOutlined style={{ color: "#6b7280" }} />}
             />
+
+            <DatePicker
+              value={selectedDate}
+              onChange={handleDateChange}
+              placeholder="Chọn ngày"
+              format="DD/MM/YYYY"
+              style={{ width: 150 }}
+            />
+
+            <Select
+              placeholder="Chọn phòng"
+              value={selectedRoomId}
+              onChange={handleRoomChange}
+              style={{ width: 300 }}
+              disabled={getRoomsForSelectedDate.length === 0} // Disable if no rooms available for the date
+            >
+              {getRoomsForSelectedDate.length > 0 ? (
+                getRoomsForSelectedDate.map(room => (
+                  <Option key={room.roomId} value={room.roomId}>
+                    {room.displayName}
+                  </Option>
+                ))
+              ) : (
+                <Option value={undefined} disabled>
+                  Không có phòng có lịch làm việc
+                </Option>
+              )}
+            </Select>
 
             <Select
               placeholder="Trạng thái"
               value={statusFilter}
               onChange={handleStatusFilterChange}
-              style={{ width: 200 }}
+              style={{ width: 150 }}
               suffixIcon={<FilterOutlined style={{ color: "#6b7280" }} />}
             >
               <Option value="all">Tất cả trạng thái</Option>
@@ -417,14 +610,14 @@ const Patients: React.FC = () => {
               <Option value="COMPLETED">Đã hoàn thành</Option>
             </Select>
 
-            <Button icon={<ClearOutlined />} onClick={clearFilters} type="text">
+            <Button icon={<ClearOutlined />} onClick={handleClearFilters} type="text">
               Xóa bộ lọc
             </Button>
 
             <Button
               icon={<ReloadOutlined />}
               onClick={handleRefresh}
-              loading={loading}
+              loading={loading || scheduleLoading}
               style={{ marginLeft: "auto" }}
             >
               Làm mới
@@ -456,6 +649,7 @@ const Patients: React.FC = () => {
                   fontWeight: 600,
                   color: "#111827",
                   margin: 0,
+                  flexShrink: 0,
                 }}
               >
                 Danh sách các chỉ định được yêu cầu
@@ -468,28 +662,29 @@ const Patients: React.FC = () => {
                   fontWeight: 500,
                   padding: "4px 12px",
                   borderRadius: "20px",
+                  flexShrink: 0,
                 }}
               >
-                {serviceOrdersTable.length} đơn
+                {getFilteredServiceOrders.length} đơn
               </span>
             </div>
           </div>
 
-          {loading ? (
+          {loading || scheduleLoading ? (
             <WeCareLoading mode="parent" />
           ) : error ? (
             <div style={{ textAlign: "center", padding: "60px 0" }}>
               <Empty description={error} />
             </div>
-          ) : serviceOrdersTable.length === 0 ? (
+          ) : getFilteredServiceOrders.length === 0 ? (
             <Empty
-              description="Không tìm thấy đơn xét nghiệm nào"
+              description="Không tìm thấy đơn xét nghiệm nào trong lịch làm việc cho lựa chọn này."
               style={{ padding: "60px 0" }}
             />
           ) : (
             <Table
               columns={columns}
-              dataSource={serviceOrdersTable}
+              dataSource={getFilteredServiceOrders}
               rowKey="orderId"
               pagination={{
                 pageSize: 10,

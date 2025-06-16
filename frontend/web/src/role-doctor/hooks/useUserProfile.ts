@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect, useCallback } from "react"
 import { message } from "antd"
 import { userService } from "../../services/userService"
