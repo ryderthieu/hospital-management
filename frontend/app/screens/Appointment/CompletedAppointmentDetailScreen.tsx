@@ -7,6 +7,7 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import {
   useNavigation,
@@ -33,6 +34,8 @@ const CompletedAppointmentDetailScreen = () => {
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { showAlert } = useAlert();
+  const [prescriptions, setPrescriptions] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
 
   useEffect(() => {
     if (!appointmentId) {
@@ -113,7 +116,28 @@ const CompletedAppointmentDetailScreen = () => {
       }
     };
 
+    const fetchPrescription = async () => {
+      try {
+        const res = await API.get(`/pharmacy/prescriptions/appointment/${appointmentId}`);
+        setPrescriptions(Array.isArray(res.data) ? res.data : []);
+      } catch (e) {
+        setPrescriptions([]);
+      }
+    };
+
+    const fetchOrders = async () => {
+      try {
+        const res = await API.get(`/appointments/services/appointments/${appointmentId}/orders`);
+        console.log(res.data)
+        setOrders(Array.isArray(res.data) ? res.data : []);
+      } catch (e) {
+        setOrders([]);
+      }
+    };
+
     fetchAppointment();
+    fetchPrescription();
+    fetchOrders();
   }, [appointmentId]);
 
   if (!fontsLoaded || isLoading || !appointment) {
@@ -182,36 +206,79 @@ const CompletedAppointmentDetailScreen = () => {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Chẩn đoán</Text>
-            {appointment.diagnosis?.map((item, index) => (
-              <Text key={index} style={styles.diagnosisText}>
-                {index + 1}. {item}
-              </Text>
-            ))}
+            <Text style={styles.diagnosisText}>{prescriptions[0]?.diagnosis || 'Không có chẩn đoán'}</Text>
           </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Ghi chú bác sĩ</Text>
-            {appointment.doctorNotes?.map((note, index) => (
-              <View key={index} style={styles.noteItem}>
-                <Ionicons name="checkmark-circle" size={18} color="#4CAF50" />
-                <Text style={styles.noteText}>{note}</Text>
-              </View>
-            ))}
+            <Text style={styles.diagnosisText}>{prescriptions[0]?.note || 'Không có ghi chú'}</Text>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Sinh hiệu</Text>
+            <Text style={styles.diagnosisText}>Huyết áp: {prescriptions[0]?.systolicBloodPressure || '-'} / {prescriptions[0]?.diastolicBloodPressure || '-'} mmHg</Text>
+            <Text style={styles.diagnosisText}>Nhịp tim: {prescriptions[0]?.heartRate || '-'} lần/phút</Text>
+            <Text style={styles.diagnosisText}>Đường huyết: {prescriptions[0]?.bloodSugar || '-'} mg/dL</Text>
           </View>
 
           <View style={styles.lastSection}>
-            <Text style={styles.sectionTitle}>Kết quả & Toa thuốc</Text>
-            <View style={styles.filesList}>
-              {appointment.testResults?.map((result, index) => (
-                <TouchableOpacity key={index} style={styles.fileItem}>
-                  <Image
-                    source={require("../../assets/images/logo/Logo.png")}
-                    style={styles.fileIcon}
-                  />
-                  <Text style={styles.fileName}>{result.name}</Text>
+            <Text style={styles.sectionTitle}>Toa thuốc</Text>
+            {prescriptions && prescriptions.length > 0 ? (
+              <View style={{ marginBottom: 12, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
+                {prescriptions[0].prescriptionDetails && prescriptions[0].prescriptionDetails.length > 0 ? (
+                  prescriptions[0].prescriptionDetails.map((detail: any, idx: number) => (
+                    <View key={idx} style={{
+                      marginBottom: 12,
+                      backgroundColor: '#F9FAFB',
+                      borderRadius: 8,
+                      padding: 8
+                    }}>
+                      <Text style={{ fontWeight: 'bold', fontSize: 15, color: '#0BC5C5' }}>{detail.medicine.medicineName}</Text>
+                      <Text style={{ fontSize: 13 }}>Liều dùng: {detail.dosage}</Text>
+                      <Text style={{ fontSize: 13 }}>Tần suất: {detail.frequency}</Text>
+                      <Text style={{ fontSize: 13 }}>Hướng dẫn: {detail.medicine.usage}</Text>
+                      <Text style={{ fontSize: 13 }}>Ghi chú: {detail.prescriptionNotes || 'Không có'}</Text>
+                      <Text style={{ fontSize: 13 }}>Số lượng: {detail.quantity}</Text>
+                      <Text style={{ fontSize: 13, color: '#F44336' }}>Tác dụng phụ: {detail.medicine.sideEffects}</Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text>Không có thuốc trong toa này</Text>
+                )}
+              </View>
+            ) : (
+              <Text>Không có toa thuốc</Text>
+            )}
+          </View>
+
+          <View style={styles.lastSection}>
+            <Text style={styles.sectionTitle}>Xét nghiệm</Text>
+            {orders && orders.length > 0 ? (
+              orders.map((order, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={{
+                    marginBottom: 10,
+                    backgroundColor: '#F3F4F6',
+                    borderRadius: 8,
+                    padding: 10,
+                  }}
+                  onPress={() => order.result ? Linking.openURL(order.result) : null}
+                  disabled={!order.result}
+                >
+                  <Text style={{ fontWeight: 'bold', color: '#0BC5C5' }}>Mã xét nghiệm: {order.orderId}</Text>
+                  <Text>Trạng thái: {order.orderStatus}</Text>
+                  <Text>Thời gian chỉ định: {order.orderTime ? new Date(order.orderTime).toLocaleString('vi-VN') : '-'}</Text>
+                  {order.result ? (
+                    <Text style={{ color: '#007AFF', textDecorationLine: 'underline' }}>Xem kết quả</Text>
+                  ) : (
+                    <Text style={{ color: '#757575' }}>Chưa có kết quả</Text>
+                  )}
                 </TouchableOpacity>
-              ))}
-            </View>
+              ))
+            ) : (
+              <Text>Không có xét nghiệm</Text>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -332,18 +399,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginBottom: 4,
     lineHeight: 20,
-  },
-  noteItem: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 8,
-  },
-  noteText: {
-    fontFamily: fontFamily.regular,
-    fontSize: 14,
-    marginLeft: 8,
-    flex: 1,
-    lineHeight: 18,
   },
   filesList: {
     flexDirection: "row",
