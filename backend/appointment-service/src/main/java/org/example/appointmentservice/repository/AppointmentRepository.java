@@ -30,4 +30,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     Integer countByScheduleIdAndSlotStart(Integer scheduleId, LocalTime slotStart);
 
     List<Appointment> findByScheduleIdOrderBySlotStartAsc(Integer scheduleId);
+
+    Page<Appointment> findByDoctorIdAndScheduleIdIn(Integer doctorId, List<Integer> scheduleIds, Pageable pageable);
 }

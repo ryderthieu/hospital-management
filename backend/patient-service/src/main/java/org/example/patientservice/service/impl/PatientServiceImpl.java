@@ -234,4 +234,12 @@ public class PatientServiceImpl implements PatientService {
         Patient updatedPatient = patientRepository.save(patient);
         return new PatientDto(updatedPatient);
     }
+
+    @Override
+    public List<PatientDto> getPatientsByIds(List<Integer> patientIds) {
+        return patientRepository.findAllById(patientIds)
+                .stream()
+                .map(PatientDto::new)
+                .collect(Collectors.toList());
+    }
 }

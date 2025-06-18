@@ -37,12 +37,12 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    public List<ScheduleDto> getAllSchedules(Integer doctorId, Schedule.Shift shift, LocalDate workDate) {
+    public List<ScheduleDto> getAllSchedules(Integer doctorId, Schedule.Shift shift, LocalDate workDate, Integer roomId) {
         List<Schedule> schedules = scheduleRepository.findByDoctor_DoctorId(doctorId);
-        
         return schedules.stream()
                 .filter(schedule -> shift == null || schedule.getShift() == shift)
                 .filter(schedule -> workDate == null || schedule.getWorkDate().equals(workDate))
+                .filter(schedule -> roomId == null || (schedule.getExaminationRoom() != null && roomId.equals(schedule.getExaminationRoom().getRoomId())))
                 .map(this::enrichScheduleWithTimeSlots)
                 .collect(Collectors.toList());
     }
@@ -120,5 +120,13 @@ public class ScheduleServiceImpl implements ScheduleService {
         Schedule schedule = scheduleRepository.findByScheduleId(scheduleId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch với ID: " + scheduleId));
         return appointmentServiceClient.getTimeSlotsByScheduleId(scheduleId, schedule);
+    }
+
+    @Override
+    public List<ScheduleDto> getSchedulesByIds(List<Integer> scheduleIds) {
+        return scheduleRepository.findAllById(scheduleIds)
+                .stream()
+                .map(ScheduleDto::new)
+                .collect(Collectors.toList());
     }
 }
