@@ -112,7 +112,7 @@ export const PrescriptionHistoryModal: React.FC<
       width={1000}
       style={{ top: 20 }}
     >
-      <div className="max-h-[80vh] overflow-y-auto">
+      <div className="max-h-[90vh] mt-10">
         {/* Header Information */}
         <div className="bg-gray-50 p-4 rounded-lg mb-6">
           <Row gutter={24}>

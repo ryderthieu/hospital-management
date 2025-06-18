@@ -69,7 +69,7 @@ export default function Signup2({ navigation, route }: Signup2Props) {
     }
 
     const today = new Date();
-    if (isNaN(dob.getTime()) || dob > today) {
+    if (isNaN(dob.getTime()) || dob >= today) {
       Alert.alert('Lỗi', 'Ngày sinh không hợp lệ');
       return;
     }
