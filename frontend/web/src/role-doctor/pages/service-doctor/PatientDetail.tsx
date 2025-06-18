@@ -15,18 +15,14 @@ import {
   DatePicker,
   Space,
   Popconfirm,
+  Upload,
 } from "antd";
 import {
   SaveOutlined,
   ArrowLeftOutlined,
   DeleteOutlined,
   ReloadOutlined,
-  ExperimentOutlined,
-  UserOutlined,
-  CalendarOutlined,
-  PhoneOutlined,
-  MailOutlined,
-  HomeOutlined,
+  UploadOutlined,
 } from "@ant-design/icons";
 import type { ServiceOrder } from "../../types/serviceOrder";
 import type { ExaminationRoom } from "../../types/examinationRoom";
@@ -39,13 +35,13 @@ import { appointmentService } from "../../services/appointmentServices";
 import { examinationRoomService } from "../../services/examinationRoomServices";
 import type { Appointment } from "../../types/appointment";
 import dayjs from "dayjs";
+import { api } from "../../../services/api"; // Assuming this is an Axios instance or similar
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
 const PatientDetail: React.FC = () => {
-  // const [serviceOrder, setServiceOrder] = useState<ServiceOrder | null>(null)
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -56,12 +52,17 @@ const PatientDetail: React.FC = () => {
   const [examinationRoom, setExaminationRoom] =
     useState<ExaminationRoom | null>(null);
 
+  const [currentServiceOrder, setCurrentServiceOrder] =
+    useState<ServiceOrder | null>(null);
+
   const { orderId, roomId, appointmentData, roomData, serviceOrder } =
     location.state || {};
 
-  // setServiceOrder(data)  //phía dứa tự hiểu là serviceOrder
-  // setAppointment(appointmentData)
-  // setExaminationRoom(roomData)
+  useEffect(() => {
+    if (serviceOrder) {
+      setCurrentServiceOrder(serviceOrder);
+    }
+  }, [serviceOrder]);
 
   const fetchServiceOrder = async () => {
     if (!orderId || !roomId) {
@@ -71,48 +72,31 @@ const PatientDetail: React.FC = () => {
 
     setLoading(true);
     try {
-      // We need serviceId to get the service order, but we don't have it directly
-      // This is a limitation of the current API structure
-      // For now, we'll assume we can get it somehow or modify the API
-      // const data = await getServiceOrderById(1, orderId) // Using serviceId = 1 as placeholder
-      // setServiceOrder(data)
-
-      // // Fetch appointment data to get patient information
-      // if (data.appointmentId) {
-      //   try {
-      //     const appointmentData = await appointmentService.getAppointmentById(data.appointmentId)
-      //     setAppointment(appointmentData)
-      //   } catch (appointmentError) {
-      //     console.error("Error fetching appointment data:", appointmentError)
-      //     // Don't show error message for appointment fetch failure, just log it
-      //   }
-      // }
-
-      // // Fetch examination room data
-      // if (data.roomId) {
-      //   try {
-      //     const roomData = await examinationRoomService.getExaminationRoomById(data.roomId)
-      //     setExaminationRoom(roomData)
-      //   } catch (roomError) {
-      //     console.error("Error fetching room data:", roomError)
-      //   }
-      // }
       setAppointment(appointmentData);
       setExaminationRoom(roomData);
+      setCurrentServiceOrder(serviceOrder);
 
       console.log("appointmentData", appointmentData);
       console.log("roomData", roomData);
       console.log("serviceOrder", serviceOrder);
 
-      // Set form values
       form.setFieldsValue({
-        serviceName: serviceOrder.serviceName || "",
-        orderStatus: serviceOrder.orderStatus,
-        result: serviceOrder.result || "",
-        orderTime: serviceOrder.orderTime
+        serviceName: serviceOrder?.serviceName || "",
+        orderStatus: serviceOrder?.orderStatus,
+        result: serviceOrder?.result
+          ? [
+              {
+                uid: "existing_result",
+                name: serviceOrder.result.split("/").pop() || "result.pdf",
+                status: "done",
+                url: serviceOrder.result,
+              },
+            ]
+          : [],
+        orderTime: serviceOrder?.orderTime
           ? dayjs(serviceOrder.orderTime)
           : null,
-        resultTime: serviceOrder.resultTime
+        resultTime: serviceOrder?.resultTime
           ? dayjs(serviceOrder.resultTime)
           : null,
       });
@@ -128,35 +112,88 @@ const PatientDetail: React.FC = () => {
     try {
       const values = await form.validateFields();
 
-      if (!serviceOrder) {
+      if (!currentServiceOrder) {
         message.error("Không tìm thấy thông tin đơn xét nghiệm");
         return;
       }
 
       setSaving(true);
 
+      let finalResultUrl = currentServiceOrder.result || "";
+
+      const fileList = values.result;
+      const isNewFileUpload = fileList.length > 0 && fileList[0].originFileObj;
+      const isExistingFileRemoved =
+        currentServiceOrder.result && fileList.length === 0;
+
+      if (isNewFileUpload) {
+        const file = fileList[0].originFileObj;
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          message.loading("Đang tải lên tệp PDF...", 0);
+          const response = await api.post(
+            `appointments/services/service-orders/${currentServiceOrder.orderId}/result`,
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+
+          // --- FIX START ---
+          // Access parsed JSON data directly from response.data
+          finalResultUrl = response.data.result;
+          // --- FIX END ---
+
+          message.destroy();
+          message.success("Tải lên tệp PDF thành công!");
+        } catch (uploadError: any) {
+          message.destroy();
+          console.error("Lỗi khi tải lên tệp PDF:", uploadError);
+          let errorMessage = "Lỗi không xác định";
+          if (
+            uploadError.response &&
+            uploadError.response.data &&
+            uploadError.response.data.message
+          ) {
+            errorMessage = uploadError.response.data.message;
+          } else if (uploadError.message) {
+            errorMessage = uploadError.message;
+          }
+          message.error(`Tải lên tệp PDF thất bại: ${errorMessage}`);
+          setSaving(false);
+          return;
+        }
+      } else if (isExistingFileRemoved) {
+        finalResultUrl = "";
+        // Optional: Call a backend API here to delete the file from Cloudinary if needed
+      }
+      const localDateTime = dayjs().format('YYYY-MM-DDTHH:mm:ss');
+
       const updateData: Partial<ServiceOrder> = {
-        ...serviceOrder,
-        orderStatus: values.orderStatus,
-        result: values.result || "",
+        ...currentServiceOrder,
+        orderStatus: form.getFieldValue("orderStatus"),
+        result: finalResultUrl,
         resultTime:
-          values.orderStatus === "COMPLETED"
-            ? new Date().toISOString()
-            : serviceOrder.resultTime,
+          form.getFieldValue("orderStatus") === "COMPLETED"
+            ? localDateTime
+            : currentServiceOrder.resultTime,
       };
 
       await updateServiceOrder(
-        serviceOrder.service.serviceId,
+        currentServiceOrder.serviceId,
         orderId,
         updateData as ServiceOrder
       );
 
       message.success("Cập nhật kết quả xét nghiệm thành công");
 
-      // Refresh data
       await fetchServiceOrder();
     } catch (error) {
-      console.error("Error updating service order:", error);
+      console.error("Lỗi khi cập nhật đơn xét nghiệm:", error);
       message.error("Có lỗi xảy ra khi cập nhật kết quả");
     } finally {
       setSaving(false);
@@ -164,16 +201,16 @@ const PatientDetail: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!serviceOrder) {
+    if (!currentServiceOrder) {
       message.error("Không tìm thấy thông tin đơn xét nghiệm");
       return;
     }
 
     setDeleting(true);
     try {
-      await deleteServiceOrder(serviceOrder.service.serviceId, orderId);
+      await deleteServiceOrder(currentServiceOrder.service.serviceId, orderId);
       message.success("Xóa đơn xét nghiệm thành công");
-      navigate(-1); // Go back to previous page
+      navigate(-1);
     } catch (error) {
       console.error("Error deleting service order:", error);
       message.error("Có lỗi xảy ra khi xóa đơn xét nghiệm");
@@ -211,11 +248,20 @@ const PatientDetail: React.FC = () => {
     return `${examinationRoom.note} - Tòa ${examinationRoom.building}, Tầng ${examinationRoom.floor}`;
   };
 
+  const handleDownloadFile = (url: string, fileName: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   useEffect(() => {
     fetchServiceOrder();
   }, [orderId, roomId]);
 
-  if (loading && !serviceOrder) {
+  if (loading && !currentServiceOrder) {
     return (
       <div className="flex-1 min-h-screen bg-gray-50 flex items-center justify-center">
         <Spin size="large" />
@@ -223,7 +269,7 @@ const PatientDetail: React.FC = () => {
     );
   }
 
-  if (!serviceOrder) {
+  if (!currentServiceOrder) {
     return (
       <div className="flex-1 min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -239,7 +285,6 @@ const PatientDetail: React.FC = () => {
   return (
     <div className="flex-1 min-h-screen bg-gray-50">
       <main className="p-6">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
             <Button
@@ -251,7 +296,7 @@ const PatientDetail: React.FC = () => {
             </Button>
             <div>
               <Title level={2} style={{ margin: 0 }}>
-                Chi tiết đơn xét nghiệm #{serviceOrder.orderId}
+                Chi tiết đơn xét nghiệm #{currentServiceOrder.orderId}
               </Title>
               <Text type="secondary">Quản lý kết quả xét nghiệm</Text>
             </div>
@@ -281,20 +326,21 @@ const PatientDetail: React.FC = () => {
         </div>
 
         <Row gutter={24}>
-          {/* Left column - Service Order Info */}
           <Col span={8}>
-            {/* Patient Information Card */}
             {appointment?.patientInfo && (
               <div className="flex-[400px] p-6 bg-white rounded-2xl border border-gray-200">
                 <div className="flex flex-row justify-between items-center mb-6">
                   <div className="flex flex-col items-center mb-6">
                     <img
-                      src={appointment.patientInfo.avatar || "https://static-00.iconduck.com/assets.00/avatar-default-symbolic-icon-440x512-ni4kvfm4.png" }
+                      src={
+                        appointment.patientInfo.avatar ||
+                        "https://static-00.iconduck.com/assets.00/avatar-default-symbolic-icon-440x512-ni4kvfm4.png"
+                      }
                       alt="Patient"
                       className="w-24 h-24 rounded-full mb-3"
                     />
                     <p className="text-black font-semibold text-xl">
-                     {appointment.patientInfo.fullName}
+                      {appointment.patientInfo.fullName}
                     </p>
                     <p className="text-gray-600">
                       Mã bệnh nhân: {appointment.patientInfo.patientId}
@@ -317,7 +363,6 @@ const PatientDetail: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Contact info */}
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-base-700 font-medium">
@@ -439,7 +484,6 @@ const PatientDetail: React.FC = () => {
             )}
           </Col>
 
-          {/* Right column - Edit Form */}
           <Col span={16}>
             <Card title="Cập nhật kết quả xét nghiệm">
               <Form form={form} layout="vertical" onFinish={handleSave}>
@@ -499,23 +543,57 @@ const PatientDetail: React.FC = () => {
                   </Select>
                 </Form.Item>
 
+                {/* Hiển thị file hiện tại nếu có */}
+                {currentServiceOrder?.result && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <span className="text-blue-600 mr-2">📄</span>
+                        <Text strong className="text-blue-800">
+                          File kết quả hiện tại: {currentServiceOrder.result.split("/").pop() || "result.pdf"}
+                        </Text>
+                      </div>
+                      <Space>
+                        <Button 
+                          size="small" 
+                          type="link"
+                          onClick={() => window.open(currentServiceOrder.result, '_blank')}
+                        >
+                          Xem
+                        </Button>
+                        <Button 
+                          size="small" 
+                          type="link"
+                          onClick={() => handleDownloadFile(
+                            currentServiceOrder.result!, 
+                            currentServiceOrder.result!.split("/").pop() || 'result.pdf'
+                          )}
+                        >
+                          Tải xuống
+                        </Button>
+                      </Space>
+                    </div>
+                  </div>
+                )}
+
                 <Form.Item
                   label="Kết quả xét nghiệm"
                   name="result"
+                  valuePropName="fileList"
+                  getValueFromEvent={(e) => {
+                    if (Array.isArray(e)) return e;
+                    return e?.fileList || [];
+                  }}
                   rules={[
-                    {
-                      required: true,
-                      message: "Trường này là bắt buộc",
-                    },
                     ({ getFieldValue }) => ({
                       validator(_, value) {
-                        if (
-                          getFieldValue("orderStatus") === "COMPLETED" &&
-                          !value
-                        ) {
+                        const orderStatus = getFieldValue("orderStatus");
+                        const hasFile = Array.isArray(value) && value.length > 0;
+
+                        if (orderStatus === "COMPLETED" && !hasFile) {
                           return Promise.reject(
                             new Error(
-                              "Vui lòng nhập kết quả khi đánh dấu hoàn thành!"
+                              "Vui lòng tải lên kết quả PDF khi đánh dấu hoàn thành!"
                             )
                           );
                         }
@@ -524,10 +602,43 @@ const PatientDetail: React.FC = () => {
                     }),
                   ]}
                 >
-                  <TextArea
-                    rows={6}
-                    placeholder="Nhập kết quả xét nghiệm chi tiết..."
-                  />
+                  <Upload
+                    beforeUpload={(file) => {
+                      const isPdf = file.type === "application/pdf";
+                      if (!isPdf) {
+                        message.error("Chỉ được phép tải lên tệp PDF!");
+                      }
+                      return isPdf ? true : Upload.LIST_IGNORE;
+                    }}
+                    maxCount={1}
+                    accept=".pdf"
+                    listType="text"
+                    onPreview={(file) => {
+                      // Mở file trong tab mới
+                      if (file.url) {
+                        window.open(file.url, '_blank');
+                      }
+                    }}
+                    onDownload={(file) => {
+                      // Download file
+                      if (file.url) {
+                        handleDownloadFile(file.url, file.name || 'result.pdf');
+                      }
+                    }}
+                    onRemove={(file) => {
+                      form.setFieldsValue({ result: [] });
+                      return true;
+                    }}
+                    showUploadList={{
+                      showPreviewIcon: true,
+                      showDownloadIcon: true,
+                      showRemoveIcon: true,
+                    }}
+                  >
+                    <Button icon={<UploadOutlined />}>
+                      {form.getFieldValue('result')?.length > 0 ? 'Thay đổi file PDF' : 'Tải lên file PDF'}
+                    </Button>
+                  </Upload>
                 </Form.Item>
 
                 <div className="flex justify-end space-x-4">

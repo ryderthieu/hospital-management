@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { useLocation } from "react-router-dom"
@@ -225,7 +223,7 @@ const PatientDetail: React.FC = () => {
     if (noteText.trim()) {
       createAppointmentNote(appointmentId, {
         noteType: NoteType.DOCTOR,
-        noteText: noteText.trim(),
+        content: noteText.trim(),
       })
       setNoteText("")
     }
@@ -323,11 +321,11 @@ const PatientDetail: React.FC = () => {
             <div className="flex flex-row justify-between items-center mb-6">
               <div className="flex flex-col items-center mb-6">
                 <img
-                  src="https://static-00.iconduck.com/assets.00/avatar-default-symbolic-icon-440x512-ni4kvfm4.png"
+                  src={patientDetail.patientInfo?.avatar ||"https://static-00.iconduck.com/assets.00/avatar-default-symbolic-icon-440x512-ni4kvfm4.png"}
                   alt="Patient"
                   className="w-24 h-24 rounded-full mb-3"
                 />
-                <p className="text-gray-600">Mã bệnh nhân:{patientDetail.patientInfo?.patientId || "N/A"}</p>
+                <p className="text-gray-600">Mã bệnh nhân: {patientDetail.patientInfo?.patientId || "N/A"}</p>
                 <p className="text-gray-600">
                   {patientDetail.patientInfo?.gender === "MALE" ? "Nam" : "Nữ"}, {patientAge} tuổi
                 </p>
@@ -678,7 +676,7 @@ const PatientDetail: React.FC = () => {
                         onChange={(e) => setNoteText(e.target.value)}
                       />
                       <div className="flex justify-end mt-2">
-                        <Button type="primary" icon={<MessageOutlined />} onClick={handleAddNote}>
+                        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddNote}>
                           Thêm ghi chú
                         </Button>
                       </div>
@@ -701,7 +699,7 @@ const PatientDetail: React.FC = () => {
                                   {note.noteType === NoteType.DOCTOR ? note.doctorName || "Bác sĩ" : "Bệnh nhân"}
                                 </span>
                               </div>
-                              <p className="text-gray-700">{note.noteText || ""}</p>
+                              <p className="text-gray-700">{note.content || ""}</p>
                               {note.createdAt && (
                                 <p className="text-xs text-gray-500 mt-2">
                                   {new Date(note.createdAt).toLocaleString("vi-VN")}

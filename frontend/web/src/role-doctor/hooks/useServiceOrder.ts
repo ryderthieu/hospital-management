@@ -62,20 +62,26 @@ export const useServiceOrderModal = (appointmentId?: number) => {
         throw new Error("Service not found")
       }
 
-      const serviceOrder: ServiceOrder = {
-        orderId: 0, // Will be set by backend
+      // const serviceOrder: ServiceOrder = {
+      //   orderId: 0, // Will be set by backend
+      //   appointmentId,
+      //   roomId,
+      //   service,
+      //   orderStatus: "ORDERED",
+      //   result: "",
+      //   number: 1,
+      //   orderTime: new Date().toISOString(),
+      //   resultTime: "",
+      //   createdAt: new Date().toISOString(),
+      // }
+
+       const serviceOrder: any = {
         appointmentId,
         roomId,
-        service,
-        orderStatus: "ORDERED",
-        result: "",
-        number: 1,
-        orderTime: new Date().toISOString(),
-        resultTime: "",
-        createdAt: new Date().toISOString(),
+        serviceId,
       }
 
-      const result = await createServiceOrder(serviceId, serviceOrder)
+      const result = await createServiceOrder(serviceOrder.appointmentId,serviceOrder.serviceId, serviceOrder.roomId )
       return result
     } catch (error) {
       console.error("Error creating service order:", error)
