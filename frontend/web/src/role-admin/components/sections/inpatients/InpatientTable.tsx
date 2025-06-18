@@ -146,8 +146,11 @@ export default function InpatientTable() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-lg">Đang tải...</div>
+      <div className="text-center py-10">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-base-600 mx-auto mb-4"></div>
+        <p className="text-gray-600 dark:text-gray-400">
+          Đang tải danh sách bệnh nhân nội trú...
+        </p>
       </div>
     );
   }

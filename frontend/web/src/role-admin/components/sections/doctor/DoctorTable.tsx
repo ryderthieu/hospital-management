@@ -14,6 +14,7 @@ const DoctorTable: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
+
   useEffect(() => {
     doctorService
       .getAllDoctors()
@@ -23,28 +24,31 @@ const DoctorTable: React.FC = () => {
       })
       .finally(() => setLoading(false));
   }, []);
+
   // Hàm xử lý tìm kiếm theo tên và mã số bác sĩ
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const searchValue = event.target.value;
     setSearchTerm(searchValue);
     setCurrentPage(1); // Reset về trang đầu khi tìm kiếm
-    
+
     if (!searchValue.trim()) {
       setFilteredDoctors(doctors);
       return;
     }
-    
+
     const filtered = doctors.filter((doctor) => {
       const searchLower = searchValue.toLowerCase();
-      const fullName = doctor.fullName?.toLowerCase() || '';
-      const doctorId = doctor.doctorId?.toString() || '';
-      const identityNumber = doctor.identityNumber?.toLowerCase() || '';
-      
-      return fullName.includes(searchLower) || 
-             doctorId.includes(searchLower) ||
-             identityNumber.includes(searchLower);
+      const fullName = doctor.fullName?.toLowerCase() || "";
+      const doctorId = doctor.doctorId?.toString() || "";
+      const identityNumber = doctor.identityNumber?.toLowerCase() || "";
+
+      return (
+        fullName.includes(searchLower) ||
+        doctorId.includes(searchLower) ||
+        identityNumber.includes(searchLower)
+      );
     });
-    
+
     setFilteredDoctors(filtered);
   };
 
@@ -68,8 +72,6 @@ const DoctorTable: React.FC = () => {
     }
   };
 
-  if (loading) return <div>Đang tải...</div>;
-
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
@@ -80,9 +82,10 @@ const DoctorTable: React.FC = () => {
           <span className="ml-5 text-sm bg-base-600/20 text-base-600 py-1 px-4 rounded-full font-bold">
             {totalItems} bác sĩ
           </span>
-        </div>        <div className="flex items-center gap-3">
-          <SearchInput 
-            placeholder="Tìm kiếm theo tên hoặc mã số..." 
+        </div>
+        <div className="flex items-center gap-3">
+          <SearchInput
+            placeholder="Tìm kiếm theo tên hoặc mã số..."
             value={searchTerm}
             onChange={handleSearch}
           />
@@ -128,14 +131,27 @@ const DoctorTable: React.FC = () => {
       </div>
 
       <div className="flex flex-col gap-4">
-        {paginatedData.map((doctor) => (
-          <DoctorCard
-            key={doctor.doctorId}
-            doctor={doctor}
-            onViewSchedule={() => handleViewSchedule(doctor.doctorId)}
-            onViewDetail={() => handleViewDetail(doctor.doctorId)}
-          />
-        ))}
+        {loading ? (
+          <div className="text-center py-10">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-base-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">
+              Đang tải danh sách bác sĩ...
+            </p>
+          </div>
+        ) : paginatedData.length === 0 ? (
+          <div className="text-center py-10 text-gray-500">
+            Không tìm thấy bác sĩ phù hợp.
+          </div>
+        ) : (
+          paginatedData.map((doctor) => (
+            <DoctorCard
+              key={doctor.doctorId}
+              doctor={doctor}
+              onViewSchedule={() => handleViewSchedule(doctor.doctorId)}
+              onViewDetail={() => handleViewDetail(doctor.doctorId)}
+            />
+          ))
+        )}
       </div>
 
       <Pagination
