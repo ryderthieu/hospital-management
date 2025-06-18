@@ -18,6 +18,7 @@ export interface Patient {
 }
 
 export interface PatientInfo {
+  avatar: string,
   patientId: number;
   userId: number;
   identityNumber: string;

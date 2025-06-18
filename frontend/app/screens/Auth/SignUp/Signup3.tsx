@@ -7,6 +7,7 @@ import { PageHeader, PhoneNumberDisplay, OtpInput, ResendTimer } from '../../../
 import API from '../../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../../context/AuthContext';
+import { useAlert } from '../../../context/AlertContext';
 
 type RootStackParamList = {
   Signup2: { phone: string; password: string };
@@ -35,13 +36,18 @@ export default function Signup3({ navigation, route }: Signup3Props) {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const inputRefs = useRef<(TextInput | null)[]>([]);
+  const { showAlert } = useAlert();
 
   const handleVerify = async () => {
     if (isLoading) return;
 
     const otpString = otp.join('');
     if (otpString.length !== 6) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đủ 6 chữ số OTP');
+      showAlert({
+        title: 'Lỗi',
+        message: 'Vui lòng nhập đủ 6 chữ số OTP',
+        buttons: [{ text: 'OK' }],
+      });
       return;
     }
 
@@ -58,12 +64,18 @@ export default function Signup3({ navigation, route }: Signup3Props) {
         setLoggedIn(true);
       }
 
-      Alert.alert('Thành công', 'Đăng ký thành công', [
-        { text: 'OK', onPress: () => navigation.navigate('Signup4') },
-      ]);
+      showAlert({
+        title: 'Thành công',
+        message: 'Đăng ký thành công',
+        buttons: [{ text: 'OK', onPress: () => navigation.navigate('Signup4') }],
+      });
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Xác thực OTP thất bại. Vui lòng thử lại.';
-      Alert.alert('Lỗi', errorMessage);
+      const errorMessage = error.response?.data?.error || 'Xác thực OTP thất bại. Vui lòng thử lại.';
+      showAlert({
+        title: 'Lỗi',
+        message: errorMessage,
+        buttons: [{ text: 'OK' }],
+      });
       console.error('Verify OTP error:', error.message, error.response?.data);
     } finally {
       setIsLoading(false);
@@ -73,9 +85,17 @@ export default function Signup3({ navigation, route }: Signup3Props) {
   const handleResendOtp = async () => {
     try {
       await API.post('/users/auth/otp/send-sms', null, { params: { phoneNumber: phone } });
-      Alert.alert('Thành công', 'Mã OTP đã được gửi lại');
+      showAlert({
+        title: 'Thành công',
+        message: 'Mã OTP đã được gửi lại',
+        buttons: [{ text: 'OK' }],
+      });
     } catch (error: any) {
-      Alert.alert('Lỗi', 'Không thể gửi lại OTP. Vui lòng thử lại.');
+      showAlert({
+        title: 'Lỗi',
+        message: 'Không thể gửi lại OTP. Vui lòng thử lại.',
+        buttons: [{ text: 'OK' }],
+      });
       console.error('Resend OTP error:', error.message);
     }
   };

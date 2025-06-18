@@ -12,6 +12,7 @@ import {
   DatePickerField,
 } from '../../../components/Auth';
 import API from '../../../services/api';
+import { useAlert } from '../../../context/AlertContext';
 
 type RootStackParamList = {
   Login: undefined;
@@ -29,6 +30,7 @@ interface Signup2Props {
 
 export default function Signup2({ navigation, route }: Signup2Props) {
   const { phone, password } = route.params;
+  const { showAlert } = useAlert();
 
   const [fullName, setFullName] = useState<string>('');
   const [idNumber, setIdNumber] = useState<string>('');
@@ -52,30 +54,30 @@ export default function Signup2({ navigation, route }: Signup2Props) {
     if (!termsAccepted) errors.push('Vui lòng đồng ý với Điều khoản Dịch vụ và Chính sách Bảo mật');
 
     if (errors.length > 0) {
-      Alert.alert('Lỗi', errors.join('\n'));
+      showAlert({ title: 'Lỗi', message: errors.join('\n') });
       return;
     }
 
     const idNumberRegex = /^\d{9,12}$/;
     if (!idNumberRegex.test(idNumber)) {
-      Alert.alert('Lỗi', 'Số CCCD/CMND phải có 9 hoặc 12 số');
+      showAlert({ title: 'Lỗi', message: 'Số CCCD/CMND phải có 9 hoặc 12 số' });
       return;
     }
 
     const insuranceRegex = /^\d{10,15}$/;
     if (!insuranceRegex.test(insuranceNumber)) {
-      Alert.alert('Lỗi', 'Số bảo hiểm y tế phải từ 10-15 số');
+      showAlert({ title: 'Lỗi', message: 'Số bảo hiểm y tế phải từ 10-15 số' });
       return;
     }
 
     const today = new Date();
     if (isNaN(dob.getTime()) || dob >= today) {
-      Alert.alert('Lỗi', 'Ngày sinh không hợp lệ');
+      showAlert({ title: 'Lỗi', message: 'Ngày sinh không hợp lệ' });
       return;
     }
 
     if (!['MALE', 'FEMALE', 'OTHER'].includes(gender.toUpperCase())) {
-      Alert.alert('Lỗi', 'Giới tính phải là Nam (MALE), Nữ (FEMALE), hoặc Khác (OTHER)');
+      showAlert({ title: 'Lỗi', message: 'Giới tính phải là Nam (MALE), Nữ (FEMALE), hoặc Khác (OTHER)' });
       return;
     }
 
@@ -96,12 +98,11 @@ export default function Signup2({ navigation, route }: Signup2Props) {
 
       const response = await API.post<{ message: string }>('/users/auth/register', payload);
 
-      Alert.alert('Thành công', response.data.message || 'Vui lòng xác thực OTP', [
-        { text: 'OK', onPress: () => navigation.navigate('Signup3', { phone }) },
-      ]);
+      showAlert({ title: 'Thành công', message: response.data.message || 'Vui lòng xác thực OTP' });
+      navigation.navigate('Signup3', { phone });
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Lưu thông tin thất bại. Vui lòng thử lại.';
-      Alert.alert('Lỗi', errorMessage);
+      const errorMessage = error.response?.data?.error || 'Lưu thông tin thất bại. Vui lòng thử lại.';
+      showAlert({ title: 'Lỗi', message: errorMessage });
       console.error('Signup2 error:', error.message, error.response?.data);
     } finally {
       setIsLoading(false);

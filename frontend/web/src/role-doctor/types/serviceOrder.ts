@@ -14,6 +14,12 @@ export interface ServiceOrder {
   createdAt: string;  
 }
 
+export interface CreateServiceOrderRequest {
+  serviceId: number,
+  appointmentId: number;
+  roomId: number;
+}
+
 export interface ServiceOrderDto {
   orderId: number;
   appointmentId: number;

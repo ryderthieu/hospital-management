@@ -20,7 +20,7 @@ public interface AppointmentService {
 
     void deleteAppointment(Integer appointmentId);
 
-    PageResponse<AppointmentResponseTypes.DoctorViewResponse> getAppointmentsByDoctorIdOptimized(Integer doctorId, int pageNo, int pageSize);
+    PageResponse<AppointmentResponseTypes.DoctorViewResponse> getAppointmentsByDoctorIdOptimized(Integer doctorId, String shift, LocalDate workDate, Appointment.AppointmentStatus appointmentStatus, Integer roomId, int pageNo, int pageSize);
 
     PageResponse<AppointmentResponseTypes.PatientViewResponse> getAppointmentsByPatientIdOptimized(Integer patientId, int pageNo, int pageSize);
 

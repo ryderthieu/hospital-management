@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { Card, Tabs } from "antd"
 import { UserOutlined, LockOutlined } from "@ant-design/icons"

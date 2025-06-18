@@ -10,6 +10,7 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ScheduleTimeDto {
+    private Integer scheduleId;
     private LocalTime startTime;
     private LocalTime endTime;
-} 
+}

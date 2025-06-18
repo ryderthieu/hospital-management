@@ -20,4 +20,9 @@ public class ScheduleDto {
     private Integer roomId;
     private String createdAt;
     private String location;
+    private String roomNote;
+
+    private Integer floor;
+
+    private String building;
 }

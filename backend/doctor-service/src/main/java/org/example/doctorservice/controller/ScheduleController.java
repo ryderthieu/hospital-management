@@ -29,8 +29,9 @@ public class ScheduleController {
     @GetMapping("/{doctorId}/schedules")
     public ResponseEntity<List<ScheduleDto>> getAllSchedules(@PathVariable Integer doctorId,
             @RequestParam(required = false) Schedule.Shift shift,
-            @RequestParam(required = false) LocalDate workDate) {
-        return ResponseEntity.ok(scheduleService.getAllSchedules(doctorId, shift, workDate));
+            @RequestParam(required = false) LocalDate workDate,
+            @RequestParam(required = false) Integer roomId) {
+        return ResponseEntity.ok(scheduleService.getAllSchedules(doctorId, shift, workDate, roomId));
     }
 
 //    @PreAuthorize("hasAnyRole('DOCTOR')")
@@ -62,5 +63,10 @@ public class ScheduleController {
     @GetMapping("/schedules/admin")
     public ResponseEntity<List<ScheduleDto>> getAllSchedulesForAdmin() {
         return ResponseEntity.ok(scheduleService.getAllSchedulesForAdmin());
+    }
+
+    @PostMapping("/schedules/batch")
+    public ResponseEntity<List<ScheduleDto>> getSchedulesByIds(@RequestBody List<Integer> scheduleIds) {
+        return ResponseEntity.ok(scheduleService.getSchedulesByIds(scheduleIds));
     }
 }

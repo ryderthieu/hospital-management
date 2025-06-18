@@ -11,6 +11,7 @@ import { mockMenuItems } from './Data';
 import { useAuth } from '../../context/AuthContext';
 import API from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAlert } from '../../context/AlertContext';
 
 interface MenuItemProps {
   item: MenuItem;
@@ -20,10 +21,11 @@ const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'Profile'>>();
   const { loggedIn, patient, setPatient } = useAuth();
   const [showAvatarOptions, setShowAvatarOptions] = useState(false);
+  const { showAlert } = useAlert();
 
   const handleAvatarPress = () => {
     if (!loggedIn || !patient) {
-      Alert.alert('Lỗi', 'Vui lòng đăng nhập để thay đổi ảnh đại diện');
+      showAlert({ title: 'Lỗi', message: 'Vui lòng đăng nhập để thay đổi ảnh đại diện' });
       return;
     }
     setShowAvatarOptions(true);
@@ -58,7 +60,7 @@ const ProfileScreen: React.FC = () => {
       };
       setPatient(updatedPatient);
 
-      Alert.alert('Thành công', 'Cập nhật ảnh đại diện thành công');
+      showAlert({ title: 'Thành công', message: 'Cập nhật ảnh đại diện thành công' });
     } catch (error: any) {
       console.error(
         '[ProfileScreen] Error uploading avatar:',
@@ -69,7 +71,7 @@ const ProfileScreen: React.FC = () => {
           headers: error.response.headers,
         } : 'No response data'
       );
-      Alert.alert('Lỗi', 'Không thể cập nhật ảnh đại diện. Vui lòng thử lại sau.');
+      showAlert({ title: 'Lỗi', message: 'Không thể cập nhật ảnh đại diện. Vui lòng thử lại sau.' });
     }
   };
 
@@ -94,7 +96,7 @@ const ProfileScreen: React.FC = () => {
       };
       setPatient(updatedPatient);
 
-      Alert.alert('Thành công', 'Xóa ảnh đại diện thành công');
+      showAlert({ title: 'Thành công', message: 'Xóa ảnh đại diện thành công' });
     } catch (error: any) {
       console.error(
         '[ProfileScreen] Error deleting avatar:',
@@ -105,7 +107,7 @@ const ProfileScreen: React.FC = () => {
           headers: error.response.headers,
         } : 'No response data'
       );
-      Alert.alert('Lỗi', 'Không thể xóa ảnh đại diện. Vui lòng thử lại sau.');
+      showAlert({ title: 'Lỗi', message: 'Không thể xóa ảnh đại diện. Vui lòng thử lại sau.' });
     }
   };
 
@@ -113,13 +115,13 @@ const ProfileScreen: React.FC = () => {
     setShowAvatarOptions(false);
 
     if (!loggedIn || !patient) {
-      Alert.alert('Lỗi', 'Vui lòng đăng nhập để chụp ảnh');
+      showAlert({ title: 'Lỗi', message: 'Vui lòng đăng nhập để chụp ảnh' });
       return;
     }
 
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Quyền truy cập', 'Cần quyền truy cập camera để chụp ảnh');
+      showAlert({ title: 'Quyền truy cập', message: 'Cần quyền truy cập camera để chụp ảnh' });
       return;
     }
 
@@ -139,13 +141,13 @@ const ProfileScreen: React.FC = () => {
     setShowAvatarOptions(false);
 
     if (!loggedIn || !patient) {
-      Alert.alert('Lỗi', 'Vui lòng đăng nhập để chọn ảnh');
+      showAlert({ title: 'Lỗi', message: 'Vui lòng đăng nhập để chọn ảnh' });
       return;
     }
 
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Quyền truy cập', 'Cần quyền truy cập thư viện ảnh để chọn ảnh');
+      showAlert({ title: 'Quyền truy cập', message: 'Cần quyền truy cập thư viện ảnh để chọn ảnh' });
       return;
     }
 
@@ -163,14 +165,14 @@ const ProfileScreen: React.FC = () => {
 
   const handleDeleteAvatar = () => {
     setShowAvatarOptions(false);
-    Alert.alert(
-      'Xác nhận',
-      'Bạn có chắc muốn xóa ảnh đại diện?',
-      [
+    showAlert({
+      title: 'Xác nhận',
+      message: 'Bạn có chắc muốn xóa ảnh đại diện?',
+      buttons: [
         { text: 'Hủy', style: 'cancel' },
         { text: 'Xóa', onPress: deleteAvatar },
       ]
-    );
+    });
   };
 
   const MenuItemComponent: React.FC<MenuItemProps> = ({ item }) => {
@@ -178,7 +180,7 @@ const ProfileScreen: React.FC = () => {
       if (item.route) {
         navigation.navigate(item.route);
       } else if (item.id === 'logout') {
-        Alert.alert('Đăng xuất thành công');
+        showAlert({ title: 'Đăng xuất thành công' });
         // TODO: Implement logout logic (clear token, reset AuthContext)
       }
     };

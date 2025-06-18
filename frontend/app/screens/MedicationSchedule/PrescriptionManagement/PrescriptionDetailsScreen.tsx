@@ -23,6 +23,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from 'expo-notifications';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useAlert } from '../../../context/AlertContext';
 
 // Cấu hình thông báo
 Notifications.setNotificationHandler({
@@ -84,6 +85,7 @@ const PrescriptionDetailsScreen: React.FC = () => {
   const [reminderTimes, setReminderTimes] = useState<{
     [key: string]: string[];
   }>({});
+  const { showAlert } = useAlert();
 
   const fetchPrescriptionDetails = async () => {
     try {
@@ -126,7 +128,7 @@ const PrescriptionDetailsScreen: React.FC = () => {
       if (status !== 'granted') {
         const { status: newStatus } = await Notifications.requestPermissionsAsync();
         if (newStatus !== 'granted') {
-          Alert.alert('Cần quyền thông báo', 'Vui lòng cấp quyền thông báo để nhận nhắc nhở uống thuốc.');
+          showAlert({ title: 'Cần quyền thông báo', message: 'Vui lòng cấp quyền thông báo để nhận nhắc nhở uống thuốc.' });
           return;
         }
       }
@@ -188,7 +190,7 @@ const PrescriptionDetailsScreen: React.FC = () => {
 
     } catch (error) {
       console.error('Lỗi khi đặt thông báo:', error);
-      Alert.alert('Lỗi', 'Không thể đặt lịch thông báo. Vui lòng thử lại.');
+      showAlert({ title: 'Lỗi', message: 'Không thể đặt lịch thông báo. Vui lòng thử lại.' });
     }
   };
 

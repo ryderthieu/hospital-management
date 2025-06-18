@@ -8,7 +8,6 @@ import org.example.doctorservice.entity.Schedule;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -41,8 +40,6 @@ public class ScheduleDto {
 
     private String createdAt;
 
-    private List<TimeSlotDto> availableTimeSlots;
-
     public ScheduleDto(Schedule schedule) {
         this.scheduleId = schedule.getScheduleId();
         this.doctorId = schedule.getDoctor().getDoctorId();
@@ -51,7 +48,7 @@ public class ScheduleDto {
         this.endTime = schedule.getEndTime();
         this.shift = schedule.getShift();
         this.roomId = schedule.getExaminationRoom().getRoomId();
-        this.location = schedule.getExaminationRoom().getBuilding() + schedule.getExaminationRoom().getFloor() + schedule.getExaminationRoom().getRoomName();
+        this.location ="Tòa "+  schedule.getExaminationRoom().getBuilding() + ", tầng " + schedule.getExaminationRoom().getFloor() + " phòng " + schedule.getScheduleId() + " " + schedule.getExaminationRoom().getNote();
         this.roomNote = schedule.getExaminationRoom().getNote();
         this.floor = schedule.getExaminationRoom().getFloor();
         this.building = schedule.getExaminationRoom().getBuilding();

@@ -89,4 +89,9 @@ public class PatientController {
     public ResponseEntity<PatientDto> deleteAvatar(@PathVariable Integer id) {
         return ResponseEntity.ok(patientService.deleteAvatar(id));
     }
+
+    @PostMapping("/batch")
+    public ResponseEntity<List<PatientDto>> getPatientsByIds(@RequestBody List<Integer> patientIds) {
+        return ResponseEntity.ok(patientService.getPatientsByIds(patientIds));
+    }
 }

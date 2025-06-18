@@ -7,7 +7,6 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import {
   useNavigation,
@@ -19,6 +18,7 @@ import type { RootStackParamList, Appointment, AppointmentResponseDto } from "./
 import { useFont, fontFamily } from "../../context/FontContext";
 import { useState, useEffect } from "react";
 import API from "../../services/api";
+import { useAlert } from '../../context/AlertContext';
 
 type CompletedAppointmentDetailScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -32,10 +32,11 @@ const CompletedAppointmentDetailScreen = () => {
   const appointmentId = route.params?.appointment?.id;
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     if (!appointmentId) {
-      Alert.alert("Lỗi", "Không tìm thấy thông tin cuộc hẹn.", [{ text: "OK", onPress: () => navigation.goBack() }]);
+      showAlert({ title: 'Lỗi', message: 'Không tìm thấy thông tin cuộc hẹn.', onConfirm: () => navigation.goBack() });
       setIsLoading(false);
       return;
     }
@@ -106,7 +107,7 @@ const CompletedAppointmentDetailScreen = () => {
         setAppointment(appointmentData);
       } catch (error: any) {
         console.error("[CompletedAppointmentDetailScreen] Error fetching appointment:", error.message, error.response?.data);
-        Alert.alert("Lỗi", "Không thể tải chi tiết cuộc hẹn. Vui lòng thử lại.", [{ text: "OK", onPress: () => navigation.goBack() }]);
+        showAlert({ title: 'Lỗi', message: 'Không thể tải chi tiết cuộc hẹn. Vui lòng thử lại.', onConfirm: () => navigation.goBack() });
       } finally {
         setIsLoading(false);
       }

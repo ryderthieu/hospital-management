@@ -28,4 +28,6 @@ public interface PatientService {
     PatientDto uploadAvatar(Integer id, MultipartFile file);
 
     PatientDto deleteAvatar(Integer id);
+
+    List<PatientDto> getPatientsByIds(List<Integer> patientIds);
 }

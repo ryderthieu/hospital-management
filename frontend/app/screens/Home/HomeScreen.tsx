@@ -20,6 +20,9 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { HomeStackParamList } from "../../navigation/types";
 import { useNavigation } from "@react-navigation/native";
 import API from "../../services/api";
+import { useDepartments } from '../../context/DepartmentContext';
+import { Specialty } from '../../types/Specialty';
+import { SpecialtyItem } from '../../components/SpecialtyItem';
 
 type HomeScreenNavigationProp = StackNavigationProp<HomeStackParamList, "Home">;
 
@@ -99,9 +102,8 @@ interface DepartmentDto {
 export default function HomeScreen() {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const { fontsLoaded } = useFont();
+  const { departments, isLoading: isLoadingDepartments, error: errorDepartments, reloadDepartments } = useDepartments();
   const [recentDoctors, setRecentDoctors] = useState<Doctor[]>([]);
-  const [specialties, setSpecialties] = useState<Specialty[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const news: NewsItem[] = [
     {
@@ -153,7 +155,7 @@ export default function HomeScreen() {
           // navigation.navigate("Login");
         }
 
-        await Promise.all([fetchRecentDoctors(), fetchSpecialties()]);
+        await Promise.all([fetchRecentDoctors()]);
       } catch (error: any) {
         console.error("[HomeScreen] Error in fetchData:", {
           message: error.message,
@@ -242,87 +244,41 @@ export default function HomeScreen() {
     }
   };
 
-  const fetchSpecialties = async () => {
-    try {
-      console.log("[FetchSpecialties] Fetching departments from /doctors/departments");
-      const response = await API.get<
-        PageResponse<DepartmentDto> | DepartmentDto[]
-      >("/doctors/departments", {
-        params: { page: 0, size: 5 },
-      });
-      console.log(
-        "[FetchSpecialties] Departments response:",
-        JSON.stringify(response.data, null, 2)
-      );
-
-      const departments = Array.isArray(response.data)
-        ? response.data.slice(0, 5)
-        : response.data.content.slice(0, 5);
-
-      if (!departments.length) {
-        console.log("[FetchSpecialties] No departments found");
-        setSpecialties([]);
-        return;
-      }
-
-      console.log(
-        "[FetchSpecialties] Departments:",
-        departments.map((d) => ({
-          id: d.departmentId,
-          name: d.departmentName,
-        }))
-      );
-
-      const doctorCountPromises = departments.map((dept) =>
-        API.get<DoctorDto[]>(`/doctors/departments/${dept.departmentId}/doctors`)
-          .then((res) => ({
-            departmentId: dept.departmentId,
-            count: res.data.length,
-          }))
-          .catch((error) => {
-            console.warn(
-              `[FetchSpecialties] No doctors for department ${dept.departmentId}:`,
-              error.message
-            );
-            return { departmentId: dept.departmentId, count: 0 };
-          })
-      );
-
-      const doctorCounts = await Promise.all(doctorCountPromises);
-      const doctorCountMap = new Map(
-        doctorCounts.map((item) => [item.departmentId, item.count])
-      );
-
-      const specialtiesData: Specialty[] = departments.map((dept) => {
-        let icon: ImageSourcePropType = {
-          uri: "https://via.placeholder.com/50",
-        };
-        try {
-          icon = require("../../assets/images/logo/Logo.png");
-        } catch (e) {
-          console.warn(`[FetchSpecialties] Default icon not found for department ${dept.departmentId}`);
-        }
-        return {
-          id: dept.departmentId,
-          name: dept.departmentName || "Chưa có tên",
-          doctorCount: doctorCountMap.get(dept.departmentId) || 0,
-          icon,
-        };
-      });
-
-      console.log("[FetchSpecialties] Processed specialties:", specialtiesData);
-      setSpecialties(specialtiesData);
-    } catch (error: any) {
-      console.error("[FetchSpecialties] Error:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      setSpecialties([]);
-    }
+  // Map tên khoa sang icon FontAwesome5 phù hợp (đồng bộ với SearchDoctorScreen)
+  const departmentIconMap: Record<string, string> = {
+    'Khoa Nội Tim Mạch': 'heartbeat',
+    'Khoa Nhi': 'child',
+    'Khoa Da Liễu': 'allergies',
+    'Khoa Thần Kinh': 'brain',
+    'Khoa Sản': 'female',
+    'Khoa Ung Bướu': 'ribbon',
+    'Khoa Tiêu Hóa': 'apple-alt', // stomach không có, dùng apple-alt
+    'Khoa Hô Hấp': 'lungs',
+    'Khoa Chấn thương': 'bandage',
+    'Khoa Mắt': 'eye',
+    'Khoa Tai mũi họng': 'deaf',
+    'Khoa Răng hàm mặt': 'teeth',
+    'Khoa Thận - Tiết Niệu': 'tint',
+    'Khoa Tâm thần': 'user-md',
+    'Khoa Chẩn Đoán Hình Ảnh': 'images',
+    'Khoa Hồi sức': 'heartbeat',
+    'Khoa Ngoại Tổng Quát': 'user-md',
+    'Khoa Khám Bệnh': 'user-md',
+    'Khoa Ngoại': 'user-md',
+    'Khoa Nội': 'user-md',
+    'Khoa Tâm Lý': 'syringe',
+    'Khoa Xét Nghiệm': 'microscope',
+    'Khoa Dược': 'capsules',
   };
 
-  if (!fontsLoaded || isLoading) {
+  const specialties = departments.map(dept => ({
+    id: dept.departmentId.toString(),
+    name: dept.departmentName || 'Chưa có tên',
+    count: dept.staffCount ? `${dept.staffCount} bác sĩ` : 'Không có bác sĩ',
+    iconName: departmentIconMap[dept.departmentName] || 'hospital-alt',
+  }));
+
+  if (!fontsLoaded || isLoadingDepartments) {
     return (
       <View style={styles.loadingContainer}>
         <Text style={styles.placeholderText}>Đang tải...</Text>
@@ -425,32 +381,19 @@ export default function HomeScreen() {
           >
             {specialties.length > 0 ? (
               specialties.map((specialty) => (
-                <TouchableOpacity
+                <SpecialtyItem
                   key={specialty.id}
-                  style={styles.specialtyCard}
-                  onPress={() =>
-                    navigation.navigate("BookAppointment", {
-                      screen: "DoctorList",
-                      params: {
-                        departmentId: specialty.id,
-                        departmentName: specialty.name,
-                      },
-                    })
-                  }
-                >
-                  <Image source={specialty.icon} style={styles.specialtyIcon} />
-                  <Text style={styles.specialtyName}>{specialty.name}</Text>
-                  <Text
-                    style={[
-                      styles.doctorCount,
-                      specialty.doctorCount === 0 && styles.placeholderText,
-                    ]}
-                  >
-                    {specialty.doctorCount > 0
-                      ? `${specialty.doctorCount} bác sĩ`
-                      : "Không có bác sĩ"}
-                  </Text>
-                </TouchableOpacity>
+                  name={specialty.name}
+                  count={specialty.count}
+                  iconName={specialty.iconName}
+                  onPress={() => navigation.navigate('BookAppointment', {
+                    screen: 'DoctorList',
+                    params: {
+                      departmentId: specialty.id,
+                      departmentName: specialty.name,
+                    },
+                  })}
+                />
               ))
             ) : (
               <Text style={styles.placeholderText}>

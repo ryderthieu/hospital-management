@@ -5,6 +5,7 @@ import Button from '../../../components/Button';
 import { PageHeader, OtpInput, ResendTimer } from '../../../components/Auth';
 import API from '../../../services/api';
 import { TextInput } from 'react-native';
+import { useAlert } from '../../../context/AlertContext';
 
 type RootStackParamList = {
   Forgot1: undefined;
@@ -36,13 +37,14 @@ export default function Forgot4({ navigation, route }: Forgot4Props) {
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const inputRefs = useRef<(TextInput | null)[]>([]);
+  const { showAlert } = useAlert();
 
   const handleVerify = async () => {
     if (isLoading) return;
 
     const otpString = otp.join('');
     if (otpString.length !== 6) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đủ 6 chữ số OTP');
+      showAlert({ title: 'Lỗi', message: 'Vui lòng nhập đủ 6 chữ số OTP' });
       return;
     }
 
@@ -55,12 +57,10 @@ export default function Forgot4({ navigation, route }: Forgot4Props) {
       if (!resetToken) {
         throw new Error('Không nhận được resetToken');
       }
-      Alert.alert('Thành công', 'Xác thực OTP thành công', [
-        { text: 'OK', onPress: () => navigation.navigate('Forgot6', { email, resetToken }) },
-      ]);
+      showAlert({ title: 'Thành công', message: 'Xác thực OTP thành công', buttons: [{ text: 'OK', onPress: () => navigation.navigate('Forgot6', { email, resetToken }) }] });
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Xác thực OTP thất bại. Vui lòng thử lại.';
-      Alert.alert('Lỗi', errorMessage);
+      const errorMessage = error.response?.data?.error || 'Xác thực OTP thất bại. Vui lòng thử lại.';
+      showAlert({ title: 'Lỗi', message: errorMessage });
       console.error('Verify OTP email error:', error.message, error.response?.data);
     } finally {
       setIsLoading(false);
@@ -73,9 +73,9 @@ export default function Forgot4({ navigation, route }: Forgot4Props) {
     setIsLoading(true);
     try {
       await API.post('/users/auth/otp/send-email', null, { params: { email } });
-      Alert.alert('Thành công', 'Mã OTP đã được gửi lại đến email của bạn');
+      showAlert({ title: 'Thành công', message: 'Mã OTP đã được gửi lại đến email của bạn' });
     } catch (error: any) {
-      Alert.alert('Lỗi', 'Không thể gửi lại OTP. Vui lòng thử lại.');
+      showAlert({ title: 'Lỗi', message: 'Không thể gửi lại OTP. Vui lòng thử lại.' });
       console.error('Resend OTP email error:', error.message);
     } finally {
       setIsLoading(false);

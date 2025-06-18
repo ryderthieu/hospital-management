@@ -22,6 +22,7 @@ import Header from "../../../components/Header"
 import { DoctorHeader } from "./DoctorHeader"
 import { useFont, fontFamily } from "../../../context/FontContext"
 import API from "../../../services/api"
+import { useAlert } from '../../../context/AlertContext'
 
 type SymptomSelectionScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, "SymptomSelection">
@@ -85,6 +86,7 @@ const symptomsData: Symptom[] = [
 export const SymptomSelectionScreen: React.FC<SymptomSelectionScreenProps> = ({ navigation, route }) => {
   const { fontsLoaded } = useFont()
   const { doctor, selectedDate, selectedTime, hasInsurance, scheduleId, patientId } = route.params
+  const { showAlert } = useAlert()
 
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([])
@@ -107,62 +109,58 @@ export const SymptomSelectionScreen: React.FC<SymptomSelectionScreenProps> = ({ 
   }
 
   const handleContinue = async () => {
-  console.log('[SymptomSelectionScreen] selectedSymptoms:', selectedSymptoms);
+    console.log('[SymptomSelectionScreen] selectedSymptoms:', selectedSymptoms);
 
-  if (!Array.isArray(selectedSymptoms) || selectedSymptoms.length === 0) {
-    Alert.alert("Thông báo", "Vui lòng chọn ít nhất một triệu chứng.", [{ text: "OK" }]);
-    return;
-  }
+    if (!Array.isArray(selectedSymptoms) || selectedSymptoms.length === 0) {
+      showAlert({ title: "Thông báo", message: "Vui lòng chọn ít nhất một triệu chứng.", buttons: [{ text: "OK" }], onPress: handleContinue })
+      return;
+    }
 
-  if (!Array.isArray(symptomsData)) {
-    console.error("[SymptomSelectionScreen] symptomsData không phải là mảng:", symptomsData);
-    Alert.alert("Lỗi", "Dữ liệu triệu chứng không hợp lệ. Vui lòng thử lại.");
-    return;
-  }
+    if (!Array.isArray(symptomsData)) {
+      console.error("[SymptomSelectionScreen] symptomsData không phải là mảng:", symptomsData);
+      showAlert({ title: "Lỗi", message: "Dữ liệu triệu chứng không hợp lệ. Vui lòng thử lại.", buttons: [{ text: "OK" }], onPress: handleContinue })
+      return;
+    }
 
-  // Tạo mảng các tên triệu chứng
-  const selectedSymptomNames = symptomsData
-    .filter((symptom) => selectedSymptoms.includes(symptom.id))
-    .map((symptom) => symptom.name);
+    // Tạo mảng các tên triệu chứng
+    const selectedSymptomNames = symptomsData
+      .filter((symptom) => selectedSymptoms.includes(symptom.id))
+      .map((symptom) => symptom.name);
 
-  setIsSubmitting(true);
-  try {
-    const [slotStart, slotEnd] = selectedTime.split(" - ").map((t) => `${t}:00`);
-    const appointmentRequest: AppointmentRequest = {
-      slotStart,
-      slotEnd,
-      scheduleId,
-      symptoms: selectedSymptomNames.join(", "),
-      doctorId: parseInt(doctor.id),
-      patientId,
-    };
+    setIsSubmitting(true);
+    try {
+      const [slotStart, slotEnd] = selectedTime.split(" - ").map((t) => `${t}:00`);
+      const appointmentRequest: AppointmentRequest = {
+        slotStart,
+        slotEnd,
+        scheduleId,
+        symptoms: selectedSymptomNames.join(", "),
+        doctorId: parseInt(doctor.id),
+        patientId,
+      };
 
-    console.log('[SymptomSelectionScreen] Tạo cuộc hẹn với:', JSON.stringify(appointmentRequest, null, 2));
-    const responseAppt = await API.post<AppointmentResponse>("/appointments", appointmentRequest);
-    console.log('[SymptomSelectionScreen] Cuộc hẹn đã tạo:', JSON.stringify(responseAppt.data, null, 2));
+      console.log('[SymptomSelectionScreen] Tạo cuộc hẹn với:', JSON.stringify(appointmentRequest, null, 2));
+      const responseAppt = await API.post<AppointmentResponse>("/appointments", appointmentRequest);
+      console.log('[SymptomSelectionScreen] Cuộc hẹn đã tạo:', JSON.stringify(responseAppt.data, null, 2));
 
-    navigation.navigate("BookingConfirmation", {
-      doctor,
-      selectedDate,
-      selectedTime,
-      hasInsurance,
-      selectedSymptoms: selectedSymptomNames,
-      location: responseAppt.data.schedule.location,
-    });
-  } catch (error: any) {
-    console.error("[SymptomSelectionScreen] Lỗi khi tạo cuộc hẹn:", error.message, error.response?.data);
-    Alert.alert(
-      "Lỗi",
-      error.response?.data?.message || "Không thể tạo lịch khám. Vui lòng thử lại.",
-      [
+      navigation.navigate("BookingConfirmation", {
+        doctor,
+        selectedDate,
+        selectedTime,
+        hasInsurance,
+        selectedSymptoms: selectedSymptomNames,
+        location: responseAppt.data.schedule.location,
+      });
+    } catch (error: any) {
+      console.error("[SymptomSelectionScreen] Lỗi khi tạo cuộc hẹn:", error.message, error.response?.data);
+      showAlert({ title: "Lỗi", message: error.response?.data?.error || "Không thể tạo lịch khám. Vui lòng thử lại.", buttons: [
         { text: "OK" },
         { text: "Thử lại", onPress: handleContinue },
-      ]
-    );
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+      ] })
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const renderSymptomItem = ({ item }: { item: Symptom }) => {
     const isSelected = selectedSymptoms.includes(item.id)

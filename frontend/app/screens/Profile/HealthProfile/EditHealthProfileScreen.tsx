@@ -14,6 +14,7 @@ import { mockHealthProfile, mockAllergyOptions } from "../Data"
 import type { RootStackParamList } from "../type"
 import { useAuth } from "../../../context/AuthContext"
 import API from "../../../services/api"
+import { useAlert } from '../../../context/AlertContext'
 
 // Define the AllergyOption interface
 interface AllergyOption {
@@ -37,6 +38,7 @@ const bloodTypeOptions = [
 const EditHealthProfileScreen: React.FC = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, "EditHealthProfile">>()
   const { patient, setPatient } = useAuth()
+  const { showAlert } = useAlert()
 
   // State for form data
   const [height, setHeight] = useState<number>(patient?.height || mockHealthProfile.height || 170)
@@ -90,7 +92,7 @@ const EditHealthProfileScreen: React.FC = () => {
   // Handle save changes
   const handleSaveChanges = useCallback(async () => {
     if (!patient?.patientId) {
-      Alert.alert("Lỗi", "Không tìm thấy thông tin bệnh nhân")
+      showAlert({ title: 'Lỗi', message: 'Không tìm thấy thông tin bệnh nhân' })
       return
     }
 
@@ -122,15 +124,12 @@ const EditHealthProfileScreen: React.FC = () => {
         bloodType: updatedPatient.bloodType,
       })
 
-      Alert.alert("Thành công", "Hồ sơ sức khỏe đã được cập nhật!", [
-        {
-          text: "OK",
-          onPress: () => navigation.goBack(),
-        },
-      ])
+      showAlert({ title: 'Thành công', message: 'Hồ sơ sức khỏe đã được cập nhật!', buttons: [
+        { text: 'OK', onPress: () => navigation.goBack() }
+      ] })
     } catch (error: any) {
       console.error("Error updating health profile:", error)
-      Alert.alert("Lỗi", error.message || "Không thể cập nhật hồ sơ sức khỏe. Vui lòng thử lại.")
+      showAlert({ title: 'Lỗi', message: error.message || 'Không thể cập nhật hồ sơ sức khỏe. Vui lòng thử lại.' })
     }
   }, [height, weight, selectedAllergies, bloodType, patient, setPatient, navigation])
 

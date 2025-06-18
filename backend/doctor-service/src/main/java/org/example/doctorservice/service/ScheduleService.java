@@ -1,14 +1,13 @@
 package org.example.doctorservice.service;
 
 import org.example.doctorservice.dto.ScheduleDto;
-import org.example.doctorservice.dto.TimeSlotDto;
 import org.example.doctorservice.entity.Schedule;
 
 import java.time.LocalDate;
 import java.util.List;
 
 public interface ScheduleService {
-    List<ScheduleDto> getAllSchedules(Integer doctorId, Schedule.Shift shift, LocalDate workDate);
+    List<ScheduleDto> getAllSchedules(Integer doctorId, Schedule.Shift shift, LocalDate workDate, Integer roomId);
 
     ScheduleDto getScheduleById(Integer doctorId);
 
@@ -20,5 +19,5 @@ public interface ScheduleService {
 
     List<ScheduleDto> getAllSchedulesForAdmin();
 
-    List<TimeSlotDto> getAllTimeSlots(Integer scheduleId);
+    List<ScheduleDto> getSchedulesByIds(List<Integer> scheduleIds);
 }

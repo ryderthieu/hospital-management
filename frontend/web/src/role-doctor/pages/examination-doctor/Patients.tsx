@@ -123,7 +123,7 @@ const Patients: React.FC = () => {
       render: (patientInfo: any, record: Appointment) => (
         <div style={{ display: "flex", alignItems: "center" }}>
           <Avatar
-            src="https://png.pngtree.com/png-clipart/20210608/ourlarge/pngtree-dark-gray-simple-avatar-png-image_3418404.jpg"
+             src={patientInfo?.avatar || "https://static-00.iconduck.com/assets.00/avatar-default-symbolic-icon-440x512-ni4kvfm4.png" }
             size={48}
             style={{ marginRight: 12, border: "2px solid #f0f9ff" }}
             icon={<UserOutlined />}
@@ -144,7 +144,7 @@ const Patients: React.FC = () => {
         <div>
           <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
             <CalendarOutlined style={{ marginRight: 8, color: "#6b7280" }} />
-            <span style={{ color: "#374151" }}>{schedule?.workDate}</span>
+            <span style={{ color: "#374151" }}>{schedule?.workDate && schedule.workDate.split('-').reverse().join('/')}</span>
           </div>
           
         </div>
@@ -165,7 +165,7 @@ const Patients: React.FC = () => {
       dataIndex: "patientInfo",
       key: "birthday",
       render: (patientInfo: any) => (
-        <span style={{ color: "#374151", fontWeight: 500 }}>
+        <span style={{ color: "#374151" }}>
           {patientInfo?.birthday ? patientInfo.birthday.split("-").reverse().join("/") : "N/A"}
         </span>
       ),

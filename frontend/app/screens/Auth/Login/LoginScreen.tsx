@@ -7,6 +7,7 @@ import { FloatingLabelInput, PageHeader, AuthFooter } from '../../../components/
 import Button from '../../../components/Button';
 import API from '../../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAlert } from '../../../context/AlertContext';
 
 type RootStackParamList = {
   Signup1: undefined;
@@ -42,6 +43,7 @@ interface PatientData {
 export default function LoginScreen() {
   const { setLoggedIn, setUser, setPatient } = useAuth();
   const navigation = useNavigation<NavigationProp>();
+  const { showAlert } = useAlert();
 
   const [phone, setPhone] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -59,9 +61,9 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     const storedToken = await AsyncStorage.getItem('token');
-  console.log('Stored token before login:', storedToken);
+    console.log('Stored token before login:', storedToken);
     if (!phone || !password) {
-      Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại và mật khẩu');
+      showAlert({ title: 'Lỗi', message: 'Vui lòng nhập số điện thoại và mật khẩu' });
       return;
     }
 
@@ -69,7 +71,7 @@ export default function LoginScreen() {
     const formattedPhone = cleanedPhone.startsWith('0') ? cleanedPhone : `0${cleanedPhone}`;
     const phoneRegex = /^(\+84|0)\d{9,10}$/;
     if (!phoneRegex.test(formattedPhone)) {
-      Alert.alert('Lỗi', 'Số điện thoại phải bắt đầu bằng +84 hoặc 0 và có 10-11 chữ số');
+      showAlert({ title: 'Lỗi', message: 'Số điện thoại phải bắt đầu bằng +84 hoặc 0 và có 10-11 chữ số' });
       return;
     }
 
@@ -107,18 +109,18 @@ export default function LoginScreen() {
             setLoggedIn(true);
             setShowSuccessAlert(true); // Kích hoạt alert
           } else {
-            Alert.alert('Lỗi', 'Không tìm thấy thông tin bệnh nhân cho tài khoản này');
+            showAlert({ title: 'Lỗi', message: 'Không tìm thấy thông tin bệnh nhân cho tài khoản này' });
           }
         } else {
-          Alert.alert('Lỗi', 'Không nhận được userId từ server');
+          showAlert({ title: 'Lỗi', message: 'Không nhận được userId từ server' });
         }
       } else {
-        Alert.alert('Lỗi', 'Không nhận được token từ server');
+        showAlert({ title: 'Lỗi', message: 'Không nhận được token từ server' });
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra kết nối hoặc thử lại.';
+      const errorMessage = error.response?.data?.error || 'Đăng nhập thất bại. Vui lòng kiểm tra kết nối hoặc thử lại.';
       console.error('Login error:', error.message, error.response?.data);
-      Alert.alert('Lỗi', errorMessage);
+      showAlert({ title: 'Lỗi', message: errorMessage });
     }
   };
 
@@ -181,17 +183,7 @@ export default function LoginScreen() {
           />
         </View>
       </ScrollView>
-      {showSuccessAlert && (
-        Alert.alert('Thành công', 'Đăng nhập thành công', [
-          {
-            text: 'OK',
-            onPress: () => {
-              setShowSuccessAlert(false);
-              console.log('Alert OK pressed');
-            },
-          },
-        ])
-      )}
+      {showSuccessAlert && showAlert({ title: 'Thành công', message: 'Đăng nhập thành công', buttons: [ { text: 'OK', onPress: () => { setShowSuccessAlert(false); console.log('Alert OK pressed'); } } ] })}
     </SafeAreaView>
   );
 }

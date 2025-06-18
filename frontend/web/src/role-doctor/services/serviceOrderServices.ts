@@ -18,10 +18,17 @@ export const getServiceOrderById = async (
 
 // Tạo mới một đơn dịch vụ theo serviceId
 export const createServiceOrder = async (
+  appointmentId: number,
   serviceId: number,
-  ServiceOrder: ServiceOrder
+  roomId: number
 ): Promise<ServiceOrder> => {
-  const response = await api.post(`/appointments/services/${serviceId}/service-orders`, ServiceOrder)
+  const serviceOrder = {
+    appointmentId,
+    serviceId,
+    roomId
+  }
+
+  const response = await api.post(`/appointments/services/service-orders`, serviceOrder)
   return response.data
 }
 
@@ -31,7 +38,7 @@ export const updateServiceOrder = async (
   orderId: number,
   ServiceOrder: ServiceOrder
 ): Promise<ServiceOrder> => {
-  const response = await api.put(`/appointments/services/${serviceId}/service-orders/${orderId}`, ServiceOrder)
+  const response = await api.put(`/appointments/services/service-orders/${orderId}`, ServiceOrder)
   return response.data
 }
 
