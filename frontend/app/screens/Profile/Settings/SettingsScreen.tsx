@@ -42,32 +42,32 @@ const SettingsScreen: React.FC = () => {
         title: "Đăng xuất",
         message: "Bạn có chắc chắn muốn đăng xuất không?",
         buttons: [
-          {
-            text: "Hủy",
-            style: "cancel",
-          },
-          {
-            text: "Đăng xuất",
-            onPress: async () => {
-              try {
-                // Xóa dữ liệu từ AsyncStorage
-                await AsyncStorage.removeItem("token");
-                await AsyncStorage.removeItem("user");
-                await AsyncStorage.removeItem("patient");
+        {
+          text: "Hủy",
+          style: "cancel",
+        },
+        {
+          text: "Đăng xuất",
+          onPress: async () => {
+            try {
+              // Xóa dữ liệu từ AsyncStorage
+              await AsyncStorage.removeItem("token");
+              await AsyncStorage.removeItem("user");
+              await AsyncStorage.removeItem("patient");
 
-                // Reset trạng thái trong AuthContext (kích hoạt RootNavigator re-render)
-                setLoggedIn(false);
-                setUser(null);
-                setPatient(null);
+              // Reset trạng thái trong AuthContext (kích hoạt RootNavigator re-render)
+              setLoggedIn(false);
+              setUser(null);
+              setPatient(null);
 
-                // Không cần navigation.replace, để RootNavigator xử lý
-                console.log("Logout triggered, loggedIn set to false");
-              } catch (error) {
-                console.error("Error during logout:", error);
+              // Không cần navigation.replace, để RootNavigator xử lý
+              console.log("Logout triggered, loggedIn set to false");
+            } catch (error) {
+              console.error("Error during logout:", error);
                 showAlert({ title: "Lỗi", message: "Đăng xuất thất bại. Vui lòng thử lại." });
-              }
-            },
+            }
           },
+        },
         ],
       });
     }
