@@ -88,7 +88,7 @@ export default function Forgot2({ navigation, route }: Forgot2Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FFF',
     paddingHorizontal: 16,
   },
   button: {

@@ -46,7 +46,9 @@ export interface User {
 }
 
 // Helper function to map backend role to frontend role
-const mapBackendRoleToFrontend = (backendRole: BackendUser['role']): User['role'] => {
+const mapBackendRoleToFrontend = (
+  backendRole: BackendUser["role"]
+): User["role"] => {
   // For now, we keep the same mapping since backend only has 4 roles
   return backendRole;
 };
@@ -240,7 +242,8 @@ const getMockRolesWithUserCount = (): Role[] => {
     {
       id: "R001",
       name: "Quản trị viên",
-      description: "Quyền cao nhất trong hệ thống, có thể thực hiện mọi thao tác",
+      description:
+        "Quyền cao nhất trong hệ thống, có thể thực hiện mọi thao tác",
       permissions: [
         "dashboard_view",
         "patient_view",
@@ -319,13 +322,16 @@ const getMockRolesWithUserCount = (): Role[] => {
 let mockRoles: Role[] = getMockRolesWithUserCount();
 
 // Helper function to filter users
-const filterUsers = (users: User[], filters: {
-  search?: string;
-  role?: string;
-  department?: string;
-  status?: string;
-}): User[] => {
-  return users.filter(user => {
+const filterUsers = (
+  users: User[],
+  filters: {
+    search?: string;
+    role?: string;
+    department?: string;
+    status?: string;
+  }
+): User[] => {
+  return users.filter((user) => {
     // Filter by search term
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
@@ -333,12 +339,14 @@ const filterUsers = (users: User[], filters: {
         user.user.name,
         user.email,
         user.phone,
-        user.department
+        user.department,
       ].filter(Boolean);
-      
-      if (!searchableFields.some(field => 
-        field?.toLowerCase().includes(searchLower)
-      )) {
+
+      if (
+        !searchableFields.some((field) =>
+          field?.toLowerCase().includes(searchLower)
+        )
+      ) {
         return false;
       }
     }
@@ -354,7 +362,7 @@ const filterUsers = (users: User[], filters: {
     }
 
     // Filter by status
-    if (filters.status && user.status !== filters.status) {  
+    if (filters.status && user.status !== filters.status) {
       return false;
     }
 
@@ -382,7 +390,8 @@ export const userService = {
     // Set development auth if needed
     setDevelopmentAuth();
 
-    try {      // Get all users from backend with a large page size
+    try {
+      // Get all users from backend with a large page size
       const queryParams = new URLSearchParams();
       queryParams.append("page", "0"); // Get first page
       queryParams.append("size", "1000"); // Get a large number of records
@@ -397,20 +406,32 @@ export const userService = {
         (response.data.content || []).map(async (backendUser: BackendUser) => {
           // Map backend role to frontend role format
           const role = mapBackendRoleToFrontend(backendUser.role);
-          
+
           // Create display name from email if no other name fields
-          let displayName = backendUser.email?.split("@")[0] || `User${backendUser.userId}`;
+          let displayName =
+            backendUser.email?.split("@")[0] || `User${backendUser.userId}`;
           let userEmail = backendUser.email || "";
-          let userAvatar = "https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg";
-          let department = role === "ADMIN" ? "Quản trị hệ thống" :
-                          role === "DOCTOR" ? "Chưa phân khoa" :
-                          role === "RECEPTIONIST" ? "Tiếp nhận" : 
-                          role === "PATIENT" ? "Bệnh nhân" : "Chưa phân công";
+          let userAvatar =
+            "https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg";
+          let department =
+            role === "ADMIN"
+              ? "Quản trị hệ thống"
+              : role === "DOCTOR"
+              ? "Chưa phân khoa"
+              : role === "RECEPTIONIST"
+              ? "Tiếp nhận"
+              : role === "PATIENT"
+              ? "Bệnh nhân"
+              : "Chưa phân công";
 
           try {
             if (role === "DOCTOR") {
-              console.log(`🩺 [DEBUG] Fetching doctor data for userId: ${backendUser.userId}`);
-              const doctorResponse = await api.get(`/doctors/users/${backendUser.userId}`);
+              console.log(
+                `🩺 [DEBUG] Fetching doctor data for userId: ${backendUser.userId}`
+              );
+              const doctorResponse = await api.get(
+                `/doctors/users/${backendUser.userId}`
+              );
               if (doctorResponse.data) {
                 const doctorData = doctorResponse.data;
                 displayName = doctorData.fullName || displayName;
@@ -420,8 +441,12 @@ export const userService = {
                 console.log(`✅ [DEBUG] Doctor data fetched:`, doctorData);
               }
             } else if (role === "PATIENT") {
-              console.log(`🏥 [DEBUG] Fetching patient data for userId: ${backendUser.userId}`);
-              const patientResponse = await api.get(`/patients/users/${backendUser.userId}`);
+              console.log(
+                `🏥 [DEBUG] Fetching patient data for userId: ${backendUser.userId}`
+              );
+              const patientResponse = await api.get(
+                `/patients/users/${backendUser.userId}`
+              );
               if (patientResponse.data) {
                 const patientData = patientResponse.data;
                 displayName = patientData.fullName || displayName;
@@ -432,7 +457,10 @@ export const userService = {
               }
             }
           } catch (serviceError) {
-            console.warn(`⚠️ [DEBUG] Failed to fetch service data:`, serviceError);
+            console.warn(
+              `⚠️ [DEBUG] Failed to fetch service data:`,
+              serviceError
+            );
             // Continue with default values if service call fails
           }
 
@@ -462,18 +490,21 @@ export const userService = {
         search: params?.search,
         role: params?.role,
         department: params?.department,
-        status: params?.status
-      });      // Calculate pagination for filtered results
+        status: params?.status,
+      }); // Calculate pagination for filtered results
       const pageSize = params?.limit || 10; // Use requested page size or default to 10
       const currentPage = params?.page || 1;
       const startIndex = (currentPage - 1) * pageSize;
       const endIndex = startIndex + pageSize;
-      
+
       // Get total before pagination
       const totalFilteredUsers = filteredUsers.length;
-      
+
       // Apply pagination to filtered results
-      const paginatedUsers = filteredUsers.slice(startIndex, Math.min(endIndex, totalFilteredUsers));
+      const paginatedUsers = filteredUsers.slice(
+        startIndex,
+        Math.min(endIndex, totalFilteredUsers)
+      );
 
       return {
         users: paginatedUsers,
@@ -485,7 +516,8 @@ export const userService = {
       console.error("Failed to load users from backend API:", error);
       throw new Error("Cannot load users from backend: " + error);
     }
-  },  getUserById: async (id: string): Promise<User> => {
+  },
+  getUserById: async (id: string): Promise<User> => {
     try {
       const response = await api.get(`/users/${id}`);
       const backendUser: BackendUser = response.data;
@@ -493,14 +525,26 @@ export const userService = {
       const role = mapBackendRoleToFrontend(backendUser.role);
       let displayName = backendUser.email?.split("@")[0] || "Unknown User";
       let userEmail = backendUser.email || "";
-      let userAvatar = "https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg";      let department = role === "ADMIN" ? "Quản trị hệ thống" :
-                      role === "DOCTOR" ? "Chưa phân khoa" :
-                      role === "RECEPTIONIST" ? "Tiếp nhận" : 
-                      role === "PATIENT" ? "Bệnh nhân" : "Chưa phân công";// Fetch additional data from doctor/patient services if applicable
+      let userAvatar =
+        "https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg";
+      let department =
+        role === "ADMIN"
+          ? "Quản trị hệ thống"
+          : role === "DOCTOR"
+          ? "Chưa phân khoa"
+          : role === "RECEPTIONIST"
+          ? "Tiếp nhận"
+          : role === "PATIENT"
+          ? "Bệnh nhân"
+          : "Chưa phân công"; // Fetch additional data from doctor/patient services if applicable
       try {
         if (role === "DOCTOR") {
-          console.log(`🩺 [DEBUG] Fetching doctor data for userId: ${backendUser.userId}`);
-          const doctorResponse = await api.get(`/doctors/users/${backendUser.userId}`);
+          console.log(
+            `🩺 [DEBUG] Fetching doctor data for userId: ${backendUser.userId}`
+          );
+          const doctorResponse = await api.get(
+            `/doctors/users/${backendUser.userId}`
+          );
           if (doctorResponse.data) {
             const doctorData = doctorResponse.data;
             displayName = doctorData.fullName || displayName;
@@ -508,22 +552,35 @@ export const userService = {
             userAvatar = doctorData.avatar || userAvatar;
             // Use the doctor's specialization as department
             department = doctorData.specialization || "Chưa phân khoa";
-            console.log(`✅ [DEBUG] Doctor data fetched for getUserById:`, doctorData);
+            console.log(
+              `✅ [DEBUG] Doctor data fetched for getUserById:`,
+              doctorData
+            );
           }
         } else if (role === "PATIENT") {
-          console.log(`🏥 [DEBUG] Fetching patient data for userId: ${backendUser.userId}`);
-          const patientResponse = await api.get(`/patients/users/${backendUser.userId}`);
+          console.log(
+            `🏥 [DEBUG] Fetching patient data for userId: ${backendUser.userId}`
+          );
+          const patientResponse = await api.get(
+            `/patients/users/${backendUser.userId}`
+          );
           if (patientResponse.data) {
             const patientData = patientResponse.data;
             displayName = patientData.fullName || displayName;
             userEmail = patientData.email || userEmail;
             userAvatar = patientData.avatar || userAvatar;
             department = "Bệnh nhân";
-            console.log(`✅ [DEBUG] Patient data fetched for getUserById:`, patientData);
+            console.log(
+              `✅ [DEBUG] Patient data fetched for getUserById:`,
+              patientData
+            );
           }
         }
       } catch (serviceError) {
-        console.warn(`⚠️ [DEBUG] Failed to fetch service data for getUserById:`, serviceError);
+        console.warn(
+          `⚠️ [DEBUG] Failed to fetch service data for getUserById:`,
+          serviceError
+        );
         // Continue with default values if service call fails
       }
 
@@ -547,24 +604,27 @@ export const userService = {
       console.error("Failed to get user by ID from backend:", error);
       throw new Error("User not found in backend: " + error);
     }
-  },  createUser: async (userData: CreateUserData): Promise<User> => {
+  },
+  createUser: async (userData: CreateUserData): Promise<User> => {
     console.log("🔧 [DEBUG] Creating user with data:", userData);
-    setDevelopmentAuth();    try {
+    setDevelopmentAuth();
+    try {
       // Now we use backend roles directly, no mapping needed
       const backendUserData = {
         phone: userData.phone,
         email: userData.email || null,
         password: userData.password,
-        role: userData.role
+        role: userData.role,
       };
 
       console.log("🌐 [DEBUG] Sending to backend:", backendUserData);
       const response = await api.post("/users", backendUserData);
       console.log("✅ [DEBUG] User created successfully:", response.data);
-      
+
       const backendUser: BackendUser = response.data;
       const role = mapBackendRoleToFrontend(backendUser.role);
-      const displayName = backendUser.email?.split("@")[0] || `User${backendUser.userId}`;
+      const displayName =
+        backendUser.email?.split("@")[0] || `User${backendUser.userId}`;
 
       return {
         id: backendUser.userId?.toString(),
@@ -574,24 +634,31 @@ export const userService = {
         role: role,
         createdAt: backendUser.createdAt,
         user: {
-          image: "https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg",
+          image:
+            "https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg",
           name: displayName,
           email: backendUser.email || `user${backendUser.userId}@wecare.vn`,
         },
-        department: role === "ADMIN" ? "Quản trị hệ thống" :
-                    role === "DOCTOR" ? "Chưa phân khoa" :
-                    role === "RECEPTIONIST" ? "Tiếp nhận" : "Chưa phân công",
+        department:
+          role === "ADMIN"
+            ? "Quản trị hệ thống"
+            : role === "DOCTOR"
+            ? "Chưa phân khoa"
+            : role === "RECEPTIONIST"
+            ? "Tiếp nhận"
+            : "Chưa phân công",
         status: "Hoạt động",
         lastLogin: "Chưa đăng nhập",
-      };    } catch (error: unknown) {
+      };
+    } catch (error: unknown) {
       console.error("❌ [DEBUG] Failed to create user in backend:", error);
-      
+
       // Extract meaningful error message
       let errorMessage = "Cannot create user in backend";
       const errorResponse = error as ApiErrorResponse;
-      
+
       if (errorResponse.response?.data) {
-        if (typeof errorResponse.response.data === 'string') {
+        if (typeof errorResponse.response.data === "string") {
           errorMessage = errorResponse.response.data;
         } else if (errorResponse.response.data.message) {
           errorMessage = errorResponse.response.data.message;
@@ -601,12 +668,14 @@ export const userService = {
       } else if (errorResponse.message) {
         errorMessage = errorResponse.message;
       }
-      
+
       throw new Error(errorMessage);
     }
-  },  updateUser: async (id: string, userData: UpdateUserData): Promise<User> => {
+  },
+  updateUser: async (id: string, userData: UpdateUserData): Promise<User> => {
     console.log("🔧 [DEBUG] Updating user with ID:", id, "data:", userData);
-    setDevelopmentAuth();    try {
+    setDevelopmentAuth();
+    try {
       // Now we use backend roles directly, no mapping needed
       const backendUserData: {
         phone?: string;
@@ -626,27 +695,37 @@ export const userService = {
       console.log("🌐 [DEBUG] Sending update to backend:", backendUserData);
       const response = await api.put(`/users/${id}`, backendUserData);
       console.log("✅ [DEBUG] User updated successfully:", response.data);
-      
+
       const backendUser: BackendUser = response.data;
       const role = mapBackendRoleToFrontend(backendUser.role);
       const displayName = backendUser.email?.split("@")[0] || "Unknown User";
 
       // Get additional data from doctor/patient services if applicable
-      let userAvatar = "https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg";
-      let department = role === "ADMIN" ? "Quản trị hệ thống" :
-                      role === "DOCTOR" ? "Chưa phân khoa" :
-                      role === "RECEPTIONIST" ? "Tiếp nhận" : "Chưa phân công";
+      let userAvatar =
+        "https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/09/19/465/avatar-trang-1.jpg";
+      let department =
+        role === "ADMIN"
+          ? "Quản trị hệ thống"
+          : role === "DOCTOR"
+          ? "Chưa phân khoa"
+          : role === "RECEPTIONIST"
+          ? "Tiếp nhận"
+          : "Chưa phân công";
 
       try {
         if (role === "DOCTOR") {
-          const doctorResponse = await api.get(`/doctors/users/${backendUser.userId}`);
+          const doctorResponse = await api.get(
+            `/doctors/users/${backendUser.userId}`
+          );
           if (doctorResponse.data) {
             const doctorData = doctorResponse.data;
             userAvatar = doctorData.avatar || userAvatar;
             department = doctorData.specialization || "Chưa phân khoa";
           }
         } else if (role === "PATIENT") {
-          const patientResponse = await api.get(`/patients/users/${backendUser.userId}`);
+          const patientResponse = await api.get(
+            `/patients/users/${backendUser.userId}`
+          );
           if (patientResponse.data) {
             const patientData = patientResponse.data;
             userAvatar = patientData.avatar || userAvatar;
@@ -654,7 +733,10 @@ export const userService = {
           }
         }
       } catch (serviceError) {
-        console.warn(`⚠️ [DEBUG] Failed to fetch service data for updated user:`, serviceError);
+        console.warn(
+          `⚠️ [DEBUG] Failed to fetch service data for updated user:`,
+          serviceError
+        );
       }
 
       return {
@@ -672,15 +754,16 @@ export const userService = {
         department: department,
         status: "Hoạt động", // Default status
         lastLogin: "Chưa có dữ liệu",
-      };    } catch (error: unknown) {
+      };
+    } catch (error: unknown) {
       console.error("❌ [DEBUG] Failed to update user in backend:", error);
-      
+
       // Extract meaningful error message
       let errorMessage = "Cannot update user in backend";
       const errorResponse = error as ApiErrorResponse;
-      
+
       if (errorResponse.response?.data) {
-        if (typeof errorResponse.response.data === 'string') {
+        if (typeof errorResponse.response.data === "string") {
           errorMessage = errorResponse.response.data;
         } else if (errorResponse.response.data.message) {
           errorMessage = errorResponse.response.data.message;
@@ -690,7 +773,7 @@ export const userService = {
       } else if (errorResponse.message) {
         errorMessage = errorResponse.message;
       }
-      
+
       throw new Error(errorMessage);
     }
   },
@@ -858,7 +941,8 @@ export const permissionService = {
       const page = params?.page || 1;
       const limit = params?.limit || 10;
       const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;      return {
+      const endIndex = startIndex + limit;
+      return {
         permissions: filteredPermissions.slice(startIndex, endIndex),
         total: filteredPermissions.length,
         page,
@@ -876,29 +960,36 @@ export const statisticsService = {
       const response = await api.get("/users/statistics");
       return response.data;
     } catch (error) {
-      console.warn("Backend statistics API not available, calculating from user data:", error);
-        try {
+      console.warn(
+        "Backend statistics API not available, calculating from user data:",
+        error
+      );
+      try {
         // Get real user data from userService
         const allUsersResponse = await userService.getUsers({ limit: 1000 }); // Get all users
         const users = allUsersResponse.users;
-        
+
         // Calculate statistics from real user data
         const totalUsers = users.length;
-        const activeUsers = users.filter((user: User) => user.status === "Hoạt động").length;
+        const activeUsers = users.filter(
+          (user: User) => user.status === "Hoạt động"
+        ).length;
         const inactiveUsers = totalUsers - activeUsers;
-        
+
         // Calculate today logins (realistic estimate: 30-70% of active users)
-        const todayLogins = Math.floor(activeUsers * (0.3 + Math.random() * 0.4));
-        
+        const todayLogins = Math.floor(
+          activeUsers * (0.3 + Math.random() * 0.4)
+        );
+
         // Count users by role from real data
         const usersByRole: { [role: string]: number } = {};
         users.forEach((user: User) => {
           usersByRole[user.role] = (usersByRole[user.role] || 0) + 1;
         });
-        
+
         // Get total roles count
         const totalRoles = Object.keys(usersByRole).length;
-        
+
         return {
           totalUsers,
           todayLogins,
@@ -911,7 +1002,9 @@ export const statisticsService = {
         };
       } catch (userError) {
         console.error("Failed to get user data for statistics:", userError);
-        throw new Error("Cannot load user statistics from backend: " + userError);
+        throw new Error(
+          "Cannot load user statistics from backend: " + userError
+        );
       }
     }
   },

@@ -56,9 +56,6 @@ const InpatientRooms: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-800">
             Danh sách phòng bệnh nội trú
           </h3>
-          <Link to="/admin/inpatients-rooms/add-room">
-            <AddButton />
-          </Link>
         </div>
 
         <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -75,7 +72,7 @@ const InpatientRooms: React.FC = () => {
         {/* Loading state */}
         {loading && (
           <div className="flex justify-center items-center py-10">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-base-500"></div>
           </div>
         )}
 
@@ -129,6 +126,12 @@ const InpatientRooms: React.FC = () => {
           </div>
         )}
       </div>
+      <div className="fixed right-5 bottom-5">
+        <Link to="/admin/inpatients-rooms/add-room">
+          <AddButton />
+        </Link>
+      </div>
+
     </>
   );
 };

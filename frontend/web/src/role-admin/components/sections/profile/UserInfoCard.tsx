@@ -1,4 +1,9 @@
 import { useModal } from "../../../hooks/useModal";
+import type { AuthUser } from "../../../types/user";
+import { useState, useEffect } from "react";
+import { authService } from "../../../services/authService";
+import { format } from "date-fns";
+
 import { Modal } from "../../ui/modal";
 import Button from "../../ui/button/Button";
 import Input from "../../form/input/InputField";
@@ -6,11 +11,29 @@ import Label from "../../form/Label";
 
 export default function UserInfoCard() {
   const { isOpen, openModal, closeModal } = useModal();
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await authService.getCurrentUser();
+        setUser(userData);
+      } catch (error) {
+        console.error("Lỗi khi lấy thông tin người dùng:", error);
+      }
+    };
+    fetchUser();
+  }, []);
+
   const handleSave = () => {
-    // Handle save logic here
     console.log("Saving changes...");
     closeModal();
   };
+
+  if (!user) {
+    return <p>Đang tải thông tin...</p>;
+  }
+
   return (
     <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -22,19 +45,10 @@ export default function UserInfoCard() {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-7 2xl:gap-x-32">
             <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                Tên tài khoản
-              </p>
-              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                Admin
-              </p>
-            </div>
-
-            <div>
-              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                 Email
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                admin@gmail.com
+                {user.email}
               </p>
             </div>
 
@@ -43,7 +57,7 @@ export default function UserInfoCard() {
                 Điện thoại
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                +09 363 398 46
+                {user.phone || "Chưa cập nhật"}
               </p>
             </div>
 
@@ -52,7 +66,24 @@ export default function UserInfoCard() {
                 Loại tài khoản
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                Admin
+                {user?.role === "ADMIN"
+                  ? "Quản trị viên"
+                  : user?.role === "DOCTOR"
+                  ? "Bác sĩ"
+                  : user?.role === "PATIENT"
+                  ? "Bệnh nhân"
+                  : user?.role === "RECEPTIONIST"
+                  ? "Lễ tân"
+                  : "Người dùng"}
+              </p>
+            </div>
+
+            <div>
+              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                Ngày tạo tài khoản
+              </p>
+              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                {format(new Date(user.createdAt), "dd/MM/yyyy")}
               </p>
             </div>
           </div>

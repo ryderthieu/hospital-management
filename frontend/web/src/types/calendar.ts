@@ -1,6 +1,6 @@
 import { EventInput } from '@fullcalendar/core';
 
-export type EventStatus = "success" | "danger" | "warning" | "waiting";
+export type EventStatus = "success" | "danger" | "warning" | "waiting" | "upcoming" | "cancel";
 
 export interface CalendarEventExtendedProps {
   calendar: EventStatus;
@@ -15,6 +15,12 @@ export interface CalendarEventExtendedProps {
   department?: string;
   departmentId?: string;
   doctorId?: string;
+  // Additional fields for database connection
+  appointmentId?: number;
+  appointmentStatus?: string;
+  scheduleId?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CalendarEvent extends EventInput {

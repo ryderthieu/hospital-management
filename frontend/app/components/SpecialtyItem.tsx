@@ -1,17 +1,21 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { Specialty } from '../types/Specialty';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 interface Props {
-  specialty: Specialty;
+  name: string;
+  count: string;
+  iconName: string; // Tên icon FontAwesome5
   onPress: () => void;
 }
 
-export const SpecialtyItem: React.FC<Props> = ({ specialty, onPress }) => (
+export const SpecialtyItem: React.FC<Props> = ({ name, count, iconName, onPress }) => (
   <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
-    <Image source={specialty.icon} style={styles.icon} />
-    <Text style={styles.name} numberOfLines={1}>{specialty.name}</Text>
-    <Text style={styles.count}>{specialty.count}</Text>
+    <View style={styles.iconWrapper}>
+      <FontAwesome5 name={iconName} size={38} color="#0BC5C5" solid />
+    </View>
+    <Text style={styles.name} numberOfLines={1}>{name}</Text>
+    <Text style={styles.count}>{count}</Text>
   </TouchableOpacity>
 );
 
@@ -30,12 +34,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginBottom: 10,
   },
-  icon: {
-    width: 50,
-    height: 50,
+  iconWrapper: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#E6F7F7',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 10,
-    borderRadius: 8,
-    backgroundColor: '#F2F2F7',
   },
   name: {
     fontWeight: 'bold',

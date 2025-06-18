@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import FullCalendar from "@fullcalendar/react";
 import viLocale from "@fullcalendar/core/locales/vi";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -17,18 +17,37 @@ import {
   ScheduleDto,
   AppointmentRequest,
 } from "../../types/appointment";
-import {
-  Department,
-  Doctor,
-  mockDataService,
-} from "../../services/mockDataService.ts";
 import { appointmentService } from "../../services/appointmentService";
-import { scheduleService } from "../../services/scheduleService";
+import { scheduleService, ScheduleResponse } from "../../services/scheduleService";
 import { patientService } from "../../services/patientService";
-import { CalendarEvent, EventStatus } from "../../../types/calendar";
+import { CalendarEvent as BaseCalendarEvent, EventStatus } from "../../../types/calendar";
+
+// Extended version of CalendarEvent that includes appointment-specific properties
+interface CalendarEvent extends BaseCalendarEvent {
+  extendedProps: {
+    calendar: EventStatus;
+    patientName?: string;
+    patientId?: string;
+    insuranceId?: string;
+    phoneNumber?: string;
+    patientAge?: number;
+    symptoms?: string;
+    eventTime?: string;
+    doctorName?: string;
+    department?: string;
+    departmentId?: string;
+    doctorId?: string;
+    appointmentStatus?: string;
+    appointmentId?: number;
+  };
+}
 import { formatTimeToVietnamese } from "../../utils/dateUtils";
 import { Patient as AppointmentPatient } from "../../types/appointment";
 import { Patient as PatientType } from "../../types/patient";
+import { departmentService } from "../../../services/departmentService";
+import { doctorService } from "../../../services/doctorService";
+import { DepartmentFromAPI } from "../../types/department";
+import { Doctor } from "../../types/doctor";
 
 // Function to create datetime string for FullCalendar
 const createAppointmentDateTime = (
@@ -83,6 +102,19 @@ const getGenderText = (gender: string): string => {
   }
 };
 
+// Helper function to calculate age from birthday
+const calculateAge = (birthday: string): number => {
+  if (!birthday) return 0;
+  const birthDate = new Date(birthday);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDifference = today.getMonth() - birthDate.getMonth();
+  if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
+
 const MedicalCalendar: React.FC = () => {
   // State cho form tạo lịch khám mới
   const [appointmentForm, setAppointmentForm] = useState<AppointmentFormData>({
@@ -117,9 +149,12 @@ const MedicalCalendar: React.FC = () => {
   const [departmentId, setDepartmentId] = useState("");
 
   // Khoa và bác sĩ
-  const [departmentList, setDepartmentList] = useState<Department[]>([]);
+  const [departmentList, setDepartmentList] = useState<DepartmentFromAPI[]>([]);
   const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
   const [isLoadingDoctors, setIsLoadingDoctors] = useState(false);
+  const [isLoadingDepartments, setIsLoadingDepartments] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [allDoctors, setAllDoctors] = useState<Doctor[]>([]);
 
   // Trạng thái lịch khám
   const [eventLevel, setEventLevel] = useState("");
@@ -156,11 +191,18 @@ const MedicalCalendar: React.FC = () => {
   // Load danh sách khoa khi component mount
   useEffect(() => {
     const fetchDepartments = async () => {
+      setIsLoadingDepartments(true);
       try {
-        const departments = await mockDataService.getDepartments();
+        const departments = await departmentService.getAllDepartments();
         setDepartmentList(departments);
       } catch (error) {
         console.error("Error fetching department: ", error);
+        setNotification({
+          type: "error",
+          message: "Không thể tải danh sách khoa",
+        });
+      } finally {
+        setIsLoadingDepartments(false);
       }
     };
 
@@ -177,12 +219,17 @@ const MedicalCalendar: React.FC = () => {
     const fetchDoctors = async () => {
       setIsLoadingDoctors(true);
       try {
-        const doctors = await mockDataService.getDoctorsByDepartment(
-          departmentId
-        );
-        setFilteredDoctors(doctors);
+        // Convert departmentId from string to number
+        const departmentIdNumber = parseInt(departmentId, 10);
+        const doctors = await departmentService.getDoctorsByDepartmentId(departmentIdNumber);
+        // Cast the response to Doctor[] type
+        setFilteredDoctors(doctors as Doctor[]);
       } catch (error) {
         console.error("Error fetching doctors: ", error);
+        setNotification({
+          type: "error",
+          message: "Không thể tải danh sách bác sĩ",
+        });
       } finally {
         setIsLoadingDoctors(false);
       }
@@ -332,9 +379,9 @@ const MedicalCalendar: React.FC = () => {
 
     // Tìm tên khoa tương ứng
     const selectedDept = departmentList.find(
-      (dept) => dept.id === selectedDeptId
+      (dept) => dept.departmentId.toString() === selectedDeptId
     );
-    setDepartment(selectedDept?.name || "");
+    setDepartment(selectedDept?.departmentName || "");
 
     // Reset thông tin bác sĩ khi đổi khoa
     setDoctorId("");
@@ -356,8 +403,8 @@ const MedicalCalendar: React.FC = () => {
     setDoctorId(selectedDocId);
 
     // Tìm tên bác sĩ tương ứng
-    const selectedDoc = filteredDoctors.find((doc) => doc.id === selectedDocId);
-    setDoctorName(selectedDoc?.name || "");
+    const selectedDoc = filteredDoctors.find((doc) => doc.doctorId.toString() === selectedDocId);
+    setDoctorName(selectedDoc?.fullName || "");
 
     // Reset schedules
     setSchedules([]);
@@ -379,8 +426,29 @@ const MedicalCalendar: React.FC = () => {
     if (!doctorId || !date) return;
     setIsLoadingSchedules(true);
     try {
-      const schedules = await mockDataService.getSchedulesByDoctorAndDate(doctorId, date);
-      setSchedules(schedules);
+      // Convert doctorId from string to number
+      const doctorIdNumber = parseInt(doctorId, 10);
+      // Get schedules from real API
+      const response = await scheduleService.getSchedulesByDoctorId(doctorIdNumber);
+      
+      // Filter schedules by date
+      const filteredSchedules = response.filter(
+        (schedule) => schedule.workDate === date
+      );
+      
+      // Convert the ScheduleResponse to Schedule type needed by the component
+      const transformedSchedules: Schedule[] = filteredSchedules.map(schedule => ({
+        id: schedule.scheduleId.toString(),
+        doctorId: schedule.doctorId.toString(),
+        date: schedule.workDate,
+        startTime: schedule.startTime.substring(0, 5), // HH:mm format
+        endTime: schedule.endTime.substring(0, 5), // HH:mm format
+        maxPatients: 10, // Default value
+        currentPatients: 0, // Default value
+        status: "AVAILABLE" // Default value
+      }));
+      
+      setSchedules(transformedSchedules);
     } catch (error) {
       console.error("Error loading schedules:", error);
       setNotification({
@@ -428,8 +496,18 @@ const MedicalCalendar: React.FC = () => {
   const loadPatients = async () => {
     setIsLoadingPatients(true);
     try {
-      const patients = await mockDataService.getPatients();
-      setPatients(patients);
+      const response = await patientService.getPatients();
+      // Transform patient data format if needed
+      const transformedPatients: AppointmentPatient[] = response.data.map(patient => ({
+        id: patient.patientId.toString(),
+        fullName: patient.fullName,
+        phoneNumber: patient.phone, // Sử dụng trường phone từ API và ánh xạ sang phoneNumber
+        age: calculateAge(patient.birthday), // Tính tuổi từ ngày sinh
+        gender: patient.gender,
+        address: patient.address,
+        insuranceNumber: patient.insuranceNumber
+      }));
+      setPatients(transformedPatients);
     } catch (error) {
       console.error("Error loading patients:", error);
       setNotification({
@@ -442,10 +520,21 @@ const MedicalCalendar: React.FC = () => {
   };
 
   // Load patient details
-  const loadPatientDetails = async (patientId: number) => {
+  const loadPatientDetails = async (patientId: string) => {
     try {
-      const patient = await mockDataService.getPatientById(patientId);
-      setSelectedPatient(patient);
+      const patientIdNumber = parseInt(patientId, 10);
+      const response = await patientService.getPatientById(patientIdNumber);
+      // Transform patient data to match AppointmentPatient format
+      const transformedPatient: AppointmentPatient = {
+        id: response.data.patientId.toString(),
+        fullName: response.data.fullName,
+        phoneNumber: response.data.phone, // Sử dụng trường phone từ API và ánh xạ sang phoneNumber
+        age: calculateAge(response.data.birthday), // Tính tuổi từ ngày sinh
+        gender: response.data.gender,
+        address: response.data.address,
+        insuranceNumber: response.data.insuranceNumber
+      };
+      setSelectedPatient(transformedPatient);
     } catch (error) {
       console.error("Error loading patient details:", error);
       setNotification({
@@ -514,16 +603,16 @@ const MedicalCalendar: React.FC = () => {
       if (!selectedSchedule || !selectedPatient) return;
 
       // Prepare appointment data
-      const appointmentData = {
-        scheduleId: selectedSchedule.id,
-        patientId: selectedPatient.id,
+      const appointmentData: AppointmentRequest = {
+        scheduleId: parseInt(selectedSchedule.id),
+        patientId: parseInt(selectedPatient.id),
         doctorId: parseInt(doctorId),
         symptoms: symptoms,
         slotStart: selectedSchedule.startTime,
         slotEnd: selectedSchedule.endTime
       };
 
-      await mockDataService.createAppointment(appointmentData);
+      await appointmentService.createAppointment(appointmentData);
       
       // Handle success
       closeModal();
@@ -556,46 +645,134 @@ const MedicalCalendar: React.FC = () => {
   };
 
   // Fetch appointments
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     try {
-      const appointments = await mockDataService.getAppointments();
-      const apiEvents = appointments.map((item): CalendarEvent => {
-        const date = item.schedule?.date || new Date().toISOString().split("T")[0];
-        const start = `${date}T${item.slotStart || ""}`;
-        const end = `${date}T${item.slotEnd || ""}`;
+      console.log("🔄 Fetching appointments from backend...");
+      
+      // Set loading state
+      setIsLoading(true);
+      
+      // Get appointments from API with increased page size and proper sorting
+      const response = await appointmentService.getAllAppointments(0, 200);
+      console.log("📊 API Response:", response);
+      
+      if (!response || !response.content || !Array.isArray(response.content)) {
+        console.error("❌ Invalid API response format:", response);
+        setEvents([]);
+        setToastInfo({
+          open: true,
+          message: "Không thể tải dữ liệu lịch khám từ máy chủ",
+          type: "error",
+        });
+        return;
+      }
+      
+      const appointments = response.content;
+      console.log(`✅ Fetched ${appointments.length} appointments`);
+      
+      // Get additional information about departments and doctors for better display
+      await prefetchDoctorAndDepartmentInfo();
+      
+      const apiEvents: CalendarEvent[] = appointments.map((item, index): CalendarEvent => {
+        // Debug log for each appointment
+        console.log(`🧩 Processing appointment #${index + 1}:`, item);
+        
+        // Extract date and time from the API response with validation
+        let date = new Date().toISOString().split("T")[0]; // Default to today
+        
+        if (item.schedule?.workDate) {
+          date = item.schedule.workDate;
+          console.log(`📅 Using schedule date: ${date}`);
+        } else if (item.schedule?.date) {
+          date = item.schedule.date;
+          console.log(`📅 Using legacy schedule date: ${date}`);
+        }
+        
+        // Ensure valid time format for start/end times
+        const validateTimeFormat = (time: string | undefined): string => {
+          if (!time) return "00:00:00";
+          // If time doesn't contain seconds, add them
+          if (time.split(":").length === 2) return `${time}:00`;
+          return time;
+        };
+        
+        const slotStart = validateTimeFormat(item.slotStart);
+        const slotEnd = validateTimeFormat(item.slotEnd);
+        
+        const start = `${date}T${slotStart}`;
+        const end = `${date}T${slotEnd}`;
+        
+        console.log(`⏰ Appointment time: ${start} to ${end}`);
+        
+        // Map appointment status to event status with improved mapping
+        const statusMap: Record<string, EventStatus> = {
+          PENDING: "waiting",
+          CONFIRMED: "upcoming",
+          IN_PROGRESS: "waiting",
+          COMPLETED: "success",
+          CANCELLED: "cancel",
+          NO_SHOW: "cancel"
+        };
+        
+        // Find doctor information from our prefetched list
+        const doctorInfo = allDoctors.find(d => d.doctorId.toString() === item.doctorId?.toString());
+        
+        // If we have doctor information, use it
+        const doctorName = doctorInfo 
+          ? `BS. ${doctorInfo.fullName}` 
+          : (item.doctorId ? `BS. ID: ${item.doctorId}` : "Bác sĩ chưa xác định");
+        
+        // Find department information
+        const deptInfo = item.schedule?.departmentId 
+          ? departmentList.find(d => d.departmentId.toString() === item.schedule?.departmentId?.toString())
+          : null;
+          
+        const departmentName = deptInfo?.departmentName || item.schedule?.departmentName || "Khoa chưa xác định";
         
         return {
-          id: item.id.toString(),
-          title: item.patientInfo?.fullName || `Lịch khám #${item.id}`,
+          id: item.appointmentId.toString(),
+          title: item.patientInfo?.fullName || `Lịch khám #${item.appointmentId}`,
           start,
           end,
           extendedProps: {
-            calendar: item.status as EventStatus,
+            calendar: statusMap[item.appointmentStatus] || "waiting",
             patientName: item.patientInfo?.fullName || "",
-            patientId: item.patientInfo?.id?.toString() || "",
+            patientId: item.patientInfo?.patientId?.toString() || "",
             insuranceId: item.patientInfo?.insuranceId || "",
             phoneNumber: item.patientInfo?.phoneNumber || "",
-            patientAge: item.patientInfo?.age || 0,
+            patientAge: item.patientInfo?.age || calculateAge(item.patientInfo?.birthday || ""),
             symptoms: item.symptoms || "",
-            eventTime: item.slotStart || "",
-            doctorName: item.schedule?.doctorName || "",
-            department: item.schedule?.departmentName || "",
+            eventTime: slotStart || "",
+            doctorName, 
+            department: departmentName,
             departmentId: item.schedule?.departmentId?.toString() || "",
             doctorId: item.doctorId?.toString() || "",
+            appointmentStatus: item.appointmentStatus,
+            appointmentId: item.appointmentId,
           },
         };
       });
+      
+      console.log("🌟 Processed calendar events:", apiEvents);
       setEvents(apiEvents);
+      
     } catch (error) {
-      console.error("Không thể tải lịch khám:", error);
+      console.error("❌ Không thể tải lịch khám:", error);
       setEvents([]); // Set empty array on error
+      setToastInfo({
+        open: true,
+        message: "Không thể tải dữ liệu lịch khám. Vui lòng thử lại sau.",
+        type: "error",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [departmentList, allDoctors]); // Dependencies for useCallback
 
   // Load appointments when component mounts
   useEffect(() => {
     fetchAppointments();
-  }, []);
+  }, [fetchAppointments]);
 
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
@@ -622,25 +799,57 @@ const MedicalCalendar: React.FC = () => {
   }) => {
     const { event } = eventInfo;
     const time = event.extendedProps.eventTime || eventInfo.timeText;
+    
+    // Determine background and text colors
+    let bgColor = 'bg-gray-50';
+    let textColor = 'text-gray-800';
+    let borderColor = 'border-gray-500';
+    let pillColor = 'bg-gray-500 text-white';
+    
+    switch (event.extendedProps.calendar) {
+      case 'success':
+        bgColor = 'bg-green-50';
+        textColor = 'text-green-800';
+        borderColor = 'border-green-500';
+        pillColor = 'bg-green-500 text-white';
+        break;
+      case 'danger':
+        bgColor = 'bg-red-50';
+        textColor = 'text-red-800';
+        borderColor = 'border-red-500';
+        pillColor = 'bg-red-500 text-white';
+        break;
+      case 'warning':
+        bgColor = 'bg-yellow-50';
+        textColor = 'text-yellow-800';
+        borderColor = 'border-yellow-500';
+        pillColor = 'bg-yellow-500 text-white';
+        break;
+      case 'waiting':
+        bgColor = 'bg-blue-50';
+        textColor = 'text-blue-800';
+        borderColor = 'border-blue-500';
+        pillColor = 'bg-blue-500 text-white';
+        break;
+    }
+    
     return (
-      <div className="flex flex-col gap-1 p-1">
-        <div className="flex items-center gap-2">
-          <div
-            className={`size-2 rounded-full ${
-              event.extendedProps.calendar === "success"
-                ? "bg-green-500"
-                : event.extendedProps.calendar === "danger"
-                ? "bg-red-500"
-                : event.extendedProps.calendar === "warning"
-                ? "bg-yellow-500"
-                : "bg-gray-500"
-            }`}
-          />
-          <span className="text-sm font-medium">{event.title}</span>
+      <div className={`flex flex-col p-1 rounded-md border-l-4 shadow-sm ${borderColor} ${bgColor}`}>
+        <div className="flex items-center gap-1 justify-between">
+          <span className={`text-sm font-medium truncate ${textColor}`}>{event.title}</span>
+          <span className={`text-xs px-1.5 py-0.5 rounded-full ${pillColor}`}>
+            {event.extendedProps.calendar === 'success' ? 'Đã khám' : 
+             event.extendedProps.calendar === 'danger' ? 'Khẩn cấp' : 
+             event.extendedProps.calendar === 'warning' ? 'Cần chú ý' : 'Chờ khám'}
+          </span>
         </div>
         {time && (
-          <div className="text-xs text-gray-500">
-            <span>{formatTimeToVietnamese(time)}</span>
+          <div className="text-xs flex items-center gap-1 mt-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span className="text-gray-600">{formatTimeToVietnamese(time)}</span>
           </div>
         )}
       </div>
@@ -660,9 +869,256 @@ const MedicalCalendar: React.FC = () => {
       setSelectedPatient(null);
       return;
     }
-    const patient = patients.find(p => p.id === patientId);
+    // Compare as strings to avoid type mismatch
+    const patient = patients.find(p => p.id.toString() === patientId);
     setSelectedPatient(patient || null);
     setErrors(prev => ({ ...prev, patientId: "" }));
+  };
+
+  // Add the EventStatus type if it doesn't include "upcoming"
+  type EventStatus = "success" | "waiting" | "cancel" | "upcoming";
+
+  // Function to prefetch all doctors for better appointment data display
+  const prefetchDoctorAndDepartmentInfo = async () => {
+    try {
+      // Get all doctors across all departments
+      const doctors = await doctorService.getAllDoctors();
+      setAllDoctors(doctors);
+      console.log(`✅ Prefetched ${doctors.length} doctors for calendar display`);
+      
+      // Make sure we have department data
+      if (departmentList.length === 0) {
+        const departments = await departmentService.getAllDepartments();
+        setDepartmentList(departments);
+        console.log(`✅ Prefetched ${departments.length} departments for calendar display`);
+      }
+    } catch (error) {
+      console.error("❌ Error prefetching doctor/department data:", error);
+    }
+  };
+
+  // State for toast notifications
+  const [toastInfo, setToastInfo] = useState<{ 
+    open: boolean; 
+    message: string; 
+    type: "success" | "error" | "info" | "warning" 
+  }>({
+    open: false,
+    message: "",
+    type: "info"
+  });
+
+  // Toast notification component
+  const Toast = () => {
+    if (!toastInfo.open) return null;
+    
+    // Set up auto-hide
+    useEffect(() => {
+      if (toastInfo.open) {
+        const timer = setTimeout(() => {
+          setToastInfo(prev => ({ ...prev, open: false }));
+        }, 5000); // Automatically hide after 5 seconds
+        
+        return () => clearTimeout(timer);
+      }
+    }, [toastInfo.open]);
+    
+    return (
+      <div className="fixed bottom-4 right-4 z-50">
+        <div 
+          className={`px-4 py-3 rounded-lg shadow-lg flex items-center ${
+            toastInfo.type === 'error' ? 'bg-red-50 text-red-800 border-l-4 border-red-500' :
+            toastInfo.type === 'success' ? 'bg-green-50 text-green-800 border-l-4 border-green-500' :
+            toastInfo.type === 'warning' ? 'bg-yellow-50 text-yellow-800 border-l-4 border-yellow-500' :
+            'bg-blue-50 text-blue-800 border-l-4 border-blue-500'
+          }`}
+        >
+          <div className="mr-3">
+            {toastInfo.type === 'error' && (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            )}
+            {toastInfo.type === 'success' && (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            )}
+            {toastInfo.type === 'warning' && (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            )}
+            {toastInfo.type === 'info' && (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+            )}
+          </div>
+          <div>
+            <p className="font-medium">{toastInfo.message}</p>
+          </div>
+          <button 
+            onClick={() => setToastInfo(prev => ({ ...prev, open: false }))} 
+            className="ml-4 text-gray-500 hover:text-gray-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Handle appointment status change
+  const handleAppointmentStatusChange = async (appointmentId: number, newStatus: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Call API to update appointment status
+      const updateData = {
+        appointmentStatus: newStatus
+      };
+      
+      await appointmentService.updateAppointment(appointmentId, updateData);
+      
+      // Update the events in state
+      setEvents(prev => 
+        prev.map(event => {
+          if (event.id === appointmentId.toString()) {
+            // Map appointment status to event status
+            const statusMap: Record<string, EventStatus> = {
+              PENDING: "waiting",
+              CONFIRMED: "waiting", // or "upcoming" if that's added to the EventStatus type
+              IN_PROGRESS: "waiting",
+              COMPLETED: "success",
+              CANCELLED: "cancel",
+              NO_SHOW: "cancel"
+            };
+            
+            return {
+              ...event,
+              extendedProps: {
+                ...event.extendedProps,
+                calendar: statusMap[newStatus] || "waiting",
+                appointmentStatus: newStatus
+              }
+            };
+          }
+          return event;
+        })
+      );
+      
+      // Update the selected event if it's the same one
+      if (selectedEvent && selectedEvent.id === appointmentId.toString()) {
+        setSelectedEvent(prev => {
+          if (!prev) return null;
+          
+          return {
+            ...prev,
+            extendedProps: {
+              ...prev.extendedProps,
+              appointmentStatus: newStatus
+            }
+          };
+        });
+      }
+      
+      // Show success message
+      setToastInfo({
+        open: true,
+        message: "Cập nhật trạng thái lịch khám thành công",
+        type: "success"
+      });
+      
+    } catch (error) {
+      console.error("❌ Lỗi khi cập nhật trạng thái:", error);
+      setToastInfo({
+        open: true,
+        message: "Không thể cập nhật trạng thái lịch khám. Vui lòng thử lại.",
+        type: "error"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Helper function to get status text in Vietnamese
+  const getStatusText = (status: string): string => {
+    switch (status) {
+      case "PENDING": return "Chờ xác nhận";
+      case "CONFIRMED": return "Đã xác nhận";
+      case "IN_PROGRESS": return "Đang thực hiện";
+      case "COMPLETED": return "Đã hoàn thành";
+      case "CANCELLED": return "Đã hủy";
+      case "NO_SHOW": return "Không đến khám";
+      default: return "Không xác định";
+    }
+  };
+
+  // Set up auto-refresh for calendar data
+  useEffect(() => {
+    // Initial load
+    fetchAppointments();
+    
+    // Set up auto-refresh interval - every 2 minutes
+    const refreshInterval = setInterval(() => {
+      // Only refresh if not already loading
+      if (!isLoading) {
+        console.log("🔄 Auto-refreshing calendar data...");
+        fetchAppointments();
+      }
+    }, 2 * 60 * 1000); // 2 minutes
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(refreshInterval);
+  }, [isLoading, fetchAppointments]); // Only recreate the interval if loading state changes
+
+  // Function to display patient information in the appointment detail modal
+  const displayPatientInfo = () => {
+    if (!selectedEvent) return null;
+    
+    // If we have patient information from the event
+    if (selectedEvent.extendedProps.patientName) {
+      return (
+        <div className="bg-blue-50 p-4 rounded-lg mb-4">
+          <h6 className="font-semibold text-blue-800 mb-2">Thông tin bệnh nhân:</h6>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-sm text-gray-600">Họ và tên:</p>
+              <p className="font-medium">{selectedEvent.extendedProps.patientName}</p>
+            </div>
+            {selectedEvent.extendedProps.patientAge && (
+              <div>
+                <p className="text-sm text-gray-600">Tuổi:</p>
+                <p className="font-medium">{selectedEvent.extendedProps.patientAge}</p>
+              </div>
+            )}
+            {selectedEvent.extendedProps.phoneNumber && (
+              <div>
+                <p className="text-sm text-gray-600">Số điện thoại:</p>
+                <p className="font-medium">{selectedEvent.extendedProps.phoneNumber}</p>
+              </div>
+            )}
+            {selectedEvent.extendedProps.insuranceId && (
+              <div>
+                <p className="text-sm text-gray-600">Mã BHYT:</p>
+                <p className="font-medium">{selectedEvent.extendedProps.insuranceId}</p>
+              </div>
+            )}
+            {selectedEvent.extendedProps.symptoms && (
+              <div className="col-span-2">
+                <p className="text-sm text-gray-600">Triệu chứng:</p>
+                <p className="font-medium">{selectedEvent.extendedProps.symptoms}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+    
+    return null;
   };
 
   return (
@@ -671,8 +1127,39 @@ const MedicalCalendar: React.FC = () => {
         title="Calendar | Admin Dashboard "
         description="This is Calendar Dashboard"
       />
+      {/* Toast notifications */}
+      <Toast />
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-        <div className="custom-calendar" style={{ position: "relative" }}>
+        {/* Calendar toolbar */}
+        <div className="flex justify-between items-center p-4 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-800">Lịch Khám Bệnh</h2>
+          <div className="flex space-x-2">
+            <button 
+              onClick={fetchAppointments}
+              disabled={isLoading}
+              className="flex items-center px-3 py-2 rounded-md bg-blue-50 text-base-600 hover:bg-base-100 transition-colors"
+            >
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-base-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Đang tải...
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Làm mới dữ liệu
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+        
+        <div className="custom-calendar" style={{ position: "relative" }}>  
           {/* Hidden element to force uniform row heights across the calendar */}
           <div
             style={{
@@ -820,32 +1307,43 @@ const MedicalCalendar: React.FC = () => {
         <Modal
           isOpen={isOpen}
           onClose={handleCloseModal}
-          className="max-w-[700px] lg:p-8 mt-[10vh] mb-8"
+          className="max-w-[800px] lg:p-8 mt-[5vh] mb-8 overflow-y-auto custom-scrollbar max-h-[calc(95vh-4rem)]"
         >
           <div className="flex flex-col px-4">
             <div className="flex justify-between items-center mb-6">
               <h5 className="font-semibold text-gray-800 text-theme-xl dark:text-white/90 lg:text-2xl">
-                Thêm lịch khám mới
+                {selectedEvent ? "Cập nhật thông tin lịch khám" : "Thêm lịch khám mới"}
               </h5>
-              <button
-                onClick={handleCloseModal}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+              
+              {selectedEvent?.extendedProps?.appointmentId && (
+                <div className="flex items-center">
+                  <span className="text-sm text-gray-600 mr-2">Trạng thái:</span>
+                  <select 
+                    value={selectedEvent.extendedProps.appointmentStatus || "PENDING"}
+                    onChange={(e) => {
+                      const newStatus = e.target.value;
+                      // Call the function to update the appointment status
+                      handleAppointmentStatusChange(
+                        selectedEvent.extendedProps.appointmentId as number,
+                        newStatus
+                      );
+                    }}
+                    className="text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                    aria-label="Trạng thái lịch khám"
+                  >
+                    <option value="PENDING">Chờ xác nhận</option>
+                    <option value="CONFIRMED">Đã xác nhận</option>
+                    <option value="IN_PROGRESS">Đang thực hiện</option>
+                    <option value="COMPLETED">Đã hoàn thành</option>
+                    <option value="CANCELLED">Đã hủy</option>
+                    <option value="NO_SHOW">Không đến khám</option>
+                  </select>
+                </div>
+              )}
             </div>
+            
+            {/* Display patient information from the database */}
+            {selectedEvent && displayPatientInfo()}
 
             <form
               onSubmit={(e) => {
@@ -871,8 +1369,8 @@ const MedicalCalendar: React.FC = () => {
                     >
                       <option value="">Chọn khoa</option>
                       {departmentList.map((dept) => (
-                        <option key={dept.id} value={dept.id}>
-                          {dept.name}
+                        <option key={dept.departmentId} value={dept.departmentId}>
+                          {dept.departmentName}
                         </option>
                       ))}
                     </select>
@@ -897,8 +1395,8 @@ const MedicalCalendar: React.FC = () => {
                           : "Vui lòng chọn khoa trước"}
                       </option>
                       {filteredDoctors.map((doctor) => (
-                        <option key={doctor.id} value={doctor.id}>
-                          {doctor.name}
+                        <option key={doctor.doctorId} value={doctor.doctorId}>
+                          {doctor.fullName}
                         </option>
                       ))}
                     </select>
@@ -914,7 +1412,8 @@ const MedicalCalendar: React.FC = () => {
                       onChange={handleDateChange}
                       value={selectedDate || ""}
                       error={errors.date}
-                      disabled={!doctorId}
+                      // Issue: disabled prop doesn't exist on type
+                      // disabled={!doctorId}
                     />
                   </div>
                 </div>
@@ -1026,7 +1525,7 @@ const MedicalCalendar: React.FC = () => {
                       </div>
                       <div>
                         <span className="font-medium text-gray-600">Số điện thoại:</span>{" "}
-                        <span className="text-gray-800">{selectedPatient.phoneNumber}</span>
+                        <span className="text-gray-800">{selectedPatient.phoneNumber || "Không có"}</span>
                       </div>
                       <div>
                         <span className="font-medium text-gray-600">Tuổi:</span>{" "}
@@ -1036,10 +1535,11 @@ const MedicalCalendar: React.FC = () => {
                         <span className="font-medium text-gray-600">Giới tính:</span>{" "}
                         <span className="text-gray-800">{getGenderText(selectedPatient.gender)}</span>
                       </div>
-                      {selectedPatient.insuranceNumber && (
+                      {/* Use optional chaining to safely access insuranceNumber property */}
+                      {(selectedPatient as any)?.insuranceNumber && (
                         <div className="col-span-2">
                           <span className="font-medium text-gray-600">Số BHYT:</span>{" "}
-                          <span className="text-gray-800">{selectedPatient.insuranceNumber}</span>
+                          <span className="text-gray-800">{(selectedPatient as any).insuranceNumber}</span>
                         </div>
                       )}
                     </div>
@@ -1076,7 +1576,7 @@ const MedicalCalendar: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting || !selectedSchedule || !selectedPatient}
-                  className="px-6 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2.5 rounded-lg bg-base-600 text-white text-sm font-medium hover:bg-base-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">
@@ -1165,9 +1665,9 @@ const MedicalCalendar: React.FC = () => {
                           </span>
                         </div>
                         <div className="text-sm font-medium text-base-600">
-                          {formatTimeToVietnamese(
+                          {event.extendedProps.eventTime ? formatTimeToVietnamese(
                             event.extendedProps.eventTime
-                          )}
+                          ) : "Không có giờ"}
                         </div>
                       </div>
                       <div className="mt-3">
@@ -1205,18 +1705,9 @@ const MedicalCalendar: React.FC = () => {
         <Modal
           isOpen={!!notification}
           onClose={() => setNotification(null)}
-          className="max-w-xs mt-[30vh]"
+          className="max-w-sm mt-[10vh]"
         >
-          <div className="p-6 text-center">
-            <div
-              className={`text-3xl mb-2 ${
-                notification?.type === "success"
-                  ? "text-green-600"
-                  : "text-red-600"
-              }`}
-            >
-              {notification?.type === "success" ? "✔" : "✖"}
-            </div>
+          <div className="p-6 text-left">
             <div className="font-semibold text-lg mb-2">
               {notification?.message}
             </div>
@@ -1224,6 +1715,14 @@ const MedicalCalendar: React.FC = () => {
               {notification?.type === "success"
                 ? "Lịch khám mới đã được thêm vào hệ thống."
                 : "Vui lòng kiểm tra lại thông tin hoặc thử lại sau."}
+            </div>
+            <div className="mt-6">
+              <button 
+                onClick={() => setNotification(null)}
+                className={`px-4 py-2 rounded-lg text-white ${notification?.type === "success" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}`}
+              >
+                Đóng
+              </button>
             </div>
           </div>
         </Modal>

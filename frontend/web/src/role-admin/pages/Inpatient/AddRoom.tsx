@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { patientService } from "../../services/patientService";
 import PageMeta from "../../components/common/PageMeta";
+import ReturnButton from "../../components/ui/button/ReturnButton";
 
 const AddRoom: React.FC = () => {
   const navigate = useNavigate();
@@ -52,7 +53,8 @@ const AddRoom: React.FC = () => {
         description="Thêm phòng bệnh vào hệ thống"
       />
 
-      <div className="mb-6">
+      <div className="mb-6 flex flow-row items-center">
+        <ReturnButton />
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">
           Thêm phòng bệnh
         </h2>

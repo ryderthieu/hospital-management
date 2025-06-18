@@ -659,8 +659,8 @@ const DoctorSchedule = () => {
           start: `${sch.workDate}T${sch.startTime}`,
           end: `${sch.workDate}T${sch.endTime}`,
           allDay: false,
-          backgroundColor: calendarType === "morning" ? "#10B981" : "#F59E0B",
-          borderColor: calendarType === "morning" ? "#10B981" : "#F59E0B",
+          backgroundColor: calendarType === "morning" ? "#F59E0B30" : "#10B98130",
+          borderColor: calendarType === "morning" ? "#F59E0B30" : "#10B98130",
           className: `event-fc-color ${colorClass}`, // Apply color dot system
           extendedProps: {
             calendar: calendarType as

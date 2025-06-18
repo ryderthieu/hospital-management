@@ -138,11 +138,11 @@ const ClinicCard: React.FC<{
             </button>
             <button
               onClick={() => setShowEditModal(true)}
-              className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 transition-colors"
+              className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 text-yellow-500"
+                className="h-4 w-4 text-slate-500"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >

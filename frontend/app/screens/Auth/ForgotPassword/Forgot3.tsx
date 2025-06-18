@@ -90,7 +90,7 @@ export default function Forgot3({ navigation, route }: Forgot3Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FFF',
     paddingHorizontal: 16,
   },
   button: {

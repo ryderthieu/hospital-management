@@ -80,7 +80,7 @@ const InpatientRoomCard: React.FC<InpatientRoomCardProps> = ({
               Phòng {room.roomName}
             </h3>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium px-2.5 py-0.5 rounded bg-base-100 text-base-800">
+              <span className="text-xs font-medium px-2.5 py-0.5 rounded bg-base-500/10 text-base-800">
                 {room.note}
               </span>
             </div>
@@ -147,11 +147,11 @@ const InpatientRoomCard: React.FC<InpatientRoomCardProps> = ({
             </button>
             <button
               onClick={() => setShowEditModal(true)}
-              className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 transition-colors"
+              className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-slate-700 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 text-yellow-500"
+                className="h-4 w-4 text-slate-500"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -187,7 +187,7 @@ const InpatientRoomCard: React.FC<InpatientRoomCardProps> = ({
         onClose={() => setOpen(false)}
         className="max-w-md p-6"
       >
-        <h2 className="text-2xl text-teal-600 font-semibold mb-4">
+        <h2 className="text-2xl text-base-600 font-semibold mb-4">
           Chi tiết phòng bệnh
         </h2>
         <div className="space-y-3">
@@ -237,7 +237,7 @@ const InpatientRoomCard: React.FC<InpatientRoomCardProps> = ({
         onClose={() => setShowEditModal(false)}
         className="max-w-md p-6"
       >
-        <h2 className="text-2xl text-teal-600 font-semibold mb-4">
+        <h2 className="text-2xl text-base-600 font-semibold mb-4">
           Chỉnh sửa phòng bệnh
         </h2>
         <form onSubmit={handleEditSubmit} className="space-y-4">
@@ -288,7 +288,7 @@ const InpatientRoomCard: React.FC<InpatientRoomCardProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
+              className="px-4 py-2 bg-base-600 text-white rounded hover:bg-base-700"
             >
               Lưu
             </button>

@@ -48,7 +48,7 @@ const DoctorCard: React.FC<DoctorCardProps> = ({
           </div>
         </div>
         <div className="flex gap-5">
-          <p className="text-teal-600 text-sm font-medium">
+          <p className="text-base-600 text-sm font-medium">
             <span>{doctor.specialization}</span>
           </p>
           <p className="text-gray-400 text-sm">Mã số: {doctor.doctorId}</p>
