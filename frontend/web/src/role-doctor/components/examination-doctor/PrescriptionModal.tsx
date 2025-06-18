@@ -3,11 +3,12 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Modal, Form, Input, Select, Button, Table, Typography, InputNumber, Spin, message } from "antd"
-import { SearchOutlined, DeleteOutlined } from "@ant-design/icons"
+import { SearchOutlined, DeleteOutlined, DownloadOutlined } from "@ant-design/icons"
 import { usePatientDetail } from "../../hooks/usePatientDetail"
 import type { Medicine } from "../../types/medicin"
 import type { PrescriptionDetail } from "../../types/prescriptionDetail"
 import type { Prescription } from "../../types/prescription"
+import { PrescriptionPDF } from "./PrescriptionPDF"
 
 const { Text } = Typography
 
@@ -20,27 +21,27 @@ interface ModalProps {
   formParent: any
 }
 
-export const PrescriptionModal: React.FC<ModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  appointmentId, 
+export const PrescriptionModal: React.FC<ModalProps> = ({
+  isOpen,
+  onClose,
+  appointmentId,
   existingPrescription,
   onPrescriptionSaved,
-  formParent
+  formParent,
 }) => {
   // Use the combined hook instead of usePrescriptionModal
   const {
     // Patient data
     patientDetail,
     prescription,
-    
+
     // Prescription management data
     medications,
     currentPrescriptionId,
     searchInput,
     searchLoading,
     saving,
-    
+
     // Prescription management actions
     searchMedicines,
     addMedicine,
@@ -57,12 +58,12 @@ export const PrescriptionModal: React.FC<ModalProps> = ({
   const [form] = Form.useForm()
   const [searchResults, setSearchResults] = useState<Medicine[]>([])
   const [showSearchResults, setShowSearchResults] = useState(false)
+  const [savedPrescription, setSavedPrescription] = useState<Prescription | null>(null)
+  const [showPDF, setShowPDF] = useState(false)
 
   // Get patient info from patientDetail
   const patientName = patientDetail?.patientInfo?.fullName || "Bệnh nhân không xác định"
   const patientCode = patientDetail?.patientInfo?.patientId || "Mã bệnh nhân không xác định"
-
- 
 
   // Check for existing prescription when modal opens
   useEffect(() => {
@@ -100,6 +101,8 @@ export const PrescriptionModal: React.FC<ModalProps> = ({
     return () => {
       if (!isOpen) {
         resetPrescriptionLoadState()
+        setSavedPrescription(null)
+        setShowPDF(false)
       }
     }
   }, [
@@ -184,8 +187,6 @@ export const PrescriptionModal: React.FC<ModalProps> = ({
 
   const handleSave = async () => {
     try {
-    
-
       if (!medications || medications.length === 0) {
         message.warning("Chưa có thuốc nào trong toa thuốc")
         return
@@ -195,42 +196,48 @@ export const PrescriptionModal: React.FC<ModalProps> = ({
       const prescriptionData = {
         appointmentId: appointmentId || undefined,
         patientId: patientDetail?.patientInfo.patientId,
-        note: formParent?.getFieldValue('doctorNotes') || "",
-        diagnosis: formParent?.getFieldValue('diagnosis') || "",
-        systolicBloodPressure: formParent?.getFieldValue('systolicBloodPressure') || 120,
-        diastolicBloodPressure: formParent?.getFieldValue('diastolicBloodPressure') || 80,
-        heartRate: formParent?.getFieldValue('heartRate') || 75,
-        bloodSugar: formParent?.getFieldValue('bloodSugar') || 100,
+        note: formParent?.getFieldValue("doctorNotes") || "",
+        diagnosis: formParent?.getFieldValue("diagnosis") || "",
+        systolicBloodPressure: formParent?.getFieldValue("systolicBloodPressure") || 120,
+        diastolicBloodPressure: formParent?.getFieldValue("diastolicBloodPressure") || 80,
+        heartRate: formParent?.getFieldValue("heartRate") || 75,
+        bloodSugar: formParent?.getFieldValue("bloodSugar") || 100,
         prescriptionDetails: medications,
-        isFollowUp: formParent?.getFieldValue('isFollowUp'),
-        followUpDate: formParent?.getFieldValue('followUpDate') || "",
+        isFollowUp: formParent?.getFieldValue("isFollowUp"),
+        followUpDate: formParent?.getFieldValue("followUpDate") || "",
       }
 
+      const savedPrescriptionResult = await savePrescription(prescriptionData)
 
-      const savedPrescription = await savePrescription(prescriptionData)
+      if (savedPrescriptionResult) {
+        setSavedPrescription(savedPrescriptionResult)
+        message.success("Lưu toa thuốc thành công!")
 
-      if (savedPrescription) {
         // Call parent callback to refresh data
         if (onPrescriptionSaved) {
           onPrescriptionSaved()
         }
-        
-        // Close modal
-        handleClose()
       }
     } catch (error) {
       console.error("Form validation failed:", error)
     }
   }
 
-  
   const handleClose = () => {
     resetPrescriptionLoadState()
     form.resetFields()
     setSearchInput("")
     setSearchResults([])
     setShowSearchResults(false)
+    setSavedPrescription(null)
+    setShowPDF(false)
     onClose()
+  }
+
+  const handleShowPDF = () => {
+    if (savedPrescription || currentPrescriptionId) {
+      setShowPDF(true)
+    }
   }
 
   const columns = [
@@ -350,126 +357,143 @@ export const PrescriptionModal: React.FC<ModalProps> = ({
   ]
 
   return (
-    <Modal
-      title={currentPrescriptionId ? "Chỉnh sửa toa thuốc" : "Kê toa thuốc"}
-      open={isOpen}
-      onCancel={handleClose}
-      footer={null}
-      width={1200}
-      destroyOnClose={true}
-    >
-      <div className="mb-6">
-        <div className="flex items-center mb-4">
-          <div className="flex-1">
-            <Text strong>Bệnh nhân: {patientName}</Text>
-            <div>
-              <Text type="secondary">Mã bệnh nhân: {patientCode}</Text>
-            </div>
-            {patientDetail?.age && (
+    <>
+      <Modal
+        title={currentPrescriptionId ? "Chỉnh sửa toa thuốc" : "Kê toa thuốc"}
+        open={isOpen}
+        onCancel={handleClose}
+        footer={null}
+        width={1200}
+        destroyOnClose={true}
+      >
+        <div className="mb-6">
+          <div className="flex items-center mb-4">
+            <div className="flex-1">
+              <Text strong>Bệnh nhân: {patientName}</Text>
               <div>
-                <Text type="secondary">Tuổi: {patientDetail.age}</Text>
+                <Text type="secondary">Mã bệnh nhân: {patientCode}</Text>
               </div>
-            )}
-            {currentPrescriptionId && (
+              {patientDetail?.age && (
+                <div>
+                  <Text type="secondary">Tuổi: {patientDetail.age}</Text>
+                </div>
+              )}
+              {currentPrescriptionId && (
+                <div>
+                  <Text type="secondary">Đang chỉnh sửa toa thuốc #{currentPrescriptionId}</Text>
+                </div>
+              )}
+            </div>
+            <div className="text-right">
+              <Text strong>Ngày: {new Date().toLocaleDateString("vi-VN")}</Text>
               <div>
-                <Text type="secondary">Đang chỉnh sửa toa thuốc #{currentPrescriptionId}</Text>
+                <Text type="secondary">
+                  Giờ: {new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                </Text>
               </div>
-            )}
-          </div>
-          <div className="text-right">
-            <Text strong>Ngày: {new Date().toLocaleDateString("vi-VN")}</Text>
-            <div>
-              <Text type="secondary">
-                Giờ: {new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
-              </Text>
             </div>
           </div>
-        </div>
 
-        <div className="flex items-center mb-4">
-          <div className="relative flex-1 max-w-md">
-            <Input
-              placeholder="Tìm thuốc..."
-              prefix={<SearchOutlined />}
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full"
-              suffix={searchLoading ? <Spin size="small" /> : null}
-            />
+          <div className="flex items-center mb-4">
+            <div className="relative flex-1 max-w-md">
+              <Input
+                placeholder="Tìm thuốc..."
+                prefix={<SearchOutlined />}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="w-full"
+                suffix={searchLoading ? <Spin size="small" /> : null}
+              />
 
-            {/* Search Results Dropdown */}
-            {showSearchResults && searchResults && searchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
-                {searchResults.map((medicine) => (
-                  <div
-                    key={medicine.medicineId}
-                    className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                    onClick={() => handleAddMedicine(medicine)}
-                  >
-                    <div className="font-medium">{medicine.medicineName}</div>
-                    <div className="text-sm text-gray-500">{medicine.category}</div>
-                    <div className="text-xs text-gray-400">
-                      {medicine.price.toLocaleString("vi-VN")} VNĐ/{medicine.unit}
-                      {medicine.quantity && ` - Còn: ${medicine.quantity}`}
+              {/* Search Results Dropdown */}
+              {showSearchResults && searchResults && searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
+                  {searchResults.map((medicine) => (
+                    <div
+                      key={medicine.medicineId}
+                      className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      onClick={() => handleAddMedicine(medicine)}
+                    >
+                      <div className="font-medium">{medicine.medicineName}</div>
+                      <div className="text-sm text-gray-500">{medicine.category}</div>
+                      <div className="text-xs text-gray-400">
+                        {medicine.price.toLocaleString("vi-VN")} VNĐ/{medicine.unit}
+                        {medicine.quantity && ` - Còn: ${medicine.quantity}`}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
 
-            {showSearchResults && (!searchResults || searchResults.length === 0) && searchInput && !searchLoading && (
-              <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 p-3">
-                <div className="text-gray-500 text-center">Không tìm thấy thuốc</div>
-              </div>
-            )}
+              {showSearchResults && (!searchResults || searchResults.length === 0) && searchInput && !searchLoading && (
+                <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 p-3">
+                  <div className="text-gray-500 text-center">Không tìm thấy thuốc</div>
+                </div>
+              )}
+            </div>
           </div>
+
+          <Table
+            columns={columns}
+            dataSource={medications || []}
+            rowKey={(record, index) => `${record.medicine?.medicineId || 0}-${index}`}
+            pagination={false}
+            className="mb-6"
+            loading={saving}
+            locale={{
+              emptyText: "Chưa có thuốc nào trong toa thuốc",
+            }}
+          />
+
+          <Form form={form} layout="vertical">
+            <Form.Item label="Ghi chú của bác sĩ" name="doctorNotes">
+              <Input.TextArea rows={4} placeholder="Nhập ghi chú..." />
+            </Form.Item>
+          </Form>
         </div>
 
-        <Table
-          columns={columns}
-          dataSource={medications || []}
-          rowKey={(record, index) => `${record.medicine?.medicineId || 0}-${index}`}
-          pagination={false}
-          className="mb-6"
-          loading={saving}
-          locale={{
-            emptyText: "Chưa có thuốc nào trong toa thuốc"
-          }}
-        />
+        <div className="flex justify-between">
+          <div>
+            {(savedPrescription || currentPrescriptionId) && (
+              <Button icon={<DownloadOutlined />} onClick={handleShowPDF} type="default">
+                Xem PDF
+              </Button>
+            )}
+          </div>
+          <div className="flex space-x-3">
+            <Button onClick={handleClose} disabled={saving}>
+              Hủy
+            </Button>
+            <Button
+              type="primary"
+              onClick={handleSave}
+              loading={saving}
+              disabled={!medications || medications.length === 0}
+            >
+              {currentPrescriptionId ? "Cập nhật toa thuốc" : "Lưu toa thuốc"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
-        <Form form={form} layout="vertical">
-          <Form.Item label="Ghi chú của bác sĩ" name="doctorNotes">
-            <Input.TextArea rows={4} placeholder="Nhập ghi chú..." />
-          </Form.Item>
-          
-          {/* Display current vital signs if available */}
-          {/* {patientDetail && (
-            <div className="bg-gray-50 p-3 rounded-md mb-4">
-              <Text strong className="block mb-2">Thông tin sinh hiệu hiện tại:</Text>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>Huyết áp: {formValue.systolicBloodPressure || 'N/A'}/{patientDetail.diastolicBloodPressure || 'N/A'} mmHg</div>
-                <div>Nhịp tim: {patientDetail.heartRate || 'N/A'} bpm</div>
-                <div>Đường huyết: {patientDetail.bloodSugar || 'N/A'} mg/dL</div>
-                <div>Nhiệt độ: {patientDetail.temperature || 'N/A'}°C</div>
-              </div>
-            </div>
-          )} */}
-        </Form>
-      </div>
-
-      <div className="flex justify-end space-x-3">
-        <Button onClick={handleClose} disabled={saving}>
-          Hủy
-        </Button>
-        <Button
-          type="primary"
-          onClick={handleSave}
-          loading={saving}
-          disabled={!medications || medications.length === 0}
-        >
-          {currentPrescriptionId ? "Cập nhật toa thuốc" : "Lưu toa thuốc"}
-        </Button>
-      </div>
-    </Modal>
+      {/* PDF Modal */}
+      <Modal
+        title="Đơn thuốc PDF"
+        open={showPDF}
+        onCancel={() => setShowPDF(false)}
+        footer={null}
+        width={1000}
+        style={{ top: 20 }}
+      >
+        {(savedPrescription || prescription) && (
+          <PrescriptionPDF
+            prescription={savedPrescription || prescription!}
+            patientName={patientName}
+            patientInfo={patientDetail?.patientInfo}
+            showControls={true}
+          />
+        )}
+      </Modal>
+    </>
   )
 }

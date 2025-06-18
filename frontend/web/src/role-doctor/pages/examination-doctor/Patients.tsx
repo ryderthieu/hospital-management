@@ -1,6 +1,8 @@
+"use client"
+
 import type React from "react"
 import { useState } from "react"
-import { Table, Input, DatePicker, Button, Avatar, Space, Card, Select, Tooltip, Empty } from "antd"
+import { Table, Input, DatePicker, Button, Avatar, Space, Card, Select, Tooltip, Empty, Tag } from "antd"
 import {
   EditOutlined,
   StepForwardOutlined,
@@ -10,15 +12,13 @@ import {
   CalendarOutlined,
   ReloadOutlined,
   ClearOutlined,
+  ClockCircleOutlined,
+  EnvironmentOutlined,
 } from "@ant-design/icons"
 import WeCareLoading from "../../components/common/WeCareLoading"
 import { useNavigate } from "react-router-dom"
-import { useAppointments } from "../../hooks/useAppointment"
-import {
-  formatTimeSlot,
-  getAppointmentStatusColor,
-  getAppointmentStatusVietnameseText,
-} from "../../services/appointmentServices"
+import { useAppointmentContext } from "../../contexts/AppointmentContext"
+import { getAppointmentStatusColor, getAppointmentStatusVietnameseText } from "../../services/appointmentServices"
 import type { Appointment } from "../../types/appointment"
 import dayjs, { type Dayjs } from "dayjs"
 
@@ -26,9 +26,7 @@ const { Search } = Input
 const { Option } = Select
 
 const Patients: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [genderFilter, setGenderFilter] = useState<string>("all")
+  const [localSearch, setLocalSearch] = useState("")
   const navigate = useNavigate()
 
   const {
@@ -40,11 +38,10 @@ const Patients: React.FC = () => {
     filters,
     updateFilters,
     updatePagination,
-    clearDateFilter,
+    clearAllFilters,
     setTodayFilter,
-    updateAppointmentStatus,
     refreshAppointments,
-  } = useAppointments()
+  } = useAppointmentContext()
 
   const handleViewPatient = (id: number) => {
     const appointment = appointments.find((a: Appointment) => a.appointmentId === id)
@@ -61,52 +58,76 @@ const Patients: React.FC = () => {
     refreshAppointments()
   }
 
-  const handleStatusChange = async (appointmentId: number, newStatus: string) => {
-    await updateAppointmentStatus(appointmentId, newStatus)
-  }
+
 
   const handleDateChange = (date: Dayjs | null, dateString: string | string[]) => {
-    const dateStr = Array.isArray(dateString) ? dateString[0] : dateString
-    if (dateStr) {
-      updateFilters({ date: dateStr })
-    } else {
-      clearDateFilter()
-    }
+  console.log("DatePicker onChange triggered:", { date, dateString }); // Debug log
+  
+  if (date) {
+    // Đảm bảo format đúng cho backend
+    const isoDate = date.format("YYYY-MM-DD");
+    updateFilters({ workDate: isoDate });
+  } else {
+    updateFilters({ workDate: undefined });
+  }
+};
+
+  const handleShiftFilterChange = (value: string) => {
+    updateFilters({ shift: value === "all" ? undefined : value })
   }
 
   const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value)
-    updateFilters({ status: value === "all" ? undefined : value })
+    updateFilters({ appointmentStatus: value === "all" ? undefined : value })
   }
 
-  const handleGenderFilterChange = (value: string) => {
-    setGenderFilter(value)
-    updateFilters({ gender: value === "all" ? undefined : value })
+  const handleLocalSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalSearch(e.target.value)
   }
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setSearchTerm(value)
-    updateFilters({ searchTerm: value || undefined })
+  const handleClearFilters = () => {
+    clearAllFilters()
+    setLocalSearch("")
   }
 
   const getStatusBadge = (appointmentStatus: string) => {
     const { color, bgColor } = getAppointmentStatusColor(appointmentStatus)
     return (
-      <span
+      <Tag
+        color={color}
         style={{
-          color,
+          color: color,
           backgroundColor: bgColor,
-          padding: "4px 12px",
+          border: `1px solid ${color}`,
           borderRadius: "20px",
           fontSize: "12px",
           fontWeight: 500,
         }}
       >
         {getAppointmentStatusVietnameseText(appointmentStatus)}
-      </span>
+      </Tag>
     )
   }
+
+  const getShiftLabel = (shift: string) => {
+    const shiftLabels = {
+      MORNING: "Sáng",
+      AFTERNOON: "Chiều",
+      EVENING: "Tối",
+    }
+    return shiftLabels[shift as keyof typeof shiftLabels] || shift
+  }
+
+  // Filter appointments based on local search
+  const filteredAppointments = appointments.filter((appointment) => {
+    if (!localSearch) return true
+
+    const searchLower = localSearch.toLowerCase()
+    return (
+      appointment.patientInfo?.fullName?.toLowerCase().includes(searchLower) ||
+      appointment.patientInfo?.phoneNumber?.includes(searchLower) ||
+      appointment.number?.toString().includes(searchLower)
+    )
+  })
 
   const columns = [
     {
@@ -123,7 +144,10 @@ const Patients: React.FC = () => {
       render: (patientInfo: any, record: Appointment) => (
         <div style={{ display: "flex", alignItems: "center" }}>
           <Avatar
-             src={patientInfo?.avatar || "https://static-00.iconduck.com/assets.00/avatar-default-symbolic-icon-440x512-ni4kvfm4.png" }
+            src={
+              patientInfo?.avatar ||
+              "https://static-00.iconduck.com/assets.00/avatar-default-symbolic-icon-440x512-ni4kvfm4.png"
+            }
             size={48}
             style={{ marginRight: 12, border: "2px solid #f0f9ff" }}
             icon={<UserOutlined />}
@@ -132,6 +156,7 @@ const Patients: React.FC = () => {
             <div style={{ fontWeight: 600, color: "#111827", marginBottom: "2px" }}>
               {patientInfo?.fullName || "Chưa có thông tin"}
             </div>
+            <div style={{ fontSize: "12px", color: "#6b7280" }}>{patientInfo?.phoneNumber || "N/A"}</div>
           </div>
         </div>
       ),
@@ -144,30 +169,28 @@ const Patients: React.FC = () => {
         <div>
           <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
             <CalendarOutlined style={{ marginRight: 8, color: "#6b7280" }} />
-            <span style={{ color: "#374151" }}>{schedule?.workDate && schedule.workDate.split('-').reverse().join('/')}</span>
+            <span style={{ color: "#374151" }}>
+              {schedule?.workDate && dayjs(schedule.workDate, "YYYY-MM-DD").format("DD/MM/YYYY")}
+            </span>
           </div>
-          
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <ClockCircleOutlined style={{ marginRight: 8, color: "#6b7280" }} />
+            <span style={{ color: "#374151", fontSize: "12px" }}>
+              Ca {getShiftLabel(schedule?.shift)}
+            </span>
+          </div>
         </div>
       ),
     },
     {
-      title: "Giới tính",
-      dataIndex: "patientInfo",
-      key: "gender",
-      render: (patientInfo: any) => (
-        <span style={{ color: "#374151" }}>
-          {patientInfo?.gender === "MALE" ? "Nam" : patientInfo?.gender === "FEMALE" ? "Nữ" : "N/A"}
-        </span>
-      ),
-    },
-    {
-      title: "Ngày sinh",
-      dataIndex: "patientInfo",
-      key: "birthday",
-      render: (patientInfo: any) => (
-        <span style={{ color: "#374151" }}>
-          {patientInfo?.birthday ? patientInfo.birthday.split("-").reverse().join("/") : "N/A"}
-        </span>
+      title: "Phòng khám",
+      dataIndex: "schedule",
+      key: "schedule",
+      render: (schedule: any, record: Appointment) => (
+        <div style={{ display: "flex", flexDirection:"column" , alignItems: "flex-start" }}>
+          <span style={{ color: "#374151" }}>{(schedule?.roomNote) || "Chưa phân phòng"}</span>
+          <span style={{ color: "#374151" }}>{("Tòa " + schedule?.building + " - Tầng " + schedule?.floor) || "Chưa phân phòng"}</span>
+        </div>
       ),
     },
     {
@@ -177,7 +200,7 @@ const Patients: React.FC = () => {
       ellipsis: true,
       render: (symptoms: string) => (
         <Tooltip title={symptoms}>
-          <span style={{ color: "#374151" }}>{symptoms}</span>
+          <span style={{ color: "#374151" }}>{symptoms || "Không có"}</span>
         </Tooltip>
       ),
     },
@@ -228,10 +251,13 @@ const Patients: React.FC = () => {
           </h1>
           <p style={{ color: "#6b7280", fontSize: "16px", margin: 0 }}>
             Quản lý và theo dõi thông tin bệnh nhân
-            {filters.date && (
+            {filters.workDate && (
               <span style={{ marginLeft: "8px", fontWeight: 500 }}>
-                - Ngày: {dayjs(filters.date).format("DD/MM/YYYY")}
+                - Ngày: {dayjs(filters.workDate, "YYYY-MM-DD").format("DD/MM/YYYY")}
               </span>
+            )}
+            {filters.shift && (
+              <span style={{ marginLeft: "8px", fontWeight: 500 }}>- Ca: {getShiftLabel(filters.shift)}</span>
             )}
           </p>
         </div>
@@ -274,48 +300,53 @@ const Patients: React.FC = () => {
         >
           <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "center" }}>
             <Search
-              placeholder="Tìm kiếm bệnh nhân..."
-              value={searchTerm}
-              onChange={handleSearchChange}
+              placeholder="Tìm kiếm bệnh nhân (tên, SĐT, STT)..."
+              value={localSearch}
+              onChange={handleLocalSearchChange}
               style={{ width: 320 }}
               prefix={<SearchOutlined style={{ color: "#6b7280" }} />}
             />
 
+            <DatePicker
+              placeholder="Chọn ngày làm việc"
+              style={{ width: 200 }}
+              value={filters.workDate ? dayjs(filters.workDate, "YYYY-MM-DD") : null}
+              onChange={handleDateChange}
+              format="DD/MM/YYYY"
+              allowClear
+            />
+
             <Select
-              placeholder="Trạng thái"
-              value={statusFilter}
-              onChange={handleStatusFilterChange}
+              placeholder="Ca làm việc"
+              value={filters.shift || "all"}
+              onChange={handleShiftFilterChange}
               style={{ width: 150 }}
               suffixIcon={<FilterOutlined style={{ color: "#6b7280" }} />}
             >
+              <Option value="all">Tất cả ca</Option>
+              <Option value="MORNING">Ca sáng</Option>
+              <Option value="AFTERNOON">Ca chiều</Option>
+              <Option value="EVENING">Ca tối</Option>
+            </Select>
+
+            <Select
+              placeholder="Trạng thái"
+              value={filters.appointmentStatus || "all"}
+              onChange={handleStatusFilterChange}
+              style={{ width: 180 }}
+              suffixIcon={<FilterOutlined style={{ color: "#6b7280" }} />}
+            >
               <Option value="all">Tất cả trạng thái</Option>
-              <Option value="PENDING">Đang chờ</Option>
+              <Option value="PENDING">Chờ xác nhận</Option>
               <Option value="CONFIRMED">Đã xác nhận</Option>
+              <Option value="IN_PROGRESS">Đang khám</Option>
+              <Option value="PENDING_TEST_RESULT">Chờ kết quả</Option>
               <Option value="COMPLETED">Hoàn thành</Option>
               <Option value="CANCELLED">Đã hủy</Option>
             </Select>
 
-            <Select
-              placeholder="Giới tính"
-              value={genderFilter}
-              onChange={handleGenderFilterChange}
-              style={{ width: 120 }}
-            >
-              <Option value="all">Tất cả</Option>
-              <Option value="MALE">Nam</Option>
-              <Option value="FEMALE">Nữ</Option>
-            </Select>
-
-            <DatePicker
-              placeholder="Chọn ngày"
-              style={{ width: 200 }}
-              value={filters.date ? dayjs(filters.date) : null}
-              onChange={handleDateChange}
-              format="DD/MM/YYYY"
-            />
-
-            <Button icon={<ClearOutlined />} onClick={clearDateFilter} disabled={!filters.date} type="text">
-              Xóa bộ lọc ngày
+            <Button icon={<ClearOutlined />} onClick={handleClearFilters} type="text">
+              Xóa bộ lọc
             </Button>
 
             <Button onClick={setTodayFilter} type="text">
@@ -366,7 +397,7 @@ const Patients: React.FC = () => {
                   borderRadius: "20px",
                 }}
               >
-                {appointments.length} bệnh nhân
+                {filteredAppointments.length} bệnh nhân
               </span>
             </div>
           </div>
@@ -377,12 +408,12 @@ const Patients: React.FC = () => {
             <div style={{ textAlign: "center", padding: "60px 0" }}>
               <Empty description={error} />
             </div>
-          ) : appointments.length === 0 ? (
+          ) : filteredAppointments.length === 0 ? (
             <Empty description="Không tìm thấy bệnh nhân nào" style={{ padding: "60px 0" }} />
           ) : (
             <Table
               columns={columns}
-              dataSource={appointments}
+              dataSource={filteredAppointments}
               rowKey="appointmentId"
               pagination={{
                 current: paginatedData.pageNo + 1, // Convert from 0-based to 1-based

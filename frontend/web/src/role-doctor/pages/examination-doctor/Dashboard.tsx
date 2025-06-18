@@ -1,4 +1,5 @@
-import type React from "react"
+import React from "react"
+import { useState, useEffect } from "react"
 import { Row, Col, Card, Table, Badge, Calendar, Typography, List, Avatar, Progress, Divider } from "antd"
 import {
   UserOutlined,
@@ -8,49 +9,103 @@ import {
   CalendarOutlined,
   TeamOutlined,
 } from "@ant-design/icons"
-import { useDashboardData } from "../../hooks/useDashboardData"
+import {
+  appointmentService,
+  formatAppointmentDate,
+  formatAppointmentTime,
+  getAppointmentStatusVietnameseText,
+  getAppointmentStatusColor,
+} from "../../services/appointmentServices"
+import type { Appointment } from "../../types/appointment"
 import type { Dayjs } from "dayjs"
+import WeCareLoading from "../../components/common/WeCareLoading"
 
 const { Title, Text } = Typography
 
 const Dashboard: React.FC = () => {
-  const { patientStats, recentPatients, upcomingAppointments, todayAppointments } = useDashboardData()
+  const [recentPatients, setRecentPatients] = useState<Appointment[]>([])
+  const [upcomingAppointments, setUpcomingAppointments] = useState<Appointment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [patientStats, setPatientStats] = useState({
+    total: 0,
+    todayAppointments: 0,
+    completed: 0,
+    testing: 0,
+  })
+
+  useEffect(() => {
+    fetchDashboardData()
+  }, [])
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true)
+
+      // Fetch recent patients (completed appointments)
+      const recentResponse = await appointmentService.getAppointments({
+        page: 0,
+        size: 8,
+        appointmentStatus: "PENDING",
+      })
+
+      console.log("recentResponse", recentResponse)
+
+      // Fetch upcoming appointments (confirmed appointments)
+      const upcomingResponse = await appointmentService.getAppointments({
+        page: 0,
+        size: 6,
+        appointmentStatus: "PENDING",
+      })
+
+      // Fetch today's appointments
+      const today = new Date().toISOString().split("T")[0]
+      const todayResponse = await appointmentService.getAppointments({
+        page: 0,
+        size: 50,
+        workDate: today,
+      })
+
+      // Fetch all appointments for stats
+      const allResponse = await appointmentService.getAppointments({
+        page: 0,
+        size: 100,
+      })
+
+      setRecentPatients(recentResponse.content || [])
+      setUpcomingAppointments(upcomingResponse.content || [])
+
+      // Calculate stats
+      const allAppointments = allResponse.content || []
+      const todayAppointments = todayResponse.content || []
+
+      setPatientStats({
+        total: allResponse.totalElements || 0,
+        todayAppointments: todayAppointments.length,
+        completed: allAppointments.filter((apt) => apt.appointmentStatus === "COMPLETED").length,
+        testing: allAppointments.filter((apt) => apt.appointmentStatus === "PENDING_TEST_RESULT").length,
+      })
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const getAppointmentListData = (value: Dayjs) => {
-    const day = value.date()
-    const month = value.month()
-
-    const matchingAppointments = todayAppointments.filter((appointment) => {
-      const appointmentDate = new Date(appointment.date)
-      return appointmentDate.getDate() === day && appointmentDate.getMonth() === month
-    })
-
-    return matchingAppointments.map((appointment) => ({
-      type: appointment.status,
-      content: appointment.patientName,
-    }))
+    return []
   }
 
   const dateCellRender = (value: Dayjs) => {
     const listData = getAppointmentListData(value)
-
     return (
       <ul className="events">
         {listData.map((item, index) => (
           <li key={index}>
             <Badge
-              status={
-                item.type === "confirmed"
-                  ? "success"
-                  : item.type === "pending"
-                    ? "warning"
-                    : item.type === "cancelled"
-                      ? "error"
-                      : "default"
-              }
+              status="success"
               text={
-                <Text ellipsis style={{ fontSize: "12px" }}>
-                  {item.content}
+                <Text ellipsis className="text-xs">
+                  {item}
                 </Text>
               }
             />
@@ -63,69 +118,45 @@ const Dashboard: React.FC = () => {
   const patientColumns = [
     {
       title: "Bệnh nhân",
-      dataIndex: "name",
-      key: "name",
-      render: (text: string, record: any) => (
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <Avatar src={record.avatar} size={40} style={{ marginRight: 12, border: "2px solid #f0f9ff" }} />
+      dataIndex: "patientInfo",
+      key: "patientInfo",
+      render: (patientInfo: any, record: Appointment) => (
+        <div className="flex items-center">
+          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-lg mr-3 border-2 border-blue-50">
+            {patientInfo?.fullName.charAt(0)?.toUpperCase()}
+          </div>
           <div>
-            <div style={{ fontWeight: 600, color: "#111827" }}>{text}</div>
-            <div style={{ fontSize: "12px", color: "#6b7280" }}>{record.code}</div>
+            <div className="font-semibold text-gray-900">{patientInfo?.fullName}</div>
+            <div className="text-xs text-gray-500">#{record.appointmentId}</div>
           </div>
         </div>
       ),
     },
     {
       title: "Ngày khám",
-      dataIndex: "date",
-      key: "date",
-      render: (date: string) => (
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <CalendarOutlined style={{ marginRight: 8, color: "#6b7280" }} />
-          <Text>{date}</Text>
+      dataIndex: "schedule",
+      key: "schedule",
+      render: (schedule: any, record: Appointment) => (
+        <div className="flex items-center">
+          <CalendarOutlined className="mr-2 text-gray-500" />
+          <span>{formatAppointmentDate(schedule?.workDate)}</span>
         </div>
       ),
     },
     {
       title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
+      dataIndex: "appointmentStatus",
+      key: "appointmentStatus",
       render: (status: string) => {
-        let color = ""
-        let text = ""
-        let bgColor = ""
-
-        switch (status) {
-          case "completed":
-            color = "#059669"
-            bgColor = "#d1fae5"
-            text = "Hoàn thành"
-            break
-          case "pending":
-            color = "#d97706"
-            bgColor = "#fef3c7"
-            text = "Đang chờ"
-            break
-          case "testing":
-            color = "#2563eb"
-            bgColor = "#dbeafe"
-            text = "Xét nghiệm"
-            break
-          default:
-            color = "#6b7280"
-            bgColor = "#f3f4f6"
-            text = status
-        }
+        const { color, bgColor } = getAppointmentStatusColor(status)
+        const text = getAppointmentStatusVietnameseText(status)
 
         return (
           <span
+            className="px-3 py-1 rounded-full text-xs font-medium"
             style={{
               color,
               backgroundColor: bgColor,
-              padding: "4px 12px",
-              borderRadius: "20px",
-              fontSize: "12px",
-              fontWeight: 500,
             }}
           >
             {text}
@@ -135,280 +166,215 @@ const Dashboard: React.FC = () => {
     },
   ]
 
+  if (loading) {
+    return (
+      <div className="flex-1 h-screen w-full bg-slate-50">
+        <WeCareLoading mode="parent" />
+      </div>
+    )
+  }
+
   return (
-    <div style={{ background: "#f8fafc", minHeight: "100vh" }}>
-      <div style={{ padding: "24px" }}>
+    <div className="bg-slate-50 min-h-screen">
+      <div className="p-6">
         {/* Header */}
-        <div style={{ marginBottom: "32px" }}>
-          <Title level={2} style={{ margin: 0, color: "#111827" }}>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Chào mừng trở lại, Dr. Trần Nhật Trường
-          </Title>
-          <Text style={{ color: "#6b7280", fontSize: "16px" }}>Đây là tổng quan về hoạt động hôm nay của bạn</Text>
+          </h1>
+          <p className="text-gray-600 text-base">Đây là tổng quan về hoạt động hôm nay của bạn</p>
         </div>
 
         {/* Stats Cards */}
-        <Row gutter={[24, 24]} style={{ marginBottom: "32px" }}>
-          <Col xs={24} sm={12} lg={6}>
-            <Card
-              bordered={false}
-              style={{
-                borderRadius: "16px",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                color: "white",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <div style={{ fontSize: "14px", opacity: 0.9, marginBottom: "8px" }}>Tổng số bệnh nhân</div>
-                  <div style={{ fontSize: "32px", fontWeight: "bold" }}>{patientStats.total}</div>
-                  <div style={{ fontSize: "12px", opacity: 0.8, marginTop: "4px" }}>
-                     +12% so với tuần trước
-                  </div>
-                </div>
-                <UserOutlined style={{ fontSize: "48px", opacity: 0.3 }} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white">
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="text-sm opacity-90 mb-2">Tổng số bệnh nhân</div>
+                <div className="text-3xl font-bold">{patientStats.total}</div>
+                <div className="text-xs opacity-80 mt-1">Tổng cộng</div>
               </div>
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card
-              bordered={false}
-              style={{
-                borderRadius: "16px",
-                background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-                color: "white",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <div style={{ fontSize: "14px", opacity: 0.9, marginBottom: "8px" }}>Lịch hẹn hôm nay</div>
-                  <div style={{ fontSize: "32px", fontWeight: "bold" }}>{patientStats.todayAppointments}</div>
-                  <div style={{ fontSize: "12px", opacity: 0.8, marginTop: "4px" }}>
-                    <ClockCircleOutlined /> 3 lịch hẹn sắp tới
-                  </div>
+              <UserOutlined className="text-5xl opacity-30" />
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-pink-400 to-red-500 rounded-2xl p-6 text-white">
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="text-sm opacity-90 mb-2">Lịch hẹn hôm nay</div>
+                <div className="text-3xl font-bold">{patientStats.todayAppointments}</div>
+                <div className="text-xs opacity-80 mt-1 flex items-center">
+                  <ClockCircleOutlined className="mr-1" /> Hôm nay
                 </div>
-                <ClockCircleOutlined style={{ fontSize: "48px", opacity: 0.3 }} />
               </div>
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card
-              bordered={false}
-              style={{
-                borderRadius: "16px",
-                background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-                color: "white",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <div style={{ fontSize: "14px", opacity: 0.9, marginBottom: "8px" }}>Đã hoàn thành</div>
-                  <div style={{ fontSize: "32px", fontWeight: "bold" }}>{patientStats.completed}</div>
-                  <div style={{ fontSize: "12px", opacity: 0.8, marginTop: "4px" }}>
-                    <CheckCircleOutlined /> Hiệu suất tốt
-                  </div>
+              <ClockCircleOutlined className="text-5xl opacity-30" />
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-sky-400 to-cyan-500 rounded-2xl p-6 text-white">
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="text-sm opacity-90 mb-2">Đã hoàn thành</div>
+                <div className="text-3xl font-bold">{patientStats.completed}</div>
+                <div className="text-xs opacity-80 mt-1 flex items-center">
+                  <CheckCircleOutlined className="mr-1" /> Hoàn tất
                 </div>
-                <CheckCircleOutlined style={{ fontSize: "48px", opacity: 0.3 }} />
               </div>
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card
-              bordered={false}
-              style={{
-                borderRadius: "16px",
-                background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
-                color: "white",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <div style={{ fontSize: "14px", opacity: 0.9, marginBottom: "8px" }}>Đang xét nghiệm</div>
-                  <div style={{ fontSize: "32px", fontWeight: "bold" }}>{patientStats.testing}</div>
-                  <div style={{ fontSize: "12px", opacity: 0.8, marginTop: "4px" }}>
-                    <MedicineBoxOutlined /> Chờ kết quả
-                  </div>
+              <CheckCircleOutlined className="text-5xl opacity-30" />
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-pink-500 to-yellow-400 rounded-2xl p-6 text-white">
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="text-sm opacity-90 mb-2">Chờ kết quả XN</div>
+                <div className="text-3xl font-bold">{patientStats.testing}</div>
+                <div className="text-xs opacity-80 mt-1 flex items-center">
+                  <MedicineBoxOutlined className="mr-1" /> Chờ kết quả
                 </div>
-                <MedicineBoxOutlined style={{ fontSize: "48px", opacity: 0.3 }} />
               </div>
-            </Card>
-          </Col>
-        </Row>
+              <MedicineBoxOutlined className="text-5xl opacity-30" />
+            </div>
+          </div>
+        </div>
 
         {/* Main Content */}
-        <Row gutter={[24, 24]}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column */}
-          <Col xs={24} lg={16}>
+          <div className="lg:col-span-2 space-y-6">
             {/* Recent Patients */}
-            <Card
-              title={
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <TeamOutlined style={{ marginRight: "8px", color: "#047481" }} />
-                  <span style={{ fontWeight: 600 }}>Bệnh nhân gần đây</span>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+              <div className="p-6 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <TeamOutlined className="mr-2 text-teal-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Bệnh nhân gần đây</h3>
+                  </div>
+                  <a
+                    href="/doctor/examination/patients"
+                    className="text-teal-600 font-medium hover:text-teal-700 transition-colors"
+                  >
+                    Xem tất cả →
+                  </a>
                 </div>
-              }
-              extra={
-                <a
-                  href="/examination/patients"
-                  style={{
-                    color: "#047481",
-                    fontWeight: 500,
-                    textDecoration: "none",
-                  }}
-                >
-                  Xem tất cả →
-                </a>
-              }
-              bordered={false}
-              style={{
-                borderRadius: "16px",
-                marginBottom: "24px",
-                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-              }}
-            >
-              <Table
-                dataSource={recentPatients}
-                columns={patientColumns}
-                pagination={false}
-                rowKey="id"
-                style={{ borderRadius: "12px" }}
-              />
-            </Card>
+              </div>
+              <div className="p-6">
+                <Table
+                  dataSource={recentPatients}
+                  columns={patientColumns}
+                  pagination={false}
+                  rowKey="appointmentId"
+                  loading={loading}
+                  className="rounded-lg"
+                />
+              </div>
+            </div>
 
             {/* Calendar */}
-            <Card
-              title={
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <CalendarOutlined style={{ marginRight: "8px", color: "#047481" }} />
-                  <span style={{ fontWeight: 600 }}>Lịch làm việc</span>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+              <div className="p-6 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <CalendarOutlined className="mr-2 text-teal-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Lịch làm việc</h3>
+                  </div>
+                  <a
+                    href="/examination/schedule"
+                    className="text-teal-600 font-medium hover:text-teal-700 transition-colors"
+                  >
+                    Xem chi tiết →
+                  </a>
                 </div>
-              }
-              extra={
-                <a
-                  href="/examination/schedule"
-                  style={{
-                    color: "#047481",
-                    fontWeight: 500,
-                    textDecoration: "none",
-                  }}
-                >
-                  Xem chi tiết →
-                </a>
-              }
-              bordered={false}
-              style={{
-                borderRadius: "16px",
-                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-              }}
-            >
-              <Calendar fullscreen={false} dateCellRender={dateCellRender} />
-            </Card>
-          </Col>
+              </div>
+              <div className="p-6">
+                <Calendar fullscreen={false} dateCellRender={dateCellRender} />
+              </div>
+            </div>
+          </div>
 
           {/* Right Column */}
-          <Col xs={24} lg={8}>
+          <div className="space-y-6">
             {/* Upcoming Appointments */}
-            <Card
-              title={
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <ClockCircleOutlined style={{ marginRight: "8px", color: "#047481" }} />
-                  <span style={{ fontWeight: 600 }}>Lịch hẹn sắp tới</span>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+              <div className="p-6 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <ClockCircleOutlined className="mr-2 text-teal-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Lịch hẹn sắp tới</h3>
+                  </div>
+                  <a
+                    href="/doctor/examination/patients"
+                    className="text-teal-600 font-medium hover:text-teal-700 transition-colors"
+                  >
+                    Xem tất cả →
+                  </a>
                 </div>
-              }
-              extra={
-                <a
-                  href="/examination/appointment"
-                  style={{
-                    color: "#047481",
-                    fontWeight: 500,
-                    textDecoration: "none",
-                  }}
-                >
-                  Xem tất cả →
-                </a>
-              }
-              bordered={false}
-              style={{
-                borderRadius: "16px",
-                marginBottom: "24px",
-                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-              }}
-            >
-              <List
-                itemLayout="horizontal"
-                dataSource={upcomingAppointments}
-                renderItem={(item) => (
-                  <List.Item style={{ padding: "12px 0", borderBottom: "1px solid #f3f4f6" }}>
-                    <List.Item.Meta
-                      avatar={<Avatar src={item.avatar} size={48} style={{ border: "2px solid #f0f9ff" }} />}
-                      title={
+              </div>
+              <div className="p-6">
+                <List
+                  itemLayout="horizontal"
+                  dataSource={upcomingAppointments}
+                  loading={loading}
+                  renderItem={(item) => (
+                    <div className="flex items-start space-x-3 py-3 border-b border-gray-100 last:border-b-0">
+                      <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-semibold text-lg border-2 border-blue-50 flex-shrink-0">
+                        {item?.patientInfo?.fullName?.charAt(0)?.toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
                         <a
-                          href={`/examination/patient/detail?id=${item.id}`}
-                          style={{
-                            fontWeight: 600,
-                            color: "#111827",
-                            textDecoration: "none",
-                          }}
+                          href={`/examination/patient/detail?id=${item.appointmentId}`}
+                          className="block font-semibold text-gray-900 hover:text-teal-600 transition-colors"
                         >
-                          {item.patientName}
+                          {item?.patientInfo?.fullName}
                         </a>
-                      }
-                      description={
-                        <div>
-                          <div style={{ marginBottom: "4px", color: "#6b7280" }}>
-                            <ClockCircleOutlined style={{ marginRight: "4px" }} />
-                            {item.date} - {item.time}
+                        <div className="mt-1">
+                          <div className="text-sm text-gray-600 mb-1 flex items-center">
+                            <ClockCircleOutlined className="mr-1" />
+                            {formatAppointmentDate(item?.schedule?.workDate)} -
                           </div>
-                          <span
-                            style={{
-                              color: item.status === "confirmed" ? "#059669" : "#d97706",
-                              backgroundColor: item.status === "confirmed" ? "#d1fae5" : "#fef3c7",
-                              padding: "2px 8px",
-                              borderRadius: "12px",
-                              fontSize: "12px",
-                              fontWeight: 500,
-                            }}
-                          >
-                            {item.status === "confirmed" ? "Đã xác nhận" : "Chờ xác nhận"}
+                          <span className="inline-block bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+                            {getAppointmentStatusVietnameseText(item.appointmentStatus)}
                           </span>
                         </div>
-                      }
-                    />
-                  </List.Item>
-                )}
-              />
-            </Card>
+                      </div>
+                    </div>
+                  )}
+                />
+              </div>
+            </div>
 
             {/* Clinic Info */}
-            <Card
-              title={<span style={{ fontWeight: 600 }}>Thông tin phòng khám</span>}
-              bordered={false}
-              style={{
-                borderRadius: "16px",
-                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-              }}
-            >
-              <div style={{ marginBottom: "20px" }}>
-                <Text style={{ color: "#6b7280", fontSize: "14px" }}>Phòng khám</Text>
-                <div style={{ fontWeight: 600, fontSize: "16px", color: "#111827" }}>Phòng khám nội</div>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+              <div className="p-6 border-b border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900">Thông tin phòng khám</h3>
               </div>
-
-              <Divider style={{ margin: "16px 0" }} />
-
-              <div style={{ marginBottom: "20px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                  <Text style={{ color: "#6b7280" }}>Số bệnh nhân đang chờ</Text>
-                  <Text style={{ fontWeight: 600, color: "#d97706" }}>12</Text>
+              <div className="p-6">
+                <div className="mb-5">
+                  <p className="text-sm text-gray-600 mb-1">Phòng khám</p>
+                  <p className="text-base font-semibold text-gray-900">Phòng khám nội</p>
                 </div>
-                <Progress percent={75} strokeColor="#f59e0b" trailColor="#fef3c7" showInfo={false} />
-              </div>
 
-              <div>
-                <Text style={{ color: "#6b7280", fontSize: "14px" }}>Thời gian làm việc</Text>
-                <div style={{ fontWeight: 600, fontSize: "16px", color: "#111827" }}>07:00 - 18:00</div>
+                <div className="border-t border-gray-200 pt-5 mb-5">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-600">Tiến độ công việc hôm nay</span>
+                    <span className="text-sm font-semibold text-green-600">68%</span>
+                  </div>
+                  <div className="w-full bg-green-50 rounded-full h-2">
+                    <div 
+                      className="bg-green-500 h-2 rounded-full transition-all duration-300" 
+                      style={{ width: '68%' }}
+                    ></div>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Thời gian làm việc</p>
+                  <p className="text-base font-semibold text-gray-900">07:00 - 18:00</p>
+                </div>
               </div>
-            </Card>
-          </Col>
-        </Row>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

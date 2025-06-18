@@ -15,43 +15,46 @@ export const useServiceOrderModal = (appointmentId?: number) => {
   const [loading, setLoading] = useState(false)
   const [searchLoading, setSearchLoading] = useState(false)
   const [roomsLoading, setRoomsLoading] = useState(false)
+  const [dataLoaded, setDataLoaded] = useState({ services: false, rooms: false })
 
-  // Fetch all services on component mount
   const fetchServices = useCallback(async () => {
+    if (dataLoaded.services) return
+
     setLoading(true)
     try {
       const data = await servicesService.getAllServices()
       setServices(data)
+      setDataLoaded((prev) => ({ ...prev, services: true }))
     } catch (error) {
       console.error("Error fetching services:", error)
       message.error("Không thể tải danh sách dịch vụ")
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [dataLoaded.services])
 
-  // Fetch test rooms
   const fetchTestRooms = useCallback(async () => {
+    if (dataLoaded.rooms) return
+
     setRoomsLoading(true)
     try {
       const rooms = await examinationRoomService.getTestRooms()
       setTestRooms(rooms)
+      setDataLoaded((prev) => ({ ...prev, rooms: true }))
     } catch (error) {
       console.error("Error fetching test rooms:", error)
       message.error("Không thể tải danh sách phòng xét nghiệm")
     } finally {
       setRoomsLoading(false)
     }
-  }, [])
+  }, [dataLoaded.rooms])
 
-  // Search services by name
   const searchServices = useCallback(
     async (searchTerm: string): Promise<Services[]> => {
       if (!searchTerm.trim()) return []
 
       setSearchLoading(true)
       try {
-        // Filter services locally for better performance
         const filtered = services.filter((service) =>
           service.serviceName.toLowerCase().includes(searchTerm.toLowerCase()),
         )
@@ -66,7 +69,6 @@ export const useServiceOrderModal = (appointmentId?: number) => {
     [services],
   )
 
-  // Create service order
   const createServiceOrder = useCallback(
     async (serviceId: number, roomId: number): Promise<ServiceOrder | null> => {
       if (!appointmentId) {
@@ -75,17 +77,7 @@ export const useServiceOrderModal = (appointmentId?: number) => {
       }
 
       try {
-        const serviceOrderData: Partial<ServiceOrder> = {
-          appointmentId,
-          roomId,
-          orderStatus: "ORDERED",
-          result: "",
-          number: 1,
-          orderTime: new Date().toISOString(),
-          resultTime: "",
-        }
-
-        const result = await createServiceOrderAPI(serviceId, serviceOrderData as ServiceOrder)
+        const result = await createServiceOrderAPI(appointmentId, serviceId, roomId)
         message.success("Tạo chỉ định thành công")
         return result
       } catch (error) {
@@ -97,7 +89,6 @@ export const useServiceOrderModal = (appointmentId?: number) => {
     [appointmentId],
   )
 
-  // Get room display name
   const getRoomDisplayName = useCallback(
     (roomId: number): string => {
       const room = testRooms.find((r) => r.roomId === roomId)
@@ -107,7 +98,6 @@ export const useServiceOrderModal = (appointmentId?: number) => {
     [testRooms],
   )
 
-  // Initialize data
   useEffect(() => {
     fetchServices()
     fetchTestRooms()
@@ -122,7 +112,5 @@ export const useServiceOrderModal = (appointmentId?: number) => {
     searchServices,
     createServiceOrder,
     getRoomDisplayName,
-    refreshServices: fetchServices,
-    refreshTestRooms: fetchTestRooms,
   }
 }

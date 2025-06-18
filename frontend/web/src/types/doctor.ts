@@ -9,6 +9,7 @@ export interface Doctor {
   identityNumber: string
   fullName: string
   birthday: string
+  avatar: string
   gender: "MALE" | "FEMALE" 
   address: string
   academicDegree: "BS" | "BS_CKI" | "BS_CKII" | "THS_BS" | "TS_BS" | "PGS_TS_BS" | "GS_TS_BS"

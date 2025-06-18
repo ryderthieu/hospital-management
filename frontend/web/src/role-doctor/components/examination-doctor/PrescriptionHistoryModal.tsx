@@ -1,34 +1,39 @@
-"use client";
+"use client"
 
-import type React from "react";
-import { Modal, Typography, Row, Col, Divider, Table } from "antd";
-import {
-  CalendarOutlined,
-  UserOutlined,
-  FileTextOutlined,
-} from "@ant-design/icons";
-import type { Prescription } from "../../types/prescription";
+import type React from "react"
+import { Modal, Typography, Row, Col, Divider, Table } from "antd"
+import { CalendarOutlined, UserOutlined, FileTextOutlined } from "@ant-design/icons"
+import type { Prescription } from "../../types/prescription"
+import { PrescriptionPDF } from "./PrescriptionPDF"
+import type { PatientInfo } from "../../types/patient"
 
-const { Text, Title } = Typography;
+const { Text, Title } = Typography
 
 interface PrescriptionHistoryModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  prescription: Prescription | null;
+  isOpen: boolean
+  onClose: () => void
+  prescription: Prescription | null
+  patientName?: string
+  patientInfo?: PatientInfo
 }
 
-export const PrescriptionHistoryModal: React.FC<
-  PrescriptionHistoryModalProps
-> = ({ isOpen, onClose, prescription }) => {
-  if (!prescription) return null;
+export const PrescriptionHistoryModal: React.FC<PrescriptionHistoryModalProps> = ({
+  isOpen,
+  onClose,
+  prescription,
+  patientName,
+  patientInfo
+}) => {
+  if (!prescription) return null
+  
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("vi-VN");
-  };
+    return new Date(dateString).toLocaleDateString("vi-VN")
+  }
 
   const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("vi-VN");
-  };
+    return new Date(dateString).toLocaleString("vi-VN")
+  }
 
   // Columns for prescription details table
   const columns = [
@@ -39,9 +44,7 @@ export const PrescriptionHistoryModal: React.FC<
       render: (text: string, record: any) => (
         <div>
           <div className="font-medium">{text}</div>
-          <div className="text-sm text-gray-500">
-            {record.medicine.category}
-          </div>
+          <div className="text-sm text-gray-500">{record.medicine.category}</div>
           <div className="text-xs text-gray-400">
             {record.medicine.price.toLocaleString("vi-VN")} VNĐ/
             {record.medicine.unit}
@@ -101,17 +104,10 @@ export const PrescriptionHistoryModal: React.FC<
         </div>
       ),
     },
-  ];
+  ]
 
   return (
-    <Modal
-      title="Chi tiết đơn thuốc"
-      open={isOpen}
-      onCancel={onClose}
-      footer={null}
-      width={1000}
-      style={{ top: 20 }}
-    >
+    <Modal title="Chi tiết đơn thuốc" open={isOpen} onCancel={onClose} footer={null} width={1200} style={{ top: 20 }}>
       <div className="max-h-[80vh] overflow-y-auto">
         {/* Header Information */}
         <div className="bg-gray-50 p-4 rounded-lg mb-6">
@@ -152,14 +148,22 @@ export const PrescriptionHistoryModal: React.FC<
                   Hẹn tái khám:
                 </Text>
                 <Text strong className="ml-2">
-                  {prescription.followUpDate
-                    ? prescription.followUpDate.split("-").reverse().join("-")
-                    : "Không"}
+                  {prescription.followUpDate ? prescription.followUpDate.split("-").reverse().join("-") : "Không"}
                 </Text>
               </div>
             </Col>
           </Row>
         </div>
+
+        {/* PDF Actions */}
+        {/* <div className="mb-6 flex justify-end gap-2">
+          <PrescriptionPDF
+            prescription={prescription}
+            patientName={patientName}
+            showControls={true}
+            className="inline-block"
+          />
+        </div> */}
 
         {/* Vital Signs */}
         <div className="mb-6">
@@ -170,36 +174,28 @@ export const PrescriptionHistoryModal: React.FC<
             <Col span={6}>
               <div className="text-center p-3 bg-blue-50 rounded">
                 <div className="text-sm text-gray-500">Huyết áp tâm thu</div>
-                <div className="text-lg font-semibold text-blue-600">
-                  {prescription.systolicBloodPressure}
-                </div>
+                <div className="text-lg font-semibold text-blue-600">{prescription.systolicBloodPressure}</div>
                 <div className="text-xs text-gray-400">mmHg</div>
               </div>
             </Col>
             <Col span={6}>
               <div className="text-center p-3 bg-green-50 rounded">
                 <div className="text-sm text-gray-500">Huyết áp tâm trương</div>
-                <div className="text-lg font-semibold text-green-600">
-                  {prescription.diastolicBloodPressure}
-                </div>
+                <div className="text-lg font-semibold text-green-600">{prescription.diastolicBloodPressure}</div>
                 <div className="text-xs text-gray-400">mmHg</div>
               </div>
             </Col>
             <Col span={6}>
               <div className="text-center p-3 bg-red-50 rounded">
                 <div className="text-sm text-gray-500">Nhịp tim</div>
-                <div className="text-lg font-semibold text-red-600">
-                  {prescription.heartRate}
-                </div>
+                <div className="text-lg font-semibold text-red-600">{prescription.heartRate}</div>
                 <div className="text-xs text-gray-400">bpm</div>
               </div>
             </Col>
             <Col span={6}>
               <div className="text-center p-3 bg-yellow-50 rounded">
                 <div className="text-sm text-gray-500">Đường huyết</div>
-                <div className="text-lg font-semibold text-yellow-600">
-                  {prescription.bloodSugar}
-                </div>
+                <div className="text-lg font-semibold text-yellow-600">{prescription.bloodSugar}</div>
                 <div className="text-xs text-gray-400">mg/dL</div>
               </div>
             </Col>
@@ -250,26 +246,25 @@ export const PrescriptionHistoryModal: React.FC<
           <Row gutter={24}>
             <Col span={12}>
               <Text strong>Tổng số loại thuốc: </Text>
-              <Text className="text-blue-600">
-                {prescription.prescriptionDetails.length} loại
-              </Text>
+              <Text className="text-blue-600">{prescription.prescriptionDetails.length} loại</Text>
             </Col>
             <Col span={12}>
               <Text strong>Tổng giá trị đơn thuốc: </Text>
               <Text className="text-blue-600">
                 {prescription.prescriptionDetails
-                  .reduce(
-                    (total, detail) =>
-                      total + detail.medicine.price * Number(detail.quantity),
-                    0
-                  )
+                  .reduce((total, detail) => total + detail.medicine.price * Number(detail.quantity), 0)
                   .toLocaleString("vi-VN")}{" "}
                 VNĐ
               </Text>
             </Col>
           </Row>
         </div>
+
+        {/* Hidden PDF Component for generation */}
+        <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
+          <PrescriptionPDF prescription={prescription} patientName={patientName} patientInfo={patientInfo} showControls={false} />
+        </div>
       </div>
     </Modal>
-  );
-};
+  )
+}

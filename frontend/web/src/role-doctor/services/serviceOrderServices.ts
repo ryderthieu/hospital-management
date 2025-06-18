@@ -1,6 +1,12 @@
 import { api } from "../../services/api"
 import type { ServiceOrder } from "../types/serviceOrder"
 
+// Interface cho filter parameters
+export interface ServiceOrderFilterParams {
+  status?: string
+  orderDate?: string // YYYY-MM-DD format
+}
+
 // Lấy tất cả các đơn dịch vụ theo serviceId
 export const getAllServiceOrders = async (serviceId: number): Promise<ServiceOrder[]> => {
   const response = await api.get(`/appointments/services/${serviceId}/service-orders`)
@@ -8,10 +14,7 @@ export const getAllServiceOrders = async (serviceId: number): Promise<ServiceOrd
 }
 
 // Lấy một đơn dịch vụ cụ thể theo serviceId và orderId
-export const getServiceOrderById = async (
-  serviceId: number,
-  orderId: number
-): Promise<ServiceOrder> => {
+export const getServiceOrderById = async (serviceId: number, orderId: number): Promise<ServiceOrder> => {
   const response = await api.get(`/appointments/services/${serviceId}/service-orders/${orderId}`)
   return response.data
 }
@@ -20,12 +23,12 @@ export const getServiceOrderById = async (
 export const createServiceOrder = async (
   appointmentId: number,
   serviceId: number,
-  roomId: number
+  roomId: number,
 ): Promise<ServiceOrder> => {
   const serviceOrder = {
     appointmentId,
     serviceId,
-    roomId
+    roomId,
   }
 
   const response = await api.post(`/appointments/services/service-orders`, serviceOrder)
@@ -36,33 +39,40 @@ export const createServiceOrder = async (
 export const updateServiceOrder = async (
   serviceId: number,
   orderId: number,
-  ServiceOrder: ServiceOrder
+  ServiceOrder: ServiceOrder,
 ): Promise<ServiceOrder> => {
   const response = await api.put(`/appointments/services/service-orders/${orderId}`, ServiceOrder)
   return response.data
 }
 
 // Xóa đơn dịch vụ theo serviceId và orderId
-export const deleteServiceOrder = async (
-  serviceId: number,
-  orderId: number
-): Promise<string> => {
+export const deleteServiceOrder = async (serviceId: number, orderId: number): Promise<string> => {
   const response = await api.delete(`/appointments/services/${serviceId}/service-orders/${orderId}`)
   return response.data // "Đặt dịch vụ đã xóa thành công"
 }
 
 // Lấy tất cả đơn dịch vụ theo appointmentId
-export const getServiceOrdersByAppointmentId = async (
-  appointmentId: number
-): Promise<ServiceOrder[]> => {
+export const getServiceOrdersByAppointmentId = async (appointmentId: number): Promise<ServiceOrder[]> => {
   const response = await api.get(`/appointments/services/appointments/${appointmentId}/orders`)
   return response.data
 }
 
-// Lấy tất cả đơn dịch vụ theo roomId
+// Lấy tất cả đơn dịch vụ theo roomId với filter
 export const getServiceOrdersByRoomId = async (
-   roomId: number
+  roomId: number,
+  status?: string,
+  orderDate?: string,
 ): Promise<ServiceOrder[]> => {
-  const response = await api.get(`/appointments/services/rooms/${roomId}/orders`)
+  const params: any = {}
+
+  if (status) {
+    params.status = status
+  }
+
+  if (orderDate) {
+    params.orderDate = orderDate
+  }
+
+  const response = await api.get(`/appointments/services/rooms/${roomId}/orders`, { params })
   return response.data
 }

@@ -5,7 +5,7 @@ import { useState } from "react"
 import WeCareLoading from "../../common/WeCareLoading"
 import { ChevronLeft, ChevronRight, Clock, BriefcaseMedical } from "lucide-react"
 import { Modal, Select, Tabs, Button, Card, Progress, Badge, Tooltip, Empty, Descriptions } from "antd"
-import { useSchedule } from "../../../hooks/useSchedule"
+import { useScheduleContext } from "../../../contexts/ScheduleContext"
 import {
   formatMonthYear,
   formatDateRange,
@@ -47,7 +47,7 @@ const MonthView: React.FC<MonthViewProps> = ({ calendarDays, onDayClick }) => {
         return (
           <div
             key={index}
-            className={`border-r border-b border-gray-200 min-h-24 p-2 relative cursor-pointer transition-all duration-200 hover:bg-base-50 ${
+            className={`border-r border-b border-gray-200 min-h-32 p-2 relative cursor-pointer transition-all duration-200 hover:bg-base-50 ${
               !day.isCurrentMonth
                 ? "bg-gray-100 text-gray-400"
                 : isToday
@@ -56,13 +56,12 @@ const MonthView: React.FC<MonthViewProps> = ({ calendarDays, onDayClick }) => {
             }`}
             onClick={() => onDayClick(day.date)}
           >
-            <div className="relative w-full h-full">
-              <span className="flex items-center justify-center text-lg h-full">{day.date.getDate()}</span>
+            <div className="flex justify-between items-start mb-2">
+              <span className="text-lg font-semibold">{day.date.getDate()}</span>
               {day.scheduleCount > 0 && (
                 <Badge
                   count={day.scheduleCount}
                   size="default"
-                  className="absolute -top-21 -right-44"
                   style={{
                     backgroundColor: isToday ? "#ffffff" : "#036672",
                     color: isToday ? "#036672" : "#ffffff",
@@ -72,6 +71,25 @@ const MonthView: React.FC<MonthViewProps> = ({ calendarDays, onDayClick }) => {
                     lineHeight: "16px",
                   }}
                 />
+              )}
+            </div>
+
+            {/* Schedule time labels */}
+            <div className="space-y-1">
+              {day.schedules.slice(0, 3).map((schedule, scheduleIndex) => (
+                <div
+                  key={scheduleIndex}
+                  className={`text-xs px-2 py-1 rounded truncate ${
+                    isToday ? "bg-white bg-opacity-20 text-white" : "bg-green-100 text-green-800"
+                  }`}
+                >
+                  {formatTimeRange(schedule.startTime, schedule.endTime)}
+                </div>
+              ))}
+              {day.schedules.length > 3 && (
+                <div className={`text-xs ${isToday ? "text-white opacity-80" : "text-gray-500"}`}>
+                  +{day.schedules.length - 3} ca khác
+                </div>
               )}
             </div>
           </div>
@@ -263,7 +281,9 @@ const WeekView: React.FC<WeekViewProps & { onScheduleClick: (schedule: Schedule)
                         {sch.title}
                       </div>
                       <div className="text-xs text-gray-600 mt-1">{formatTimeRange(sch.startTime, sch.endTime)}</div>
-                      <div className="text-xs text-gray-600 mt-1">{sch.shift === "MORNING" ? "Buổi sáng" : "Buổi chiều"}</div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        {sch.shift === "MORNING" ? "Buổi sáng" : "Buổi chiều"}
+                      </div>
                       <div className="text-xs text-gray-600 mt-1">{sch.roomNote}</div>
                     </div>
                   </Tooltip>
@@ -320,11 +340,14 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ selectedDay, schedules, o
                     <span>{formatTimeRange(schedule.startTime, schedule.endTime)}</span>
                   </div>
 
-                  <div className="text-sm text-gray-600 mb-2">{schedule.shift === "MORNING" ? "Buổi sáng" : "Buổi chiều"}</div>
+                  <div className="text-sm text-gray-600 mb-2">
+                    {schedule.shift === "MORNING" ? "Buổi sáng" : "Buổi chiều"}
+                  </div>
 
-                  <div className="text-sm text-gray-600">Địa điểm: {"Tòa nhà " + schedule.building + ", tầng " + schedule.floor + ", " +  schedule.roomNote}</div>
+                  <div className="text-sm text-gray-600">
+                    Địa điểm: {"Tòa nhà " + schedule.building + ", tầng " + schedule.floor + ", " + schedule.roomNote}
+                  </div>
                 </div>
-
               </div>
             </Card>
           ))}
@@ -359,21 +382,15 @@ const ScheduleDetailModal: React.FC<{
     >
       <Descriptions column={1} bordered size="small">
         <Descriptions.Item label="Loại công việc" labelStyle={{ fontWeight: "bold" }}>
-          <div className="flex items-center">
-            {schedule.title}
-          </div>
+          <div className="flex items-center">{schedule.title}</div>
         </Descriptions.Item>
 
         <Descriptions.Item label="Thời gian" labelStyle={{ fontWeight: "bold" }}>
-          <div className="flex items-center">
-            {formatTimeRange(schedule.startTime, schedule.endTime)}
-          </div>
+          <div className="flex items-center">{formatTimeRange(schedule.startTime, schedule.endTime)}</div>
         </Descriptions.Item>
 
         <Descriptions.Item label="Ngày" labelStyle={{ fontWeight: "bold" }}>
-          <div className="flex items-center">
-            {formatScheduleDate(schedule.date)}
-          </div>
+          <div className="flex items-center">{formatScheduleDate(schedule.date)}</div>
         </Descriptions.Item>
 
         <Descriptions.Item label="Ca làm việc" labelStyle={{ fontWeight: "bold" }}>
@@ -381,7 +398,7 @@ const ScheduleDetailModal: React.FC<{
         </Descriptions.Item>
 
         <Descriptions.Item label="Địa điểm" labelStyle={{ fontWeight: "bold" }}>
-          <span>{"Tòa nhà " + schedule.building + ", tầng " + schedule.floor + ", " +  schedule.roomNote}</span>
+          <span>{"Tòa nhà " + schedule.building + ", tầng " + schedule.floor + ", " + schedule.roomNote}</span>
         </Descriptions.Item>
       </Descriptions>
     </Modal>
@@ -407,7 +424,8 @@ export const ScheduleComponent: React.FC = () => {
     handleNextPeriod,
     handleDayClick,
     handleCloseScheduleModal,
-  } = useSchedule()
+    refreshSchedules,
+  } = useScheduleContext()
 
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null)
 
@@ -445,9 +463,7 @@ export const ScheduleComponent: React.FC = () => {
     setSelectedSchedule(null)
   }
 
-  if(loading) return <WeCareLoading />
-  
-  else
+  if (loading) return <WeCareLoading />
 
   return (
     <div className="w-full bg-white rounded-lg shadow-sm">
@@ -502,51 +518,59 @@ export const ScheduleComponent: React.FC = () => {
               <Option value="week">Tuần</Option>
             </Select>
           </div>
+
+          <Button onClick={() => refreshSchedules()} loading={loading}>
+            Làm mới
+          </Button>
         </div>
       </div>
 
-      {/* Month Tabs */}
-      <div className="custom-tabs px-5">
-        <Tabs
-          activeKey={(currentDate.getMonth() + 1).toString()}
-          onChange={handleMonthChange}
-          type="line"
-          size="large"
-          items={monthTabs.map((tab) => ({
-            key: tab.key,
-            label: tab.label,
-          }))}
-        />
-      </div>
+      {/* Month Tabs - Only show in month view */}
+      {view === "month" && (
+        <div className="custom-tabs px-5">
+          <Tabs
+            activeKey={(currentDate.getMonth() + 1).toString()}
+            onChange={handleMonthChange}
+            type="line"
+            size="large"
+            items={monthTabs.map((tab) => ({
+              key: tab.key,
+              label: tab.label,
+            }))}
+          />
+        </div>
+      )}
 
-      {/* Working Hours */}
-      <div className="flex space-x-8 mb-6 px-4">
-        <Card size="small" className="flex-1">
-          <div className="text-sm text-gray-600 mb-2">Tổng số giờ làm việc trong tuần</div>
-          <div className="flex items-center">
-            <Progress
-              percent={Math.min(100, (totalWeekHours / 40) * 100)} // Assuming 40 hours is a full work week
-              showInfo={false}
-              strokeColor={{ from: "#52c41a", to: "#73d13d" }}
-              className="flex-1 mr-3"
-            />
-            <span className="font-semibold text-gray-800">{totalWeekHours}h</span>
-          </div>
-        </Card>
+      {/* Working Hours - Only show in month view */}
+      {view === "month" && (
+        <div className="flex space-x-8 mb-6 px-4">
+          <Card size="small" className="flex-1">
+            <div className="text-sm text-gray-600 mb-2">Tổng số giờ làm việc trong tuần</div>
+            <div className="flex items-center">
+              <Progress
+                percent={Math.min(100, (totalWeekHours / 40) * 100)} // Assuming 40 hours is a full work week
+                showInfo={false}
+                strokeColor={{ from: "#52c41a", to: "#73d13d" }}
+                className="flex-1 mr-3"
+              />
+              <span className="font-semibold text-gray-800">{totalWeekHours}h</span>
+            </div>
+          </Card>
 
-        <Card size="small" className="flex-1">
-          <div className="text-sm text-gray-600 mb-2">Tổng số giờ làm việc trong tháng</div>
-          <div className="flex items-center">
-            <Progress
-              percent={Math.min(100, (totalMonthHours / 160) * 100)} // Assuming 160 hours is a full work month
-              showInfo={false}
-              strokeColor={{ from: "#1890ff", to: "#40a9ff" }}
-              className="flex-1 mr-3"
-            />
-            <span className="font-semibold text-gray-800">{totalMonthHours}h</span>
-          </div>
-        </Card>
-      </div>
+          <Card size="small" className="flex-1">
+            <div className="text-sm text-gray-600 mb-2">Tổng số giờ làm việc trong tháng</div>
+            <div className="flex items-center">
+              <Progress
+                percent={Math.min(100, (totalMonthHours / 160) * 100)} // Assuming 160 hours is a full work month
+                showInfo={false}
+                strokeColor={{ from: "#1890ff", to: "#40a9ff" }}
+                className="flex-1 mr-3"
+              />
+              <span className="font-semibold text-gray-800">{totalMonthHours}h</span>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Calendar */}
       <Card className="mx-4 mb-4" bodyStyle={{ padding: 0 }}>

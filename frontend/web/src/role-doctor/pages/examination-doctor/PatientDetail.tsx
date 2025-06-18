@@ -1,6 +1,8 @@
+"use client"
+
 import type React from "react"
 import { useState, useEffect, useCallback } from "react"
-import { useLocation } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import {
   Row,
   Col,
@@ -15,6 +17,8 @@ import {
   InputNumber,
   message,
   Empty,
+  Select,
+  Tag,
 } from "antd"
 import {
   PlusOutlined,
@@ -25,6 +29,7 @@ import {
   ReloadOutlined,
   CloseOutlined,
   MedicineBoxOutlined,
+  UserOutlined,
 } from "@ant-design/icons"
 import { PrescriptionModal } from "../../components/examination-doctor/PrescriptionModal"
 import { ServiceOrderModal } from "../../components/examination-doctor/ServiceOrderModal"
@@ -32,6 +37,7 @@ import { PrescriptionHistoryModal } from "../../components/examination-doctor/Pr
 import { TestResultDetailModal } from "../../components/examination-doctor/TestResultDetailModal"
 import { usePatientDetail } from "../../hooks/usePatientDetail"
 import { usePrescriptionHistory } from "../../hooks/usePrescriptionHistory"
+import { useAppointmentContext } from "../../contexts/AppointmentContext"
 import { NoteType } from "../../types/appointmentNote"
 import type { Prescription } from "../../types/prescription"
 import type { ServiceOrder } from "../../types/serviceOrder"
@@ -41,6 +47,7 @@ import { stringToDate, dateToString } from "../../services/dateHelperServices"
 
 const { Title, Text } = Typography
 const { TabPane } = Tabs
+const { Option } = Select
 
 const PatientDetail: React.FC = () => {
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false)
@@ -52,7 +59,11 @@ const PatientDetail: React.FC = () => {
   const [noteText, setNoteText] = useState("")
   const [form] = Form.useForm()
   const location = useLocation()
+  const navigate = useNavigate()
   const { appointmentId } = location.state || {}
+
+  // Get appointments from context for patient selection
+  const { appointments } = useAppointmentContext()
 
   const {
     patientDetail,
@@ -112,6 +123,42 @@ const PatientDetail: React.FC = () => {
       form.setFieldsValue(formValues)
     }
   }, [patientDetail, prescription, form])
+
+  // Chuyển trạng thái appoimnet sang hoàn thành khi nhấn "Đang chờ kết quả xét nghiệm"
+  const ChangeToPendingTestStatus = async () => {
+    if (!appointmentId) {
+      message.error("Không tìm thấy thông tin cuộc hẹn")
+      return
+    }
+
+    setPendingTestStatusLoading(true)
+
+    try {
+      const updateAppointmentData = {
+        appointmentId: patientDetail?.appointmentId,
+        doctorId: patientDetail?.doctorId,
+        patientId: patientDetail?.patientInfo?.patientId,
+        scheduleId: patientDetail?.schedule.scheduleId,
+        symptoms: patientDetail?.symptoms,
+        number: patientDetail?.number,
+        slotStart: patientDetail?.slotStart,
+        slotEnd: patientDetail?.slotEnd,
+        appointmentStatus: "PENDING_TEST_RESULT",
+      }
+       console.log("data up:", updateAppointmentData)
+       console.log("data up:", patientDetail)
+
+      // Cập nhật trạng thái
+      await appointmentService.updateAppointmentById(appointmentId, updateAppointmentData)
+
+      message.success("Đã chuyển trạng thái hồ sơ sang: Chờ kết quả xét nghiệm")
+    } catch (error) {
+      console.error("Không thể chuyển đổi trạng thái hồ sơ:", error)
+      message.error("Có lỗi xảy ra khi chuyển đổi trạng thái hồ sơ")
+    } finally {
+      setPendingTestStatusLoading(false)
+    }
+  }
 
   // Chuyển trạng thái appoimnet sang hoàn thành khi nhấn "Hoàn thành khám"
   const handleCompleteExamination = async () => {
@@ -180,39 +227,7 @@ const PatientDetail: React.FC = () => {
     }
   }
 
-  // Chuyển trạng thái appoimnet sang hoàn thành khi nhấn "Đang chờ kết quả xét nghiệm"
-  const ChangeToPendingTestStatus = async () => {
-    if (!appointmentId) {
-      message.error("Không tìm thấy thông tin cuộc hẹn")
-      return
-    }
-
-    setPendingTestStatusLoading(true)
-
-    try {
-      const updateAppointmentData = {
-        appointmentId: patientDetail?.appointmentId,
-        doctorId: patientDetail?.doctorId,
-        patientId: patientDetail?.patientInfo?.patientId,
-        scheduleId: patientDetail?.schedule.scheduleId,
-        symptoms: patientDetail?.symptoms,
-        number: patientDetail?.number,
-        slotStart: patientDetail?.slotStart,
-        slotEnd: patientDetail?.slotEnd,
-        appointmentStatus: "PENDING_TEST_RESULT",
-      }
-
-      // Cập nhật trạng thái
-      await appointmentService.updateAppointmentById(appointmentId, updateAppointmentData)
-
-      message.success("Đã chuyển trạng thái hồ sơ sang: Chờ kết quả xét nghiệm")
-    } catch (error) {
-      console.error("Không thể chuyển đổi trạng thái hồ sơ:", error)
-      message.error("Có lỗi xảy ra khi chuyển đổi trạng thái hồ sơ")
-    } finally {
-      setPendingTestStatusLoading(false)
-    }
-  }
+  
 
   const handleAddNote = () => {
     if (!appointmentId) {
@@ -252,16 +267,6 @@ const PatientDetail: React.FC = () => {
     setIsTestResultDetailModalOpen(true)
   }, [])
 
-  // Chỉ cập nhật toa thuốc khi đóng modal toa thuốc
-  // const handleClosePrescriptionModal = useCallback(() => {
-  //   setIsPrescriptionModalOpen(false);
-  //   // Chỉ refresh toa thuốc, không refresh toàn bộ dữ liệu
-  //   if (appointmentId) {
-  //     fetchPrescription(appointmentId);
-  //   }
-  //   console.log("ID của cuộc hẹn", appointmentId);
-  // }, [appointmentId, fetchPrescription]);
-
   const formatDate = useCallback((dateString?: string) => {
     if (!dateString) return ""
     try {
@@ -286,6 +291,42 @@ const PatientDetail: React.FC = () => {
       return "Định dạng không hợp lệ"
     }
   }, [])
+
+  // Get appointment status display
+  const getAppointmentStatusDisplay = (status?: string) => {
+    switch (status) {
+      case "PENDING":
+        return <Tag color="orange">Chờ khám</Tag>
+      case "IN_PROGRESS":
+        return <Tag color="blue">Đang khám</Tag>
+      case "COMPLETED":
+        return <Tag color="green">Hoàn thành</Tag>
+      case "PENDING_TEST_RESULT":
+        return <Tag color="purple">Chờ kết quả XN</Tag>
+      case "CANCELLED":
+        return <Tag color="red">Đã hủy</Tag>
+      default:
+        return <Tag color="default">Không xác định</Tag>
+    }
+  }
+
+  // Get today's appointments for patient selection
+  const todayAppointments = appointments.filter((apt) => {
+    const today = new Date()
+    const aptDate = new Date(apt.schedule?.workDate || "")
+    return (
+      aptDate.getDate() === today.getDate() &&
+      aptDate.getMonth() === today.getMonth() &&
+      aptDate.getFullYear() === today.getFullYear()
+    )
+  })
+
+  // Handle patient selection change
+  const handlePatientChange = (selectedAppointmentId: number) => {
+    navigate("/examination/patient/detail", {
+      state: { appointmentId: selectedAppointmentId },
+    })
+  }
 
   if (loading && !patientDetail) {
     return (
@@ -321,7 +362,12 @@ const PatientDetail: React.FC = () => {
             <div className="flex flex-row justify-between items-center mb-6">
               <div className="flex flex-col items-center mb-6">
                 <img
-                  src={patientDetail.patientInfo?.avatar ||"https://static-00.iconduck.com/assets.00/avatar-default-symbolic-icon-440x512-ni4kvfm4.png"}
+                  src={
+                    patientDetail.patientInfo?.avatar ||
+                    "https://static-00.iconduck.com/assets.00/avatar-default-symbolic-icon-440x512-ni4kvfm4.png" ||
+                    "/placeholder.svg" ||
+                    "/placeholder.svg"
+                  }
                   alt="Patient"
                   className="w-24 h-24 rounded-full mb-3"
                 />
@@ -454,6 +500,40 @@ const PatientDetail: React.FC = () => {
           {/* Right column - Examination details */}
           <div className="w-full lg:w-3/4 mt-6 lg:mt-0">
             <div className="bg-white rounded-lg p-6 shadow-sm">
+              {/* Patient Selection and Status */}
+              <div className="mb-6 p-4  rounded-lg">
+                <Row gutter={24} align="middle">
+                  <Col span={12}>
+                    {/* <div className="flex items-center space-x-3">
+                      <UserOutlined className="text-blue-600" style={{ fontSize: 18 }} />
+                      <div>
+                        <Text strong style={{ fontSize: 16 }}>
+                          Chọn bệnh nhân:
+                        </Text>
+                        <Select
+                          value={appointmentId}
+                          onChange={handlePatientChange}
+                          style={{ width: 300, marginLeft: 8 }}
+                          placeholder="Chọn bệnh nhân"
+                        >
+                          {todayAppointments.map((apt) => (
+                            <Option key={apt.appointmentId} value={apt.appointmentId}>
+                              {apt.patientInfo?.fullName} - STT: {apt.number}
+                            </Option>
+                          ))}
+                        </Select>
+                      </div>
+                    </div> */}
+                  </Col>
+                  <Col span={12}>
+                    <div className="flex items-center justify-end space-x-3">
+                      <Text strong>Trạng thái:</Text>
+                      {getAppointmentStatusDisplay(patientDetail.appointmentStatus)}
+                    </div>
+                  </Col>
+                </Row>
+              </div>
+
               <Form form={form} layout="vertical">
                 <Row gutter={24}>
                   <Col span={12}>
@@ -629,10 +709,6 @@ const PatientDetail: React.FC = () => {
                             <FileTextOutlined style={{ fontSize: 20 }} className="text-base-600 mr-3 mt-1" />
                             <div className="flex-1">
                               <p className="font-medium">{order?.serviceName || "Không có tên"}</p>
-                              {/* <p className="text-sm text-gray-500">
-                                Loại:{" "}
-                                {order.service?.serviceType || "Không xác định"}
-                              </p> */}
                               <p className="text-sm text-gray-500">Phòng: {order.roomId || "Không xác định"}</p>
                               {order.orderTime && (
                                 <p className="text-sm text-gray-500">
@@ -644,7 +720,34 @@ const PatientDetail: React.FC = () => {
                                   Thời gian trả kết quả: {new Date(order.resultTime).toLocaleString("vi-VN")}
                                 </p>
                               )}
-                              {order.result && <p className="text-sm font-medium mt-1">Kết luận: {order.result}</p>}
+                              {order.result === "COMPLETED" && (
+                                <div className="mt-2">
+                                  <p className="text-sm font-medium">Kết quả:</p>
+                                  <div className="flex items-center space-x-2 mt-1">
+                                    <Button
+                                      size="small"
+                                      type="default"
+                                      onClick={() => window.open(order.result, "_blank")}
+                                    >
+                                      Xem PDF
+                                    </Button>
+                                    <Button
+                                      size="small"
+                                      type="primary"
+                                      onClick={() => {
+                                        const link = document.createElement("a")
+                                        link.href = order.result!
+                                        link.download = `ket-qua-dinh-${order.orderId}.pdf`
+                                        document.body.appendChild(link)
+                                        link.click()
+                                        document.body.removeChild(link)
+                                      }}
+                                    >
+                                      Tải xuống
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
                               <p className="text-sm text-gray-500 mt-1">
                                 Trạng thái: {order.orderStatus === "COMPLETED" ? "Đã có kết quả" : "Đang chờ"}
                               </p>
@@ -747,6 +850,7 @@ const PatientDetail: React.FC = () => {
           setSelectedPrescription(null)
         }}
         prescription={selectedPrescription}
+        patientInfo={patientDetail?.patientInfo}
       />
 
       {/* Test Result Detail Modal */}
@@ -757,6 +861,12 @@ const PatientDetail: React.FC = () => {
           setSelectedServiceOrder(null)
         }}
         serviceOrder={selectedServiceOrder}
+        appointment={patientDetail}
+        examinationRoom={null}
+        onUpdate={(updatedOrder) => {
+          // Update the service orders list
+          refreshSpecific(appointmentId, ["serviceOrders"])
+        }}
       />
     </div>
   )
