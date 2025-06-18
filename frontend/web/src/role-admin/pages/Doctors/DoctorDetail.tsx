@@ -29,56 +29,42 @@ export default function DoctorDetail() {
   const [doctorData, setDoctorData] = useState<DoctorDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [departments, setDepartments] = useState<{[key: number]: string}>({});
+  const [departments, setDepartments] = useState<{ [key: number]: string }>({});
   const [editFormData, setEditFormData] = useState<any>({});
 
   useEffect(() => {
-    console.log("doctorId:", doctorId);
     if (!doctorId || isNaN(Number(doctorId))) {
       setLoading(false);
       setDoctorData(null);
       return;
     }
-    
+
     const fetchData = async () => {
       setLoading(true);
       try {
         // Fetch departments first to create ID-to-name mapping
         const departmentsData = await departmentService.getAllDepartments();
-        console.log("Departments data:", departmentsData);
-        
-        const departmentMapping: {[key: number]: string} = {};
-        departmentsData.forEach(dept => {
+        const departmentMapping: { [key: number]: string } = {};
+        departmentsData.forEach((dept) => {
           if (dept.departmentId) {
             departmentMapping[dept.departmentId] = dept.departmentName;
           }
         });
-        console.log("Department mapping:", departmentMapping);
         setDepartments(departmentMapping);
 
         // Fetch doctor data
         const data = await doctorService.getDoctorById(Number(doctorId));
-        console.log("Doctor data:", data);
-        console.log("Doctor data keys:", Object.keys(data));
-        console.log("Doctor departmentId (direct):", data.departmentId);
-        console.log("Doctor departmentName (direct):", data.departmentName);
-        
-        // Use mapping to get department name - prioritize API data first, then mapping
-        const departmentName = data.departmentName || 
-          (data.departmentId ? departmentMapping[data.departmentId] : "") || 
+        const departmentName =
+          data.departmentName ||
+          (data.departmentId ? departmentMapping[data.departmentId] : "") ||
           "";
-        
-        console.log("Final department name:", departmentName);
-        console.log("departmentMapping[data.departmentId]:", data.departmentId ? departmentMapping[data.departmentId] : "N/A");
 
         setDoctorData({
           ...data,
-          // Ensure these fields are properly set for backward compatibility
           departmentId: data.departmentId ?? 0,
           departmentName: departmentName,
         });
       } catch (err) {
-        console.error("API error:", err);
         setDoctorData(null);
       } finally {
         setLoading(false);
@@ -90,75 +76,64 @@ export default function DoctorDetail() {
 
   const handleSave = async () => {
     if (!doctorData) return;
-    
+
     setSaving(true);
     try {
-      // Get form data using more reliable method
-      const form = document.querySelector('form') as HTMLFormElement;
+      const form = document.querySelector("form") as HTMLFormElement;
       if (!form) {
         throw new Error("Form not found");
       }
-      
-      // Create update payload using more reliable selectors
-      const inputs = form.querySelectorAll('input, select, textarea');
+      const inputs = form.querySelectorAll("input, select, textarea");
       const values: any = {};
-      
       inputs.forEach((input: any) => {
         if (input.name) {
           values[input.name] = input.value;
         }
       });
 
-      console.log("Form values extracted:", values);
-      console.log("Original doctor data:", doctorData);
-
-      // Validate required fields
-      if (!values.fullName || values.fullName.trim() === '') {
+      if (!values.fullName || values.fullName.trim() === "") {
         throw new Error("Họ tên không được để trống");
       }
-      if (!values.identityNumber || values.identityNumber.trim() === '') {
+      if (!values.identityNumber || values.identityNumber.trim() === "") {
         throw new Error("Số CMND/CCCD không được để trống");
       }
-      if (!values.specialization || values.specialization.trim() === '') {
+      if (!values.specialization || values.specialization.trim() === "") {
         throw new Error("Chuyên môn không được để trống");
       }
-      if (!values.phone || values.phone.trim() === '') {
+      if (!values.phone || values.phone.trim() === "") {
         throw new Error("Số điện thoại không được để trống");
       }
 
-      // Map form values to API structure matching backend DoctorDto exactly
       const updateData = {
-        // Required fields - must not be null or empty
-        phone: values.phone?.trim() || doctorData.phone || "0123456789", // Backend requires non-empty phone
+        phone: values.phone?.trim() || doctorData.phone || "0123456789",
         identityNumber: values.identityNumber.trim(),
         fullName: values.fullName.trim(),
-        birthday: values.birthday, // LocalDate format expected
-        gender: values.gender, // Enum: MALE, FEMALE
-        academicDegree: values.academicDegree, // Enum value
+        birthday: values.birthday,
+        gender: values.gender,
+        academicDegree: values.academicDegree,
         specialization: values.specialization.trim(),
-        type: values.type || doctorData.type, // Enum: EXAMINATION, SERVICE
+        type: values.type || doctorData.type,
         departmentId: parseInt(values.departmentId) || doctorData.departmentId,
-        
-        // Optional fields
         email: values.email?.trim() || doctorData.email || "",
         address: values.address || "",
         avatar: doctorData.avatar || "",
-        consultationFee: parseFloat(values.consultationFee) || doctorData.consultationFee || 0,
-        
-        // Keep existing system fields
+        consultationFee:
+          parseFloat(values.consultationFee) || doctorData.consultationFee || 0,
         doctorId: doctorData.doctorId,
         userId: doctorData.userId,
         createdAt: doctorData.createdAt,
       };
 
-      console.log("Updating doctor with data:", updateData);
-      
-      // Call API to update doctor
-      const updatedDoctor = await doctorService.updateDoctor(doctorData.doctorId!, updateData);
-      
-      // Update local state with the response
-      const departmentName = updatedDoctor.departmentName || 
-        (updatedDoctor.departmentId ? departments[updatedDoctor.departmentId] : "") || 
+      const updatedDoctor = await doctorService.updateDoctor(
+        doctorData.doctorId!,
+        updateData
+      );
+
+      const departmentName =
+        updatedDoctor.departmentName ||
+        (updatedDoctor.departmentId
+          ? departments[updatedDoctor.departmentId]
+          : "") ||
         "";
 
       setDoctorData({
@@ -167,24 +142,30 @@ export default function DoctorDetail() {
         departmentName: departmentName,
       });
 
-      console.log("Doctor updated successfully!");
       alert("Cập nhật thông tin bác sĩ thành công!");
       closeEditModal();
     } catch (error) {
-      console.error("Error updating doctor:", error);
-      // Log more details about the error
-      if (error instanceof Error) {
-        console.error("Error message:", error.message);
-        console.error("Error stack:", error.stack);
-      }
       alert("Có lỗi xảy ra khi cập nhật thông tin bác sĩ. Vui lòng thử lại.");
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <div>Đang tải...</div>;
-  if (!doctorData) return <div>Không tìm thấy bác sĩ</div>;
+  if (loading)
+    return (
+      <div className="text-center py-10">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-base-600 mx-auto mb-4"></div>
+        <p className="text-gray-600 dark:text-gray-400">Đang tải dữ liệu...</p>
+      </div>
+    );
+  if (!doctorData)
+    return (
+      <div className="text-center py-10">
+        <p className="text-gray-600 dark:text-gray-400">
+          Không tìm thấy bác sĩ
+        </p>
+      </div>
+    );
 
   return (
     <div className="min-h-screen">
@@ -346,7 +327,13 @@ export default function DoctorDetail() {
                   </label>
                   <input
                     type="text"
-                    value={doctorData.gender === "MALE" ? "Nam" : doctorData.gender === "FEMALE" ? "Nữ" : "Khác"}
+                    value={
+                      doctorData.gender === "MALE"
+                        ? "Nam"
+                        : doctorData.gender === "FEMALE"
+                        ? "Nữ"
+                        : "Khác"
+                    }
                     disabled
                     className="w-full px-3 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                   />
@@ -402,7 +389,11 @@ export default function DoctorDetail() {
                   </label>
                   <input
                     type="text"
-                    value={ACADEMIC_DEGREE_LABELS[doctorData.academicDegree as keyof typeof ACADEMIC_DEGREE_LABELS] || doctorData.academicDegree}
+                    value={
+                      ACADEMIC_DEGREE_LABELS[
+                        doctorData.academicDegree as keyof typeof ACADEMIC_DEGREE_LABELS
+                      ] || doctorData.academicDegree
+                    }
                     disabled
                     className="w-full px-3 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                   />
@@ -426,7 +417,11 @@ export default function DoctorDetail() {
                   </label>
                   <input
                     type="text"
-                    value={doctorData.type === "EXAMINATION" ? "Khám bệnh" : "Dịch vụ"}
+                    value={
+                      doctorData.type === "EXAMINATION"
+                        ? "Khám bệnh"
+                        : "Dịch vụ"
+                    }
                     disabled
                     className="w-full px-3 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                   />
@@ -438,7 +433,9 @@ export default function DoctorDetail() {
                   </label>
                   <input
                     type="text"
-                    value={doctorData.consultationFee?.toLocaleString('vi-VN') || "0"}
+                    value={
+                      doctorData.consultationFee?.toLocaleString("vi-VN") || "0"
+                    }
                     disabled
                     className="w-full px-3 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                   />
@@ -468,7 +465,9 @@ export default function DoctorDetail() {
           <form className="space-y-6">
             {/* Personal Information */}
             <div>
-              <h5 className="text-base font-medium text-gray-900 mb-4">Thông tin cá nhân</h5>
+              <h5 className="text-base font-medium text-gray-900 mb-4">
+                Thông tin cá nhân
+              </h5>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -545,7 +544,7 @@ export default function DoctorDetail() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Giới tính
                   </label>
-                  <select 
+                  <select
                     name="gender"
                     defaultValue={doctorData.gender}
                     className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 transition-colors outline-0"
@@ -571,7 +570,9 @@ export default function DoctorDetail() {
 
             {/* Professional Information */}
             <div>
-              <h5 className="text-base font-medium text-gray-900 mb-4">Thông tin chuyên môn</h5>
+              <h5 className="text-base font-medium text-gray-900 mb-4">
+                Thông tin chuyên môn
+              </h5>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -599,11 +600,13 @@ export default function DoctorDetail() {
                     defaultValue={doctorData.academicDegree}
                     className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 transition-colors outline-0"
                   >
-                    {Object.entries(ACADEMIC_DEGREE_LABELS).map(([key, label]) => (
-                      <option key={key} value={key}>
-                        {label}
-                      </option>
-                    ))}
+                    {Object.entries(ACADEMIC_DEGREE_LABELS).map(
+                      ([key, label]) => (
+                        <option key={key} value={key}>
+                          {label}
+                        </option>
+                      )
+                    )}
                   </select>
                 </div>
                 <div>

@@ -12,6 +12,7 @@ import Label from "../../form/Label";
 export default function UserInfoCard() {
   const { isOpen, openModal, closeModal } = useModal();
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -20,6 +21,8 @@ export default function UserInfoCard() {
         setUser(userData);
       } catch (error) {
         console.error("Lỗi khi lấy thông tin người dùng:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchUser();
@@ -30,8 +33,19 @@ export default function UserInfoCard() {
     closeModal();
   };
 
+  if (loading) {
+    return (
+      <div className="text-center py-10">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-base-600 mx-auto mb-4"></div>
+        <p className="text-gray-600 dark:text-gray-400">
+          Đang tải hồ sơ cá nhân...
+        </p>
+      </div>
+    );
+  }
+
   if (!user) {
-    return <p>Đang tải thông tin...</p>;
+    return <p>Không tìm thấy thông tin người dùng.</p>;
   }
 
   return (
