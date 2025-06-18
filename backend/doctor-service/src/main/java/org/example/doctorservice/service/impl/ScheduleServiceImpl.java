@@ -3,7 +3,6 @@ package org.example.doctorservice.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.example.doctorservice.client.AppointmentServiceClient;
 import org.example.doctorservice.dto.ScheduleDto;
-import org.example.doctorservice.dto.TimeSlotDto;
 import org.example.doctorservice.entity.Department;
 import org.example.doctorservice.entity.Doctor;
 import org.example.doctorservice.entity.ExaminationRoom;
@@ -29,13 +28,6 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final ExaminationRoomRepository examinationRoomRepository;
     private final AppointmentServiceClient appointmentServiceClient;
 
-    private ScheduleDto enrichScheduleWithTimeSlots(Schedule schedule) {
-        ScheduleDto scheduleDto = new ScheduleDto(schedule);
-        List<TimeSlotDto> availableTimeSlots = appointmentServiceClient.getTimeSlotsByScheduleId(schedule.getScheduleId(), schedule);
-        scheduleDto.setAvailableTimeSlots(availableTimeSlots);
-        return scheduleDto;
-    }
-
     @Override
     public List<ScheduleDto> getAllSchedules(Integer doctorId, Schedule.Shift shift, LocalDate workDate, Integer roomId) {
         List<Schedule> schedules = scheduleRepository.findByDoctor_DoctorId(doctorId);
@@ -43,7 +35,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .filter(schedule -> shift == null || schedule.getShift() == shift)
                 .filter(schedule -> workDate == null || schedule.getWorkDate().equals(workDate))
                 .filter(schedule -> roomId == null || (schedule.getExaminationRoom() != null && roomId.equals(schedule.getExaminationRoom().getRoomId())))
-                .map(this::enrichScheduleWithTimeSlots)
+                .map(ScheduleDto::new)
                 .collect(Collectors.toList());
     }
 
@@ -51,7 +43,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     public ScheduleDto getScheduleById(Integer scheduleId) {
         Schedule schedule = scheduleRepository.findByScheduleId(scheduleId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch với ID: " + scheduleId));
-        return enrichScheduleWithTimeSlots(schedule);
+        return new ScheduleDto(schedule);
     }
 
     @Override
@@ -68,35 +60,30 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .shift(scheduleDto.getShift())
                 .examinationRoom(examinationRoom)
                 .build();
-
         Schedule savedSchedule = scheduleRepository.save(schedule);
-        return enrichScheduleWithTimeSlots(savedSchedule);
+        return new ScheduleDto(savedSchedule);
     }
 
     @Override
     public ScheduleDto updateSchedule(Integer doctorId, Integer scheduleId, ScheduleDto scheduleDto) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch với ID: " + scheduleId));
-
         if (scheduleDto.getDoctorId() != null) {
             Doctor doctor = doctorRepository.findById(doctorId)
                     .orElseThrow(() -> new RuntimeException("Bác sĩ không được tìm thấy"));
             schedule.setDoctor(doctor);
         }
-
         if (scheduleDto.getRoomId() != null) {
             ExaminationRoom examinationRoom = examinationRoomRepository.findById(scheduleDto.getRoomId())
                     .orElseThrow(() -> new RuntimeException("Phòng không được tìm thấy"));
             schedule.setExaminationRoom(examinationRoom);
         }
-
         schedule.setWorkDate(scheduleDto.getWorkDate());
         schedule.setStartTime(scheduleDto.getStartTime());
         schedule.setEndTime(scheduleDto.getEndTime());
         schedule.setShift(scheduleDto.getShift());
-
         Schedule updatedSchedule = scheduleRepository.save(schedule);
-        return enrichScheduleWithTimeSlots(updatedSchedule);
+        return new ScheduleDto(updatedSchedule);
     }
 
     @Override
@@ -111,15 +98,8 @@ public class ScheduleServiceImpl implements ScheduleService {
     public List<ScheduleDto> getAllSchedulesForAdmin() {
         return scheduleRepository.findAll()
                 .stream()
-                .map(this::enrichScheduleWithTimeSlots)
+                .map(ScheduleDto::new)
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<TimeSlotDto> getAllTimeSlots(Integer scheduleId) {
-        Schedule schedule = scheduleRepository.findByScheduleId(scheduleId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch với ID: " + scheduleId));
-        return appointmentServiceClient.getTimeSlotsByScheduleId(scheduleId, schedule);
     }
 
     @Override

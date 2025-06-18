@@ -244,29 +244,19 @@ public class AppointmentServiceImpl implements AppointmentService {
     public List<AppointmentDtos.AvailableTimeSlotResponse> getAvailableTimeSlots(Integer scheduleId, ScheduleTimeDto scheduleTime) {
         List<AppointmentDtos.AvailableTimeSlotResponse> availableSlots = new ArrayList<>();
         LocalTime currentTime = scheduleTime.getStartTime();
-
-        // Tạo các khung giờ 1 tiếng cho đến hết ca trực
         while (!currentTime.plusHours(1).isAfter(scheduleTime.getEndTime())) {
             LocalTime slotStart = currentTime;
             LocalTime slotEnd = currentTime.plusHours(1);
-
-            // Đếm số lượng cuộc hẹn trong khung giờ này
             Integer existingAppointments = appointmentRepository.countByScheduleIdAndSlotStart(scheduleId, slotStart);
-            if (existingAppointments == null) {
-                existingAppointments = 0;
-            }
-
-            // Tạo response cho khung giờ
+            if (existingAppointments == null) existingAppointments = 0;
             AppointmentDtos.AvailableTimeSlotResponse slot = AppointmentDtos.AvailableTimeSlotResponse.builder()
-                    .slotStart(slotStart)
-                    .slotEnd(slotEnd)
-                    .isAvailable(existingAppointments < 10)
-                    .build();
-
+                .slotStart(slotStart)
+                .slotEnd(slotEnd)
+                .isAvailable(existingAppointments < 10)
+                .build();
             availableSlots.add(slot);
             currentTime = slotEnd;
         }
-
         return availableSlots;
     }
 

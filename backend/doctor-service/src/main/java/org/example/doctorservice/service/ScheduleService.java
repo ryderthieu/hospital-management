@@ -1,7 +1,6 @@
 package org.example.doctorservice.service;
 
 import org.example.doctorservice.dto.ScheduleDto;
-import org.example.doctorservice.dto.TimeSlotDto;
 import org.example.doctorservice.entity.Schedule;
 
 import java.time.LocalDate;
@@ -19,8 +18,6 @@ public interface ScheduleService {
     void deleteSchedule(Integer doctorId, Integer scheduleId);
 
     List<ScheduleDto> getAllSchedulesForAdmin();
-
-    List<TimeSlotDto> getAllTimeSlots(Integer scheduleId);
 
     List<ScheduleDto> getSchedulesByIds(List<Integer> scheduleIds);
 }

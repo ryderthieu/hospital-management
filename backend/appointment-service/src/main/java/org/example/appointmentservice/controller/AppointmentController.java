@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @RestController
@@ -77,12 +78,11 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getAppointmentsByPatientIdOptimized(patientId, pageNo, pageSize));
     }
 
-    @PostMapping("/schedule/{scheduleId}/available-slots")
+    @PostMapping("/schedule/available-slots")
     public ResponseEntity<List<AppointmentDtos.AvailableTimeSlotResponse>> getAvailableTimeSlots(
-            @PathVariable Integer scheduleId,
             @RequestBody ScheduleTimeDto scheduleTime
     ) {
-        return ResponseEntity.ok(appointmentService.getAvailableTimeSlots(scheduleId, scheduleTime));
+        return ResponseEntity.ok(appointmentService.getAvailableTimeSlots(scheduleTime.getScheduleId(), scheduleTime));
     }
 
     @GetMapping("/schedule/{scheduleId}")
