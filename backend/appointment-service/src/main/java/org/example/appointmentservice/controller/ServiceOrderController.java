@@ -2,6 +2,7 @@ package org.example.appointmentservice.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.appointmentservice.dto.ServiceOrderDto;
+import org.example.appointmentservice.entity.ServiceOrder;
 import org.example.appointmentservice.service.ServiceOrderService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -51,8 +52,11 @@ public class ServiceOrderController {
     }
 
     @GetMapping("/rooms/{roomId}/orders")
-    public ResponseEntity<List<ServiceOrderDto>> getOrdersByRoomId(@PathVariable Integer roomId) {
-        return ResponseEntity.ok(serviceOrderService.getOrdersByRoomId(roomId));
+    public ResponseEntity<List<ServiceOrderDto>> getOrdersByRoomId(
+            @PathVariable Integer roomId,
+            @RequestParam(required = false) ServiceOrder.OrderStatus status,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate orderDate) {
+        return ResponseEntity.ok(serviceOrderService.getOrdersByRoomId(roomId, status, orderDate));
     }
 
     @PostMapping("/service-orders/{orderId}/result")

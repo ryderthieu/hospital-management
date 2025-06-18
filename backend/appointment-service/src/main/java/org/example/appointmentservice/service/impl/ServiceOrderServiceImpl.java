@@ -121,11 +121,22 @@ public class ServiceOrderServiceImpl implements ServiceOrderService {
     }
 
     @Override
-    public List<ServiceOrderDto> getOrdersByRoomId(Integer roomId) {
-        return serviceOrderRepository.findByRoomId(roomId)
-                .stream()
-                .map(ServiceOrderDto::new)
-                .collect(Collectors.toList());
+    public List<ServiceOrderDto> getOrdersByRoomId(Integer roomId, ServiceOrder.OrderStatus status, java.time.LocalDate orderDate) {
+        List<ServiceOrder> orders;
+        if (status == null && orderDate == null) {
+            orders = serviceOrderRepository.findByRoomId(roomId);
+        } else if (status != null && orderDate == null) {
+            orders = serviceOrderRepository.findByRoomIdAndOrderStatus(roomId, status);
+        } else if (status == null && orderDate != null) {
+            java.time.LocalDateTime from = orderDate.atStartOfDay();
+            java.time.LocalDateTime to = orderDate.atTime(23, 59, 59);
+            orders = serviceOrderRepository.findByRoomIdAndOrderTimeBetween(roomId, from, to);
+        } else {
+            java.time.LocalDateTime from = orderDate.atStartOfDay();
+            java.time.LocalDateTime to = orderDate.atTime(23, 59, 59);
+            orders = serviceOrderRepository.findByRoomIdAndOrderStatusAndOrderTimeBetween(roomId, status, from, to);
+        }
+        return orders.stream().map(ServiceOrderDto::new).collect(java.util.stream.Collectors.toList());
     }
 
     @Override
