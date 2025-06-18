@@ -7,29 +7,6 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import { Patient, PatientDetail, PatientAddForm } from "./pages/Patients";
 import {
-  Doctor,
-  DoctorDetail,
-  DoctorSchedule,
-  AddDoctor,
-} from "./pages/Doctors";
-import {
-  Medicines,
-  AddMedicine,
-  EditMedicine,
-  ViewMedicine,
-} from "./pages/Medicines";
-import {
-  Services,
-  AddService,
-  EditService,
-  ViewService,
-} from "./pages/HealthServices";
-import {
-  Department,
-  DepartmentDetail,
-  AddDepartment,
-} from "./pages/Departments";
-import {
   RoomDetail,
   Inpatients,
   InpatientRoom,
@@ -43,20 +20,23 @@ import {
   ClinicDetail,
   AddClinic,
 } from "./pages/MedicalExamination";
-import Authorization from "./pages/Authorization/Authorization";
+import {
+  Department,
+  DepartmentDetail,
+  AddDepartment,
+} from "./pages/Departments";
 
-// Component kiểm tra quyền admin
-const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({
+const RequireReceptionist: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const role = localStorage.getItem("authRole");
-  if (role !== "ADMIN") {
+  if (role !== "RECEPTIONIST") {
     return <Navigate to="/login" replace />;
   }
   return <>{children}</>;
 };
 
-const AdminApp: React.FC = () => {
+const ReceptionistApp: React.FC = () => {
   return (
     <>
       <ScrollToTop />
@@ -64,12 +44,12 @@ const AdminApp: React.FC = () => {
         {/* Auth Layout */}
         <Route path="login" element={<SignIn />} />
 
-        {/* Dashboard Layout - chỉ cho admin */}
+        {/* Dashboard Layout - chỉ cho receptionist */}
         <Route
           element={
-            <RequireAdmin>
+            <RequireReceptionist>
               <AppLayout />
-            </RequireAdmin>
+            </RequireReceptionist>
           }
         >
           <Route index element={<Home />} />
@@ -85,24 +65,6 @@ const AdminApp: React.FC = () => {
           <Route path="patients/:patientId" element={<PatientDetail />} />
           <Route path="patients/add" element={<PatientAddForm />} />
 
-          {/* Doctors Page */}
-          <Route path="doctors" element={<Doctor />} />
-          <Route path="doctors/add" element={<AddDoctor />} />
-          <Route path="doctors/detail/:doctorId" element={<DoctorDetail />} />
-          <Route path="doctors/schedule/:id" element={<DoctorSchedule />} />
-
-          {/* Medicines Pages */}
-          <Route path="medicines" element={<Medicines />} />
-          <Route path="medicines/add" element={<AddMedicine />} />
-          <Route path="medicines/edit/:id" element={<EditMedicine />} />
-          <Route path="medicines/:id" element={<ViewMedicine />} />
-
-          {/* Services Page */}
-          <Route path="health-services" element={<Services />} />
-          <Route path="health-services/add" element={<AddService />} />
-          <Route path="health-services/edit/:id" element={<EditService />} />
-          <Route path="health-services/:id" element={<ViewService />} />
-
           {/* Inpatients Page */}
           <Route path="inpatients-rooms" element={<InpatientRoom />} />
           <Route path="inpatients-rooms/add" element={<AddPatientRoom />} />
@@ -117,15 +79,10 @@ const AdminApp: React.FC = () => {
           />
           <Route path="inpatients-rooms/add-room" element={<AddRoom />} />
 
-          {/* Medical Examination Pages */}
-
           {/* Department Page */}
           <Route path="departments" element={<Department />} />
           <Route path="departments/add" element={<AddDepartment />} />
           <Route path="departments/:id" element={<DepartmentDetail />} />
-
-          {/* Authorization Page */}
-          <Route path="authorization" element={<Authorization />} />
 
           {/* Others Page */}
           <Route path="profile" element={<Profile />} />
@@ -138,4 +95,4 @@ const AdminApp: React.FC = () => {
   );
 };
 
-export default AdminApp;
+export default ReceptionistApp;

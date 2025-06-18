@@ -15,7 +15,7 @@ import {
   PatientIcon,
   DepartmentIcon,
   InpatientIcon,
-  AdminIcon
+  AdminIcon,
 } from "../components/assets/icons";
 import { useSidebar } from "../context/SidebarContext";
 
@@ -23,87 +23,96 @@ type NavItem = {
   name: string;
   icon: React.ReactNode;
   path?: string;
+  roles?: string[];
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
 };
 
-const navItems: NavItem[] = [
-  {
-    icon: <GridIcon />,
-    name: "Tổng quan",
-    path: "/admin",
-  },
-  {
-    name: "Khám bệnh",
-    icon: <CalendarIcon />,
-    subItems: [
-          { name: "Lịch khám", path: "/admin/calendar", pro: false },
-          { name: "Phòng khám", path: "/admin/outpatient-clinics", pro: false },
-        ],
-  },
-  {
-    icon: <PatientIcon />,
-    name: "Bệnh nhân",
-    path: "/admin/patients",
-  },
-  {
-    name: "Nội trú",
-    icon: <InpatientIcon />,
-    subItems: [
-          { name: "Phòng bệnh", path: "/admin/inpatients-rooms", pro: false },
-          { name: "Bệnh nhân nội trú", path: "/admin/inpatients", pro: false },
-        ],
-  },
-  {
-    icon: <DoctorIcon />,
-    name: "Bác sĩ",
-    path: "/admin/doctors"
-  },
-  {
-    icon: <CalendarIcon />,
-    name: "Kho thuốc",
-    path: "/admin/medicines",
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "Dịch vụ",
-    path: "/admin/health-services",
-  },
-  {
-    name: "Phòng ban",
-    icon: <DepartmentIcon />,
-    path: "/admin/departments"
-  },
+// const navItems: NavItem[] = [
+//   {
+//     icon: <GridIcon />,
+//     name: "Tổng quan",
+//     path: "/admin",
+//     roles: ["admin", "receptionist"],
+//   },
+//   {
+//     name: "Khám bệnh",
+//     icon: <CalendarIcon />,
+//     subItems: [
+//       { name: "Lịch khám", path: "/admin/calendar", pro: false },
+//       { name: "Phòng khám", path: "/admin/outpatient-clinics", pro: false },
+//     ],
+//     roles: ["admin", "receptionist"],
+//   },
+//   {
+//     icon: <PatientIcon />,
+//     name: "Bệnh nhân",
+//     path: "/admin/patients",
+//     roles: ["admin", "receptionist"],
+//   },
+//   {
+//     name: "Nội trú",
+//     icon: <InpatientIcon />,
+//     subItems: [
+//       { name: "Phòng bệnh", path: "/admin/inpatients-rooms", pro: false },
+//       { name: "Bệnh nhân nội trú", path: "/admin/inpatients", pro: false },
+//     ],
+//     roles: ["admin", "receptionist"],
+//   },
+//   {
+//     icon: <DoctorIcon />,
+//     name: "Bác sĩ",
+//     path: "/admin/doctors",
+//     roles: ["admin", "receptionist"],
+//   },
+//   {
+//     icon: <CalendarIcon />,
+//     name: "Kho thuốc",
+//     path: "/admin/medicines",
+//     roles: ["admin", "receptionist"],
+//   },
+//   {
+//     icon: <BoxCubeIcon />,
+//     name: "Dịch vụ",
+//     path: "/admin/health-services",
+//     roles: ["admin", "receptionist"],
+//   },
+//   {
+//     name: "Phòng ban",
+//     icon: <DepartmentIcon />,
+//     path: "/admin/departments",
+//     roles: ["admin", "receptionist"],
+//   },
+//   {
+//     icon: <AdminIcon />,
+//     name: "Phân quyền",
+//     path: "/admin/authorization",
+//     roles: ["admin"],
+//   },
+//   {
+//     icon: <UserCircleIcon />,
+//     name: "Hồ sơ",
+//     path: "/admin/profile",
+//     roles: ["admin", "receptionist"],
+//   },
 
-  {
-    icon: <AdminIcon />,
-    name: "Phân quyền",
-    path: "/admin/authorization",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "Hồ sơ",
-    path: "/admin/profile",
-  },
-
-  // {
-  //   name: "Forms",
-  //   icon: <ListIcon />,
-  //   subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  // },
-  // {
-  //   name: "Tables",
-  //   icon: <TableIcon />,
-  //   subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  // },
-  // {
-  //   name: "Pages",
-  //   icon: <PageIcon />,
-  //   subItems: [
-  //     { name: "Blank Page", path: "/blank", pro: false },
-  //     { name: "404 Error", path: "/error-404", pro: false },
-  //   ],
-  // },
-];
+// {
+//   name: "Forms",
+//   icon: <ListIcon />,
+//   subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
+// },
+// {
+//   name: "Tables",
+//   icon: <TableIcon />,
+//   subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
+// },
+// {
+//   name: "Pages",
+//   icon: <PageIcon />,
+//   subItems: [
+//     { name: "Blank Page", path: "/blank", pro: false },
+//     { name: "404 Error", path: "/error-404", pro: false },
+//   ],
+// },
 
 const othersItems: NavItem[] = [
   {
@@ -139,6 +148,93 @@ const othersItems: NavItem[] = [
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
+  const role = (localStorage.getItem("authRole") || "").toLowerCase();
+  const basePath = role === "receptionist" ? "/receptionist" : "/admin";
+
+  const navItems: NavItem[] = [
+    {
+      icon: <GridIcon />,
+      name: "Tổng quan",
+      path: basePath,
+      roles: ["admin", "receptionist"],
+    },
+    {
+      name: "Khám bệnh",
+      icon: <CalendarIcon />,
+      subItems: [
+        { name: "Lịch khám", path: `${basePath}/calendar`, pro: false },
+        {
+          name: "Phòng khám",
+          path: `${basePath}/outpatient-clinics`,
+          pro: false,
+        },
+      ],
+      roles: ["admin", "receptionist"],
+    },
+    {
+      icon: <PatientIcon />,
+      name: "Bệnh nhân",
+      path: `${basePath}/patients`,
+      roles: ["admin", "receptionist"],
+    },
+    {
+      name: "Nội trú",
+      icon: <InpatientIcon />,
+      subItems: [
+        {
+          name: "Phòng bệnh",
+          path: `${basePath}/inpatients-rooms`,
+          pro: false,
+        },
+        {
+          name: "Bệnh nhân nội trú",
+          path: `${basePath}/inpatients`,
+          pro: false,
+        },
+      ],
+      roles: ["admin", "receptionist"],
+    },
+    {
+      name: "Phòng ban",
+      icon: <DepartmentIcon />,
+      path: `${basePath}/departments`,
+      roles: ["admin", "receptionist"],
+    },
+    {
+      icon: <AdminIcon />,
+      name: "Phân quyền",
+      path: `${basePath}/authorization`,
+      roles: ["admin"],
+    },
+    {
+      icon: <DoctorIcon />,
+      name: "Bác sĩ",
+      path: `${basePath}/doctors`,
+      roles: ["admin"],
+    },
+    {
+      icon: <CalendarIcon />,
+      name: "Kho thuốc",
+      path: `${basePath}/medicines`,
+      roles: ["admin"],
+    },
+    {
+      icon: <BoxCubeIcon />,
+      name: "Dịch vụ",
+      path: `${basePath}/health-services`,
+      roles: ["admin"],
+    },
+    {
+      icon: <UserCircleIcon />,
+      name: "Hồ sơ",
+      path: `${basePath}/profile`,
+      roles: ["admin", "receptionist"],
+    },
+  ];
+
+  const filteredNavItems = navItems.filter(
+    (item) => item.roles && item.roles.includes(role)
+  );
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";
@@ -151,8 +247,15 @@ const AppSidebar: React.FC = () => {
 
   // const isActive = (path: string) => location.pathname === path;
   const isActive = useCallback(
-    (path: string) => location.pathname === path || location.pathname.startsWith(`/admin/${path}/`),
-    [location.pathname]
+    (path: string) => {
+      if (path === basePath) {
+        return location.pathname === path;
+      }
+      return (
+        location.pathname === path || location.pathname.startsWith(path + "/")
+      );
+    },
+    [location.pathname, basePath]
   );
 
   useEffect(() => {
@@ -206,55 +309,27 @@ const AppSidebar: React.FC = () => {
 
   const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => (
     <ul className="flex flex-col gap-4">
-      {items.map((nav, index) => (
-        <li key={nav.name}>
-          {nav.subItems ? (
-            <button
-              onClick={() => handleSubmenuToggle(index, menuType)}
-              className={`menu-item group ${
-                openSubmenu?.type === menuType && openSubmenu?.index === index
-                  ? "menu-item-active"
-                  : "menu-item-inactive"
-              } cursor-pointer ${
-                !isExpanded && !isHovered
-                  ? "lg:justify-center"
-                  : "lg:justify-start"
-              }`}
-            >
-              <span
-                className={`menu-item-icon-size  ${
-                  openSubmenu?.type === menuType && openSubmenu?.index === index
-                    ? "menu-item-icon-active"
-                    : "menu-item-icon-inactive"
-                }`}
-              >
-                {nav.icon}
-              </span>
-              {(isExpanded || isHovered || isMobileOpen) && (
-                <span className="menu-item-text">{nav.name}</span>
-              )}
-              {(isExpanded || isHovered || isMobileOpen) && (
-                <ChevronDownIcon
-                  className={`ml-auto w-5 h-5 transition-transform duration-200 ${
-                    openSubmenu?.type === menuType &&
-                    openSubmenu?.index === index
-                      ? "rotate-180 text-white"
-                      : ""
-                  }`}
-                />
-              )}
-            </button>
-          ) : (
-            nav.path && (
-              <Link
-                to={nav.path}
+      {items
+        .filter((nav) => nav.roles?.includes(role || ""))
+        .map((nav, index) => (
+          <li key={nav.name}>
+            {nav.subItems ? (
+              <button
+                onClick={() => handleSubmenuToggle(index, menuType)}
                 className={`menu-item group ${
-                  isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
+                  openSubmenu?.type === menuType && openSubmenu?.index === index
+                    ? "menu-item-active"
+                    : "menu-item-inactive"
+                } cursor-pointer ${
+                  !isExpanded && !isHovered
+                    ? "lg:justify-center"
+                    : "lg:justify-start"
                 }`}
               >
                 <span
-                  className={`menu-item-icon-size ${
-                    isActive(nav.path)
+                  className={`menu-item-icon-size  ${
+                    openSubmenu?.type === menuType &&
+                    openSubmenu?.index === index
                       ? "menu-item-icon-active"
                       : "menu-item-icon-inactive"
                   }`}
@@ -264,66 +339,100 @@ const AppSidebar: React.FC = () => {
                 {(isExpanded || isHovered || isMobileOpen) && (
                   <span className="menu-item-text">{nav.name}</span>
                 )}
-              </Link>
-            )
-          )}
-          {nav.subItems && (isExpanded || isHovered || isMobileOpen) && (
-            <div
-              ref={(el) => {
-                subMenuRefs.current[`${menuType}-${index}`] = el;
-              }}
-              className="overflow-hidden transition-all duration-300"
-              style={{
-                height:
-                  openSubmenu?.type === menuType && openSubmenu?.index === index
-                    ? `${subMenuHeight[`${menuType}-${index}`]}px`
-                    : "0px",
-              }}
-            >
-              <ul className="mt-2 space-y-1 ml-9">
-                {nav.subItems.map((subItem) => (
-                  <li key={subItem.name}>
-                    <Link
-                      to={subItem.path}
-                      className={`menu-dropdown-item ${
-                        isActive(subItem.path)
-                          ? "menu-dropdown-item-active"
-                          : "menu-dropdown-item-inactive"
-                      }`}
-                    >
-                      {subItem.name}
-                      <span className="flex items-center gap-1 ml-auto">
-                        {subItem.new && (
-                          <span
-                            className={`ml-auto ${
-                              isActive(subItem.path)
-                                ? "menu-dropdown-badge-active"
-                                : "menu-dropdown-badge-inactive"
-                            } menu-dropdown-badge`}
-                          >
-                            new
-                          </span>
-                        )}
-                        {subItem.pro && (
-                          <span
-                            className={`ml-auto ${
-                              isActive(subItem.path)
-                                ? "menu-dropdown-badge-active"
-                                : "menu-dropdown-badge-inactive"
-                            } menu-dropdown-badge`}
-                          >
-                            pro
-                          </span>
-                        )}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </li>
-      ))}
+                {(isExpanded || isHovered || isMobileOpen) && (
+                  <ChevronDownIcon
+                    className={`ml-auto w-5 h-5 transition-transform duration-200 ${
+                      openSubmenu?.type === menuType &&
+                      openSubmenu?.index === index
+                        ? "rotate-180 text-white"
+                        : ""
+                    }`}
+                  />
+                )}
+              </button>
+            ) : (
+              nav.path && (
+                <Link
+                  to={nav.path}
+                  className={`menu-item group ${
+                    isActive(nav.path)
+                      ? "menu-item-active"
+                      : "menu-item-inactive"
+                  }`}
+                >
+                  <span
+                    className={`menu-item-icon-size ${
+                      isActive(nav.path)
+                        ? "menu-item-icon-active"
+                        : "menu-item-icon-inactive"
+                    }`}
+                  >
+                    {nav.icon}
+                  </span>
+                  {(isExpanded || isHovered || isMobileOpen) && (
+                    <span className="menu-item-text">{nav.name}</span>
+                  )}
+                </Link>
+              )
+            )}
+            {nav.subItems && (isExpanded || isHovered || isMobileOpen) && (
+              <div
+                ref={(el) => {
+                  subMenuRefs.current[`${menuType}-${index}`] = el;
+                }}
+                className="overflow-hidden transition-all duration-300"
+                style={{
+                  height:
+                    openSubmenu?.type === menuType &&
+                    openSubmenu?.index === index
+                      ? `${subMenuHeight[`${menuType}-${index}`]}px`
+                      : "0px",
+                }}
+              >
+                <ul className="mt-2 space-y-1 ml-9">
+                  {nav.subItems.map((subItem) => (
+                    <li key={subItem.name}>
+                      <Link
+                        to={subItem.path}
+                        className={`menu-dropdown-item ${
+                          isActive(subItem.path)
+                            ? "menu-dropdown-item-active"
+                            : "menu-dropdown-item-inactive"
+                        }`}
+                      >
+                        {subItem.name}
+                        <span className="flex items-center gap-1 ml-auto">
+                          {subItem.new && (
+                            <span
+                              className={`ml-auto ${
+                                isActive(subItem.path)
+                                  ? "menu-dropdown-badge-active"
+                                  : "menu-dropdown-badge-inactive"
+                              } menu-dropdown-badge`}
+                            >
+                              new
+                            </span>
+                          )}
+                          {subItem.pro && (
+                            <span
+                              className={`ml-auto ${
+                                isActive(subItem.path)
+                                  ? "menu-dropdown-badge-active"
+                                  : "menu-dropdown-badge-inactive"
+                              } menu-dropdown-badge`}
+                            >
+                              pro
+                            </span>
+                          )}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </li>
+        ))}
     </ul>
   );
 
@@ -347,13 +456,17 @@ const AppSidebar: React.FC = () => {
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
         }`}
       >
-        <Link to="/">
+        <Link to={basePath}>
           {isExpanded || isHovered || isMobileOpen ? (
             <>
-              <div className="tracking-tight font-black text-lg "><span className="text-base-800">We</span>care</div>
+              <div className="tracking-tight font-black text-lg ">
+                <span className="text-base-800">We</span>care
+              </div>
             </>
           ) : (
-            <div className="tracking-tight font-black text-lg "><span className="text-base-800">We</span>care</div>
+            <div className="tracking-tight font-black text-lg ">
+              <span className="text-base-800">We</span>care
+            </div>
           )}
         </Link>
       </div>
@@ -374,24 +487,8 @@ const AppSidebar: React.FC = () => {
                   <HorizontaLDots className="size-6" />
                 )}
               </h2>
-              {renderMenuItems(navItems, "main")}
+              {renderMenuItems(filteredNavItems, "main")}
             </div>
-            {/* <div className="">
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-start"
-                }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </h2>
-              {renderMenuItems(othersItems, "others")}
-            </div> */}
           </div>
         </nav>
         {/* {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null} */}

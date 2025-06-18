@@ -1,13 +1,12 @@
 import PageMeta from "../../components/common/PageMeta";
 import AuthLayout from "../../layouts/AuthPageLayout";
 import { useState } from "react";
-import { Link } from "react-router";
 import { EyeCloseIcon, EyeIcon } from "../../components/assets/icons";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
 import Button from "../../components/ui/button/Button";
 import { useLogin } from "../../hooks/useLogin";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
@@ -21,10 +20,14 @@ export default function SignIn() {
     await handleLogin({ phone, password });
 
     const role = localStorage.getItem("role");
+    console.log("Logged in role:", role);
 
     switch (role) {
       case "ADMIN":
         navigate("/admin");
+        break;
+      case "RECEPTIONIST":
+        navigate("/receptionist");
         break;
       case "DOCTOR":
         navigate("/examination");

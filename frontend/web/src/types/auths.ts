@@ -12,6 +12,8 @@ export interface DoctorInfo extends Doctor {
 export interface AdminInfo extends User {
   // Admin-specific fields can be added here if needed
 }
+
+export interface ReceptionistInfo extends User {}
 export interface AuthState {
   user: AuthUser | null;
   doctorInfo: DoctorInfo | null;
