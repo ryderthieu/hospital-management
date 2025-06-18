@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { StyleSheet, Alert, SafeAreaView } from 'react-native';
+import { StyleSheet, SafeAreaView } from 'react-native';
 import { NativeStackNavigationProp, RouteProp } from '@react-navigation/native-stack';
 import { PageHeader, FloatingLabelInput } from '../../../components/Auth';
 import Button from '../../../components/Button';
 import API from '../../../services/api';
+import { useAlert } from '../../../context/AlertContext';
 
 type RootStackParamList = {
   Forgot1: undefined;
@@ -28,12 +29,13 @@ export default function Forgot3({ navigation, route }: Forgot3Props) {
   const { method } = route.params;
   const [phone, setPhone] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { showAlert } = useAlert();
 
   const handleNext = async () => {
     if (isLoading) return;
 
     if (!phone) {
-      Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại của bạn!');
+      showAlert({ title: 'Lỗi', message: 'Vui lòng nhập số điện thoại của bạn!' });
       return;
     }
 
@@ -41,19 +43,17 @@ export default function Forgot3({ navigation, route }: Forgot3Props) {
     const formattedPhone = cleanedPhone.startsWith('0') ? cleanedPhone : `0${cleanedPhone}`;
     const phoneRegex = /^(\+84|0)\d{9,10}$/;
     if (!phoneRegex.test(formattedPhone)) {
-      Alert.alert('Lỗi', 'Số điện thoại phải bắt đầu bằng +84 hoặc 0 và có 10-11 chữ số');
+      showAlert({ title: 'Lỗi', message: 'Số điện thoại phải bắt đầu bằng +84 hoặc 0 và có 10-11 chữ số' });
       return;
     }
 
     setIsLoading(true);
     try {
       await API.post('/users/auth/otp/send-sms', null, { params: { phoneNumber: formattedPhone } });
-      Alert.alert('Thành công', 'Mã OTP đã được gửi đến số điện thoại của bạn', [
-        { text: 'OK', onPress: () => navigation.navigate('Forgot5', { method, phone: formattedPhone }) },
-      ]);
+      showAlert({ title: 'Thành công', message: 'Mã OTP đã được gửi đến số điện thoại của bạn', buttons: [{ text: 'OK', onPress: () => navigation.navigate('Forgot5', { method, phone: formattedPhone }) }] });
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Không thể gửi OTP. Vui lòng thử lại.';
-      Alert.alert('Lỗi', errorMessage);
+      const errorMessage = error.response?.data?.error || 'Không thể gửi OTP. Vui lòng thử lại.';
+      showAlert({ title: 'Lỗi', message: errorMessage });
       console.error('Send OTP error:', error.message, error.response?.data);
     } finally {
       setIsLoading(false);

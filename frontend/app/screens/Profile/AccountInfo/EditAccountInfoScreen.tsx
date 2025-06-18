@@ -13,7 +13,6 @@ import {
   Modal,
   FlatList,
   KeyboardAvoidingView,
-  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -24,6 +23,7 @@ import Header from "../../../components/Header";
 import API from "../../../services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { EditAccountInfoScreenNavigationProp } from "../../../navigation/types";
+import { useAlert } from '../../../context/AlertContext';
 
 interface PatientData {
   patientId: number;
@@ -179,6 +179,7 @@ const EditAccountInfoScreen: React.FC = () => {
   const [emergencyContacts, setEmergencyContacts] = useState<
     PatientData["emergencyContactDtos"]
   >(patient?.emergencyContactDtos || []);
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     if (showSuccessAlert) {
@@ -234,12 +235,9 @@ const EditAccountInfoScreen: React.FC = () => {
       });
       setEmergencyContacts(patient.emergencyContactDtos || []);
     } else {
-      Alert.alert(
-        "Lỗi",
-        "Không tìm thấy thông tin bệnh nhân hoặc người dùng. Vui lòng đăng nhập lại."
-      );
+      showAlert({ title: 'Lỗi', message: 'Không tìm thấy thông tin bệnh nhân hoặc người dùng. Vui lòng đăng nhập lại.' });
     }
-  }, [patient, user]);
+  }, [patient, user, showAlert]);
 
   const updateField = (field: string, value: string) => {
     console.log(`Updating ${field} to:`, value);
@@ -275,10 +273,7 @@ const EditAccountInfoScreen: React.FC = () => {
     console.log("handleSave called", { patient, user });
     if (!patient || !user) {
       console.log("No patient or user data");
-      Alert.alert(
-        "Lỗi",
-        "Không tìm thấy thông tin bệnh nhân hoặc người dùng. Vui lòng đăng nhập lại."
-      );
+      showAlert({ title: 'Lỗi', message: 'Không tìm thấy thông tin bệnh nhân hoặc người dùng. Vui lòng đăng nhập lại.' });
       return;
     }
 
@@ -287,7 +282,7 @@ const EditAccountInfoScreen: React.FC = () => {
       formState.firstName || ""
     }`.trim();
     if (!fullName || !formState.dob || !formState.gender) {
-      Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin cá nhân.");
+      showAlert({ title: 'Lỗi', message: 'Vui lòng điền đầy đủ thông tin cá nhân.' });
       return;
     }
 
@@ -326,6 +321,7 @@ const EditAccountInfoScreen: React.FC = () => {
       setPatient(updatedPatient);
       setShowSuccessAlert(true);
       navigation.goBack();
+      showAlert({ title: 'Thành công', message: 'Cập nhật thông tin thành công' });
     } catch (error: any) {
       console.error(
         "Update patient error:",
@@ -334,13 +330,13 @@ const EditAccountInfoScreen: React.FC = () => {
       );
       const errorMessage =
         error.message || "Cập nhật thông tin thất bại. Vui lòng thử lại.";
-      Alert.alert("Lỗi", errorMessage);
+      showAlert({ title: 'Lỗi', message: errorMessage });
     }
   };
 
   const handleAddEmergencyContact = async () => {
     if (!patient?.patientId) {
-      Alert.alert("Lỗi", "Không tìm thấy thông tin bệnh nhân.");
+      showAlert({ title: 'Lỗi', message: 'Không tìm thấy thông tin bệnh nhân.' });
       return;
     }
 
@@ -351,15 +347,15 @@ const EditAccountInfoScreen: React.FC = () => {
     } = formState;
 
     if (!emergencyContactPhone || emergencyContactPhone.trim() === "") {
-      Alert.alert("Lỗi", "Vui lòng điền số điện thoại.");
+      showAlert({ title: 'Lỗi', message: 'Vui lòng điền số điện thoại.' });
       return;
     }
     if (!emergencyContactName || emergencyContactName.trim() === "") {
-      Alert.alert("Lỗi", "Vui lòng điền họ tên.");
+      showAlert({ title: 'Lỗi', message: 'Vui lòng điền họ tên.' });
       return;
     }
     if (!emergencyContactRelationship) {
-      Alert.alert("Lỗi", "Vui lòng chọn mối quan hệ.");
+      showAlert({ title: 'Lỗi', message: 'Vui lòng chọn mối quan hệ.' });
       return;
     }
 
@@ -399,7 +395,7 @@ const EditAccountInfoScreen: React.FC = () => {
 
       console.log("Updated patient:", updatedPatient); // Log để kiểm tra
 
-      Alert.alert("Thành công", "Thêm liên hệ khẩn cấp thành công");
+      showAlert({ title: 'Thành công', message: 'Thêm liên hệ khẩn cấp thành công' });
       updateField("emergencyContactPhone", "");
       updateField("emergencyContactName", "");
       updateField("emergencyContactRelationship", "");
@@ -410,8 +406,8 @@ const EditAccountInfoScreen: React.FC = () => {
         error.response?.data
       );
       const errorMessage =
-        error.response?.data?.message || "Thêm liên hệ khẩn cấp thất bại";
-      Alert.alert("Lỗi", errorMessage);
+        error.response?.data?.error || "Thêm liên hệ khẩn cấp thất bại";
+      showAlert({ title: 'Lỗi', message: errorMessage });
     }
   };
 
@@ -421,17 +417,14 @@ const EditAccountInfoScreen: React.FC = () => {
       setEmergencyContacts(
         emergencyContacts.filter((contact) => contact.contactId !== contactId)
       );
-      Alert.alert("Thành công", "Xóa liên hệ khẩn cấp thành công");
+      showAlert({ title: 'Thành công', message: 'Xóa liên hệ khẩn cấp thành công' });
     } catch (error: any) {
       console.error(
         "Error deleting emergency contact:",
         error.message,
         error.response?.data
       );
-      Alert.alert(
-        "Lỗi",
-        error.response?.data?.message || "Xóa liên hệ khẩn cấp thất bại"
-      );
+      showAlert({ title: 'Lỗi', message: error.response?.data?.error || "Xóa liên hệ khẩn cấp thất bại" });
     }
   };
 
@@ -452,7 +445,7 @@ const EditAccountInfoScreen: React.FC = () => {
           contact.contactId === contactId ? response.data : contact
         )
       );
-      Alert.alert("Thành công", "Cập nhật liên hệ khẩn cấp thành công");
+      showAlert({ title: 'Thành công', message: 'Cập nhật liên hệ khẩn cấp thành công' });
       updateField("emergencyContactPhone", "");
       updateField("emergencyContactName", "");
       updateField("emergencyContactRelationship", "");
@@ -462,10 +455,7 @@ const EditAccountInfoScreen: React.FC = () => {
         error.message,
         error.response?.data
       );
-      Alert.alert(
-        "Lỗi",
-        error.response?.data?.message || "Cập nhật liên hệ khẩn cấp thất bại"
-      );
+      showAlert({ title: 'Lỗi', message: error.response?.data?.error || "Cập nhật liên hệ khẩn cấp thất bại" });
     }
   };
 
@@ -718,18 +708,6 @@ const EditAccountInfoScreen: React.FC = () => {
         />
       )}
 
-      {/* Success Alert */}
-      {showSuccessAlert &&
-        Alert.alert("Thành công", "Cập nhật thông tin thành công", [
-          {
-            text: "OK",
-            onPress: () => {
-              setShowSuccessAlert(false);
-              console.log("Alert OK pressed");
-            },
-          },
-        ])}
-
       {/* Relationship Selection Modal */}
       <Modal
         visible={showRelationshipModal}
@@ -778,24 +756,6 @@ const relationshipOptions = [
   { id: "10", label: "Bạn", value: "FRIEND" },
   { id: "11", label: "Họ hàng khác", value: "OTHERS" },
 ];
-
-const RelationshipItem = ({
-  item,
-  onSelect,
-}: {
-  item: { id: string; label: string; value: string };
-  onSelect: (value: string) => void;
-}) => (
-  <TouchableOpacity
-    style={styles.relationshipItem}
-    onPress={() => onSelect(item.value)}
-  >
-    <Text style={styles.relationshipItemText}>{item.label}</Text>
-    {formState.emergencyContactRelationship === item.value && (
-      <Ionicons name="checkmark" size={20} color="#0BC5C5" />
-    )}
-  </TouchableOpacity>
-);
 
 const styles = StyleSheet.create({
   container: {

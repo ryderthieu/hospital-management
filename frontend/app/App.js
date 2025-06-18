@@ -6,6 +6,7 @@ import RootNavigator from './navigation/RootNavigator';
 import { FontProvider, useFont } from './context/FontContext.js';
 import { View, Text } from 'react-native';
 import configurePushNotifications from './services/PushNotificationConfig';
+import { AlertProvider } from './context/AlertContext';
 
 function AppContent() {
   const { fontsLoaded } = useFont();
@@ -29,11 +30,13 @@ export default function App() {
   return (
     <FontProvider>
       <AuthProvider>
-        <SafeAreaProvider>
-          <NavigationContainer>
-            <AppContent />
-          </NavigationContainer>
-        </SafeAreaProvider>
+        <AlertProvider>
+          <SafeAreaProvider>
+            <NavigationContainer>
+              <AppContent />
+            </NavigationContainer>
+          </SafeAreaProvider>
+        </AlertProvider>
       </AuthProvider>
     </FontProvider>
   );

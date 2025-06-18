@@ -24,6 +24,7 @@ import { fontFamily } from "../../../context/FontContext"
 import Header from "../../../components/Header"
 import { mockInsurances } from "../Data"
 import type { InsuranceListScreenNavigationProp } from "../../../navigation/types"
+import { useAlert } from '../../../context/AlertContext'
 
 // Insurance types
 const insuranceTypes = [
@@ -92,6 +93,7 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
 
 const AddInsuranceScreen: React.FC = () => {
   const navigation = useNavigation<InsuranceListScreenNavigationProp>()
+  const { showAlert } = useAlert()
 
   // Initialize empty form state
   const [formState, setFormState] = useState({
@@ -202,7 +204,7 @@ const AddInsuranceScreen: React.FC = () => {
 
     for (const { field, label } of requiredFields) {
       if (!formState[field as keyof typeof formState]) {
-        Alert.alert("Thông tin thiếu", `Vui lòng nhập ${label}`)
+        showAlert({ title: 'Thông tin thiếu', message: `Vui lòng nhập ${label}` })
         return false
       }
     }
@@ -238,15 +240,12 @@ const AddInsuranceScreen: React.FC = () => {
     console.log("Adding new insurance:", newInsurance)
 
     // Show success message
-    Alert.alert("Thành công", "Đã thêm bảo hiểm mới", [
-      {
-        text: "OK",
-        onPress: () => {
-          // Navigate back to the insurance list
-          navigation.goBack()
-        },
-      },
-    ])
+    showAlert({ title: 'Thành công', message: 'Đã thêm bảo hiểm mới', buttons: [
+      { text: 'OK', onPress: () => {
+        // Navigate back to the insurance list
+        navigation.goBack()
+      } }
+    ] })
   }
 
   // Insurance type option item

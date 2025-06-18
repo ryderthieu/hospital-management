@@ -20,6 +20,7 @@ import { SearchStackParamList } from "../../../navigation/types";
 import { globalStyles, colors } from "../../../styles/globalStyles";
 import Header from "../../../components/Header";
 import { useFont, fontFamily } from "../../../context/FontContext";
+import { useAlert } from '../../../context/AlertContext';
 
 type DiseaseSearchScreenProps = {
   navigation: StackNavigationProp<SearchStackParamList, "DiseaseSearch">;
@@ -106,6 +107,7 @@ export const DiseaseSearchScreen: React.FC<DiseaseSearchScreenProps> = ({
 }) => {
   const { fontsLoaded } = useFont();
   const [lastSymptoms, setLastSymptoms] = useState<string>("");
+  const { showAlert } = useAlert();
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -275,8 +277,8 @@ export const DiseaseSearchScreen: React.FC<DiseaseSearchScreenProps> = ({
         ];
         setMessages(prev => [...prev, { ...aiResponse, suggestions }]);
       })
-      .catch(error => {
-        Alert.alert("Lỗi", "Không thể kết nối với server. Vui lòng thử lại sau.");
+      .catch(() => {
+        showAlert({ title: 'Lỗi', message: 'Không thể kết nối với server. Vui lòng thử lại sau.' });
       })
       .finally(() => {
         setIsTyping(false);

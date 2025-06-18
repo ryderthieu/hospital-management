@@ -23,6 +23,7 @@ import Header from "../../../components/Header"
 import { useFont, fontFamily } from "../../../context/FontContext"
 import { useAuth } from "../../../context/AuthContext"
 import axios from "axios"
+import { useAlert } from '../../../context/AlertContext'
 
 type PaymentScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, "Payment">
@@ -41,6 +42,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
   const [showWebView, setShowWebView] = useState(false)
   const [webViewUrl, setWebViewUrl] = useState("")
   const [billId, setBillId] = useState<number | null>(null)
+  const { showAlert } = useAlert()
 
   // Calculate total amount from doctor's consultation fee with fallback
   const totalAmount = doctor.consultationFee && typeof doctor.consultationFee === 'number' 
@@ -112,7 +114,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
         }
       } catch (error: any) {
         console.error('Lỗi khi tạo hóa đơn:', error.response?.data || error.message)
-        Alert.alert('Lỗi', error.message || 'Không thể tạo hóa đơn. Vui lòng thử lại.')
+        showAlert({ title: 'Lỗi', message: error.message || 'Không thể tạo hóa đơn. Vui lòng thử lại.' })
         if (error.response?.status === 401) {
           navigation.navigate('Login')
         }
@@ -122,7 +124,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
     if (!billId) {
       createBill()
     }
-  }, [billId, appointmentId, doctor.specialty, totalAmount, insuranceDiscount, finalAmount, patient, navigation])
+  }, [billId, appointmentId, doctor.specialty, totalAmount, insuranceDiscount, finalAmount, patient, navigation, showAlert])
 
   const handleTermsToggle = () => {
     setAgreedToTerms(!agreedToTerms)
@@ -130,12 +132,12 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
 
   const handleContinue = async () => {
     if (!agreedToTerms) {
-      Alert.alert("Thông báo", "Vui lòng đồng ý với điều khoản dịch vụ để tiếp tục.", [{ text: "OK" }])
+      showAlert({ title: "Thông báo", message: "Vui lòng đồng ý với điều khoản dịch vụ để tiếp tục." })
       return
     }
 
     if (!billId) {
-      Alert.alert("Lỗi", "Hóa đơn chưa được tạo. Vui lòng thử lại.")
+      showAlert({ title: "Lỗi", message: "Hóa đơn chưa được tạo. Vui lòng thử lại." })
       return
     }
 
@@ -161,7 +163,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
       }
     } catch (error: any) {
       console.error('Lỗi thanh toán:', error.response?.data || error.message)
-      Alert.alert('Lỗi', error.message || 'Không thể xử lý thanh toán. Vui lòng thử lại.', [{ text: "OK" }])
+      showAlert({ title: 'Lỗi', message: error.message || 'Không thể xử lý thanh toán. Vui lòng thử lại.' })
       if (error.response?.status === 401) {
         navigation.navigate('Login')
       }

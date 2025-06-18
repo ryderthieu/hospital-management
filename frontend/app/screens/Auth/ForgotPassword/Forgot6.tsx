@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView, StatusBar, ScrollView, Text, Alert } from 'react-native';
+import { View, StyleSheet, SafeAreaView, StatusBar, ScrollView, Text } from 'react-native';
 import { NativeStackNavigationProp, RouteProp } from '@react-navigation/native-stack';
 import Button from '../../../components/Button';
 import { FloatingLabelInput, PasswordRequirements, PageHeader } from '../../../components/Auth';
 import API from '../../../services/api';
+import { useAlert } from '../../../context/AlertContext';
 
 type RootStackParamList = {
   Forgot1: undefined;
@@ -38,6 +39,7 @@ export default function Forgot6({ navigation, route }: Forgot6Props) {
   const [isPasswordValid, setIsPasswordValid] = useState<boolean>(false);
   const [passwordsMatch, setPasswordsMatch] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     if (password.length > 0) {
@@ -63,17 +65,17 @@ export default function Forgot6({ navigation, route }: Forgot6Props) {
     if (isLoading) return;
 
     if (!isPasswordValid) {
-      Alert.alert('Lỗi', 'Mật khẩu không đáp ứng các yêu cầu. Vui lòng kiểm tra lại!');
+      showAlert({ title: 'Lỗi', message: 'Mật khẩu không đáp ứng các yêu cầu. Vui lòng kiểm tra lại!' });
       return;
     }
 
     if (!passwordsMatch) {
-      Alert.alert('Lỗi', 'Mật khẩu xác nhận không khớp. Vui lòng nhập lại!');
+      showAlert({ title: 'Lỗi', message: 'Mật khẩu xác nhận không khớp. Vui lòng nhập lại!' });
       return;
     }
 
     if (!password || !confirmPassword) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ mật khẩu và xác nhận mật khẩu!');
+      showAlert({ title: 'Lỗi', message: 'Vui lòng nhập đầy đủ mật khẩu và xác nhận mật khẩu!' });
       return;
     }
 
@@ -83,12 +85,10 @@ export default function Forgot6({ navigation, route }: Forgot6Props) {
         resetToken,
         password,
       });
-      Alert.alert('Thành công', response.data.message || 'Mật khẩu đã được đặt lại', [
-        { text: 'OK', onPress: () => navigation.navigate('Forgot7') },
-      ]);
+      showAlert({ title: 'Thành công', message: response.data.message || 'Mật khẩu đã được đặt lại', buttons: [{ text: 'OK', onPress: () => navigation.navigate('Forgot7') }] });
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Đặt lại mật khẩu thất bại. Vui lòng thử lại.';
-      Alert.alert('Lỗi', errorMessage);
+      const errorMessage = error.response?.data?.error || 'Đặt lại mật khẩu thất bại. Vui lòng thử lại.';
+      showAlert({ title: 'Lỗi', message: errorMessage });
       console.error('Reset password error:', error.message, error.response?.data);
     } finally {
       setIsLoading(false);

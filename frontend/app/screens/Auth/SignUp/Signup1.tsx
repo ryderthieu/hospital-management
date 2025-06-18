@@ -4,6 +4,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Button from '../../../components/Button';
 import { FloatingLabelInput, PasswordRequirements, CheckboxWithLabel, PageHeader, AuthFooter } from '../../../components/Auth';
 import API from '../../../services/api';
+import { useAlert } from '../../../context/AlertContext';
 
 type RootStackParamList = {
   Login: undefined;
@@ -26,6 +27,7 @@ export default function Signup1({ navigation }: Signup1Props) {
   const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
   const [showValidation, setShowValidation] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     setShowValidation(password.length > 0);
@@ -35,12 +37,12 @@ export default function Signup1({ navigation }: Signup1Props) {
     if (isLoading) return;
 
     if (!phone || !password) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ số điện thoại và mật khẩu');
+      showAlert({ title: 'Lỗi', message: 'Vui lòng nhập đầy đủ số điện thoại và mật khẩu' });
       return;
     }
 
     if (!termsAccepted) {
-      Alert.alert('Lỗi', 'Bạn phải đồng ý với Điều khoản Dịch vụ và Chính sách Bảo mật');
+      showAlert({ title: 'Lỗi', message: 'Bạn phải đồng ý với Điều khoản Dịch vụ và Chính sách Bảo mật' });
       return;
     }
 
@@ -48,13 +50,13 @@ export default function Signup1({ navigation }: Signup1Props) {
     const formattedPhone = cleanedPhone.startsWith('0') ? cleanedPhone : `0${cleanedPhone}`;
     const phoneRegex = /^(\+84|0)\d{9,10}$/;
     if (!phoneRegex.test(formattedPhone)) {
-      Alert.alert('Lỗi', 'Số điện thoại phải bắt đầu bằng +84 hoặc 0 và có 10-11 chữ số');
+      showAlert({ title: 'Lỗi', message: 'Số điện thoại phải bắt đầu bằng +84 hoặc 0 và có 10-11 chữ số' });
       return;
     }
 
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
     if (!passwordRegex.test(password)) {
-      Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số');
+      showAlert({ title: 'Lỗi', message: 'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số' });
       return;
     }
     navigation.navigate('Signup2', { phone: formattedPhone, password });

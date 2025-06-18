@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, Alert } from "react-native";
+import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -11,11 +11,13 @@ import { mockSettings } from "../Data";
 import type { RootStackParamList, Setting } from "../type";
 import { useAuth } from "../../../context/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAlert } from '../../../context/AlertContext';
 
 const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, "Settings">>();
   const [settings, setSettings] = useState<Setting[]>(mockSettings);
   const { setLoggedIn, setUser, setPatient } = useAuth();
+  const { showAlert } = useAlert();
 
   // Handle toggle change
   const handleToggle = (id: string, newValue: boolean) => {
@@ -29,41 +31,45 @@ const SettingsScreen: React.FC = () => {
     if (route) {
       navigation.navigate(route);
     } else {
-      Alert.alert("Thông báo", "Chức năng này đang được phát triển");
+      showAlert({ title: "Thông báo", message: "Chức năng này đang được phát triển" });
     }
   };
 
   // Handle action items like logout
   const handleAction = async (id: string) => {
     if (id === "logout") {
-      Alert.alert("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất không?", [
-        {
-          text: "Hủy",
-          style: "cancel",
-        },
-        {
-          text: "Đăng xuất",
-          onPress: async () => {
-            try {
-              // Xóa dữ liệu từ AsyncStorage
-              await AsyncStorage.removeItem("token");
-              await AsyncStorage.removeItem("user");
-              await AsyncStorage.removeItem("patient");
-
-              // Reset trạng thái trong AuthContext (kích hoạt RootNavigator re-render)
-              setLoggedIn(false);
-              setUser(null);
-              setPatient(null);
-
-              // Không cần navigation.replace, để RootNavigator xử lý
-              console.log("Logout triggered, loggedIn set to false");
-            } catch (error) {
-              console.error("Error during logout:", error);
-              Alert.alert("Lỗi", "Đăng xuất thất bại. Vui lòng thử lại.");
-            }
+      showAlert({
+        title: "Đăng xuất",
+        message: "Bạn có chắc chắn muốn đăng xuất không?",
+        buttons: [
+          {
+            text: "Hủy",
+            style: "cancel",
           },
-        },
-      ]);
+          {
+            text: "Đăng xuất",
+            onPress: async () => {
+              try {
+                // Xóa dữ liệu từ AsyncStorage
+                await AsyncStorage.removeItem("token");
+                await AsyncStorage.removeItem("user");
+                await AsyncStorage.removeItem("patient");
+
+                // Reset trạng thái trong AuthContext (kích hoạt RootNavigator re-render)
+                setLoggedIn(false);
+                setUser(null);
+                setPatient(null);
+
+                // Không cần navigation.replace, để RootNavigator xử lý
+                console.log("Logout triggered, loggedIn set to false");
+              } catch (error) {
+                console.error("Error during logout:", error);
+                showAlert({ title: "Lỗi", message: "Đăng xuất thất bại. Vui lòng thử lại." });
+              }
+            },
+          },
+        ],
+      });
     }
   };
 

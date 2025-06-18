@@ -9,6 +9,7 @@ import type { RootStackParamList } from "../types"
 import { globalStyles, colors } from "../../../styles/globalStyles"
 import Header from "../../../components/Header"
 import { useFont, fontFamily } from "../../../context/FontContext"
+import { useAlert } from '../../../context/AlertContext'
 
 type BookingConfirmationScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, "BookingConfirmation">
@@ -18,6 +19,7 @@ type BookingConfirmationScreenProps = {
 export const BookingConfirmationScreen: React.FC<BookingConfirmationScreenProps> = ({ navigation, route }) => {
   const { fontsLoaded } = useFont()
   const { doctor, selectedDate, selectedTime, hasInsurance, selectedSymptoms, location } = route.params
+  const { showAlert } = useAlert();
 
   // Hàm format location để hiển thị thân thiện
   const formatLocation = (location: string | undefined) => {
@@ -53,16 +55,20 @@ export const BookingConfirmationScreen: React.FC<BookingConfirmationScreenProps>
   }
 
   const handleCancel = () => {
-    Alert.alert("Hủy đặt hẹn", "Bạn có chắc chắn muốn hủy đặt lịch này không?", [
-      { text: "Không", style: "cancel" },
-      {
-        text: "Hủy",
-        style: "destructive",
-        onPress: () => {
-          navigation.navigate("DoctorList", { specialty: doctor.specialty })
+    showAlert({
+      title: 'Hủy đặt hẹn',
+      message: 'Bạn có chắc chắn muốn hủy đặt lịch này không?',
+      buttons: [
+        { text: 'Không', style: 'cancel' },
+        {
+          text: 'Hủy',
+          style: 'destructive',
+          onPress: () => {
+            navigation.navigate('DoctorList', { specialty: doctor.specialty })
+          },
         },
-      },
-    ])
+      ],
+    });
   }
 
   const handleSearchMore = () => {

@@ -9,7 +9,6 @@ import {
   ScrollView,
   StyleSheet,
   SafeAreaView,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -33,6 +32,7 @@ import { useAuth } from "../../../context/AuthContext";
 import Sun from "../../../assets/images/ThoiGian/sun.svg";
 import Moon from "../../../assets/images/ThoiGian/moon.svg";
 import API from "../../../services/api";
+import { useAlert } from '../../../context/AlertContext';
 
 type BookAppointmentScreenProps = {
   navigation: StackNavigationProp<
@@ -87,6 +87,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({
   const { fontsLoaded } = useFont();
   const { doctor } = route.params;
   const { patient } = useAuth();
+  const { showAlert } = useAlert();
 
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
@@ -106,9 +107,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({
       console.log(
         "[BookAppointmentScreen] Bỏ qua fetchDates: doctor hoặc doctor.id không xác định"
       );
-      Alert.alert("Lỗi", "Thông tin bác sĩ không hợp lệ.", [
-        { text: "OK", onPress: () => navigation.goBack() },
-      ]);
+      showAlert({ title: 'Lỗi', message: 'Thông tin bác sĩ không hợp lệ.', buttons: [{ text: "OK", onPress: () => navigation.goBack() }] });
       return;
     }
 
@@ -157,15 +156,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({
           error.message,
           error.response?.data
         );
-        Alert.alert(
-          "Lỗi",
-          error.response?.data?.message ||
-            "Không thể tải danh sách ngày. Vui lòng thử lại sau.",
-          [
-            { text: "Chọn bác sĩ khác", onPress: () => navigation.goBack() },
-            { text: "Thử lại", onPress: () => fetchDates() },
-          ]
-        );
+        showAlert({ title: 'Lỗi', message: error.response?.data?.error || 'Không thể tải danh sách ngày. Vui lòng thử lại sau.', buttons: [{ text: "Chọn bác sĩ khác", onPress: () => navigation.goBack() }, { text: "Thử lại", onPress: () => fetchDates() }] });
         setDates([]);
       } finally {
         setIsLoadingDates(false);
@@ -210,12 +201,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({
           error.message,
           error.response?.data
         );
-        Alert.alert(
-          "Lỗi",
-          error.response?.data?.message ||
-            "Không thể tải khung giờ khả dụng. Vui lòng thử lại.",
-          [{ text: "OK" }, { text: "Thử lại", onPress: () => fetchSlots() }]
-        );
+        showAlert({ title: 'Lỗi', message: error.response?.data?.error || 'Không thể tải khung giờ khả dụng. Vui lòng thử lại.', buttons: [{ text: "OK" }, { text: "Thử lại", onPress: () => fetchSlots() }] });
         setTimeSlots([]);
       } finally {
         setIsLoadingSlots(false);
@@ -289,14 +275,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({
           error.message,
           error.response?.data
         );
-        Alert.alert(
-          "Lỗi",
-          error.response?.data?.message || "Không thể tải bác sĩ tương tự.",
-          [
-            { text: "OK" },
-            { text: "Thử lại", onPress: () => fetchSimilarDoctors() },
-          ]
-        );
+        showAlert({ title: 'Lỗi', message: error.response?.data?.error || 'Không thể tải bác sĩ tương tự.', buttons: [{ text: "OK" }, { text: "Thử lại", onPress: () => fetchSimilarDoctors() }] });
         setSimilarDoctors([]);
       }
     };
@@ -330,7 +309,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({
         "available:",
         slot?.available
       );
-      Alert.alert("Thông báo", "Khung giờ này đã qua hoặc không khả dụng.");
+      showAlert({ title: 'Thông báo', message: 'Khung giờ này đã qua hoặc không khả dụng.' });
       return;
     }
     console.log("[BookAppointmentScreen] Khung giờ được chọn:", time);
@@ -361,12 +340,12 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({
 
   const handleContinue = async () => {
     if (!selectedDate || !selectedTime) {
-      Alert.alert("Thông báo", "Vui lòng chọn ngày và giờ khám.");
+      showAlert({ title: 'Thông báo', message: 'Vui lòng chọn ngày và giờ khám.' });
       return;
     }
 
     if (!doctor || selectedScheduleIds.length === 0 || !patient?.patientId) {
-      Alert.alert("Lỗi", "Thông tin bác sĩ, lịch hoặc bệnh nhân không hợp lệ.");
+      showAlert({ title: 'Lỗi', message: 'Thông tin bác sĩ, lịch hoặc bệnh nhân không hợp lệ.' });
       return;
     }
 
@@ -390,7 +369,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({
       // Additional check for past time slot before navigation
       const slot = timeSlots.find((s) => s.time === selectedTime);
       if (slot?.isPast) {
-        Alert.alert("Lỗi", "Không thể chọn khung giờ đã qua.");
+        showAlert({ title: 'Lỗi', message: 'Không thể chọn khung giờ đã qua.' });
         return;
       }
 
@@ -408,12 +387,7 @@ export const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({
         error.message,
         error.response?.data
       );
-      Alert.alert(
-        "Lỗi",
-        error.response?.data?.message ||
-          "Không thể xác thực lịch. Vui lòng thử lại.",
-        [{ text: "OK" }]
-      );
+      showAlert({ title: 'Lỗi', message: error.response?.data?.error || 'Không thể xác thực lịch. Vui lòng thử lại.', buttons: [{ text: "OK" }] });
     }
   };
 

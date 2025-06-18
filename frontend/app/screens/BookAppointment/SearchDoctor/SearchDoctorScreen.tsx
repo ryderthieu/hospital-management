@@ -17,7 +17,7 @@ import { SpecialtyItem } from './SpecialtyItem';
 import Header from '../../../components/Header';
 import { useFont, fontFamily } from '../../../context/FontContext';
 import API from '../../../services/api';
-import { Alert } from 'react-native';
+import { useAlert } from '../../../context/AlertContext';
 
 type SpecialistSearchScreenProps = {
   navigation: StackNavigationProp<BookAppointmentStackParamList, 'Search'>;
@@ -30,6 +30,7 @@ export const SpecialistSearchScreen: React.FC<SpecialistSearchScreenProps> = ({ 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     fetchSpecialties();
@@ -71,10 +72,10 @@ export const SpecialistSearchScreen: React.FC<SpecialistSearchScreenProps> = ({ 
       setSpecialties(specialtiesData);
     } catch (error: any) {
       console.error('Fetch specialties error:', error.message, error.response?.data);
-      Alert.alert(
-        'Lỗi',
-        error.response?.data?.message || 'Không thể tải danh sách chuyên khoa. Vui lòng thử lại.',
-      );
+      showAlert({
+        title: 'Lỗi',
+        message: error.response?.data?.error || 'Không thể tải danh sách chuyên khoa. Vui lòng thử lại.'
+      });
       setSpecialties([]);
     } finally {
       setIsLoading(false);
