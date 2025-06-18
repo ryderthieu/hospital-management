@@ -7,17 +7,20 @@ import {
   FlatList,
   StyleSheet,
   StatusBar,
+  ActivityIndicator,
+  View as RNView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { BookAppointmentStackParamList, Specialty, DepartmentDto, DoctorDto } from '../types';
 import { globalStyles, colors } from '../../../styles/globalStyles';
-import { SpecialtyItem } from './SpecialtyItem';
+import { SpecialtyItem } from '../../../components/SpecialtyItem';
 import Header from '../../../components/Header';
 import { useFont, fontFamily } from '../../../context/FontContext';
-import API from '../../../services/api';
 import { useAlert } from '../../../context/AlertContext';
+import { useDepartments } from '../../../context/DepartmentContext';
+import { useDoctors } from '../../../context/DoctorContext';
 
 type SpecialistSearchScreenProps = {
   navigation: StackNavigationProp<BookAppointmentStackParamList, 'Search'>;
@@ -25,62 +28,21 @@ type SpecialistSearchScreenProps = {
 
 export const SpecialistSearchScreen: React.FC<SpecialistSearchScreenProps> = ({ navigation }) => {
   const { fontsLoaded } = useFont();
+  const { departments, isLoading: isLoadingDepartments, error: errorDepartments, reloadDepartments } = useDepartments();
+  const { doctorsByDepartment, loadingDepartments, preloadDoctorsForDepartments } = useDoctors();
   const [searchQuery, setSearchQuery] = useState('');
-  const [specialties, setSpecialties] = useState<Specialty[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
   const { showAlert } = useAlert();
+  const [activeLoadingDepartmentId, setActiveLoadingDepartmentId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchSpecialties();
-  }, []);
-
-  const fetchSpecialties = async () => {
-    setIsLoading(true);
-    try {
-      const departmentsResponse = await API.get<DepartmentDto[]>('/doctors/departments');
-      console.log('Debug - Departments response:', departmentsResponse.data);
-
-      const doctorCountPromises = departmentsResponse.data.map((dept) =>
-        API.get<DoctorDto[]>(`/doctors/departments/${dept.departmentId}/doctors`)
-          .then((res) => ({ departmentId: dept.departmentId, count: res.data.length }))
-          .catch((error) => {
-            console.warn(`No doctors for department ${dept.departmentId}:`, error.message);
-            return { departmentId: dept.departmentId, count: 0 };
-          }),
-      );
-
-      const doctorCounts = await Promise.all(doctorCountPromises);
-      const doctorCountMap = new Map(doctorCounts.map((item) => [item.departmentId, item.count]));
-
-      const specialtiesData: Specialty[] = departmentsResponse.data.map((dept) => {
-        let icon: ImageSourcePropType = { uri: 'https://via.placeholder.com/50' };
-        try {
-          icon = require('../../../assets/images/logo/Logo.png');
-        } catch (e) {
-          console.warn(`Default icon not found, using placeholder URI`);
-        }
-        return {
-          id: dept.departmentId,
-          name: dept.departmentName || 'Chưa có tên',
-          doctorCount: doctorCountMap.get(dept.departmentId) || 0,
-          icon,
-        };
-      });
-
-      setSpecialties(specialtiesData);
-    } catch (error: any) {
-      console.error('Fetch specialties error:', error.message, error.response?.data);
-      showAlert({
-        title: 'Lỗi',
-        message: error.response?.data?.error || 'Không thể tải danh sách chuyên khoa. Vui lòng thử lại.'
-      });
-      setSpecialties([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Map departments từ context sang Specialty
+  const specialties: Specialty[] = useMemo(() => departments.map(dept => ({
+    id: dept.departmentId.toString(),
+    name: dept.departmentName || 'Chưa có tên',
+    count: dept.staffCount ? `${dept.staffCount} bác sĩ` : 'Không có bác sĩ',
+    icon: dept.icon ? { uri: dept.icon } : require('../../../assets/images/logo/Logo.png'),
+  })), [departments]);
 
   const filteredSpecialties = useMemo(() => {
     if (!searchQuery.trim()) {
@@ -99,12 +61,39 @@ export const SpecialistSearchScreen: React.FC<SpecialistSearchScreenProps> = ({ 
 
   const totalPages = Math.ceil(filteredSpecialties.length / itemsPerPage);
 
+  useEffect(() => {
+    if (departments.length > 0) {
+      preloadDoctorsForDepartments(departments.map(d => d.departmentId.toString()));
+    }
+  }, [departments]);
+
   const handleSpecialtyPress = (specialty: Specialty) => {
+    if (loadingDepartments.includes(specialty.id)) {
+      setActiveLoadingDepartmentId(specialty.id);
+      return;
+    }
     navigation.navigate('DoctorList', {
       departmentId: specialty.id,
       departmentName: specialty.name,
     });
   };
+
+  useEffect(() => {
+    if (
+      activeLoadingDepartmentId &&
+      !loadingDepartments.includes(activeLoadingDepartmentId)
+    ) {
+      // Đã load xong, reset lại và điều hướng
+      const specialty = specialties.find(s => s.id === activeLoadingDepartmentId);
+      setActiveLoadingDepartmentId(null);
+      if (specialty) {
+        navigation.navigate('DoctorList', {
+          departmentId: specialty.id,
+          departmentName: specialty.name,
+        });
+      }
+    }
+  }, [loadingDepartments, activeLoadingDepartmentId]);
 
   const handleSearchMore = () => {
     console.log('Search more pressed');
@@ -117,7 +106,10 @@ export const SpecialistSearchScreen: React.FC<SpecialistSearchScreenProps> = ({ 
   };
 
   const renderSpecialtyItem = ({ item }: { item: Specialty }) => (
-    <SpecialtyItem specialty={item} onPress={() => handleSpecialtyPress(item)} />
+    <SpecialtyItem
+      specialty={item}
+      onPress={() => handleSpecialtyPress(item)}
+    />
   );
 
   const renderListFooter = () => (
@@ -178,7 +170,7 @@ export const SpecialistSearchScreen: React.FC<SpecialistSearchScreenProps> = ({ 
     </View>
   );
 
-  if (!fontsLoaded || isLoading) {
+  if (!fontsLoaded || isLoadingDepartments) {
     return (
       <SafeAreaView style={globalStyles.container}>
         <Header
@@ -221,10 +213,21 @@ export const SpecialistSearchScreen: React.FC<SpecialistSearchScreenProps> = ({ 
           )}
         </View>
       </View>
+      {activeLoadingDepartmentId && loadingDepartments.includes(activeLoadingDepartmentId) && (
+        <RNView style={{
+          ...StyleSheet.absoluteFillObject,
+          backgroundColor: 'rgba(255,255,255,0.7)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 100,
+        }}>
+          <ActivityIndicator size="large" color="#00B5B8" />
+        </RNView>
+      )}
       <FlatList
         data={paginatedSpecialties}
         renderItem={renderSpecialtyItem}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={paginatedSpecialties.length > 1 ? styles.specialtyRow : null}
         contentContainerStyle={styles.specialtyList}
@@ -243,7 +246,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   specialtyRow: {
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
   },
   footerContainer: {
     paddingBottom: 24,

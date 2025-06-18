@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Alert, ActivityIndicator, View as RNView } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +12,7 @@ import { FilterOptionsScreen, FilterOptions } from './FilterOptionsScreen';
 import { useFont, fontFamily } from '../../../context/FontContext';
 import API from '../../../services/api';
 import { useAlert } from '../../../context/AlertContext';
+import { useDoctors } from '../../../context/DoctorContext';
 
 type DoctorListScreenProps = {
   navigation: StackNavigationProp<BookAppointmentStackParamList, 'DoctorList'>;
@@ -30,73 +31,24 @@ export const DoctorListScreen: React.FC<DoctorListScreenProps> = ({ navigation, 
   const { fontsLoaded } = useFont();
   const { departmentId, departmentName } = route.params || {};
   const { showAlert } = useAlert();
+  const { doctorsByDepartment, loadingDepartments, preloadDoctorsForDepartments, schedulesByDoctor, loadingDoctors, preloadSchedulesForDoctors } = useDoctors();
+  const [activeLoadingDoctorId, setActiveLoadingDoctorId] = useState<string | null>(null);
 
   const [sortModalVisible, setSortModalVisible] = useState(false);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedSort, setSelectedSort] = useState<SortOption>('popular');
   const [selectedFilters, setSelectedFilters] = useState<FilterOptions>({});
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+
 
   useEffect(() => {
-    if (departmentId) {
-      fetchDoctors();
+    if (departmentId && !doctorsByDepartment[departmentId]) {
+      preloadDoctorsForDepartments([departmentId.toString()]);
     }
   }, [departmentId]);
 
-  const fetchDoctors = async () => {
-    setIsLoading(true);
-    try {
-      const response = await API.get<DoctorDto[]>(`/doctors/departments/${departmentId}/doctors`);
-      console.log('Debug - Doctors response:', response.data);
-
-      const mappedDoctors: Doctor[] = response.data.map((dto) => {
-        const academicPart = dto.academicDegree ? `${dto.academicDegree}.` : '';
-        const namePart = dto.fullName || '';
-        const fullName = [academicPart, namePart]
-          .filter((part) => part !== '')
-          .join(' ')
-          .trim() || 'Bác sĩ chưa có tên';
-
-        // Format consultationFee thành tiền tệ VNĐ
-        const formattedPrice = dto.consultationFee
-          ? new Intl.NumberFormat('vi-VN', {
-              style: 'currency',
-              currency: 'VND',
-            }).format(dto.consultationFee)
-          : 'Liên hệ';
-
-        return {
-          id: dto.doctorId.toString(),
-          name: fullName,
-          specialty: dto.specialization || 'Đa khoa',
-          departmentId: dto.departmentId,
-          image: dto.avatar ? { uri: dto.avatar } : null, // Ánh xạ avatar
-          price: formattedPrice, // Giá đã format
-          consultationFee: Number(dto.consultationFee) || 0, // Giá trị số
-          room: null,
-          rating: 0,
-          experience: null,
-          isOnline: false,
-          joinDate: null,
-          status: 'active',
-        };
-      });
-
-      console.log('Mapped doctors:', mappedDoctors);
-      setDoctors(mappedDoctors);
-    } catch (error: any) {
-      console.error('Fetch doctors error:', error.message, error.response?.data);
-      showAlert({
-        title: 'Lỗi',
-        message: error.response?.data?.error || 'Không thể tải danh sách bác sĩ. Vui lòng thử lại.'
-      });
-      setDoctors([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const doctors = doctorsByDepartment[departmentId] || [];
+  const isLoading = loadingDepartments.includes(departmentId);
 
   const filteredDoctors = useMemo(() => {
     let filtered = [...doctors];
@@ -162,9 +114,27 @@ export const DoctorListScreen: React.FC<DoctorListScreenProps> = ({ navigation, 
   }, [filteredDoctors, selectedSort]);
 
   const handleDoctorPress = (doctor: Doctor) => {
-    console.log('Navigating with doctor:', doctor);
+    if (!schedulesByDoctor[doctor.id] && !loadingDoctors.includes(doctor.id)) {
+      setActiveLoadingDoctorId(doctor.id);
+      preloadSchedulesForDoctors([doctor.id]);
+      return;
+    }
     navigation.navigate('BookAppointment', { doctor });
   };
+
+  useEffect(() => {
+    if (
+      activeLoadingDoctorId &&
+      !loadingDoctors.includes(activeLoadingDoctorId) &&
+      schedulesByDoctor[activeLoadingDoctorId]
+    ) {
+      const doctor = doctors.find(d => d.id === activeLoadingDoctorId);
+      setActiveLoadingDoctorId(null);
+      if (doctor) {
+        navigation.navigate('BookAppointment', { doctor });
+      }
+    }
+  }, [loadingDoctors, activeLoadingDoctorId, schedulesByDoctor]);
 
   const handleFavoritePress = (doctorId: string) => {
     setFavorites((prev) =>
@@ -313,6 +283,18 @@ export const DoctorListScreen: React.FC<DoctorListScreenProps> = ({ navigation, 
         onApplyFilters={handleApplyFilters}
         onClearFilters={handleClearFilters}
       />
+
+      {activeLoadingDoctorId && loadingDoctors.includes(activeLoadingDoctorId) && (
+        <RNView style={{
+          ...StyleSheet.absoluteFillObject,
+          backgroundColor: 'rgba(255,255,255,0.7)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 100,
+        }}>
+          <ActivityIndicator size="large" color="#00B5B8" />
+        </RNView>
+      )}
     </SafeAreaView>
   );
 };
