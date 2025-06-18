@@ -34,7 +34,7 @@ const LoginForm = () => {
               else if (type === "SERVICE") navigate("/doctor/service");
               break;
             case "RECEPTIONIST":
-              navigate("/receptionist/");
+              navigate("/receptionist");
               break;
             default:
               navigate("/");

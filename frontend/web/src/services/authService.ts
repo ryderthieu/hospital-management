@@ -4,6 +4,7 @@ import type {
   AuthUser,
   DoctorInfo,
   AdminInfo,
+  ReceptionistInfo,
 } from "../types/auths";
 import { api } from "./api";
 import { doctorService } from "./doctorService";
@@ -27,6 +28,7 @@ export const authService = {
 
     // Step 4: Store user info
     localStorage.setItem("authUser", JSON.stringify(user));
+    localStorage.setItem("authRole", user.role); // Thêm dòng này để lưu role riêng
     localStorage.setItem("currentUserId", user.userId.toString());
 
     // Step 5: If user is a doctor, fetch doctor info
@@ -49,6 +51,15 @@ export const authService = {
         role: "ADMIN",
       };
       localStorage.setItem("adminInfo", JSON.stringify(adminInfo));
+    } else if (user.role === "RECEPTIONIST") {
+      const receptionistInfo: ReceptionistInfo = {
+        ...user,
+        role: "RECEPTIONIST",
+      };
+      localStorage.setItem(
+        "receptionistInfo",
+        JSON.stringify(receptionistInfo)
+      );
     }
 
     return {
@@ -72,6 +83,7 @@ export const authService = {
       localStorage.removeItem("currentUserId");
       localStorage.removeItem("currentDoctorId");
       localStorage.removeItem("adminInfo");
+      localStorage.removeItem("receptionistInfo");
     }
   },
 

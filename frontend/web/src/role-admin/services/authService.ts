@@ -1,6 +1,8 @@
-import axios from 'axios';
+import axios from "axios";
+import { api } from "../../services/api";
+import { AuthUser } from "../types/user";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export interface LoginRequest {
   phone: string;
@@ -12,6 +14,16 @@ export interface LoginResponse {
 }
 
 export const login = async (data: LoginRequest): Promise<LoginResponse> => {
-  const response = await axios.post<LoginResponse>(`${API_BASE_URL}/users/auth/login`, data);
+  const response = await axios.post<LoginResponse>(
+    `${API_BASE_URL}/users/auth/login`,
+    data
+  );
   return response.data;
+};
+
+export const authService = {
+  async getCurrentUser(): Promise<AuthUser> {
+    const response = await api.get<AuthUser>("/users/me");
+    return response.data;
+  },
 };

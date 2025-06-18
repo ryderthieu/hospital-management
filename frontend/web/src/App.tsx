@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import AdminApp from "./role-admin/AdminApp";
+import ReceptionistApp from "./role-admin/ReceptionistApp";
 import DoctorApp from "./role-doctor/DoctorApp";
 import SignIn from "./role-doctor/pages/auth/SignIn";
 import { AuthProvider } from "./context/AuthContext";
@@ -11,6 +12,7 @@ export default function App() {
         <Route path="" element={<SignIn />} />
         <Route path="/login" element={<SignIn />} />
         <Route path="/admin/*" element={<AdminApp />} />
+        <Route path="/receptionist/*" element={<ReceptionistApp />} />
         <Route path="/doctor/*" element={<DoctorApp />} />
         <Route path="*" element={<div>404 - Không tìm thấy trang</div>} />
       </Routes>
