@@ -36,12 +36,39 @@ export const SpecialistSearchScreen: React.FC<SpecialistSearchScreenProps> = ({ 
   const { showAlert } = useAlert();
   const [activeLoadingDepartmentId, setActiveLoadingDepartmentId] = useState<string | null>(null);
 
-  // Map departments từ context sang Specialty
+  // Map tên khoa sang icon FontAwesome5 phù hợp
+  const departmentIconMap: Record<string, string> = {
+    'Khoa Nội Tim Mạch': 'heartbeat',
+    'Khoa Nhi': 'child',
+    'Khoa Da Liễu': 'allergies',
+    'Khoa Thần Kinh': 'brain',
+    'Khoa Sản': 'female',
+    'Khoa Ung Bướu': 'ribbon',
+    'Khoa Tiêu Hóa': 'stomach', // stomach không có, có thể dùng 'procedures' hoặc 'apple-alt'
+    'Khoa Hô Hấp': 'lungs',
+    'Khoa Chấn thương': 'bandage',
+    'Khoa Mắt': 'eye',
+    'Khoa Tai mũi họng': 'deaf',
+    'Khoa Răng hàm mặt': 'teeth',
+    'Khoa Thận - Tiết Niệu': 'tint',
+    'Khoa Tâm thần': 'user-md',
+    'Khoa Chẩn Đoán Hình Ảnh': 'images',
+    'Khoa Hồi sức': 'heartbeat',
+    'Khoa Ngoại Tổng Quát': 'user-md',
+    'Khoa Khám Bệnh': 'user-md',
+    'Khoa Ngoại': 'user-md',
+    'Khoa Nội': 'user-md',
+    'Khoa Tâm Lý': 'syringe',
+    'Khoa Xét Nghiệm': 'microscope',
+    'Khoa Dược': 'capsules',
+  
+  };
+
   const specialties: Specialty[] = useMemo(() => departments.map(dept => ({
     id: dept.departmentId.toString(),
     name: dept.departmentName || 'Chưa có tên',
     count: dept.staffCount ? `${dept.staffCount} bác sĩ` : 'Không có bác sĩ',
-    icon: dept.icon ? { uri: dept.icon } : require('../../../assets/images/logo/Logo.png'),
+    iconName: departmentIconMap[dept.departmentName] || 'hospital-alt',
   })), [departments]);
 
   const filteredSpecialties = useMemo(() => {
@@ -107,7 +134,9 @@ export const SpecialistSearchScreen: React.FC<SpecialistSearchScreenProps> = ({ 
 
   const renderSpecialtyItem = ({ item }: { item: Specialty }) => (
     <SpecialtyItem
-      specialty={item}
+      name={item.name}
+      count={item.count}
+      iconName={item.iconName}
       onPress={() => handleSpecialtyPress(item)}
     />
   );
