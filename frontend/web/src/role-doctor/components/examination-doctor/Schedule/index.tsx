@@ -51,7 +51,7 @@ const MonthView: React.FC<MonthViewProps> = ({ calendarDays, onDayClick }) => {
               !day.isCurrentMonth
                 ? "bg-gray-100 text-gray-400"
                 : isToday
-                  ? "bg-base-700 text-white font-semibold shadow-lg"
+                  ? "bg-base-700 text-white font-semibold shadow-lg hover:bg-base-800"
                   : "bg-white text-gray-800 hover:shadow-md"
             }`}
             onClick={() => onDayClick(day.date)}
@@ -80,7 +80,7 @@ const MonthView: React.FC<MonthViewProps> = ({ calendarDays, onDayClick }) => {
                 <div
                   key={scheduleIndex}
                   className={`text-xs px-2 py-1 rounded truncate ${
-                    isToday ? "bg-white bg-opacity-20 text-white" : "bg-green-100 text-green-800"
+                    isToday ? "bg-white bg-opacity-20 text-green-800" : "bg-green-100 text-green-800"
                   }`}
                 >
                   {formatTimeRange(schedule.startTime, schedule.endTime)}
